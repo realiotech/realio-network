@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -8,6 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	typesparams "github.com/cosmos/cosmos-sdk/x/params/types"
 	ibckeeper "github.com/cosmos/ibc-go/modules/core/keeper"
@@ -33,8 +36,6 @@ func AssetKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 
 	registry := codectypes.NewInterfaceRegistry()
 	appCodec := codec.NewProtoCodec(registry)
-	capabilityKeeper := capabilitykeeper.NewKeeper(appCodec, storeKey, memStoreKey)
-
 	amino := codec.NewLegacyAmino()
 	ss := typesparams.NewSubspace(appCodec,
 		amino,
@@ -42,6 +43,11 @@ func AssetKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		memStoreKey,
 		"AssetSubSpace",
 	)
+
+
+	capabilityKeeper := capabilitykeeper.NewKeeper(appCodec, storeKey, memStoreKey)
+	accountKeeper := authkeeper.NewAccountKeeper(appCodec,storeKey, ss, authtypes.ProtoBaseAccount, nil)
+
 	IBCKeeper := ibckeeper.NewKeeper(
 		appCodec,
 		storeKey,
@@ -51,6 +57,14 @@ func AssetKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		capabilityKeeper.ScopeToModule("AssetIBCKeeper"),
 	)
 
+	BankKeeper := bankkeeper.NewBaseKeeper(
+		appCodec,
+		storeKey,
+		accountKeeper,
+		ss,
+		nil,
+	)
+
 	k := keeper.NewKeeper(
 		codec.NewProtoCodec(registry),
 		storeKey,
@@ -58,6 +72,7 @@ func AssetKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		IBCKeeper.ChannelKeeper,
 		&IBCKeeper.PortKeeper,
 		capabilityKeeper.ScopeToModule("AssetScopedKeeper"),
+		BankKeeper,
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, logger)
