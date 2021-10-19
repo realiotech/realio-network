@@ -1,0 +1,22 @@
+syntax = "proto3";
+package realiotech.network.asset;
+
+option go_package = "github.com/realiotech/network/x/asset/types";
+
+
+message Token {
+  string index = 1; 
+  string name = 2; 
+  string symbol = 3; 
+  int64 total = 4;
+  string decimals = 5; 
+  bool authorizationRequired = 6;
+  string creator = 7;
+  map<string, TokenAuthorization> authorized = 8;
+}
+
+message TokenAuthorization {
+  string tokenIndex = 1;
+  string address = 2;
+  bool authorized = 3;
+}
