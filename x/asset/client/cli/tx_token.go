@@ -139,3 +139,40 @@ func CmdUnAuthorizeAddress() *cobra.Command {
 
 	return cmd
 }
+
+func CmdTransferToken() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transfer-token [index] [symbol] [from] [to] [amount]",
+		Short: "Broadcast message transferToken",
+		Args:  cobra.ExactArgs(5),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			argIndex := args[0]
+			argSymbol := args[1]
+			argFrom := args[2]
+			argTo := args[3]
+			argAmount := cast.ToInt64(args[4])
+
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgTransferToken(
+				clientCtx.GetFromAddress().String(),
+				argIndex,
+				argSymbol,
+				argFrom,
+				argTo,
+				argAmount,
+			)
+			if err := msg.ValidateBasic(); err != nil {
+				return err
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}

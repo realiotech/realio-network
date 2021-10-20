@@ -44,9 +44,8 @@ func AssetKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		"AssetSubSpace",
 	)
 
-
 	capabilityKeeper := capabilitykeeper.NewKeeper(appCodec, storeKey, memStoreKey)
-	accountKeeper := authkeeper.NewAccountKeeper(appCodec,storeKey, ss, authtypes.ProtoBaseAccount, nil)
+	accountKeeper := authkeeper.NewAccountKeeper(appCodec, storeKey, ss, authtypes.ProtoBaseAccount, nil)
 
 	IBCKeeper := ibckeeper.NewKeeper(
 		appCodec,

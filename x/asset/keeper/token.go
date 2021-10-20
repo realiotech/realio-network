@@ -61,3 +61,22 @@ func (k Keeper) GetAllToken(ctx sdk.Context) (list []types.Token) {
 
 	return
 }
+
+func (k Keeper) IsAddressAuthorizedToSend(ctx sdk.Context, symbol string, address sdk.AccAddress) (authorized bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TokenKeyPrefix))
+
+	b := store.Get(types.KeyPrefix(symbol))
+	if b == nil {
+		return false
+	}
+	var t types.Token
+	k.cdc.MustUnmarshal(b, &t)
+
+	value, ok := t.Authorized[address.String()]
+
+	if ok {
+		return value.Authorized
+	}
+
+	return ok
+}

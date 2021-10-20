@@ -12,7 +12,8 @@ service Msg {
       rpc UpdateToken(MsgUpdateToken) returns (MsgUpdateTokenResponse);
       rpc AuthorizeAddress(MsgAuthorizeAddress) returns (MsgAuthorizeAddressResponse);
       rpc UnAuthorizeAddress(MsgUnAuthorizeAddress) returns (MsgUnAuthorizeAddressResponse);
-   // this line is used by starport scaffolding # proto/tx/rpc
+     rpc TransferToken(MsgTransferToken) returns (MsgTransferTokenResponse);
+// this line is used by starport scaffolding # proto/tx/rpc
 }
 
 message MsgCreateToken {
@@ -50,6 +51,20 @@ message MsgUnAuthorizeAddress {
 }
 
 message MsgUnAuthorizeAddressResponse {
+}
+
+
+
+message MsgTransferToken {
+  string creator = 1;
+  string index = 2;
+  string symbol = 3;
+  string from = 4;
+  string to = 5;
+  int64 amount = 6;
+}
+
+message MsgTransferTokenResponse {
 }
 
 // this line is used by starport scaffolding # proto/tx/message

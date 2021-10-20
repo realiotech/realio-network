@@ -1,5 +1,6 @@
 export declare type AssetMsgAuthorizeAddressResponse = object;
 export declare type AssetMsgCreateTokenResponse = object;
+export declare type AssetMsgTransferTokenResponse = object;
 export declare type AssetMsgUnAuthorizeAddressResponse = object;
 export declare type AssetMsgUpdateTokenResponse = object;
 export interface AssetQueryAllTokenResponse {

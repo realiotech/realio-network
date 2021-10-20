@@ -20025,6 +20025,8 @@ definitions:
     type: object
   realiotech.network.asset.MsgCreateTokenResponse:
     type: object
+  realiotech.network.asset.MsgTransferTokenResponse:
+    type: object
   realiotech.network.asset.MsgUnAuthorizeAddressResponse:
     type: object
   realiotech.network.asset.MsgUpdateTokenResponse:

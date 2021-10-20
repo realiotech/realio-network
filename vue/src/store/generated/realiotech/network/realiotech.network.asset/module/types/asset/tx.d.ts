@@ -32,6 +32,16 @@ export interface MsgUnAuthorizeAddress {
 }
 export interface MsgUnAuthorizeAddressResponse {
 }
+export interface MsgTransferToken {
+    creator: string;
+    index: string;
+    symbol: string;
+    from: string;
+    to: string;
+    amount: number;
+}
+export interface MsgTransferTokenResponse {
+}
 export declare const MsgCreateToken: {
     encode(message: MsgCreateToken, writer?: Writer): Writer;
     decode(input: Reader | Uint8Array, length?: number): MsgCreateToken;
@@ -88,13 +98,28 @@ export declare const MsgUnAuthorizeAddressResponse: {
     toJSON(_: MsgUnAuthorizeAddressResponse): unknown;
     fromPartial(_: DeepPartial<MsgUnAuthorizeAddressResponse>): MsgUnAuthorizeAddressResponse;
 };
+export declare const MsgTransferToken: {
+    encode(message: MsgTransferToken, writer?: Writer): Writer;
+    decode(input: Reader | Uint8Array, length?: number): MsgTransferToken;
+    fromJSON(object: any): MsgTransferToken;
+    toJSON(message: MsgTransferToken): unknown;
+    fromPartial(object: DeepPartial<MsgTransferToken>): MsgTransferToken;
+};
+export declare const MsgTransferTokenResponse: {
+    encode(_: MsgTransferTokenResponse, writer?: Writer): Writer;
+    decode(input: Reader | Uint8Array, length?: number): MsgTransferTokenResponse;
+    fromJSON(_: any): MsgTransferTokenResponse;
+    toJSON(_: MsgTransferTokenResponse): unknown;
+    fromPartial(_: DeepPartial<MsgTransferTokenResponse>): MsgTransferTokenResponse;
+};
 /** Msg defines the Msg service. */
 export interface Msg {
     CreateToken(request: MsgCreateToken): Promise<MsgCreateTokenResponse>;
     UpdateToken(request: MsgUpdateToken): Promise<MsgUpdateTokenResponse>;
     AuthorizeAddress(request: MsgAuthorizeAddress): Promise<MsgAuthorizeAddressResponse>;
-    /** this line is used by starport scaffolding # proto/tx/rpc */
     UnAuthorizeAddress(request: MsgUnAuthorizeAddress): Promise<MsgUnAuthorizeAddressResponse>;
+    /** this line is used by starport scaffolding # proto/tx/rpc */
+    TransferToken(request: MsgTransferToken): Promise<MsgTransferTokenResponse>;
 }
 export declare class MsgClientImpl implements Msg {
     private readonly rpc;
@@ -103,6 +128,7 @@ export declare class MsgClientImpl implements Msg {
     UpdateToken(request: MsgUpdateToken): Promise<MsgUpdateTokenResponse>;
     AuthorizeAddress(request: MsgAuthorizeAddress): Promise<MsgAuthorizeAddressResponse>;
     UnAuthorizeAddress(request: MsgUnAuthorizeAddress): Promise<MsgUnAuthorizeAddressResponse>;
+    TransferToken(request: MsgTransferToken): Promise<MsgTransferTokenResponse>;
 }
 interface Rpc {
     request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;
