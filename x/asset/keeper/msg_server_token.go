@@ -3,10 +3,10 @@ package keeper
 import (
 	"context"
 	"fmt"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/realiotech/network/x/asset/types"
 )
 
