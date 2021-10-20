@@ -1,16 +1,29 @@
 accounts:
   - name: alice
-    coins: ["20000token", "200000000stake"]
+    coins: ["200000000rio"]
   - name: bob
-    coins: ["10000token", "100000000stake"]
+    coins: ["100000000rio"]
 validator:
   name: alice
-  staked: "100000000stake"
+  staked: "100000000rio"
 client:
-  openapi:
-    path: "docs/static/openapi.yml"
   vuex:
     path: "vue/src/store"
+  openapi:
+    path: "docs/static/openapi.yml"
 faucet:
   name: bob
-  coins: ["5token", "100000stake"]
+  coins: ["1000rio"]
+genesis:
+  chain_id: "network-test1"
+  app_state:
+    staking:
+      params:
+        bond_denom: "rio"
+    mint:
+      params:
+        mint_denom: "rio"
+    crisis:
+      constant_fee:
+        denom: "rio"
+
