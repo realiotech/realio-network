@@ -740,6 +740,165 @@ export const MsgTransferTokenResponse = {
         return message;
     }
 };
+const baseMsgSendToAlgorand = { creator: '', index: '', denom: '', algorandReceiver: '', amount: 0 };
+export const MsgSendToAlgorand = {
+    encode(message, writer = Writer.create()) {
+        if (message.creator !== '') {
+            writer.uint32(10).string(message.creator);
+        }
+        if (message.index !== '') {
+            writer.uint32(18).string(message.index);
+        }
+        if (message.denom !== '') {
+            writer.uint32(26).string(message.denom);
+        }
+        if (message.algorandReceiver !== '') {
+            writer.uint32(34).string(message.algorandReceiver);
+        }
+        if (message.amount !== 0) {
+            writer.uint32(40).int32(message.amount);
+        }
+        return writer;
+    },
+    decode(input, length) {
+        const reader = input instanceof Uint8Array ? new Reader(input) : input;
+        let end = length === undefined ? reader.len : reader.pos + length;
+        const message = { ...baseMsgSendToAlgorand };
+        while (reader.pos < end) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.creator = reader.string();
+                    break;
+                case 2:
+                    message.index = reader.string();
+                    break;
+                case 3:
+                    message.denom = reader.string();
+                    break;
+                case 4:
+                    message.algorandReceiver = reader.string();
+                    break;
+                case 5:
+                    message.amount = reader.int32();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    },
+    fromJSON(object) {
+        const message = { ...baseMsgSendToAlgorand };
+        if (object.creator !== undefined && object.creator !== null) {
+            message.creator = String(object.creator);
+        }
+        else {
+            message.creator = '';
+        }
+        if (object.index !== undefined && object.index !== null) {
+            message.index = String(object.index);
+        }
+        else {
+            message.index = '';
+        }
+        if (object.denom !== undefined && object.denom !== null) {
+            message.denom = String(object.denom);
+        }
+        else {
+            message.denom = '';
+        }
+        if (object.algorandReceiver !== undefined && object.algorandReceiver !== null) {
+            message.algorandReceiver = String(object.algorandReceiver);
+        }
+        else {
+            message.algorandReceiver = '';
+        }
+        if (object.amount !== undefined && object.amount !== null) {
+            message.amount = Number(object.amount);
+        }
+        else {
+            message.amount = 0;
+        }
+        return message;
+    },
+    toJSON(message) {
+        const obj = {};
+        message.creator !== undefined && (obj.creator = message.creator);
+        message.index !== undefined && (obj.index = message.index);
+        message.denom !== undefined && (obj.denom = message.denom);
+        message.algorandReceiver !== undefined && (obj.algorandReceiver = message.algorandReceiver);
+        message.amount !== undefined && (obj.amount = message.amount);
+        return obj;
+    },
+    fromPartial(object) {
+        const message = { ...baseMsgSendToAlgorand };
+        if (object.creator !== undefined && object.creator !== null) {
+            message.creator = object.creator;
+        }
+        else {
+            message.creator = '';
+        }
+        if (object.index !== undefined && object.index !== null) {
+            message.index = object.index;
+        }
+        else {
+            message.index = '';
+        }
+        if (object.denom !== undefined && object.denom !== null) {
+            message.denom = object.denom;
+        }
+        else {
+            message.denom = '';
+        }
+        if (object.algorandReceiver !== undefined && object.algorandReceiver !== null) {
+            message.algorandReceiver = object.algorandReceiver;
+        }
+        else {
+            message.algorandReceiver = '';
+        }
+        if (object.amount !== undefined && object.amount !== null) {
+            message.amount = object.amount;
+        }
+        else {
+            message.amount = 0;
+        }
+        return message;
+    }
+};
+const baseMsgSendToAlgorandResponse = {};
+export const MsgSendToAlgorandResponse = {
+    encode(_, writer = Writer.create()) {
+        return writer;
+    },
+    decode(input, length) {
+        const reader = input instanceof Uint8Array ? new Reader(input) : input;
+        let end = length === undefined ? reader.len : reader.pos + length;
+        const message = { ...baseMsgSendToAlgorandResponse };
+        while (reader.pos < end) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    },
+    fromJSON(_) {
+        const message = { ...baseMsgSendToAlgorandResponse };
+        return message;
+    },
+    toJSON(_) {
+        const obj = {};
+        return obj;
+    },
+    fromPartial(_) {
+        const message = { ...baseMsgSendToAlgorandResponse };
+        return message;
+    }
+};
 export class MsgClientImpl {
     constructor(rpc) {
         this.rpc = rpc;
@@ -768,6 +927,11 @@ export class MsgClientImpl {
         const data = MsgTransferToken.encode(request).finish();
         const promise = this.rpc.request('realiotech.network.asset.Msg', 'TransferToken', data);
         return promise.then((data) => MsgTransferTokenResponse.decode(new Reader(data)));
+    }
+    SendToAlgorand(request) {
+        const data = MsgSendToAlgorand.encode(request).finish();
+        const promise = this.rpc.request('realiotech.network.asset.Msg', 'SendToAlgorand', data);
+        return promise.then((data) => MsgSendToAlgorandResponse.decode(new Reader(data)));
     }
 }
 var globalThis = (() => {

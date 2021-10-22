@@ -13,6 +13,7 @@ func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgUnAuthorizeAddress{}, "asset/UnAuthorizeAddress", nil)
 	cdc.RegisterConcrete(&MsgAuthorizeAddress{}, "asset/AuthorizeAddress", nil)
 	cdc.RegisterConcrete(&MsgTransferToken{}, "asset/TransferToken", nil)
+	cdc.RegisterConcrete(&MsgSendToAlgorand{}, "asset/SendToAlgorand", nil)
 	// this line is used by starport scaffolding # 2
 }
 
@@ -23,6 +24,9 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgAuthorizeAddress{},
 		&MsgUnAuthorizeAddress{},
 		&MsgTransferToken{},
+	)
+	registry.RegisterImplementations((*sdk.Msg)(nil),
+		&MsgSendToAlgorand{},
 	)
 	// this line is used by starport scaffolding # 3
 

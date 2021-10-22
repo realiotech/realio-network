@@ -23,6 +23,10 @@ const (
 	PortID = "asset"
 )
 
+const (
+	RelayerAddr  = "localhost:7010"
+)
+
 var (
 	// PortKey defines the key to store the port ID in store
 	PortKey = KeyPrefix("asset-port-")

@@ -13,6 +13,7 @@ service Msg {
       rpc AuthorizeAddress(MsgAuthorizeAddress) returns (MsgAuthorizeAddressResponse);
       rpc UnAuthorizeAddress(MsgUnAuthorizeAddress) returns (MsgUnAuthorizeAddressResponse);
      rpc TransferToken(MsgTransferToken) returns (MsgTransferTokenResponse);
+  rpc SendToAlgorand(MsgSendToAlgorand) returns (MsgSendToAlgorandResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 
@@ -65,6 +66,17 @@ message MsgTransferToken {
 }
 
 message MsgTransferTokenResponse {
+}
+
+message MsgSendToAlgorand {
+  string creator = 1;
+  string index = 2;
+  string denom = 3;
+  string algorandReceiver = 4;
+  int64 amount = 5;
+}
+
+message MsgSendToAlgorandResponse {
 }
 
 // this line is used by starport scaffolding # proto/tx/message

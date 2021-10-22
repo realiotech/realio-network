@@ -42,6 +42,15 @@ export interface MsgTransferToken {
 }
 export interface MsgTransferTokenResponse {
 }
+export interface MsgSendToAlgorand {
+    creator: string;
+    index: string;
+    denom: string;
+    algorandReceiver: string;
+    amount: number;
+}
+export interface MsgSendToAlgorandResponse {
+}
 export declare const MsgCreateToken: {
     encode(message: MsgCreateToken, writer?: Writer): Writer;
     decode(input: Reader | Uint8Array, length?: number): MsgCreateToken;
@@ -112,14 +121,29 @@ export declare const MsgTransferTokenResponse: {
     toJSON(_: MsgTransferTokenResponse): unknown;
     fromPartial(_: DeepPartial<MsgTransferTokenResponse>): MsgTransferTokenResponse;
 };
+export declare const MsgSendToAlgorand: {
+    encode(message: MsgSendToAlgorand, writer?: Writer): Writer;
+    decode(input: Reader | Uint8Array, length?: number): MsgSendToAlgorand;
+    fromJSON(object: any): MsgSendToAlgorand;
+    toJSON(message: MsgSendToAlgorand): unknown;
+    fromPartial(object: DeepPartial<MsgSendToAlgorand>): MsgSendToAlgorand;
+};
+export declare const MsgSendToAlgorandResponse: {
+    encode(_: MsgSendToAlgorandResponse, writer?: Writer): Writer;
+    decode(input: Reader | Uint8Array, length?: number): MsgSendToAlgorandResponse;
+    fromJSON(_: any): MsgSendToAlgorandResponse;
+    toJSON(_: MsgSendToAlgorandResponse): unknown;
+    fromPartial(_: DeepPartial<MsgSendToAlgorandResponse>): MsgSendToAlgorandResponse;
+};
 /** Msg defines the Msg service. */
 export interface Msg {
     CreateToken(request: MsgCreateToken): Promise<MsgCreateTokenResponse>;
     UpdateToken(request: MsgUpdateToken): Promise<MsgUpdateTokenResponse>;
     AuthorizeAddress(request: MsgAuthorizeAddress): Promise<MsgAuthorizeAddressResponse>;
     UnAuthorizeAddress(request: MsgUnAuthorizeAddress): Promise<MsgUnAuthorizeAddressResponse>;
-    /** this line is used by starport scaffolding # proto/tx/rpc */
     TransferToken(request: MsgTransferToken): Promise<MsgTransferTokenResponse>;
+    /** this line is used by starport scaffolding # proto/tx/rpc */
+    SendToAlgorand(request: MsgSendToAlgorand): Promise<MsgSendToAlgorandResponse>;
 }
 export declare class MsgClientImpl implements Msg {
     private readonly rpc;
@@ -129,6 +153,7 @@ export declare class MsgClientImpl implements Msg {
     AuthorizeAddress(request: MsgAuthorizeAddress): Promise<MsgAuthorizeAddressResponse>;
     UnAuthorizeAddress(request: MsgUnAuthorizeAddress): Promise<MsgUnAuthorizeAddressResponse>;
     TransferToken(request: MsgTransferToken): Promise<MsgTransferTokenResponse>;
+    SendToAlgorand(request: MsgSendToAlgorand): Promise<MsgSendToAlgorandResponse>;
 }
 interface Rpc {
     request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;

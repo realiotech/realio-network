@@ -51,6 +51,16 @@ export interface MsgTransferToken {
 
 export interface MsgTransferTokenResponse {}
 
+export interface MsgSendToAlgorand {
+  creator: string
+  index: string
+  denom: string
+  algorandReceiver: string
+  amount: number
+}
+
+export interface MsgSendToAlgorandResponse {}
+
 const baseMsgCreateToken: object = { creator: '', index: '', name: '', symbol: '', total: 0, decimals: '', authorizationRequired: false }
 
 export const MsgCreateToken = {
@@ -805,14 +815,176 @@ export const MsgTransferTokenResponse = {
   }
 }
 
+const baseMsgSendToAlgorand: object = { creator: '', index: '', denom: '', algorandReceiver: '', amount: 0 }
+
+export const MsgSendToAlgorand = {
+  encode(message: MsgSendToAlgorand, writer: Writer = Writer.create()): Writer {
+    if (message.creator !== '') {
+      writer.uint32(10).string(message.creator)
+    }
+    if (message.index !== '') {
+      writer.uint32(18).string(message.index)
+    }
+    if (message.denom !== '') {
+      writer.uint32(26).string(message.denom)
+    }
+    if (message.algorandReceiver !== '') {
+      writer.uint32(34).string(message.algorandReceiver)
+    }
+    if (message.amount !== 0) {
+      writer.uint32(40).int32(message.amount)
+    }
+    return writer
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): MsgSendToAlgorand {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input
+    let end = length === undefined ? reader.len : reader.pos + length
+    const message = { ...baseMsgSendToAlgorand } as MsgSendToAlgorand
+    while (reader.pos < end) {
+      const tag = reader.uint32()
+      switch (tag >>> 3) {
+        case 1:
+          message.creator = reader.string()
+          break
+        case 2:
+          message.index = reader.string()
+          break
+        case 3:
+          message.denom = reader.string()
+          break
+        case 4:
+          message.algorandReceiver = reader.string()
+          break
+        case 5:
+          message.amount = reader.int32()
+          break
+        default:
+          reader.skipType(tag & 7)
+          break
+      }
+    }
+    return message
+  },
+
+  fromJSON(object: any): MsgSendToAlgorand {
+    const message = { ...baseMsgSendToAlgorand } as MsgSendToAlgorand
+    if (object.creator !== undefined && object.creator !== null) {
+      message.creator = String(object.creator)
+    } else {
+      message.creator = ''
+    }
+    if (object.index !== undefined && object.index !== null) {
+      message.index = String(object.index)
+    } else {
+      message.index = ''
+    }
+    if (object.denom !== undefined && object.denom !== null) {
+      message.denom = String(object.denom)
+    } else {
+      message.denom = ''
+    }
+    if (object.algorandReceiver !== undefined && object.algorandReceiver !== null) {
+      message.algorandReceiver = String(object.algorandReceiver)
+    } else {
+      message.algorandReceiver = ''
+    }
+    if (object.amount !== undefined && object.amount !== null) {
+      message.amount = Number(object.amount)
+    } else {
+      message.amount = 0
+    }
+    return message
+  },
+
+  toJSON(message: MsgSendToAlgorand): unknown {
+    const obj: any = {}
+    message.creator !== undefined && (obj.creator = message.creator)
+    message.index !== undefined && (obj.index = message.index)
+    message.denom !== undefined && (obj.denom = message.denom)
+    message.algorandReceiver !== undefined && (obj.algorandReceiver = message.algorandReceiver)
+    message.amount !== undefined && (obj.amount = message.amount)
+    return obj
+  },
+
+  fromPartial(object: DeepPartial<MsgSendToAlgorand>): MsgSendToAlgorand {
+    const message = { ...baseMsgSendToAlgorand } as MsgSendToAlgorand
+    if (object.creator !== undefined && object.creator !== null) {
+      message.creator = object.creator
+    } else {
+      message.creator = ''
+    }
+    if (object.index !== undefined && object.index !== null) {
+      message.index = object.index
+    } else {
+      message.index = ''
+    }
+    if (object.denom !== undefined && object.denom !== null) {
+      message.denom = object.denom
+    } else {
+      message.denom = ''
+    }
+    if (object.algorandReceiver !== undefined && object.algorandReceiver !== null) {
+      message.algorandReceiver = object.algorandReceiver
+    } else {
+      message.algorandReceiver = ''
+    }
+    if (object.amount !== undefined && object.amount !== null) {
+      message.amount = object.amount
+    } else {
+      message.amount = 0
+    }
+    return message
+  }
+}
+
+const baseMsgSendToAlgorandResponse: object = {}
+
+export const MsgSendToAlgorandResponse = {
+  encode(_: MsgSendToAlgorandResponse, writer: Writer = Writer.create()): Writer {
+    return writer
+  },
+
+  decode(input: Reader | Uint8Array, length?: number): MsgSendToAlgorandResponse {
+    const reader = input instanceof Uint8Array ? new Reader(input) : input
+    let end = length === undefined ? reader.len : reader.pos + length
+    const message = { ...baseMsgSendToAlgorandResponse } as MsgSendToAlgorandResponse
+    while (reader.pos < end) {
+      const tag = reader.uint32()
+      switch (tag >>> 3) {
+        default:
+          reader.skipType(tag & 7)
+          break
+      }
+    }
+    return message
+  },
+
+  fromJSON(_: any): MsgSendToAlgorandResponse {
+    const message = { ...baseMsgSendToAlgorandResponse } as MsgSendToAlgorandResponse
+    return message
+  },
+
+  toJSON(_: MsgSendToAlgorandResponse): unknown {
+    const obj: any = {}
+    return obj
+  },
+
+  fromPartial(_: DeepPartial<MsgSendToAlgorandResponse>): MsgSendToAlgorandResponse {
+    const message = { ...baseMsgSendToAlgorandResponse } as MsgSendToAlgorandResponse
+    return message
+  }
+}
+
 /** Msg defines the Msg service. */
 export interface Msg {
   CreateToken(request: MsgCreateToken): Promise<MsgCreateTokenResponse>
   UpdateToken(request: MsgUpdateToken): Promise<MsgUpdateTokenResponse>
   AuthorizeAddress(request: MsgAuthorizeAddress): Promise<MsgAuthorizeAddressResponse>
   UnAuthorizeAddress(request: MsgUnAuthorizeAddress): Promise<MsgUnAuthorizeAddressResponse>
-  /** this line is used by starport scaffolding # proto/tx/rpc */
   TransferToken(request: MsgTransferToken): Promise<MsgTransferTokenResponse>
+  /** this line is used by starport scaffolding # proto/tx/rpc */
+  SendToAlgorand(request: MsgSendToAlgorand): Promise<MsgSendToAlgorandResponse>
 }
 
 export class MsgClientImpl implements Msg {
@@ -848,6 +1020,12 @@ export class MsgClientImpl implements Msg {
     const data = MsgTransferToken.encode(request).finish()
     const promise = this.rpc.request('realiotech.network.asset.Msg', 'TransferToken', data)
     return promise.then((data) => MsgTransferTokenResponse.decode(new Reader(data)))
+  }
+
+  SendToAlgorand(request: MsgSendToAlgorand): Promise<MsgSendToAlgorandResponse> {
+    const data = MsgSendToAlgorand.encode(request).finish()
+    const promise = this.rpc.request('realiotech.network.asset.Msg', 'SendToAlgorand', data)
+    return promise.then((data) => MsgSendToAlgorandResponse.decode(new Reader(data)))
   }
 }
 
