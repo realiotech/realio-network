@@ -40,8 +40,6 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 
 	// mint coins for the current module
 	var coin = sdk.Coins{{Denom: msg.Symbol, Amount: sdk.NewInt(msg.Total)}}
-	sdk.NewCoin()
-
 
 	k.SetToken(
 		ctx,
