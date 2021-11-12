@@ -740,6 +740,203 @@ export const MsgTransferTokenResponse = {
         return message;
     }
 };
+const baseMsgSendFungibleTokenTransfer = { creator: '', port: '', channelID: '', timeoutTimestamp: 0, denom: '', amount: 0, receiver: '' };
+export const MsgSendFungibleTokenTransfer = {
+    encode(message, writer = Writer.create()) {
+        if (message.creator !== '') {
+            writer.uint32(10).string(message.creator);
+        }
+        if (message.port !== '') {
+            writer.uint32(18).string(message.port);
+        }
+        if (message.channelID !== '') {
+            writer.uint32(26).string(message.channelID);
+        }
+        if (message.timeoutTimestamp !== 0) {
+            writer.uint32(32).uint64(message.timeoutTimestamp);
+        }
+        if (message.denom !== '') {
+            writer.uint32(42).string(message.denom);
+        }
+        if (message.amount !== 0) {
+            writer.uint32(48).uint64(message.amount);
+        }
+        if (message.receiver !== '') {
+            writer.uint32(58).string(message.receiver);
+        }
+        return writer;
+    },
+    decode(input, length) {
+        const reader = input instanceof Uint8Array ? new Reader(input) : input;
+        let end = length === undefined ? reader.len : reader.pos + length;
+        const message = { ...baseMsgSendFungibleTokenTransfer };
+        while (reader.pos < end) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                case 1:
+                    message.creator = reader.string();
+                    break;
+                case 2:
+                    message.port = reader.string();
+                    break;
+                case 3:
+                    message.channelID = reader.string();
+                    break;
+                case 4:
+                    message.timeoutTimestamp = longToNumber(reader.uint64());
+                    break;
+                case 5:
+                    message.denom = reader.string();
+                    break;
+                case 6:
+                    message.amount = longToNumber(reader.uint64());
+                    break;
+                case 7:
+                    message.receiver = reader.string();
+                    break;
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    },
+    fromJSON(object) {
+        const message = { ...baseMsgSendFungibleTokenTransfer };
+        if (object.creator !== undefined && object.creator !== null) {
+            message.creator = String(object.creator);
+        }
+        else {
+            message.creator = '';
+        }
+        if (object.port !== undefined && object.port !== null) {
+            message.port = String(object.port);
+        }
+        else {
+            message.port = '';
+        }
+        if (object.channelID !== undefined && object.channelID !== null) {
+            message.channelID = String(object.channelID);
+        }
+        else {
+            message.channelID = '';
+        }
+        if (object.timeoutTimestamp !== undefined && object.timeoutTimestamp !== null) {
+            message.timeoutTimestamp = Number(object.timeoutTimestamp);
+        }
+        else {
+            message.timeoutTimestamp = 0;
+        }
+        if (object.denom !== undefined && object.denom !== null) {
+            message.denom = String(object.denom);
+        }
+        else {
+            message.denom = '';
+        }
+        if (object.amount !== undefined && object.amount !== null) {
+            message.amount = Number(object.amount);
+        }
+        else {
+            message.amount = 0;
+        }
+        if (object.receiver !== undefined && object.receiver !== null) {
+            message.receiver = String(object.receiver);
+        }
+        else {
+            message.receiver = '';
+        }
+        return message;
+    },
+    toJSON(message) {
+        const obj = {};
+        message.creator !== undefined && (obj.creator = message.creator);
+        message.port !== undefined && (obj.port = message.port);
+        message.channelID !== undefined && (obj.channelID = message.channelID);
+        message.timeoutTimestamp !== undefined && (obj.timeoutTimestamp = message.timeoutTimestamp);
+        message.denom !== undefined && (obj.denom = message.denom);
+        message.amount !== undefined && (obj.amount = message.amount);
+        message.receiver !== undefined && (obj.receiver = message.receiver);
+        return obj;
+    },
+    fromPartial(object) {
+        const message = { ...baseMsgSendFungibleTokenTransfer };
+        if (object.creator !== undefined && object.creator !== null) {
+            message.creator = object.creator;
+        }
+        else {
+            message.creator = '';
+        }
+        if (object.port !== undefined && object.port !== null) {
+            message.port = object.port;
+        }
+        else {
+            message.port = '';
+        }
+        if (object.channelID !== undefined && object.channelID !== null) {
+            message.channelID = object.channelID;
+        }
+        else {
+            message.channelID = '';
+        }
+        if (object.timeoutTimestamp !== undefined && object.timeoutTimestamp !== null) {
+            message.timeoutTimestamp = object.timeoutTimestamp;
+        }
+        else {
+            message.timeoutTimestamp = 0;
+        }
+        if (object.denom !== undefined && object.denom !== null) {
+            message.denom = object.denom;
+        }
+        else {
+            message.denom = '';
+        }
+        if (object.amount !== undefined && object.amount !== null) {
+            message.amount = object.amount;
+        }
+        else {
+            message.amount = 0;
+        }
+        if (object.receiver !== undefined && object.receiver !== null) {
+            message.receiver = object.receiver;
+        }
+        else {
+            message.receiver = '';
+        }
+        return message;
+    }
+};
+const baseMsgSendFungibleTokenTransferResponse = {};
+export const MsgSendFungibleTokenTransferResponse = {
+    encode(_, writer = Writer.create()) {
+        return writer;
+    },
+    decode(input, length) {
+        const reader = input instanceof Uint8Array ? new Reader(input) : input;
+        let end = length === undefined ? reader.len : reader.pos + length;
+        const message = { ...baseMsgSendFungibleTokenTransferResponse };
+        while (reader.pos < end) {
+            const tag = reader.uint32();
+            switch (tag >>> 3) {
+                default:
+                    reader.skipType(tag & 7);
+                    break;
+            }
+        }
+        return message;
+    },
+    fromJSON(_) {
+        const message = { ...baseMsgSendFungibleTokenTransferResponse };
+        return message;
+    },
+    toJSON(_) {
+        const obj = {};
+        return obj;
+    },
+    fromPartial(_) {
+        const message = { ...baseMsgSendFungibleTokenTransferResponse };
+        return message;
+    }
+};
 export class MsgClientImpl {
     constructor(rpc) {
         this.rpc = rpc;
@@ -768,6 +965,11 @@ export class MsgClientImpl {
         const data = MsgTransferToken.encode(request).finish();
         const promise = this.rpc.request('realiotech.network.asset.Msg', 'TransferToken', data);
         return promise.then((data) => MsgTransferTokenResponse.decode(new Reader(data)));
+    }
+    SendFungibleTokenTransfer(request) {
+        const data = MsgSendFungibleTokenTransfer.encode(request).finish();
+        const promise = this.rpc.request('realiotech.network.asset.Msg', 'SendFungibleTokenTransfer', data);
+        return promise.then((data) => MsgSendFungibleTokenTransferResponse.decode(new Reader(data)));
     }
 }
 var globalThis = (() => {

@@ -13,6 +13,8 @@ export type AssetMsgAuthorizeAddressResponse = object;
 
 export type AssetMsgCreateTokenResponse = object;
 
+export type AssetMsgSendFungibleTokenTransferResponse = object;
+
 export type AssetMsgTransferTokenResponse = object;
 
 export type AssetMsgUnAuthorizeAddressResponse = object;

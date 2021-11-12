@@ -42,6 +42,17 @@ export interface MsgTransferToken {
 }
 export interface MsgTransferTokenResponse {
 }
+export interface MsgSendFungibleTokenTransfer {
+    creator: string;
+    port: string;
+    channelID: string;
+    timeoutTimestamp: number;
+    denom: string;
+    amount: number;
+    receiver: string;
+}
+export interface MsgSendFungibleTokenTransferResponse {
+}
 export declare const MsgCreateToken: {
     encode(message: MsgCreateToken, writer?: Writer): Writer;
     decode(input: Reader | Uint8Array, length?: number): MsgCreateToken;
@@ -112,14 +123,29 @@ export declare const MsgTransferTokenResponse: {
     toJSON(_: MsgTransferTokenResponse): unknown;
     fromPartial(_: DeepPartial<MsgTransferTokenResponse>): MsgTransferTokenResponse;
 };
+export declare const MsgSendFungibleTokenTransfer: {
+    encode(message: MsgSendFungibleTokenTransfer, writer?: Writer): Writer;
+    decode(input: Reader | Uint8Array, length?: number): MsgSendFungibleTokenTransfer;
+    fromJSON(object: any): MsgSendFungibleTokenTransfer;
+    toJSON(message: MsgSendFungibleTokenTransfer): unknown;
+    fromPartial(object: DeepPartial<MsgSendFungibleTokenTransfer>): MsgSendFungibleTokenTransfer;
+};
+export declare const MsgSendFungibleTokenTransferResponse: {
+    encode(_: MsgSendFungibleTokenTransferResponse, writer?: Writer): Writer;
+    decode(input: Reader | Uint8Array, length?: number): MsgSendFungibleTokenTransferResponse;
+    fromJSON(_: any): MsgSendFungibleTokenTransferResponse;
+    toJSON(_: MsgSendFungibleTokenTransferResponse): unknown;
+    fromPartial(_: DeepPartial<MsgSendFungibleTokenTransferResponse>): MsgSendFungibleTokenTransferResponse;
+};
 /** Msg defines the Msg service. */
 export interface Msg {
     CreateToken(request: MsgCreateToken): Promise<MsgCreateTokenResponse>;
     UpdateToken(request: MsgUpdateToken): Promise<MsgUpdateTokenResponse>;
     AuthorizeAddress(request: MsgAuthorizeAddress): Promise<MsgAuthorizeAddressResponse>;
     UnAuthorizeAddress(request: MsgUnAuthorizeAddress): Promise<MsgUnAuthorizeAddressResponse>;
-    /** this line is used by starport scaffolding # proto/tx/rpc */
     TransferToken(request: MsgTransferToken): Promise<MsgTransferTokenResponse>;
+    /** this line is used by starport scaffolding # proto/tx/rpc */
+    SendFungibleTokenTransfer(request: MsgSendFungibleTokenTransfer): Promise<MsgSendFungibleTokenTransferResponse>;
 }
 export declare class MsgClientImpl implements Msg {
     private readonly rpc;
@@ -129,6 +155,7 @@ export declare class MsgClientImpl implements Msg {
     AuthorizeAddress(request: MsgAuthorizeAddress): Promise<MsgAuthorizeAddressResponse>;
     UnAuthorizeAddress(request: MsgUnAuthorizeAddress): Promise<MsgUnAuthorizeAddressResponse>;
     TransferToken(request: MsgTransferToken): Promise<MsgTransferTokenResponse>;
+    SendFungibleTokenTransfer(request: MsgSendFungibleTokenTransfer): Promise<MsgSendFungibleTokenTransferResponse>;
 }
 interface Rpc {
     request(service: string, method: string, data: Uint8Array): Promise<Uint8Array>;

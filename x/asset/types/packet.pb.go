@@ -25,6 +25,7 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 type AssetPacketData struct {
 	// Types that are valid to be assigned to Packet:
 	//	*AssetPacketData_NoData
+	//	*AssetPacketData_FungibleTokenTransferPacket
 	Packet isAssetPacketData_Packet `protobuf_oneof:"packet"`
 }
 
@@ -70,8 +71,12 @@ type isAssetPacketData_Packet interface {
 type AssetPacketData_NoData struct {
 	NoData *NoData `protobuf:"bytes,1,opt,name=noData,proto3,oneof" json:"noData,omitempty"`
 }
+type AssetPacketData_FungibleTokenTransferPacket struct {
+	FungibleTokenTransferPacket *FungibleTokenTransferPacketData `protobuf:"bytes,2,opt,name=fungibleTokenTransferPacket,proto3,oneof" json:"fungibleTokenTransferPacket,omitempty"`
+}
 
-func (*AssetPacketData_NoData) isAssetPacketData_Packet() {}
+func (*AssetPacketData_NoData) isAssetPacketData_Packet()                      {}
+func (*AssetPacketData_FungibleTokenTransferPacket) isAssetPacketData_Packet() {}
 
 func (m *AssetPacketData) GetPacket() isAssetPacketData_Packet {
 	if m != nil {
@@ -87,10 +92,18 @@ func (m *AssetPacketData) GetNoData() *NoData {
 	return nil
 }
 
+func (m *AssetPacketData) GetFungibleTokenTransferPacket() *FungibleTokenTransferPacketData {
+	if x, ok := m.GetPacket().(*AssetPacketData_FungibleTokenTransferPacket); ok {
+		return x.FungibleTokenTransferPacket
+	}
+	return nil
+}
+
 // XXX_OneofWrappers is for the internal use of the proto package.
 func (*AssetPacketData) XXX_OneofWrappers() []interface{} {
 	return []interface{}{
 		(*AssetPacketData_NoData)(nil),
+		(*AssetPacketData_FungibleTokenTransferPacket)(nil),
 	}
 }
 
@@ -130,27 +143,143 @@ func (m *NoData) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_NoData proto.InternalMessageInfo
 
+// FungibleTokenTransferPacketData defines a struct for the packet payload
+type FungibleTokenTransferPacketData struct {
+	Denom    string `protobuf:"bytes,1,opt,name=denom,proto3" json:"denom,omitempty"`
+	Amount   uint64 `protobuf:"varint,2,opt,name=amount,proto3" json:"amount,omitempty"`
+	Receiver string `protobuf:"bytes,3,opt,name=receiver,proto3" json:"receiver,omitempty"`
+	Sender   string `protobuf:"bytes,4,opt,name=sender,proto3" json:"sender,omitempty"`
+}
+
+func (m *FungibleTokenTransferPacketData) Reset()         { *m = FungibleTokenTransferPacketData{} }
+func (m *FungibleTokenTransferPacketData) String() string { return proto.CompactTextString(m) }
+func (*FungibleTokenTransferPacketData) ProtoMessage()    {}
+func (*FungibleTokenTransferPacketData) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ae2b96752a4e188c, []int{2}
+}
+func (m *FungibleTokenTransferPacketData) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *FungibleTokenTransferPacketData) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_FungibleTokenTransferPacketData.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *FungibleTokenTransferPacketData) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FungibleTokenTransferPacketData.Merge(m, src)
+}
+func (m *FungibleTokenTransferPacketData) XXX_Size() int {
+	return m.Size()
+}
+func (m *FungibleTokenTransferPacketData) XXX_DiscardUnknown() {
+	xxx_messageInfo_FungibleTokenTransferPacketData.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_FungibleTokenTransferPacketData proto.InternalMessageInfo
+
+func (m *FungibleTokenTransferPacketData) GetDenom() string {
+	if m != nil {
+		return m.Denom
+	}
+	return ""
+}
+
+func (m *FungibleTokenTransferPacketData) GetAmount() uint64 {
+	if m != nil {
+		return m.Amount
+	}
+	return 0
+}
+
+func (m *FungibleTokenTransferPacketData) GetReceiver() string {
+	if m != nil {
+		return m.Receiver
+	}
+	return ""
+}
+
+func (m *FungibleTokenTransferPacketData) GetSender() string {
+	if m != nil {
+		return m.Sender
+	}
+	return ""
+}
+
+// FungibleTokenTransferPacketAck defines a struct for the packet acknowledgment
+type FungibleTokenTransferPacketAck struct {
+}
+
+func (m *FungibleTokenTransferPacketAck) Reset()         { *m = FungibleTokenTransferPacketAck{} }
+func (m *FungibleTokenTransferPacketAck) String() string { return proto.CompactTextString(m) }
+func (*FungibleTokenTransferPacketAck) ProtoMessage()    {}
+func (*FungibleTokenTransferPacketAck) Descriptor() ([]byte, []int) {
+	return fileDescriptor_ae2b96752a4e188c, []int{3}
+}
+func (m *FungibleTokenTransferPacketAck) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *FungibleTokenTransferPacketAck) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_FungibleTokenTransferPacketAck.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *FungibleTokenTransferPacketAck) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_FungibleTokenTransferPacketAck.Merge(m, src)
+}
+func (m *FungibleTokenTransferPacketAck) XXX_Size() int {
+	return m.Size()
+}
+func (m *FungibleTokenTransferPacketAck) XXX_DiscardUnknown() {
+	xxx_messageInfo_FungibleTokenTransferPacketAck.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_FungibleTokenTransferPacketAck proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*AssetPacketData)(nil), "realiotech.network.asset.AssetPacketData")
 	proto.RegisterType((*NoData)(nil), "realiotech.network.asset.NoData")
+	proto.RegisterType((*FungibleTokenTransferPacketData)(nil), "realiotech.network.asset.FungibleTokenTransferPacketData")
+	proto.RegisterType((*FungibleTokenTransferPacketAck)(nil), "realiotech.network.asset.FungibleTokenTransferPacketAck")
 }
 
 func init() { proto.RegisterFile("asset/packet.proto", fileDescriptor_ae2b96752a4e188c) }
 
 var fileDescriptor_ae2b96752a4e188c = []byte{
-	// 182 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x12, 0x4a, 0x2c, 0x2e, 0x4e,
-	0x2d, 0xd1, 0x2f, 0x48, 0x4c, 0xce, 0x4e, 0x2d, 0xd1, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x92,
-	0x28, 0x4a, 0x4d, 0xcc, 0xc9, 0xcc, 0x2f, 0x49, 0x4d, 0xce, 0xd0, 0xcb, 0x4b, 0x2d, 0x29, 0xcf,
-	0x2f, 0xca, 0xd6, 0x03, 0x2b, 0x53, 0x0a, 0xe7, 0xe2, 0x77, 0x04, 0x31, 0x02, 0xc0, 0xca, 0x5d,
-	0x12, 0x4b, 0x12, 0x85, 0xac, 0xb8, 0xd8, 0xf2, 0xf2, 0x41, 0x2c, 0x09, 0x46, 0x05, 0x46, 0x0d,
-	0x6e, 0x23, 0x05, 0x3d, 0x5c, 0xba, 0xf5, 0xfc, 0xc0, 0xea, 0x3c, 0x18, 0x82, 0xa0, 0x3a, 0x9c,
-	0x38, 0xb8, 0xd8, 0x20, 0x16, 0x2b, 0x71, 0x70, 0xb1, 0x41, 0x64, 0x9d, 0x5c, 0x4f, 0x3c, 0x92,
-	0x63, 0xbc, 0xf0, 0x48, 0x8e, 0xf1, 0xc1, 0x23, 0x39, 0xc6, 0x09, 0x8f, 0xe5, 0x18, 0x2e, 0x3c,
-	0x96, 0x63, 0xb8, 0xf1, 0x58, 0x8e, 0x21, 0x4a, 0x3b, 0x3d, 0xb3, 0x24, 0xa3, 0x34, 0x49, 0x2f,
-	0x39, 0x3f, 0x57, 0x1f, 0x61, 0x87, 0x3e, 0xd4, 0x0e, 0xfd, 0x0a, 0x7d, 0x88, 0x57, 0x4a, 0x2a,
-	0x0b, 0x52, 0x8b, 0x93, 0xd8, 0xc0, 0x5e, 0x31, 0x06, 0x04, 0x00, 0x00, 0xff, 0xff, 0xb5, 0x1f,
-	0xe4, 0x4c, 0xe0, 0x00, 0x00, 0x00,
+	// 305 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x91, 0x3f, 0x4b, 0xf4, 0x40,
+	0x10, 0xc6, 0xb3, 0xef, 0x7b, 0x86, 0xb8, 0x16, 0xc2, 0x22, 0x12, 0x14, 0xd6, 0x90, 0x4a, 0x10,
+	0x36, 0xa0, 0x95, 0x76, 0x77, 0xa8, 0x58, 0x89, 0x84, 0xab, 0xec, 0x36, 0xb9, 0xb9, 0xbb, 0x90,
+	0xcb, 0x6e, 0xd8, 0x6c, 0xfc, 0x53, 0x58, 0xf9, 0x05, 0xfc, 0x58, 0x96, 0x57, 0x89, 0xa5, 0x24,
+	0x5f, 0x44, 0xb2, 0x1b, 0xb4, 0xca, 0xd9, 0xcd, 0xc3, 0xce, 0xf3, 0xdb, 0x67, 0x66, 0x30, 0xe1,
+	0x55, 0x05, 0x3a, 0x2a, 0x79, 0x9a, 0x83, 0x66, 0xa5, 0x92, 0x5a, 0x12, 0x5f, 0x01, 0x5f, 0x65,
+	0x52, 0x43, 0xba, 0x64, 0x02, 0xf4, 0xa3, 0x54, 0x39, 0x33, 0x6d, 0xe1, 0x07, 0xc2, 0xbb, 0xe3,
+	0xae, 0xba, 0x33, 0xfd, 0x97, 0x5c, 0x73, 0x72, 0x81, 0x5d, 0x21, 0xbb, 0xca, 0x47, 0x01, 0x3a,
+	0xde, 0x39, 0x0d, 0xd8, 0x90, 0x9d, 0xdd, 0x9a, 0xbe, 0x1b, 0x27, 0xee, 0x1d, 0xe4, 0x05, 0x1f,
+	0xce, 0x6b, 0xb1, 0xc8, 0x92, 0x15, 0x4c, 0x65, 0x0e, 0x62, 0xaa, 0xb8, 0xa8, 0xe6, 0xa0, 0x2c,
+	0xde, 0xff, 0x67, 0x80, 0xe7, 0xc3, 0xc0, 0xeb, 0x61, 0x73, 0xff, 0xd3, 0x26, 0xfe, 0xc4, 0xc3,
+	0xae, 0x1d, 0x3c, 0xf4, 0xb0, 0x6b, 0xc3, 0x85, 0xaf, 0x08, 0x1f, 0xfd, 0x81, 0x25, 0x7b, 0x78,
+	0x6b, 0x06, 0x42, 0x16, 0x66, 0xe2, 0xed, 0xd8, 0x0a, 0xb2, 0x8f, 0x5d, 0x5e, 0xc8, 0x5a, 0xd8,
+	0xdc, 0xa3, 0xb8, 0x57, 0xe4, 0x00, 0x7b, 0x0a, 0x52, 0xc8, 0x1e, 0x40, 0xf9, 0xff, 0x8d, 0xe1,
+	0x47, 0x77, 0x9e, 0x0a, 0xc4, 0x0c, 0x94, 0x3f, 0x32, 0x2f, 0xbd, 0x0a, 0x03, 0x4c, 0x37, 0x84,
+	0x18, 0xa7, 0xf9, 0xe4, 0xea, 0xbd, 0xa1, 0x68, 0xdd, 0x50, 0xf4, 0xd5, 0x50, 0xf4, 0xd6, 0x52,
+	0x67, 0xdd, 0x52, 0xe7, 0xb3, 0xa5, 0xce, 0xfd, 0xc9, 0x22, 0xd3, 0xcb, 0x3a, 0x61, 0xa9, 0x2c,
+	0xa2, 0xdf, 0xcd, 0x45, 0xfd, 0xe6, 0xa2, 0xa7, 0xc8, 0x9e, 0x5c, 0x3f, 0x97, 0x50, 0x25, 0xae,
+	0x39, 0xf9, 0xd9, 0x77, 0x00, 0x00, 0x00, 0xff, 0xff, 0x90, 0x29, 0x51, 0x62, 0x08, 0x02, 0x00,
+	0x00,
 }
 
 func (m *AssetPacketData) Marshal() (dAtA []byte, err error) {
@@ -206,6 +335,27 @@ func (m *AssetPacketData_NoData) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 	}
 	return len(dAtA) - i, nil
 }
+func (m *AssetPacketData_FungibleTokenTransferPacket) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *AssetPacketData_FungibleTokenTransferPacket) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	if m.FungibleTokenTransferPacket != nil {
+		{
+			size, err := m.FungibleTokenTransferPacket.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintPacket(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0x12
+	}
+	return len(dAtA) - i, nil
+}
 func (m *NoData) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
@@ -222,6 +372,78 @@ func (m *NoData) MarshalTo(dAtA []byte) (int, error) {
 }
 
 func (m *NoData) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *FungibleTokenTransferPacketData) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *FungibleTokenTransferPacketData) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *FungibleTokenTransferPacketData) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Sender) > 0 {
+		i -= len(m.Sender)
+		copy(dAtA[i:], m.Sender)
+		i = encodeVarintPacket(dAtA, i, uint64(len(m.Sender)))
+		i--
+		dAtA[i] = 0x22
+	}
+	if len(m.Receiver) > 0 {
+		i -= len(m.Receiver)
+		copy(dAtA[i:], m.Receiver)
+		i = encodeVarintPacket(dAtA, i, uint64(len(m.Receiver)))
+		i--
+		dAtA[i] = 0x1a
+	}
+	if m.Amount != 0 {
+		i = encodeVarintPacket(dAtA, i, uint64(m.Amount))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.Denom) > 0 {
+		i -= len(m.Denom)
+		copy(dAtA[i:], m.Denom)
+		i = encodeVarintPacket(dAtA, i, uint64(len(m.Denom)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *FungibleTokenTransferPacketAck) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *FungibleTokenTransferPacketAck) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *FungibleTokenTransferPacketAck) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -264,7 +486,52 @@ func (m *AssetPacketData_NoData) Size() (n int) {
 	}
 	return n
 }
+func (m *AssetPacketData_FungibleTokenTransferPacket) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.FungibleTokenTransferPacket != nil {
+		l = m.FungibleTokenTransferPacket.Size()
+		n += 1 + l + sovPacket(uint64(l))
+	}
+	return n
+}
 func (m *NoData) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *FungibleTokenTransferPacketData) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Denom)
+	if l > 0 {
+		n += 1 + l + sovPacket(uint64(l))
+	}
+	if m.Amount != 0 {
+		n += 1 + sovPacket(uint64(m.Amount))
+	}
+	l = len(m.Receiver)
+	if l > 0 {
+		n += 1 + l + sovPacket(uint64(l))
+	}
+	l = len(m.Sender)
+	if l > 0 {
+		n += 1 + l + sovPacket(uint64(l))
+	}
+	return n
+}
+
+func (m *FungibleTokenTransferPacketAck) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -343,6 +610,41 @@ func (m *AssetPacketData) Unmarshal(dAtA []byte) error {
 			}
 			m.Packet = &AssetPacketData_NoData{v}
 			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field FungibleTokenTransferPacket", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowPacket
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthPacket
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthPacket
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			v := &FungibleTokenTransferPacketData{}
+			if err := v.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			m.Packet = &AssetPacketData_FungibleTokenTransferPacket{v}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipPacket(dAtA[iNdEx:])
@@ -391,6 +693,221 @@ func (m *NoData) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: NoData: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipPacket(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthPacket
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *FungibleTokenTransferPacketData) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowPacket
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: FungibleTokenTransferPacketData: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: FungibleTokenTransferPacketData: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Denom", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowPacket
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthPacket
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthPacket
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Denom = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+			}
+			m.Amount = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowPacket
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Amount |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Receiver", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowPacket
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthPacket
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthPacket
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Receiver = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Sender", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowPacket
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthPacket
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthPacket
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Sender = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipPacket(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthPacket
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *FungibleTokenTransferPacketAck) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowPacket
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: FungibleTokenTransferPacketAck: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: FungibleTokenTransferPacketAck: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

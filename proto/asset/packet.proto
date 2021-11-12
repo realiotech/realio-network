@@ -9,10 +9,22 @@ message AssetPacketData {
     oneof packet {
         NoData noData = 1;
         // this line is used by starport scaffolding # ibc/packet/proto/field
+				FungibleTokenTransferPacketData fungibleTokenTransferPacket = 2; // this line is used by starport scaffolding # ibc/packet/proto/field/number
     }
 }
 
 message NoData {
 }
 
+// FungibleTokenTransferPacketData defines a struct for the packet payload
+message FungibleTokenTransferPacketData {
+  string denom = 1;
+  uint64 amount = 2;
+  string receiver = 3;
+  string sender = 4;
+}
+
+// FungibleTokenTransferPacketAck defines a struct for the packet acknowledgment
+message FungibleTokenTransferPacketAck {
+	}
 // this line is used by starport scaffolding # ibc/packet/proto/message
