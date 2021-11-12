@@ -5,7 +5,7 @@ import "asset/token.proto";
 // this line is used by starport scaffolding # genesis/proto/import
 import "gogoproto/gogo.proto";
 
-option go_package = "github.com/realiotech/network/x/asset/types";
+option go_package = "github.com/realiotech/realio-network/x/asset/types";
 
 // GenesisState defines the asset module's genesis state.
 message GenesisState {

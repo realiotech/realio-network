@@ -10,7 +10,7 @@ import (
 	porttypes "github.com/cosmos/ibc-go/modules/core/05-port/types"
 	host "github.com/cosmos/ibc-go/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/modules/core/exported"
-	"github.com/realiotech/network/x/asset/types"
+	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 // OnChanOpenInit implements the IBCModule interface

@@ -3,9 +3,9 @@ package asset_test
 import (
 	"testing"
 
-	keepertest "github.com/realiotech/network/testutil/keeper"
-	"github.com/realiotech/network/x/asset"
-	"github.com/realiotech/network/x/asset/types"
+	keepertest "github.com/realiotech/realio-network/testutil/keeper"
+	"github.com/realiotech/realio-network/x/asset"
+	"github.com/realiotech/realio-network/x/asset/types"
 	"github.com/stretchr/testify/require"
 )
 

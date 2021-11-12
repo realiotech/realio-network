@@ -17,9 +17,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	porttypes "github.com/cosmos/ibc-go/modules/core/05-port/types"
-	"github.com/realiotech/network/x/asset/client/cli"
-	"github.com/realiotech/network/x/asset/keeper"
-	"github.com/realiotech/network/x/asset/types"
+	"github.com/realiotech/realio-network/x/asset/client/cli"
+	"github.com/realiotech/realio-network/x/asset/keeper"
+	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 var (

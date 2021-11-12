@@ -10,8 +10,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	keepertest "github.com/realiotech/network/testutil/keeper"
-	"github.com/realiotech/network/x/asset/types"
+	keepertest "github.com/realiotech/realio-network/testutil/keeper"
+	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 // Prevent strconv unused error

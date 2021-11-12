@@ -18,7 +18,7 @@ import (
 	tmrand "github.com/tendermint/tendermint/libs/rand"
 	tmdb "github.com/tendermint/tm-db"
 
-	"github.com/realiotech/network/app"
+	"github.com/realiotech/realio-network/app"
 )
 
 type (

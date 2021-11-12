@@ -11,8 +11,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/stretchr/testify/require"
 
-	"github.com/realiotech/network/testutil/network"
-	"github.com/realiotech/network/x/asset/client/cli"
+	"github.com/realiotech/realio-network/testutil/network"
+	"github.com/realiotech/realio-network/x/asset/client/cli"
 )
 
 // Prevent strconv unused error

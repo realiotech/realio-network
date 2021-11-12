@@ -86,10 +86,10 @@ import (
 	"github.com/tendermint/spm/cosmoscmd"
 	"github.com/tendermint/spm/openapiconsole"
 
-	"github.com/realiotech/network/docs"
-	assetmodule "github.com/realiotech/network/x/asset"
-	assetmodulekeeper "github.com/realiotech/network/x/asset/keeper"
-	assetmoduletypes "github.com/realiotech/network/x/asset/types"
+	"github.com/realiotech/realio-network/docs"
+	assetmodule "github.com/realiotech/realio-network/x/asset"
+	assetmodulekeeper "github.com/realiotech/realio-network/x/asset/keeper"
+	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 

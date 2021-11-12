@@ -12,9 +12,9 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/realiotech/network/testutil/network"
-	"github.com/realiotech/network/x/asset/client/cli"
-	"github.com/realiotech/network/x/asset/types"
+	"github.com/realiotech/realio-network/testutil/network"
+	"github.com/realiotech/realio-network/x/asset/client/cli"
+	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 // Prevent strconv unused error

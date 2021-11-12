@@ -11,7 +11,7 @@ import (
 	tmtypes "github.com/tendermint/tendermint/types"
 	tmdb "github.com/tendermint/tm-db"
 
-	"github.com/realiotech/network/app"
+	"github.com/realiotech/realio-network/app"
 )
 
 // New creates application instance with in-memory database and disabled logging.

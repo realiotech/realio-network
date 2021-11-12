@@ -1,7 +1,7 @@
 package keeper
 
 import (
-	"github.com/realiotech/network/x/asset/types"
+	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 type msgServer struct {

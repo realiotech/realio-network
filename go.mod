@@ -1,4 +1,4 @@
-module github.com/realiotech/network
+module github.com/realiotech/realio-network
 
 go 1.16
 

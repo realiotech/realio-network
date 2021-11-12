@@ -6,7 +6,7 @@ import (
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	channeltypes "github.com/cosmos/ibc-go/modules/core/04-channel/types"
 	host "github.com/cosmos/ibc-go/modules/core/24-host"
-	"github.com/realiotech/network/x/asset/types"
+	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 // ChanCloseInit defines a wrapper function for the channel Keeper's function
