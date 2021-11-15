@@ -15,15 +15,19 @@ faucet:
   name: bob
   coins: ["1000rio"]
 genesis:
-  chain_id: "network-test1"
+  chain_id: "realionetwork-test1"
   app_state:
     staking:
       params:
         bond_denom: "rio"
+        historical_entries: "10"
+        max_validators: "10"
+        unbonding_time: "300000000000ns"
     mint:
       params:
         mint_denom: "rio"
     crisis:
       constant_fee:
         denom: "rio"
+
 

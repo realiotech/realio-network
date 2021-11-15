@@ -1,10 +1,10 @@
 // THIS FILE IS GENERATED AUTOMATICALLY. DO NOT MODIFY.
 
-import RealiotechNetworkRealiotechNetworkAsset from './realiotech/network/realiotech.network.asset'
+import RealiotechRealioNetworkRealiotechNetworkAsset from './realiotech/realio-network/realiotech.network.asset'
 
 
 export default { 
-  RealiotechNetworkRealiotechNetworkAsset: load(RealiotechNetworkRealiotechNetworkAsset, 'realiotech.network.asset'),
+  RealiotechRealioNetworkRealiotechNetworkAsset: load(RealiotechRealioNetworkRealiotechNetworkAsset, 'realiotech.network.asset'),
   
 }
 

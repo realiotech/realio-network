@@ -95,7 +95,7 @@ import (
 
 const (
 	AccountAddressPrefix = "realio"
-	Name                 = "network"
+	Name                 = "realio-network"
 )
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals

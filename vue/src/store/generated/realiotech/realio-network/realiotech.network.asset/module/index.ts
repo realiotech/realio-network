@@ -4,19 +4,19 @@ import { StdFee } from "@cosmjs/launchpad";
 import { SigningStargateClient } from "@cosmjs/stargate";
 import { Registry, OfflineSigner, EncodeObject, DirectSecp256k1HdWallet } from "@cosmjs/proto-signing";
 import { Api } from "./rest";
+import { MsgUpdateToken } from "./types/asset/tx";
 import { MsgTransferToken } from "./types/asset/tx";
 import { MsgCreateToken } from "./types/asset/tx";
-import { MsgUpdateToken } from "./types/asset/tx";
-import { MsgUnAuthorizeAddress } from "./types/asset/tx";
 import { MsgAuthorizeAddress } from "./types/asset/tx";
+import { MsgUnAuthorizeAddress } from "./types/asset/tx";
 
 
 const types = [
+  ["/realiotech.network.asset.MsgUpdateToken", MsgUpdateToken],
   ["/realiotech.network.asset.MsgTransferToken", MsgTransferToken],
   ["/realiotech.network.asset.MsgCreateToken", MsgCreateToken],
-  ["/realiotech.network.asset.MsgUpdateToken", MsgUpdateToken],
-  ["/realiotech.network.asset.MsgUnAuthorizeAddress", MsgUnAuthorizeAddress],
   ["/realiotech.network.asset.MsgAuthorizeAddress", MsgAuthorizeAddress],
+  ["/realiotech.network.asset.MsgUnAuthorizeAddress", MsgUnAuthorizeAddress],
   
 ];
 export const MissingWalletError = new Error("wallet is required");
@@ -45,11 +45,11 @@ const txClient = async (wallet: OfflineSigner, { addr: addr }: TxClientOptions =
 
   return {
     signAndBroadcast: (msgs: EncodeObject[], { fee, memo }: SignAndBroadcastOptions = {fee: defaultFee, memo: ""}) => client.signAndBroadcast(address, msgs, fee,memo),
+    msgUpdateToken: (data: MsgUpdateToken): EncodeObject => ({ typeUrl: "/realiotech.network.asset.MsgUpdateToken", value: data }),
     msgTransferToken: (data: MsgTransferToken): EncodeObject => ({ typeUrl: "/realiotech.network.asset.MsgTransferToken", value: data }),
     msgCreateToken: (data: MsgCreateToken): EncodeObject => ({ typeUrl: "/realiotech.network.asset.MsgCreateToken", value: data }),
-    msgUpdateToken: (data: MsgUpdateToken): EncodeObject => ({ typeUrl: "/realiotech.network.asset.MsgUpdateToken", value: data }),
-    msgUnAuthorizeAddress: (data: MsgUnAuthorizeAddress): EncodeObject => ({ typeUrl: "/realiotech.network.asset.MsgUnAuthorizeAddress", value: data }),
     msgAuthorizeAddress: (data: MsgAuthorizeAddress): EncodeObject => ({ typeUrl: "/realiotech.network.asset.MsgAuthorizeAddress", value: data }),
+    msgUnAuthorizeAddress: (data: MsgUnAuthorizeAddress): EncodeObject => ({ typeUrl: "/realiotech.network.asset.MsgUnAuthorizeAddress", value: data }),
     
   };
 };
