@@ -25,7 +25,7 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 	var creatorAccAddress, err = sdk.AccAddressFromBech32(msg.Creator)
 
 	if err != nil {
-		panic(err)
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid creator address")
 	}
 
 	var token = types.Token{
@@ -46,9 +46,17 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 		token,
 	)
 
-	k.bankKeeper.MintCoins(ctx, types.ModuleName, coin)
+	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, coin)
+	if err != nil {
+		panic(err)
+	}
+
 	k.bankKeeper.SetDenomMetaData(ctx, bank.Metadata{Base: msg.Symbol, Display: msg.Symbol, DenomUnits: []*bank.DenomUnit{{Denom: msg.Symbol, Exponent: 0}}})
-	k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, creatorAccAddress, coin)
+
+	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, creatorAccAddress, coin)
+	if err != nil {
+		panic(err)
+	}
 
 	return &types.MsgCreateTokenResponse{}, nil
 }
@@ -57,7 +65,7 @@ func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken)
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Check if the value exists
-	_, isFound := k.GetToken(
+	existing, isFound := k.GetToken(
 		ctx,
 		msg.Index,
 	)
@@ -65,9 +73,13 @@ func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken)
 		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, "index not set")
 	}
 
-	// todo test that this does not overright existing props
 	var token = types.Token{
-		Index:                 msg.Index,
+		Creator:               existing.Creator,
+		Index:                 existing.Index,
+		Name:                  existing.Name,
+		Symbol:                existing.Symbol,
+		Total:                 existing.Total,
+		Decimals:              existing.Decimals,
 		AuthorizationRequired: msg.AuthorizationRequired,
 	}
 

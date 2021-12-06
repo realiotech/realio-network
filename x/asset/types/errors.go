@@ -8,7 +8,7 @@ import (
 
 // x/asset module sentinel errors
 var (
-	ErrSample               = sdkerrors.Register(ModuleName, 1100, "sample error")
-	ErrInvalidPacketTimeout = sdkerrors.Register(ModuleName, 1500, "invalid packet timeout")
-	ErrInvalidVersion       = sdkerrors.Register(ModuleName, 1501, "invalid version")
+	ErrInvalidVersion       = sdkerrors.Register(ModuleName, 1001, "invalid version")
+	ErrMintingOnCreate      = sdkerrors.Register(ModuleName, 1002, "error miniting creating asset")
+	ErrDistributingOnCreate = sdkerrors.Register(ModuleName, 1003, "error distributing created asset")
 )
