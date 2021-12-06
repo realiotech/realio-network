@@ -54,3 +54,24 @@ func TestTokenGetAll(t *testing.T) {
 	items := createNToken(keeper, ctx, 10)
 	require.ElementsMatch(t, items, keeper.GetAllToken(ctx))
 }
+
+func (suite *KeeperTestSuite) TestIsAddressAuthorized() {
+	suite.SetupTest()
+
+	wctx := sdk.WrapSDKContext(suite.ctx)
+	creator := "cosmos19cm0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
+
+	createMsg := &types.MsgCreateToken{Creator: creator,
+		Index: "1", Symbol: "RIO", Total: 1000, AuthorizationRequired: true,
+	}
+	_, _ = suite.msgSrv.CreateToken(wctx, createMsg)
+
+	suite.Require().False(suite.app.AssetKeeper.IsAddressAuthorizedToSend(suite.ctx, "1", suite.testUser1Acc))
+
+	authUserMsg := &types.MsgAuthorizeAddress{Creator: creator,
+		Index: "1", Address: suite.testUser1Address,
+	}
+	_, _ = suite.msgSrv.AuthorizeAddress(wctx, authUserMsg)
+
+	suite.Require().True(suite.app.AssetKeeper.IsAddressAuthorizedToSend(suite.ctx, "1", suite.testUser1Acc))
+}

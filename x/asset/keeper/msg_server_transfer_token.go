@@ -2,29 +2,32 @@ package keeper
 
 import (
 	"context"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferToken) (*types.MsgTransferTokenResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	var err error
 	var fromAddress, toAddress sdk.AccAddress
-	fromAddress, err = sdk.AccAddressFromBech32(msg.From)
-	if err != nil {
-		panic(err)
+	var isAuthorizedFrom, isAuthorizedTo = true, true
+
+	fromAddress, _ = sdk.AccAddressFromBech32(msg.From)
+	toAddress, _ = sdk.AccAddressFromBech32(msg.To)
+	// Check if the value already exists
+	token, isFound := k.GetToken(
+		ctx,
+		msg.Index,
+	)
+	if !isFound {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, "token not found")
 	}
 
-	toAddress, err = sdk.AccAddressFromBech32(msg.To)
-	if err != nil {
-		panic(err)
+	if token.AuthorizationRequired == true {
+		isAuthorizedFrom = k.IsAddressAuthorizedToSend(ctx, msg.Index, fromAddress)
+		isAuthorizedTo = k.IsAddressAuthorizedToSend(ctx, msg.Index, toAddress)
 	}
-
-	isAuthorizedFrom := k.IsAddressAuthorizedToSend(ctx, msg.Symbol, fromAddress)
-	isAuthorizedTo := k.IsAddressAuthorizedToSend(ctx, msg.Symbol, toAddress)
 
 	if isAuthorizedFrom && isAuthorizedTo {
 		var coin = sdk.Coins{{Denom: msg.Symbol, Amount: sdk.NewInt(msg.Amount)}}
