@@ -1,13 +1,12 @@
 import { StdFee } from "@cosmjs/launchpad";
-import { Registry, OfflineSigner, EncodeObject } from "@cosmjs/proto-signing";
+import { OfflineSigner, EncodeObject } from "@cosmjs/proto-signing";
 import { Api } from "./rest";
-import { MsgTransferToken } from "./types/asset/tx";
-import { MsgUnAuthorizeAddress } from "./types/asset/tx";
-import { MsgAuthorizeAddress } from "./types/asset/tx";
 import { MsgCreateToken } from "./types/asset/tx";
+import { MsgUnAuthorizeAddress } from "./types/asset/tx";
 import { MsgUpdateToken } from "./types/asset/tx";
+import { MsgAuthorizeAddress } from "./types/asset/tx";
+import { MsgTransferToken } from "./types/asset/tx";
 export declare const MissingWalletError: Error;
-export declare const registry: Registry;
 interface TxClientOptions {
     addr: string;
 }
@@ -16,12 +15,12 @@ interface SignAndBroadcastOptions {
     memo?: string;
 }
 declare const txClient: (wallet: OfflineSigner, { addr: addr }?: TxClientOptions) => Promise<{
-    signAndBroadcast: (msgs: EncodeObject[], { fee, memo }?: SignAndBroadcastOptions) => any;
-    msgTransferToken: (data: MsgTransferToken) => EncodeObject;
-    msgUnAuthorizeAddress: (data: MsgUnAuthorizeAddress) => EncodeObject;
-    msgAuthorizeAddress: (data: MsgAuthorizeAddress) => EncodeObject;
+    signAndBroadcast: (msgs: EncodeObject[], { fee, memo }?: SignAndBroadcastOptions) => Promise<import("@cosmjs/stargate").BroadcastTxResponse>;
     msgCreateToken: (data: MsgCreateToken) => EncodeObject;
+    msgUnAuthorizeAddress: (data: MsgUnAuthorizeAddress) => EncodeObject;
     msgUpdateToken: (data: MsgUpdateToken) => EncodeObject;
+    msgAuthorizeAddress: (data: MsgAuthorizeAddress) => EncodeObject;
+    msgTransferToken: (data: MsgTransferToken) => EncodeObject;
 }>;
 interface QueryClientOptions {
     addr: string;
