@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if [ -r /etc/realio-secrets/realio-network/secretspassword ]; then
+    export MASTERPASSWORD="$(cat /etc/realio-secrets/realio-network/secretspassword)" 
+fi
+
+HOME=/data
+
+export HOME
+
+exec s6-setuidgid realio-cosmos secretserviced
