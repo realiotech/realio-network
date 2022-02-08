@@ -1,11 +1,14 @@
 syntax = "proto3";
 package realiotech.realionetwork.rststaking;
 
+import "rststaking/rst_stake.proto";
 // this line is used by starport scaffolding # genesis/proto/import
+import "gogoproto/gogo.proto";
 
 option go_package = "github.com/realiotech/realio-network/x/rststaking/types";
 
 // GenesisState defines the rststaking module's genesis state.
 message GenesisState {
-    // this line is used by starport scaffolding # genesis/proto/state
+    repeated RstStake rstStakeList = 1 [(gogoproto.nullable) = false];
+  // this line is used by starport scaffolding # genesis/proto/state
 }

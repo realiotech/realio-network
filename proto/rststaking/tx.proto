@@ -1,13 +1,55 @@
 syntax = "proto3";
 package realiotech.realionetwork.rststaking;
 
+import "rststaking/rst_stake.proto";
 // this line is used by starport scaffolding # proto/tx/import
 
 option go_package = "github.com/realiotech/realio-network/x/rststaking/types";
 
 // Msg defines the Msg service.
 service Msg {
-    // this line is used by starport scaffolding # proto/tx/rpc
+  rpc CreateRstStake(MsgCreateRstStake) returns (MsgCreateRstStakeResponse);
+  rpc UpdateRstStake(MsgUpdateRstStake) returns (MsgUpdateRstStakeResponse);
+  rpc DeleteRstStake(MsgDeleteRstStake) returns (MsgDeleteRstStakeResponse);
+// this line is used by starport scaffolding # proto/tx/rpc
 }
+
+message MsgCreateRstStake {
+  string creator = 1;
+  string index = 2;
+
+  string address = 3;
+  int64 rstAmount = 4;
+  int64 rioAmount = 5;
+  string incomingRstTxnHash = 6;
+  string fundedRioTxnHash = 7;
+  string rstOriginChain = 8;
+  string rstOriginAddress = 9;
+  int64 created = 10;
+  string status = 11;
+}
+message MsgCreateRstStakeResponse {}
+
+message MsgUpdateRstStake {
+  string creator = 1;
+  string index = 2;
+
+  string address = 3;
+  int64 rstAmount = 4;
+  int64 rioAmount = 5;
+  string incomingRstTxnHash = 6;
+  string fundedRioTxnHash = 7;
+  string rstOriginChain = 8;
+  string rstOriginAddress = 9;
+  int64 created = 10;
+  string status = 11;
+}
+message MsgUpdateRstStakeResponse {}
+
+message MsgDeleteRstStake {
+  string creator = 1;
+  string index = 2;
+}
+message MsgDeleteRstStakeResponse {}
 
 // this line is used by starport scaffolding # proto/tx/message

@@ -11,6 +11,14 @@ import (
 
 func TestGenesis(t *testing.T) {
 	genesisState := types.GenesisState{
+		RstStakeList: []types.RstStake{
+			{
+				Index: "0",
+			},
+			{
+				Index: "1",
+			},
+		},
 		// this line is used by starport scaffolding # genesis/test/state
 	}
 
@@ -19,5 +27,7 @@ func TestGenesis(t *testing.T) {
 	got := rststaking.ExportGenesis(ctx, *k)
 	require.NotNil(t, got)
 
+	require.Len(t, got.RstStakeList, len(genesisState.RstStakeList))
+	require.Subset(t, genesisState.RstStakeList, got.RstStakeList)
 	// this line is used by starport scaffolding # genesis/test/assert
 }

@@ -3,13 +3,43 @@ package realiotech.realionetwork.rststaking;
 
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
+import "rststaking/rst_stake.proto";
 // this line is used by starport scaffolding # 1
+import "gogoproto/gogo.proto";
 
 option go_package = "github.com/realiotech/realio-network/x/rststaking/types";
 
 // Query defines the gRPC querier service.
 service Query {
-    // this line is used by starport scaffolding # 2
+    // Queries a rstStake by index.
+	rpc RstStake(QueryGetRstStakeRequest) returns (QueryGetRstStakeResponse) {
+		option (google.api.http).get = "/realiotech/realionetwork/rststaking/rstStake/{index}";
+	}
+
+	// Queries a list of rstStake items.
+	rpc RstStakeAll(QueryAllRstStakeRequest) returns (QueryAllRstStakeResponse) {
+		option (google.api.http).get = "/realiotech/realionetwork/rststaking/rstStake";
+	}
+
+// this line is used by starport scaffolding # 2
+}
+
+message QueryGetRstStakeRequest {
+	  string index = 1;
+
+}
+
+message QueryGetRstStakeResponse {
+	RstStake rstStake = 1 [(gogoproto.nullable) = false];
+}
+
+message QueryAllRstStakeRequest {
+	cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+message QueryAllRstStakeResponse {
+	repeated RstStake rstStake = 1 [(gogoproto.nullable) = false];
+	cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
 
 // this line is used by starport scaffolding # 3
