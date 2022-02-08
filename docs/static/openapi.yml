@@ -12542,6 +12542,9 @@ paths:
                             type: string
                           authorized:
                             type: boolean
+                    created:
+                      type: string
+                      format: int64
               pagination:
                 type: object
                 properties:
@@ -12682,6 +12685,9 @@ paths:
                           type: string
                         authorized:
                           type: boolean
+                  created:
+                    type: string
+                    format: int64
         default:
           description: An unexpected error response.
           schema:
@@ -20065,6 +20071,9 @@ definitions:
                     type: string
                   authorized:
                     type: boolean
+            created:
+              type: string
+              format: int64
       pagination:
         type: object
         properties:
@@ -20122,6 +20131,9 @@ definitions:
                   type: string
                 authorized:
                   type: boolean
+          created:
+            type: string
+            format: int64
   realiotech.network.asset.Token:
     type: object
     properties:
@@ -20151,6 +20163,9 @@ definitions:
               type: string
             authorized:
               type: boolean
+      created:
+        type: string
+        format: int64
   realiotech.network.asset.TokenAuthorization:
     type: object
     properties:
