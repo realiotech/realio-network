@@ -90,6 +90,9 @@ import (
 	assetmodule "github.com/realiotech/realio-network/x/asset"
 	assetmodulekeeper "github.com/realiotech/realio-network/x/asset/keeper"
 	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
+	rststakingmodule "github.com/realiotech/realio-network/x/rststaking"
+	rststakingmodulekeeper "github.com/realiotech/realio-network/x/rststaking/keeper"
+	rststakingmoduletypes "github.com/realiotech/realio-network/x/rststaking/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
@@ -97,7 +100,7 @@ const (
 	// AccountAddressPrefix the account address prefix
 	AccountAddressPrefix = "realio"
 	// Name defines the application binary name
-	Name                 = "realio-network"
+	Name = "realio-network"
 	// latest software upgrade name
 	upgradeName = "Malerth-v0.0.1"
 )
@@ -145,6 +148,7 @@ var (
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		assetmodule.AppModuleBasic{},
+		rststakingmodule.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -216,6 +220,8 @@ type App struct {
 
 	ScopedAssetKeeper capabilitykeeper.ScopedKeeper
 	AssetKeeper       assetmodulekeeper.Keeper
+
+	RststakingKeeper rststakingmodulekeeper.Keeper
 	// this line is used by starport scaffolding # stargate/app/keeperDeclaration
 
 	// the module manager
@@ -256,6 +262,7 @@ func New(
 		govtypes.StoreKey, paramstypes.StoreKey, ibchost.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, ibctransfertypes.StoreKey, capabilitytypes.StoreKey,
 		assetmoduletypes.StoreKey,
+		rststakingmoduletypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
@@ -367,6 +374,13 @@ func New(
 	)
 	assetModule := assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper)
 
+	app.RststakingKeeper = *rststakingmodulekeeper.NewKeeper(
+		appCodec,
+		keys[rststakingmoduletypes.StoreKey],
+		keys[rststakingmoduletypes.MemStoreKey],
+	)
+	rststakingModule := rststakingmodule.NewAppModule(appCodec, app.RststakingKeeper)
+
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
 	// Create static IBC router, add transfer route, then set and seal it
@@ -407,6 +421,7 @@ func New(
 		params.NewAppModule(app.ParamsKeeper),
 		transferModule,
 		assetModule,
+		rststakingModule,
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -442,6 +457,7 @@ func New(
 		evidencetypes.ModuleName,
 		ibctransfertypes.ModuleName,
 		assetmoduletypes.ModuleName,
+		rststakingmoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/initGenesis
 	)
 
@@ -653,6 +669,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
 	paramsKeeper.Subspace(ibchost.ModuleName)
 	paramsKeeper.Subspace(assetmoduletypes.ModuleName)
+	paramsKeeper.Subspace(rststakingmoduletypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
