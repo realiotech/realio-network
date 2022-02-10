@@ -6,25 +6,25 @@ import (
 	"github.com/realiotech/realio-network/x/rststaking/types"
 )
 
-// SetRstStake set a specific rstStake in the store from its index
+// SetRstStake set a specific rstStake in the store from its id
 func (k Keeper) SetRstStake(ctx sdk.Context, rstStake types.RstStake) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RstStakeKeyPrefix))
 	b := k.cdc.MustMarshal(&rstStake)
 	store.Set(types.RstStakeKey(
-		rstStake.Index,
+		rstStake.Id,
 	), b)
 }
 
-// GetRstStake returns a rstStake from its index
+// GetRstStake returns a rstStake from its id
 func (k Keeper) GetRstStake(
 	ctx sdk.Context,
-	index string,
+	id string,
 
 ) (val types.RstStake, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RstStakeKeyPrefix))
 
 	b := store.Get(types.RstStakeKey(
-		index,
+		id,
 	))
 	if b == nil {
 		return val, false
@@ -37,12 +37,12 @@ func (k Keeper) GetRstStake(
 // RemoveRstStake removes a rstStake from the store
 func (k Keeper) RemoveRstStake(
 	ctx sdk.Context,
-	index string,
+	id string,
 
 ) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.RstStakeKeyPrefix))
 	store.Delete(types.RstStakeKey(
-		index,
+		id,
 	))
 }
 

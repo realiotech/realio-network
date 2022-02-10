@@ -6,7 +6,7 @@ option go_package = "github.com/realiotech/realio-network/x/rststaking/types";
 
 
 message RstStake {
-  string index = 1; 
+  string id = 1;
   string address = 2; 
   int64 rstAmount = 3; 
   int64 rioAmount = 4; 

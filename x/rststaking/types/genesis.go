@@ -4,10 +4,10 @@ import (
 	"fmt"
 )
 
-// DefaultIndex is the default capability global index
+// DefaultIndex is the default global index
 const DefaultIndex uint64 = 1
 
-// DefaultGenesis returns the default Capability genesis state
+// DefaultGenesis returns the default genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		RstStakeList: []RstStake{},
@@ -19,14 +19,14 @@ func DefaultGenesis() *GenesisState {
 // failure.
 func (gs GenesisState) Validate() error {
 	// Check for duplicated index in rstStake
-	rstStakeIndexMap := make(map[string]struct{})
+	rstStakeIdMap := make(map[string]struct{})
 
 	for _, elem := range gs.RstStakeList {
-		index := string(RstStakeKey(elem.Index))
-		if _, ok := rstStakeIndexMap[index]; ok {
-			return fmt.Errorf("duplicated index for rstStake")
+		id := string(RstStakeKey(elem.Id))
+		if _, ok := rstStakeIdMap[id]; ok {
+			return fmt.Errorf("duplicated id for rstStake")
 		}
-		rstStakeIndexMap[index] = struct{}{}
+		rstStakeIdMap[id] = struct{}{}
 	}
 	// this line is used by starport scaffolding # genesis/types/validate
 

@@ -26,14 +26,14 @@ func TestCreateRstStake(t *testing.T) {
 	fields := []string{"xyz", "111", "111", "xyz", "xyz", "xyz", "xyz", "111", "xyz"}
 	for _, tc := range []struct {
 		desc    string
-		idIndex string
+		id string
 
 		args []string
 		err  error
-		code uint64
+		code uint32
 	}{
 		{
-			idIndex: strconv.Itoa(0),
+			id: strconv.Itoa(0),
 
 			desc: "valid",
 			args: []string{
@@ -47,7 +47,7 @@ func TestCreateRstStake(t *testing.T) {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			args := []string{
-				tc.idIndex,
+				tc.id,
 			}
 			args = append(args, fields...)
 			args = append(args, tc.args...)
@@ -86,21 +86,21 @@ func TestUpdateRstStake(t *testing.T) {
 
 	for _, tc := range []struct {
 		desc    string
-		idIndex string
+		id string
 
 		args []string
-		code uint64
+		code uint32
 		err  error
 	}{
 		{
 			desc:    "valid",
-			idIndex: strconv.Itoa(0),
+			id: strconv.Itoa(0),
 
 			args: common,
 		},
 		{
 			desc:    "key not found",
-			idIndex: strconv.Itoa(100000),
+			id: strconv.Itoa(100000),
 
 			args: common,
 			code: sdkerrors.ErrKeyNotFound.ABCICode(),
@@ -109,7 +109,7 @@ func TestUpdateRstStake(t *testing.T) {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			args := []string{
-				tc.idIndex,
+				tc.id,
 			}
 			args = append(args, fields...)
 			args = append(args, tc.args...)
@@ -149,21 +149,21 @@ func TestDeleteRstStake(t *testing.T) {
 
 	for _, tc := range []struct {
 		desc    string
-		idIndex string
+		id string
 
 		args []string
-		code uint64
+		code uint32
 		err  error
 	}{
 		{
 			desc:    "valid",
-			idIndex: strconv.Itoa(0),
+			id: strconv.Itoa(0),
 
 			args: common,
 		},
 		{
 			desc:    "key not found",
-			idIndex: strconv.Itoa(100000),
+			id: strconv.Itoa(100000),
 
 			args: common,
 			code: sdkerrors.ErrKeyNotFound.ABCICode(),
@@ -172,7 +172,7 @@ func TestDeleteRstStake(t *testing.T) {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			args := []string{
-				tc.idIndex,
+				tc.id,
 			}
 			args = append(args, tc.args...)
 			out, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdDeleteRstStake(), args)

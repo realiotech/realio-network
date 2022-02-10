@@ -28,7 +28,7 @@ func networkWithRstStakeObjects(t *testing.T, n int) (*network.Network, []types.
 
 	for i := 0; i < n; i++ {
 		state.RstStakeList = append(state.RstStakeList, types.RstStake{
-			Index: strconv.Itoa(i),
+			Id: strconv.Itoa(i),
 		})
 	}
 	buf, err := cfg.Codec.MarshalJSON(&state)
@@ -46,7 +46,7 @@ func TestShowRstStake(t *testing.T) {
 	}
 	for _, tc := range []struct {
 		desc    string
-		idIndex string
+		id string
 
 		args []string
 		err  error
@@ -54,14 +54,14 @@ func TestShowRstStake(t *testing.T) {
 	}{
 		{
 			desc:    "found",
-			idIndex: objs[0].Index,
+			id: objs[0].Id,
 
 			args: common,
 			obj:  objs[0],
 		},
 		{
 			desc:    "not found",
-			idIndex: strconv.Itoa(100000),
+			id: strconv.Itoa(100000),
 
 			args: common,
 			err:  status.Error(codes.InvalidArgument, "not found"),
@@ -70,7 +70,7 @@ func TestShowRstStake(t *testing.T) {
 		tc := tc
 		t.Run(tc.desc, func(t *testing.T) {
 			args := []string{
-				tc.idIndex,
+				tc.id,
 			}
 			args = append(args, tc.args...)
 			out, err := clitestutil.ExecTestCLICmd(ctx, cli.CmdShowRstStake(), args)

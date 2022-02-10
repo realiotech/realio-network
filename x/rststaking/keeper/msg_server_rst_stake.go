@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/realiotech/realio-network/x/rststaking/types"
 )
 
@@ -14,15 +15,25 @@ func (k msgServer) CreateRstStake(goCtx context.Context, msg *types.MsgCreateRst
 	// Check if the value already exists
 	_, isFound := k.GetRstStake(
 		ctx,
-		msg.Index,
+		msg.Id,
 	)
 	if isFound {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "index already set")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "Id already set")
 	}
+
+	//var creatorAccAddress, err = sdk.AccAddressFromBech32(msg.Creator)
+	//
+	//if err != nil {
+	//	return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid creator address")
+	//}
+
+	var holdingAccName = types.ModuleName + "/" + msg.Creator
+	var holdingAcc = authtypes.NewEmptyModuleAccount(holdingAccName)
+	k.accountKeeper.SetModuleAccount(ctx, holdingAcc)
 
 	var rstStake = types.RstStake{
 		Creator:            msg.Creator,
-		Index:              msg.Index,
+		Id:                 msg.Id,
 		Address:            msg.Address,
 		RstAmount:          msg.RstAmount,
 		RioAmount:          msg.RioAmount,
@@ -47,10 +58,10 @@ func (k msgServer) UpdateRstStake(goCtx context.Context, msg *types.MsgUpdateRst
 	// Check if the value exists
 	valFound, isFound := k.GetRstStake(
 		ctx,
-		msg.Index,
+		msg.Id,
 	)
 	if !isFound {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, "index not set")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, "Id not set")
 	}
 
 	// Checks if the the msg creator is the same as the current owner
@@ -60,7 +71,7 @@ func (k msgServer) UpdateRstStake(goCtx context.Context, msg *types.MsgUpdateRst
 
 	var rstStake = types.RstStake{
 		Creator:            msg.Creator,
-		Index:              msg.Index,
+		Id:                 msg.Id,
 		Address:            msg.Address,
 		RstAmount:          msg.RstAmount,
 		RioAmount:          msg.RioAmount,
@@ -83,10 +94,10 @@ func (k msgServer) DeleteRstStake(goCtx context.Context, msg *types.MsgDeleteRst
 	// Check if the value exists
 	valFound, isFound := k.GetRstStake(
 		ctx,
-		msg.Index,
+		msg.Id,
 	)
 	if !isFound {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, "index not set")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, "Id not set")
 	}
 
 	// Checks if the the msg creator is the same as the current owner
@@ -96,7 +107,7 @@ func (k msgServer) DeleteRstStake(goCtx context.Context, msg *types.MsgDeleteRst
 
 	k.RemoveRstStake(
 		ctx,
-		msg.Index,
+		msg.Id,
 	)
 
 	return &types.MsgDeleteRstStakeResponse{}, nil

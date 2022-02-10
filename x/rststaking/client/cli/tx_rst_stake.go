@@ -12,12 +12,12 @@ import (
 
 func CmdCreateRstStake() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-rst-stake [index] [address] [rst-amount] [rio-amount] [incoming-rst-txn-hash] [funded-rio-txn-hash] [rst-origin-chain] [rst-origin-address] [created] [status]",
+		Use:   "create-rst-stake [id] [address] [rst-amount] [rio-amount] [incoming-rst-txn-hash] [funded-rio-txn-hash] [rst-origin-chain] [rst-origin-address] [created] [status]",
 		Short: "Create a new rstStake",
 		Args:  cobra.ExactArgs(10),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			// Get indexes
-			indexIndex := args[0]
+			// Get id
+			id := args[0]
 
 			// Get value arguments
 			argAddress := args[1]
@@ -46,7 +46,7 @@ func CmdCreateRstStake() *cobra.Command {
 
 			msg := types.NewMsgCreateRstStake(
 				clientCtx.GetFromAddress().String(),
-				indexIndex,
+				id,
 				argAddress,
 				argRstAmount,
 				argRioAmount,
@@ -71,12 +71,12 @@ func CmdCreateRstStake() *cobra.Command {
 
 func CmdUpdateRstStake() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "update-rst-stake [index] [address] [rst-amount] [rio-amount] [incoming-rst-txn-hash] [funded-rio-txn-hash] [rst-origin-chain] [rst-origin-address] [created] [status]",
+		Use:   "update-rst-stake [id] [address] [rst-amount] [rio-amount] [incoming-rst-txn-hash] [funded-rio-txn-hash] [rst-origin-chain] [rst-origin-address] [created] [status]",
 		Short: "Update a rstStake",
 		Args:  cobra.ExactArgs(10),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			// Get indexes
-			indexIndex := args[0]
+			// Get id
+			id := args[0]
 
 			// Get value arguments
 			argAddress := args[1]
@@ -105,7 +105,7 @@ func CmdUpdateRstStake() *cobra.Command {
 
 			msg := types.NewMsgUpdateRstStake(
 				clientCtx.GetFromAddress().String(),
-				indexIndex,
+				id,
 				argAddress,
 				argRstAmount,
 				argRioAmount,
@@ -130,11 +130,11 @@ func CmdUpdateRstStake() *cobra.Command {
 
 func CmdDeleteRstStake() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "delete-rst-stake [index]",
+		Use:   "delete-rst-stake [id]",
 		Short: "Delete a rstStake",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
-			indexIndex := args[0]
+			id := args[0]
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -143,7 +143,7 @@ func CmdDeleteRstStake() *cobra.Command {
 
 			msg := types.NewMsgDeleteRstStake(
 				clientCtx.GetFromAddress().String(),
-				indexIndex,
+				id,
 			)
 			if err := msg.ValidateBasic(); err != nil {
 				return err

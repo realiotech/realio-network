@@ -9,7 +9,7 @@ var _ sdk.Msg = &MsgCreateRstStake{}
 
 func NewMsgCreateRstStake(
 	creator string,
-	index string,
+	id string,
 	address string,
 	rstAmount int64,
 	rioAmount int64,
@@ -23,7 +23,7 @@ func NewMsgCreateRstStake(
 ) *MsgCreateRstStake {
 	return &MsgCreateRstStake{
 		Creator:            creator,
-		Index:              index,
+		Id:                 id,
 		Address:            address,
 		RstAmount:          rstAmount,
 		RioAmount:          rioAmount,
@@ -69,7 +69,7 @@ var _ sdk.Msg = &MsgUpdateRstStake{}
 
 func NewMsgUpdateRstStake(
 	creator string,
-	index string,
+	id string,
 	address string,
 	rstAmount int64,
 	rioAmount int64,
@@ -83,7 +83,7 @@ func NewMsgUpdateRstStake(
 ) *MsgUpdateRstStake {
 	return &MsgUpdateRstStake{
 		Creator:            creator,
-		Index:              index,
+		Id:                 id,
 		Address:            address,
 		RstAmount:          rstAmount,
 		RioAmount:          rioAmount,
@@ -129,12 +129,12 @@ var _ sdk.Msg = &MsgDeleteRstStake{}
 
 func NewMsgDeleteRstStake(
 	creator string,
-	index string,
+	id string,
 
 ) *MsgDeleteRstStake {
 	return &MsgDeleteRstStake{
 		Creator: creator,
-		Index:   index,
+		Id:   id,
 	}
 }
 func (msg *MsgDeleteRstStake) Route() string {

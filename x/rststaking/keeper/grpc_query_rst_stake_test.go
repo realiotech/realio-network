@@ -30,21 +30,21 @@ func TestRstStakeQuerySingle(t *testing.T) {
 		{
 			desc: "First",
 			request: &types.QueryGetRstStakeRequest{
-				Index: msgs[0].Index,
+				Id: msgs[0].Id,
 			},
 			response: &types.QueryGetRstStakeResponse{RstStake: msgs[0]},
 		},
 		{
 			desc: "Second",
 			request: &types.QueryGetRstStakeRequest{
-				Index: msgs[1].Index,
+				Id: msgs[1].Id,
 			},
 			response: &types.QueryGetRstStakeResponse{RstStake: msgs[1]},
 		},
 		{
 			desc: "KeyNotFound",
 			request: &types.QueryGetRstStakeRequest{
-				Index: strconv.Itoa(100000),
+				Id: strconv.Itoa(100000),
 			},
 			err: status.Error(codes.InvalidArgument, "not found"),
 		},

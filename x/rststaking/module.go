@@ -99,12 +99,16 @@ type AppModule struct {
 	AppModuleBasic
 
 	keeper keeper.Keeper
+	bankKeeper types.BankKeeper
+	accountKeeper types.AccountKeeper
 }
 
-func NewAppModule(cdc codec.Codec, keeper keeper.Keeper) AppModule {
+func NewAppModule(cdc codec.Codec, keeper keeper.Keeper, bk types.BankKeeper, ak types.AccountKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
+		bankKeeper:     bk,
+		accountKeeper:  ak,
 	}
 }
 

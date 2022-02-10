@@ -163,6 +163,7 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 		assetmoduletypes.ModuleName: {authtypes.Minter, authtypes.Burner, authtypes.Staking},
+		rststakingmoduletypes.ModuleName: nil,
 	}
 )
 
@@ -378,8 +379,10 @@ func New(
 		appCodec,
 		keys[rststakingmoduletypes.StoreKey],
 		keys[rststakingmoduletypes.MemStoreKey],
+		app.BankKeeper,
+		app.AccountKeeper,
 	)
-	rststakingModule := rststakingmodule.NewAppModule(appCodec, app.RststakingKeeper)
+	rststakingModule := rststakingmodule.NewAppModule(appCodec, app.RststakingKeeper, app.BankKeeper, app.AccountKeeper)
 
 	// this line is used by starport scaffolding # stargate/app/keeperDefinition
 
@@ -607,8 +610,6 @@ func (app *App) GetMemKey(storeKey string) *sdk.MemoryStoreKey {
 }
 
 // GetSubspace returns a param subspace for a given module name.
-//
-// NOTE: This is solely to be used for testing purposes.
 func (app *App) GetSubspace(moduleName string) paramstypes.Subspace {
 	subspace, _ := app.ParamsKeeper.GetSubspace(moduleName)
 	return subspace

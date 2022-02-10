@@ -23,12 +23,12 @@ func TestRstStakeMsgServerCreate(t *testing.T) {
 	creator := "A"
 	for i := 0; i < 5; i++ {
 		expected := &types.MsgCreateRstStake{Creator: creator,
-			Index: strconv.Itoa(i),
+			Id: strconv.Itoa(i),
 		}
 		_, err := srv.CreateRstStake(wctx, expected)
 		require.NoError(t, err)
 		rst, found := k.GetRstStake(ctx,
-			expected.Index,
+			expected.Id,
 		)
 		require.True(t, found)
 		require.Equal(t, expected.Creator, rst.Creator)
@@ -46,20 +46,20 @@ func TestRstStakeMsgServerUpdate(t *testing.T) {
 		{
 			desc: "Completed",
 			request: &types.MsgUpdateRstStake{Creator: creator,
-				Index: strconv.Itoa(0),
+				Id: strconv.Itoa(0),
 			},
 		},
 		{
 			desc: "Unauthorized",
 			request: &types.MsgUpdateRstStake{Creator: "B",
-				Index: strconv.Itoa(0),
+				Id: strconv.Itoa(0),
 			},
 			err: sdkerrors.ErrUnauthorized,
 		},
 		{
 			desc: "KeyNotFound",
 			request: &types.MsgUpdateRstStake{Creator: creator,
-				Index: strconv.Itoa(100000),
+				Id: strconv.Itoa(100000),
 			},
 			err: sdkerrors.ErrKeyNotFound,
 		},
@@ -69,7 +69,7 @@ func TestRstStakeMsgServerUpdate(t *testing.T) {
 			srv := keeper.NewMsgServerImpl(*k)
 			wctx := sdk.WrapSDKContext(ctx)
 			expected := &types.MsgCreateRstStake{Creator: creator,
-				Index: strconv.Itoa(0),
+				Id: strconv.Itoa(0),
 			}
 			_, err := srv.CreateRstStake(wctx, expected)
 			require.NoError(t, err)
@@ -80,7 +80,7 @@ func TestRstStakeMsgServerUpdate(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				rst, found := k.GetRstStake(ctx,
-					expected.Index,
+					expected.Id,
 				)
 				require.True(t, found)
 				require.Equal(t, expected.Creator, rst.Creator)
@@ -100,20 +100,20 @@ func TestRstStakeMsgServerDelete(t *testing.T) {
 		{
 			desc: "Completed",
 			request: &types.MsgDeleteRstStake{Creator: creator,
-				Index: strconv.Itoa(0),
+				Id: strconv.Itoa(0),
 			},
 		},
 		{
 			desc: "Unauthorized",
 			request: &types.MsgDeleteRstStake{Creator: "B",
-				Index: strconv.Itoa(0),
+				Id: strconv.Itoa(0),
 			},
 			err: sdkerrors.ErrUnauthorized,
 		},
 		{
 			desc: "KeyNotFound",
 			request: &types.MsgDeleteRstStake{Creator: creator,
-				Index: strconv.Itoa(100000),
+				Id: strconv.Itoa(100000),
 			},
 			err: sdkerrors.ErrKeyNotFound,
 		},
@@ -124,7 +124,7 @@ func TestRstStakeMsgServerDelete(t *testing.T) {
 			wctx := sdk.WrapSDKContext(ctx)
 
 			_, err := srv.CreateRstStake(wctx, &types.MsgCreateRstStake{Creator: creator,
-				Index: strconv.Itoa(0),
+				Id: strconv.Itoa(0),
 			})
 			require.NoError(t, err)
 			_, err = srv.DeleteRstStake(wctx, tc.request)
@@ -133,7 +133,7 @@ func TestRstStakeMsgServerDelete(t *testing.T) {
 			} else {
 				require.NoError(t, err)
 				_, found := k.GetRstStake(ctx,
-					tc.request.Index,
+					tc.request.Id,
 				)
 				require.False(t, found)
 			}

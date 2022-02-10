@@ -45,7 +45,7 @@ func CmdListRstStake() *cobra.Command {
 
 func CmdShowRstStake() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "show-rst-stake [index]",
+		Use:   "show-rst-stake [id]",
 		Short: "shows a rstStake",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
@@ -53,10 +53,10 @@ func CmdShowRstStake() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			argIndex := args[0]
+			argId := args[0]
 
 			params := &types.QueryGetRstStakeRequest{
-				Index: argIndex,
+				Id: argId,
 			}
 
 			res, err := queryClient.RstStake(context.Background(), params)

@@ -12728,16 +12728,16 @@ paths:
                 items:
                   type: object
                   properties:
-                    index:
+                    id:
                       type: string
                     address:
                       type: string
                     rstAmount:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: int64
                     rioAmount:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: int64
                     incomingRstTxnHash:
                       type: string
                     fundedRioTxnHash:
@@ -12747,8 +12747,8 @@ paths:
                     rstOriginAddress:
                       type: string
                     created:
-                      type: integer
-                      format: int32
+                      type: string
+                      format: int64
                     status:
                       type: string
                     creator:
@@ -12854,9 +12854,9 @@ paths:
           type: boolean
       tags:
         - Query
-  '/realiotech/realionetwork/rststaking/rstStake/{index}':
+  '/realiotech/realionetwork/rststaking/rstStake/{id}':
     get:
-      summary: Queries a rstStake by index.
+      summary: Queries a rstStake by id.
       operationId: RealiotechRealionetworkRststakingRstStake
       responses:
         '200':
@@ -12867,16 +12867,16 @@ paths:
               rstStake:
                 type: object
                 properties:
-                  index:
+                  id:
                     type: string
                   address:
                     type: string
                   rstAmount:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: int64
                   rioAmount:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: int64
                   incomingRstTxnHash:
                     type: string
                   fundedRioTxnHash:
@@ -12886,8 +12886,8 @@ paths:
                   rstOriginAddress:
                     type: string
                   created:
-                    type: integer
-                    format: int32
+                    type: string
+                    format: int64
                   status:
                     type: string
                   creator:
@@ -12911,7 +12911,7 @@ paths:
                       type: string
                   additionalProperties: {}
       parameters:
-        - name: index
+        - name: id
           in: path
           required: true
           type: string
@@ -20393,16 +20393,16 @@ definitions:
         items:
           type: object
           properties:
-            index:
+            id:
               type: string
             address:
               type: string
             rstAmount:
-              type: integer
-              format: int32
+              type: string
+              format: int64
             rioAmount:
-              type: integer
-              format: int32
+              type: string
+              format: int64
             incomingRstTxnHash:
               type: string
             fundedRioTxnHash:
@@ -20412,8 +20412,8 @@ definitions:
             rstOriginAddress:
               type: string
             created:
-              type: integer
-              format: int32
+              type: string
+              format: int64
             status:
               type: string
             creator:
@@ -20449,16 +20449,16 @@ definitions:
       rstStake:
         type: object
         properties:
-          index:
+          id:
             type: string
           address:
             type: string
           rstAmount:
-            type: integer
-            format: int32
+            type: string
+            format: int64
           rioAmount:
-            type: integer
-            format: int32
+            type: string
+            format: int64
           incomingRstTxnHash:
             type: string
           fundedRioTxnHash:
@@ -20468,8 +20468,8 @@ definitions:
           rstOriginAddress:
             type: string
           created:
-            type: integer
-            format: int32
+            type: string
+            format: int64
           status:
             type: string
           creator:
@@ -20477,16 +20477,16 @@ definitions:
   realiotech.realionetwork.rststaking.RstStake:
     type: object
     properties:
-      index:
+      id:
         type: string
       address:
         type: string
       rstAmount:
-        type: integer
-        format: int32
+        type: string
+        format: int64
       rioAmount:
-        type: integer
-        format: int32
+        type: string
+        format: int64
       incomingRstTxnHash:
         type: string
       fundedRioTxnHash:
@@ -20496,8 +20496,8 @@ definitions:
       rstOriginAddress:
         type: string
       created:
-        type: integer
-        format: int32
+        type: string
+        format: int64
       status:
         type: string
       creator:

@@ -47,7 +47,7 @@ func (k Keeper) RstStake(c context.Context, req *types.QueryGetRstStakeRequest) 
 
 	val, found := k.GetRstStake(
 		ctx,
-		req.Index,
+		req.Id,
 	)
 	if !found {
 		return nil, status.Error(codes.InvalidArgument, "not found")
