@@ -6,13 +6,21 @@ import (
 	"github.com/realiotech/realio-network/x/rststaking/types"
 )
 
-// InitGenesis initializes the capability module's state from a provided genesis
+// InitGenesis initializes the module's state from a provided genesis
 // state.
-func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
+func InitGenesis(ctx sdk.Context, k keeper.Keeper, bk types.BankKeeper, genState types.GenesisState) {
 	// Set all the rstStake
 	for _, elem := range genState.RstStakeList {
 		k.SetRstStake(ctx, elem)
 	}
+
+	//pre mine urio for module account
+	var rioCoin = sdk.Coins{{Denom: "urio", Amount: sdk.NewInt(50000000000000)}}
+	err := bk.MintCoins(ctx, types.ModuleName, rioCoin)
+	if err != nil {
+		panic(err)
+	}
+
 	// this line is used by starport scaffolding # genesis/module/init
 }
 

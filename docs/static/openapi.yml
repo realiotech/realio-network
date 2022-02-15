@@ -12728,6 +12728,8 @@ paths:
                 items:
                   type: object
                   properties:
+                    creator:
+                      type: string
                     id:
                       type: string
                     address:
@@ -12740,18 +12742,13 @@ paths:
                       format: int64
                     incomingRstTxnHash:
                       type: string
-                    fundedRioTxnHash:
-                      type: string
-                    rstOriginChain:
-                      type: string
-                    rstOriginAddress:
-                      type: string
                     created:
                       type: string
                       format: int64
-                    status:
+                    updated:
                       type: string
-                    creator:
+                      format: int64
+                    status:
                       type: string
               pagination:
                 type: object
@@ -12867,6 +12864,8 @@ paths:
               rstStake:
                 type: object
                 properties:
+                  creator:
+                    type: string
                   id:
                     type: string
                   address:
@@ -12879,18 +12878,13 @@ paths:
                     format: int64
                   incomingRstTxnHash:
                     type: string
-                  fundedRioTxnHash:
-                    type: string
-                  rstOriginChain:
-                    type: string
-                  rstOriginAddress:
-                    type: string
                   created:
                     type: string
                     format: int64
-                  status:
+                  updated:
                     type: string
-                  creator:
+                    format: int64
+                  status:
                     type: string
         default:
           description: An unexpected error response.
@@ -20381,8 +20375,6 @@ definitions:
         type: boolean
   realiotech.realionetwork.rststaking.MsgCreateRstStakeResponse:
     type: object
-  realiotech.realionetwork.rststaking.MsgDeleteRstStakeResponse:
-    type: object
   realiotech.realionetwork.rststaking.MsgUpdateRstStakeResponse:
     type: object
   realiotech.realionetwork.rststaking.QueryAllRstStakeResponse:
@@ -20393,6 +20385,8 @@ definitions:
         items:
           type: object
           properties:
+            creator:
+              type: string
             id:
               type: string
             address:
@@ -20405,18 +20399,13 @@ definitions:
               format: int64
             incomingRstTxnHash:
               type: string
-            fundedRioTxnHash:
-              type: string
-            rstOriginChain:
-              type: string
-            rstOriginAddress:
-              type: string
             created:
               type: string
               format: int64
-            status:
+            updated:
               type: string
-            creator:
+              format: int64
+            status:
               type: string
       pagination:
         type: object
@@ -20449,6 +20438,8 @@ definitions:
       rstStake:
         type: object
         properties:
+          creator:
+            type: string
           id:
             type: string
           address:
@@ -20461,22 +20452,19 @@ definitions:
             format: int64
           incomingRstTxnHash:
             type: string
-          fundedRioTxnHash:
-            type: string
-          rstOriginChain:
-            type: string
-          rstOriginAddress:
-            type: string
           created:
+            type: string
+            format: int64
+          updated:
             type: string
             format: int64
           status:
             type: string
-          creator:
-            type: string
   realiotech.realionetwork.rststaking.RstStake:
     type: object
     properties:
+      creator:
+        type: string
       id:
         type: string
       address:
@@ -20489,16 +20477,11 @@ definitions:
         format: int64
       incomingRstTxnHash:
         type: string
-      fundedRioTxnHash:
-        type: string
-      rstOriginChain:
-        type: string
-      rstOriginAddress:
-        type: string
       created:
         type: string
         format: int64
-      status:
+      updated:
         type: string
-      creator:
+        format: int64
+      status:
         type: string

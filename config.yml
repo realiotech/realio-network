@@ -1,11 +1,11 @@
 accounts:
   - name: eduardo
-    coins: ["50000000000000urio"]
+    coins: ["80000000000000urio"]
   - name: aaron
     coins: ["20000000000000urio"]
 validator:
   name: eduardo
-  staked: "50000000000000urio"
+  staked: "20000000000000urio"
 client:
   openapi:
     path: "docs/static/openapi.yml"
@@ -17,7 +17,7 @@ genesis:
   app_state:
     staking:
       params:
-        bond_denom: "urio"
+        bond_denom: "urio,rst"
         historical_entries: "10"
         max_validators: "10"
         unbonding_time: "10000000000ns"

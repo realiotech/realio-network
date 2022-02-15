@@ -14,9 +14,6 @@ func NewMsgCreateRstStake(
 	rstAmount int64,
 	rioAmount int64,
 	incomingRstTxnHash string,
-	fundedRioTxnHash string,
-	rstOriginChain string,
-	rstOriginAddress string,
 	created int64,
 	status string,
 
@@ -28,9 +25,6 @@ func NewMsgCreateRstStake(
 		RstAmount:          rstAmount,
 		RioAmount:          rioAmount,
 		IncomingRstTxnHash: incomingRstTxnHash,
-		FundedRioTxnHash:   fundedRioTxnHash,
-		RstOriginChain:     rstOriginChain,
-		RstOriginAddress:   rstOriginAddress,
 		Created:            created,
 		Status:             status,
 	}
@@ -70,28 +64,12 @@ var _ sdk.Msg = &MsgUpdateRstStake{}
 func NewMsgUpdateRstStake(
 	creator string,
 	id string,
-	address string,
-	rstAmount int64,
-	rioAmount int64,
-	incomingRstTxnHash string,
-	fundedRioTxnHash string,
-	rstOriginChain string,
-	rstOriginAddress string,
-	created int64,
 	status string,
 
 ) *MsgUpdateRstStake {
 	return &MsgUpdateRstStake{
 		Creator:            creator,
 		Id:                 id,
-		Address:            address,
-		RstAmount:          rstAmount,
-		RioAmount:          rioAmount,
-		IncomingRstTxnHash: incomingRstTxnHash,
-		FundedRioTxnHash:   fundedRioTxnHash,
-		RstOriginChain:     rstOriginChain,
-		RstOriginAddress:   rstOriginAddress,
-		Created:            created,
 		Status:             status,
 	}
 }
@@ -118,47 +96,6 @@ func (msg *MsgUpdateRstStake) GetSignBytes() []byte {
 }
 
 func (msg *MsgUpdateRstStake) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
-	}
-	return nil
-}
-
-var _ sdk.Msg = &MsgDeleteRstStake{}
-
-func NewMsgDeleteRstStake(
-	creator string,
-	id string,
-
-) *MsgDeleteRstStake {
-	return &MsgDeleteRstStake{
-		Creator: creator,
-		Id:   id,
-	}
-}
-func (msg *MsgDeleteRstStake) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgDeleteRstStake) Type() string {
-	return "DeleteRstStake"
-}
-
-func (msg *MsgDeleteRstStake) GetSigners() []sdk.AccAddress {
-	creator, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{creator}
-}
-
-func (msg *MsgDeleteRstStake) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
-func (msg *MsgDeleteRstStake) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Creator)
 	if err != nil {
 		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)

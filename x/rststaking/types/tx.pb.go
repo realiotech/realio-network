@@ -34,11 +34,8 @@ type MsgCreateRstStake struct {
 	RstAmount          int64  `protobuf:"varint,4,opt,name=rstAmount,proto3" json:"rstAmount,omitempty"`
 	RioAmount          int64  `protobuf:"varint,5,opt,name=rioAmount,proto3" json:"rioAmount,omitempty"`
 	IncomingRstTxnHash string `protobuf:"bytes,6,opt,name=incomingRstTxnHash,proto3" json:"incomingRstTxnHash,omitempty"`
-	FundedRioTxnHash   string `protobuf:"bytes,7,opt,name=fundedRioTxnHash,proto3" json:"fundedRioTxnHash,omitempty"`
-	RstOriginChain     string `protobuf:"bytes,8,opt,name=rstOriginChain,proto3" json:"rstOriginChain,omitempty"`
-	RstOriginAddress   string `protobuf:"bytes,9,opt,name=rstOriginAddress,proto3" json:"rstOriginAddress,omitempty"`
-	Created            int64  `protobuf:"varint,10,opt,name=created,proto3" json:"created,omitempty"`
-	Status             string `protobuf:"bytes,11,opt,name=status,proto3" json:"status,omitempty"`
+	Created            int64  `protobuf:"varint,7,opt,name=created,proto3" json:"created,omitempty"`
+	Status             string `protobuf:"bytes,8,opt,name=status,proto3" json:"status,omitempty"`
 }
 
 func (m *MsgCreateRstStake) Reset()         { *m = MsgCreateRstStake{} }
@@ -116,27 +113,6 @@ func (m *MsgCreateRstStake) GetIncomingRstTxnHash() string {
 	return ""
 }
 
-func (m *MsgCreateRstStake) GetFundedRioTxnHash() string {
-	if m != nil {
-		return m.FundedRioTxnHash
-	}
-	return ""
-}
-
-func (m *MsgCreateRstStake) GetRstOriginChain() string {
-	if m != nil {
-		return m.RstOriginChain
-	}
-	return ""
-}
-
-func (m *MsgCreateRstStake) GetRstOriginAddress() string {
-	if m != nil {
-		return m.RstOriginAddress
-	}
-	return ""
-}
-
 func (m *MsgCreateRstStake) GetCreated() int64 {
 	if m != nil {
 		return m.Created
@@ -188,17 +164,9 @@ func (m *MsgCreateRstStakeResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgCreateRstStakeResponse proto.InternalMessageInfo
 
 type MsgUpdateRstStake struct {
-	Creator            string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	Id                 string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-	Address            string `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
-	RstAmount          int64  `protobuf:"varint,4,opt,name=rstAmount,proto3" json:"rstAmount,omitempty"`
-	RioAmount          int64  `protobuf:"varint,5,opt,name=rioAmount,proto3" json:"rioAmount,omitempty"`
-	IncomingRstTxnHash string `protobuf:"bytes,6,opt,name=incomingRstTxnHash,proto3" json:"incomingRstTxnHash,omitempty"`
-	FundedRioTxnHash   string `protobuf:"bytes,7,opt,name=fundedRioTxnHash,proto3" json:"fundedRioTxnHash,omitempty"`
-	RstOriginChain     string `protobuf:"bytes,8,opt,name=rstOriginChain,proto3" json:"rstOriginChain,omitempty"`
-	RstOriginAddress   string `protobuf:"bytes,9,opt,name=rstOriginAddress,proto3" json:"rstOriginAddress,omitempty"`
-	Created            int64  `protobuf:"varint,10,opt,name=created,proto3" json:"created,omitempty"`
-	Status             string `protobuf:"bytes,11,opt,name=status,proto3" json:"status,omitempty"`
+	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Id      string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	Status  string `protobuf:"bytes,3,opt,name=status,proto3" json:"status,omitempty"`
 }
 
 func (m *MsgUpdateRstStake) Reset()         { *m = MsgUpdateRstStake{} }
@@ -248,62 +216,6 @@ func (m *MsgUpdateRstStake) GetId() string {
 	return ""
 }
 
-func (m *MsgUpdateRstStake) GetAddress() string {
-	if m != nil {
-		return m.Address
-	}
-	return ""
-}
-
-func (m *MsgUpdateRstStake) GetRstAmount() int64 {
-	if m != nil {
-		return m.RstAmount
-	}
-	return 0
-}
-
-func (m *MsgUpdateRstStake) GetRioAmount() int64 {
-	if m != nil {
-		return m.RioAmount
-	}
-	return 0
-}
-
-func (m *MsgUpdateRstStake) GetIncomingRstTxnHash() string {
-	if m != nil {
-		return m.IncomingRstTxnHash
-	}
-	return ""
-}
-
-func (m *MsgUpdateRstStake) GetFundedRioTxnHash() string {
-	if m != nil {
-		return m.FundedRioTxnHash
-	}
-	return ""
-}
-
-func (m *MsgUpdateRstStake) GetRstOriginChain() string {
-	if m != nil {
-		return m.RstOriginChain
-	}
-	return ""
-}
-
-func (m *MsgUpdateRstStake) GetRstOriginAddress() string {
-	if m != nil {
-		return m.RstOriginAddress
-	}
-	return ""
-}
-
-func (m *MsgUpdateRstStake) GetCreated() int64 {
-	if m != nil {
-		return m.Created
-	}
-	return 0
-}
-
 func (m *MsgUpdateRstStake) GetStatus() string {
 	if m != nil {
 		return m.Status
@@ -347,136 +259,40 @@ func (m *MsgUpdateRstStakeResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateRstStakeResponse proto.InternalMessageInfo
 
-type MsgDeleteRstStake struct {
-	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	Id      string `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
-}
-
-func (m *MsgDeleteRstStake) Reset()         { *m = MsgDeleteRstStake{} }
-func (m *MsgDeleteRstStake) String() string { return proto.CompactTextString(m) }
-func (*MsgDeleteRstStake) ProtoMessage()    {}
-func (*MsgDeleteRstStake) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a30279616cf5f5a5, []int{4}
-}
-func (m *MsgDeleteRstStake) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgDeleteRstStake) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgDeleteRstStake.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgDeleteRstStake) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgDeleteRstStake.Merge(m, src)
-}
-func (m *MsgDeleteRstStake) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgDeleteRstStake) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgDeleteRstStake.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgDeleteRstStake proto.InternalMessageInfo
-
-func (m *MsgDeleteRstStake) GetCreator() string {
-	if m != nil {
-		return m.Creator
-	}
-	return ""
-}
-
-func (m *MsgDeleteRstStake) GetId() string {
-	if m != nil {
-		return m.Id
-	}
-	return ""
-}
-
-type MsgDeleteRstStakeResponse struct {
-}
-
-func (m *MsgDeleteRstStakeResponse) Reset()         { *m = MsgDeleteRstStakeResponse{} }
-func (m *MsgDeleteRstStakeResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgDeleteRstStakeResponse) ProtoMessage()    {}
-func (*MsgDeleteRstStakeResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_a30279616cf5f5a5, []int{5}
-}
-func (m *MsgDeleteRstStakeResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *MsgDeleteRstStakeResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_MsgDeleteRstStakeResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *MsgDeleteRstStakeResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgDeleteRstStakeResponse.Merge(m, src)
-}
-func (m *MsgDeleteRstStakeResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *MsgDeleteRstStakeResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgDeleteRstStakeResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_MsgDeleteRstStakeResponse proto.InternalMessageInfo
-
 func init() {
 	proto.RegisterType((*MsgCreateRstStake)(nil), "realiotech.realionetwork.rststaking.MsgCreateRstStake")
 	proto.RegisterType((*MsgCreateRstStakeResponse)(nil), "realiotech.realionetwork.rststaking.MsgCreateRstStakeResponse")
 	proto.RegisterType((*MsgUpdateRstStake)(nil), "realiotech.realionetwork.rststaking.MsgUpdateRstStake")
 	proto.RegisterType((*MsgUpdateRstStakeResponse)(nil), "realiotech.realionetwork.rststaking.MsgUpdateRstStakeResponse")
-	proto.RegisterType((*MsgDeleteRstStake)(nil), "realiotech.realionetwork.rststaking.MsgDeleteRstStake")
-	proto.RegisterType((*MsgDeleteRstStakeResponse)(nil), "realiotech.realionetwork.rststaking.MsgDeleteRstStakeResponse")
 }
 
 func init() { proto.RegisterFile("rststaking/tx.proto", fileDescriptor_a30279616cf5f5a5) }
 
 var fileDescriptor_a30279616cf5f5a5 = []byte{
-	// 452 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xec, 0x54, 0x41, 0x8b, 0xd4, 0x30,
-	0x14, 0x9e, 0x4e, 0x75, 0xd6, 0x89, 0x30, 0x68, 0x04, 0x89, 0xa3, 0x94, 0x65, 0x05, 0x59, 0x04,
-	0x5b, 0x50, 0xd0, 0x93, 0xc2, 0xba, 0x1e, 0xbc, 0x2c, 0x62, 0xd5, 0x8b, 0x17, 0xe9, 0x36, 0xb1,
-	0x0d, 0xbb, 0x93, 0x94, 0xbc, 0x57, 0x1c, 0xff, 0x81, 0x47, 0x7f, 0x85, 0xbf, 0xc5, 0xe3, 0x1e,
-	0x3d, 0xca, 0xcc, 0x6f, 0xf0, 0x2e, 0x4d, 0xd3, 0x99, 0x6d, 0x67, 0x0e, 0x65, 0x0e, 0x9e, 0xbc,
-	0xe5, 0x7d, 0xef, 0x7d, 0x2f, 0x5f, 0xde, 0x97, 0x84, 0xdc, 0x32, 0x80, 0x80, 0xc9, 0x99, 0x54,
-	0x59, 0x84, 0xf3, 0xb0, 0x30, 0x1a, 0x35, 0xbd, 0x6f, 0x44, 0x72, 0x2e, 0x35, 0x8a, 0x34, 0x0f,
-	0xeb, 0xa5, 0x12, 0xf8, 0x45, 0x9b, 0xb3, 0x70, 0x5d, 0x3d, 0x9d, 0x5e, 0x62, 0x1a, 0xc0, 0x4f,
-	0xd5, 0x5a, 0xd4, 0x0d, 0x0e, 0xfe, 0x0c, 0xc9, 0xcd, 0x13, 0xc8, 0x8e, 0x8d, 0x48, 0x50, 0xc4,
-	0x80, 0xef, 0xaa, 0x1c, 0x65, 0x64, 0x2f, 0xad, 0x10, 0x6d, 0x98, 0xb7, 0xef, 0x1d, 0x8e, 0xe3,
-	0x26, 0xa4, 0x13, 0x32, 0x94, 0x9c, 0x0d, 0x2d, 0x38, 0x94, 0xbc, 0xaa, 0x4c, 0x38, 0x37, 0x02,
-	0x80, 0xf9, 0x75, 0xa5, 0x0b, 0xe9, 0x3d, 0x32, 0x36, 0x80, 0x47, 0x33, 0x5d, 0x2a, 0x64, 0x57,
-	0xf6, 0xbd, 0x43, 0x3f, 0x5e, 0x03, 0x36, 0x2b, 0xb5, 0xcb, 0x5e, 0x75, 0xd9, 0x06, 0xa0, 0x21,
-	0xa1, 0x52, 0xa5, 0x7a, 0x26, 0x55, 0x16, 0x03, 0xbe, 0x9f, 0xab, 0xd7, 0x09, 0xe4, 0x6c, 0x64,
-	0x37, 0xd8, 0x92, 0xa1, 0x0f, 0xc9, 0x8d, 0xcf, 0xa5, 0xe2, 0x82, 0xc7, 0x52, 0x37, 0xd5, 0x7b,
-	0xb6, 0x7a, 0x03, 0xa7, 0x0f, 0xc8, 0xc4, 0x00, 0xbe, 0x31, 0x32, 0x93, 0xea, 0x38, 0x4f, 0xa4,
-	0x62, 0xd7, 0x6c, 0x65, 0x07, 0xad, 0x7a, 0xae, 0x90, 0x23, 0x77, 0xc4, 0x71, 0xdd, 0xb3, 0x8b,
-	0xaf, 0xe6, 0x25, 0x38, 0x23, 0xf6, 0x2c, 0x4d, 0x48, 0x6f, 0x93, 0x11, 0x60, 0x82, 0x25, 0xb0,
-	0xeb, 0x96, 0xeb, 0xa2, 0x83, 0xbb, 0xe4, 0xce, 0xc6, 0xd8, 0x63, 0x01, 0x85, 0x56, 0x20, 0x1a,
-	0x53, 0x3e, 0x14, 0xfc, 0xbf, 0x29, 0xff, 0xde, 0x94, 0xf6, 0xd8, 0x57, 0xa6, 0x3c, 0xb7, 0x9e,
-	0xbc, 0x12, 0xe7, 0x62, 0x17, 0x4f, 0x5c, 0xef, 0x36, 0xbd, 0xe9, 0xfd, 0xf8, 0x87, 0x4f, 0xfc,
-	0x13, 0xc8, 0xe8, 0x37, 0x8f, 0x4c, 0x3a, 0x4f, 0xf1, 0x69, 0xd8, 0xe3, 0x89, 0x87, 0x1b, 0x77,
-	0x69, 0xfa, 0x62, 0x37, 0x5e, 0x23, 0xc9, 0x4a, 0xe9, 0x5c, 0xc0, 0xde, 0x52, 0xda, 0xbc, 0xfe,
-	0x52, 0xb6, 0x4f, 0xde, 0x4a, 0xe9, 0xcc, 0xbd, 0xb7, 0x94, 0x36, 0xaf, 0xbf, 0x94, 0xed, 0x46,
-	0xbd, 0x7c, 0xfb, 0x73, 0x11, 0x78, 0x17, 0x8b, 0xc0, 0xfb, 0xbd, 0x08, 0xbc, 0xef, 0xcb, 0x60,
-	0x70, 0xb1, 0x0c, 0x06, 0xbf, 0x96, 0xc1, 0xe0, 0xe3, 0xb3, 0x4c, 0x62, 0x5e, 0x9e, 0x86, 0xa9,
-	0x9e, 0x45, 0xeb, 0x3d, 0xdc, 0xf2, 0x91, 0xdb, 0x24, 0x9a, 0x47, 0x97, 0x7f, 0xf1, 0xaf, 0x85,
-	0x80, 0xd3, 0x91, 0xfd, 0x88, 0x9f, 0xfc, 0x0d, 0x00, 0x00, 0xff, 0xff, 0x52, 0x54, 0x1a, 0x26,
-	0xe0, 0x05, 0x00, 0x00,
+	// 359 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x53, 0x3d, 0x4f, 0xc3, 0x30,
+	0x10, 0xad, 0x13, 0x68, 0xa9, 0x87, 0x4a, 0x18, 0x09, 0x99, 0x0f, 0x45, 0x55, 0x59, 0xba, 0x90,
+	0x48, 0x20, 0xc1, 0x86, 0x04, 0x2c, 0x2c, 0x1d, 0x08, 0x74, 0x61, 0x4b, 0x13, 0x2b, 0xb5, 0x4a,
+	0xe3, 0xc8, 0x77, 0x15, 0xe5, 0x1f, 0x30, 0xb2, 0xf3, 0x87, 0x18, 0x3b, 0x32, 0xa2, 0xf6, 0x37,
+	0xb0, 0xa3, 0xba, 0x09, 0xa1, 0x1f, 0x43, 0xd5, 0xcd, 0xf7, 0xde, 0x9d, 0xdf, 0xf3, 0xb3, 0x8e,
+	0xee, 0x69, 0x40, 0xc0, 0xa0, 0x27, 0x93, 0xd8, 0xc3, 0xa1, 0x9b, 0x6a, 0x85, 0x8a, 0x9d, 0x68,
+	0x11, 0x3c, 0x4b, 0x85, 0x22, 0xec, 0xba, 0xb3, 0x63, 0x22, 0xf0, 0x45, 0xe9, 0x9e, 0x5b, 0x74,
+	0x37, 0x7e, 0x08, 0xdd, 0x6d, 0x41, 0x7c, 0xab, 0x45, 0x80, 0xc2, 0x07, 0x7c, 0xc0, 0xa0, 0x27,
+	0x18, 0xa7, 0x95, 0x70, 0x8a, 0x28, 0xcd, 0x49, 0x9d, 0x34, 0xab, 0x7e, 0x5e, 0xb2, 0x1a, 0xb5,
+	0x64, 0xc4, 0x2d, 0x03, 0x5a, 0x32, 0x9a, 0x76, 0x06, 0x51, 0xa4, 0x05, 0x00, 0xb7, 0x67, 0x9d,
+	0x59, 0xc9, 0x8e, 0x69, 0x55, 0x03, 0x5e, 0xf7, 0xd5, 0x20, 0x41, 0xbe, 0x55, 0x27, 0x4d, 0xdb,
+	0x2f, 0x00, 0xc3, 0x4a, 0x95, 0xb1, 0xdb, 0x19, 0x9b, 0x03, 0xcc, 0xa5, 0x4c, 0x26, 0xa1, 0xea,
+	0xcb, 0x24, 0xf6, 0x01, 0x1f, 0x87, 0xc9, 0x5d, 0x00, 0x5d, 0x5e, 0x36, 0x02, 0x2b, 0x98, 0x3f,
+	0xbf, 0x22, 0xe2, 0x15, 0x73, 0x57, 0x5e, 0xb2, 0x7d, 0x5a, 0x06, 0x0c, 0x70, 0x00, 0x7c, 0xc7,
+	0x4c, 0x67, 0x55, 0xe3, 0x88, 0x1e, 0x2c, 0x3d, 0xdb, 0x17, 0x90, 0xaa, 0x04, 0x44, 0xa3, 0x6d,
+	0x32, 0x69, 0xa7, 0xd1, 0x66, 0x99, 0x14, 0x9a, 0xf6, 0x0a, 0xcd, 0xf9, 0x6b, 0x73, 0xcd, 0xb3,
+	0x0f, 0x8b, 0xda, 0x2d, 0x88, 0xd9, 0x1b, 0xa1, 0xb5, 0x85, 0xdf, 0xb8, 0x70, 0xd7, 0xf8, 0x49,
+	0x77, 0xe9, 0x39, 0x87, 0x57, 0x9b, 0xcd, 0xe5, 0x96, 0x8c, 0x95, 0x85, 0x10, 0xd6, 0xb6, 0x32,
+	0x3f, 0xb7, 0xbe, 0x95, 0xd5, 0xe9, 0xdc, 0xdc, 0x7f, 0x8e, 0x1d, 0x32, 0x1a, 0x3b, 0xe4, 0x7b,
+	0xec, 0x90, 0xf7, 0x89, 0x53, 0x1a, 0x4d, 0x9c, 0xd2, 0xd7, 0xc4, 0x29, 0x3d, 0x5d, 0xc6, 0x12,
+	0xbb, 0x83, 0x8e, 0x1b, 0xaa, 0xbe, 0x57, 0x68, 0x64, 0xc7, 0xd3, 0x4c, 0xc4, 0x1b, 0x7a, 0xff,
+	0x37, 0xe4, 0x35, 0x15, 0xd0, 0x29, 0x9b, 0x2d, 0x39, 0xff, 0x0d, 0x00, 0x00, 0xff, 0xff, 0x59,
+	0xff, 0xf4, 0xa7, 0x3c, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -493,7 +309,6 @@ const _ = grpc.SupportPackageIsVersion4
 type MsgClient interface {
 	CreateRstStake(ctx context.Context, in *MsgCreateRstStake, opts ...grpc.CallOption) (*MsgCreateRstStakeResponse, error)
 	UpdateRstStake(ctx context.Context, in *MsgUpdateRstStake, opts ...grpc.CallOption) (*MsgUpdateRstStakeResponse, error)
-	DeleteRstStake(ctx context.Context, in *MsgDeleteRstStake, opts ...grpc.CallOption) (*MsgDeleteRstStakeResponse, error)
 }
 
 type msgClient struct {
@@ -522,20 +337,10 @@ func (c *msgClient) UpdateRstStake(ctx context.Context, in *MsgUpdateRstStake, o
 	return out, nil
 }
 
-func (c *msgClient) DeleteRstStake(ctx context.Context, in *MsgDeleteRstStake, opts ...grpc.CallOption) (*MsgDeleteRstStakeResponse, error) {
-	out := new(MsgDeleteRstStakeResponse)
-	err := c.cc.Invoke(ctx, "/realiotech.realionetwork.rststaking.Msg/DeleteRstStake", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	CreateRstStake(context.Context, *MsgCreateRstStake) (*MsgCreateRstStakeResponse, error)
 	UpdateRstStake(context.Context, *MsgUpdateRstStake) (*MsgUpdateRstStakeResponse, error)
-	DeleteRstStake(context.Context, *MsgDeleteRstStake) (*MsgDeleteRstStakeResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -547,9 +352,6 @@ func (*UnimplementedMsgServer) CreateRstStake(ctx context.Context, req *MsgCreat
 }
 func (*UnimplementedMsgServer) UpdateRstStake(ctx context.Context, req *MsgUpdateRstStake) (*MsgUpdateRstStakeResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateRstStake not implemented")
-}
-func (*UnimplementedMsgServer) DeleteRstStake(ctx context.Context, req *MsgDeleteRstStake) (*MsgDeleteRstStakeResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteRstStake not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -592,24 +394,6 @@ func _Msg_UpdateRstStake_Handler(srv interface{}, ctx context.Context, dec func(
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_DeleteRstStake_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgDeleteRstStake)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(MsgServer).DeleteRstStake(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/realiotech.realionetwork.rststaking.Msg/DeleteRstStake",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).DeleteRstStake(ctx, req.(*MsgDeleteRstStake))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "realiotech.realionetwork.rststaking.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -621,10 +405,6 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateRstStake",
 			Handler:    _Msg_UpdateRstStake_Handler,
-		},
-		{
-			MethodName: "DeleteRstStake",
-			Handler:    _Msg_DeleteRstStake_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -656,33 +436,12 @@ func (m *MsgCreateRstStake) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.Status)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.Status)))
 		i--
-		dAtA[i] = 0x5a
+		dAtA[i] = 0x42
 	}
 	if m.Created != 0 {
 		i = encodeVarintTx(dAtA, i, uint64(m.Created))
 		i--
-		dAtA[i] = 0x50
-	}
-	if len(m.RstOriginAddress) > 0 {
-		i -= len(m.RstOriginAddress)
-		copy(dAtA[i:], m.RstOriginAddress)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.RstOriginAddress)))
-		i--
-		dAtA[i] = 0x4a
-	}
-	if len(m.RstOriginChain) > 0 {
-		i -= len(m.RstOriginChain)
-		copy(dAtA[i:], m.RstOriginChain)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.RstOriginChain)))
-		i--
-		dAtA[i] = 0x42
-	}
-	if len(m.FundedRioTxnHash) > 0 {
-		i -= len(m.FundedRioTxnHash)
-		copy(dAtA[i:], m.FundedRioTxnHash)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.FundedRioTxnHash)))
-		i--
-		dAtA[i] = 0x3a
+		dAtA[i] = 0x38
 	}
 	if len(m.IncomingRstTxnHash) > 0 {
 		i -= len(m.IncomingRstTxnHash)
@@ -773,56 +532,6 @@ func (m *MsgUpdateRstStake) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.Status)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.Status)))
 		i--
-		dAtA[i] = 0x5a
-	}
-	if m.Created != 0 {
-		i = encodeVarintTx(dAtA, i, uint64(m.Created))
-		i--
-		dAtA[i] = 0x50
-	}
-	if len(m.RstOriginAddress) > 0 {
-		i -= len(m.RstOriginAddress)
-		copy(dAtA[i:], m.RstOriginAddress)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.RstOriginAddress)))
-		i--
-		dAtA[i] = 0x4a
-	}
-	if len(m.RstOriginChain) > 0 {
-		i -= len(m.RstOriginChain)
-		copy(dAtA[i:], m.RstOriginChain)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.RstOriginChain)))
-		i--
-		dAtA[i] = 0x42
-	}
-	if len(m.FundedRioTxnHash) > 0 {
-		i -= len(m.FundedRioTxnHash)
-		copy(dAtA[i:], m.FundedRioTxnHash)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.FundedRioTxnHash)))
-		i--
-		dAtA[i] = 0x3a
-	}
-	if len(m.IncomingRstTxnHash) > 0 {
-		i -= len(m.IncomingRstTxnHash)
-		copy(dAtA[i:], m.IncomingRstTxnHash)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.IncomingRstTxnHash)))
-		i--
-		dAtA[i] = 0x32
-	}
-	if m.RioAmount != 0 {
-		i = encodeVarintTx(dAtA, i, uint64(m.RioAmount))
-		i--
-		dAtA[i] = 0x28
-	}
-	if m.RstAmount != 0 {
-		i = encodeVarintTx(dAtA, i, uint64(m.RstAmount))
-		i--
-		dAtA[i] = 0x20
-	}
-	if len(m.Address) > 0 {
-		i -= len(m.Address)
-		copy(dAtA[i:], m.Address)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Address)))
-		i--
 		dAtA[i] = 0x1a
 	}
 	if len(m.Id) > 0 {
@@ -858,66 +567,6 @@ func (m *MsgUpdateRstStakeResponse) MarshalTo(dAtA []byte) (int, error) {
 }
 
 func (m *MsgUpdateRstStakeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgDeleteRstStake) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgDeleteRstStake) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgDeleteRstStake) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Id) > 0 {
-		i -= len(m.Id)
-		copy(dAtA[i:], m.Id)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Id)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Creator) > 0 {
-		i -= len(m.Creator)
-		copy(dAtA[i:], m.Creator)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *MsgDeleteRstStakeResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *MsgDeleteRstStakeResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *MsgDeleteRstStakeResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -964,18 +613,6 @@ func (m *MsgCreateRstStake) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.FundedRioTxnHash)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.RstOriginChain)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.RstOriginAddress)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
 	if m.Created != 0 {
 		n += 1 + sovTx(uint64(m.Created))
 	}
@@ -1009,35 +646,6 @@ func (m *MsgUpdateRstStake) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.Address)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	if m.RstAmount != 0 {
-		n += 1 + sovTx(uint64(m.RstAmount))
-	}
-	if m.RioAmount != 0 {
-		n += 1 + sovTx(uint64(m.RioAmount))
-	}
-	l = len(m.IncomingRstTxnHash)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.FundedRioTxnHash)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.RstOriginChain)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.RstOriginAddress)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	if m.Created != 0 {
-		n += 1 + sovTx(uint64(m.Created))
-	}
 	l = len(m.Status)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
@@ -1046,32 +654,6 @@ func (m *MsgUpdateRstStake) Size() (n int) {
 }
 
 func (m *MsgUpdateRstStakeResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	return n
-}
-
-func (m *MsgDeleteRstStake) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Creator)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.Id)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	return n
-}
-
-func (m *MsgDeleteRstStakeResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1282,102 +864,6 @@ func (m *MsgCreateRstStake) Unmarshal(dAtA []byte) error {
 			m.IncomingRstTxnHash = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 7:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FundedRioTxnHash", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.FundedRioTxnHash = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 8:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RstOriginChain", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.RstOriginChain = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 9:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RstOriginAddress", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.RstOriginAddress = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 10:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Created", wireType)
 			}
@@ -1396,7 +882,7 @@ func (m *MsgCreateRstStake) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 11:
+		case 8:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
 			}
@@ -1594,223 +1080,6 @@ func (m *MsgUpdateRstStake) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Address = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 4:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RstAmount", wireType)
-			}
-			m.RstAmount = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.RstAmount |= int64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 5:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RioAmount", wireType)
-			}
-			m.RioAmount = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.RioAmount |= int64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 6:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field IncomingRstTxnHash", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.IncomingRstTxnHash = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 7:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field FundedRioTxnHash", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.FundedRioTxnHash = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 8:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RstOriginChain", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.RstOriginChain = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 9:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field RstOriginAddress", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.RstOriginAddress = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 10:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Created", wireType)
-			}
-			m.Created = 0
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				m.Created |= int64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-		case 11:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
 			}
 			var stringLen uint64
@@ -1889,170 +1158,6 @@ func (m *MsgUpdateRstStakeResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgUpdateRstStakeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgDeleteRstStake) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgDeleteRstStake: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgDeleteRstStake: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Creator = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Id", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Id = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipTx(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthTx
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *MsgDeleteRstStakeResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowTx
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: MsgDeleteRstStakeResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgDeleteRstStakeResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

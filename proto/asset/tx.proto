@@ -12,7 +12,7 @@ service Msg {
       rpc UpdateToken(MsgUpdateToken) returns (MsgUpdateTokenResponse);
       rpc AuthorizeAddress(MsgAuthorizeAddress) returns (MsgAuthorizeAddressResponse);
       rpc UnAuthorizeAddress(MsgUnAuthorizeAddress) returns (MsgUnAuthorizeAddressResponse);
-     rpc TransferToken(MsgTransferToken) returns (MsgTransferTokenResponse);
+      rpc TransferToken(MsgTransferToken) returns (MsgTransferTokenResponse);
 // this line is used by starport scaffolding # proto/tx/rpc
 }
 

@@ -4,18 +4,19 @@ package realiotech.realionetwork.rststaking;
 option go_package = "github.com/realiotech/realio-network/x/rststaking/types";
 
 
-
 message RstStake {
-  string id = 1;
-  string address = 2; 
-  int64 rstAmount = 3; 
-  int64 rioAmount = 4; 
-  string incomingRstTxnHash = 5; 
-  string fundedRioTxnHash = 6; 
-  string rstOriginChain = 7; 
-  string rstOriginAddress = 8; 
-  int64 created = 9; 
-  string status = 10; 
-  string creator = 11;
+  string creator = 1;
+  string id = 2;
+  string address = 3;
+  int64 rstAmount = 4;
+  int64 rioAmount = 5;
+  string incomingRstTxnHash = 6;
+  int64 created = 7;
+  int64 updated = 8;
+  enum Status {
+    ACTIVE = 0;
+    COMPLETE = 1;
+  }
+  string status = 9;
 }
 
