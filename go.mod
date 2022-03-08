@@ -11,7 +11,12 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 	github.com/regen-network/cosmos-proto v0.3.1
+=======
+	github.com/grpc-ecosystem/grpc-gateway/v2 v2.8.0 // indirect
+	github.com/regen-network/cosmos-proto v0.3.1 // indirect
+>>>>>>> Stashed changes
 =======
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.8.0 // indirect
 	github.com/regen-network/cosmos-proto v0.3.1 // indirect
@@ -24,10 +29,16 @@ require (
 	github.com/tendermint/tendermint v0.34.13
 	github.com/tendermint/tm-db v0.6.4
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 	google.golang.org/genproto v0.0.0-20211129164237-f09f9a12af12
 	google.golang.org/grpc v1.42.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
+=======
+	google.golang.org/genproto v0.0.0-20220302033224-9aa15565e42a
+	google.golang.org/grpc v1.44.0
+	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.0.0 // indirect
+>>>>>>> Stashed changes
 =======
 	google.golang.org/genproto v0.0.0-20220302033224-9aa15565e42a
 	google.golang.org/grpc v1.44.0
