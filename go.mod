@@ -8,19 +8,10 @@ require (
 	github.com/cosmos/ibc-go v1.2.0
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.2
+	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
 	github.com/regen-network/cosmos-proto v0.3.1
-=======
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.8.0 // indirect
-	github.com/regen-network/cosmos-proto v0.3.1 // indirect
->>>>>>> Stashed changes
-=======
-	github.com/grpc-ecosystem/grpc-gateway/v2 v2.8.0 // indirect
-	github.com/regen-network/cosmos-proto v0.3.1 // indirect
->>>>>>> Stashed changes
 	github.com/spf13/cast v1.3.1
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
@@ -28,22 +19,11 @@ require (
 	github.com/tendermint/spm v0.1.5
 	github.com/tendermint/tendermint v0.34.13
 	github.com/tendermint/tm-db v0.6.4
-<<<<<<< Updated upstream
-<<<<<<< Updated upstream
-	google.golang.org/genproto v0.0.0-20211129164237-f09f9a12af12
-	google.golang.org/grpc v1.42.0
+	golang.org/x/net v0.0.0-20220127200216-cd36cc0744dd // indirect
+	google.golang.org/genproto v0.0.0-20220302033224-9aa15565e42a
+	google.golang.org/grpc v1.44.0
 	google.golang.org/protobuf v1.27.1
 	gopkg.in/yaml.v2 v2.4.0
-=======
-	google.golang.org/genproto v0.0.0-20220302033224-9aa15565e42a
-	google.golang.org/grpc v1.44.0
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.0.0 // indirect
->>>>>>> Stashed changes
-=======
-	google.golang.org/genproto v0.0.0-20220302033224-9aa15565e42a
-	google.golang.org/grpc v1.44.0
-	google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.0.0 // indirect
->>>>>>> Stashed changes
 )
 
 replace (
