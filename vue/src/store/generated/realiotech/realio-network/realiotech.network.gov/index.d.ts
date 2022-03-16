@@ -1,0 +1,12 @@
+import { WeightedVoteOption } from "./module/types/gov/gov";
+import { TextProposal } from "./module/types/gov/gov";
+import { Deposit } from "./module/types/gov/gov";
+import { Proposal } from "./module/types/gov/gov";
+import { TallyResult } from "./module/types/gov/gov";
+import { Vote } from "./module/types/gov/gov";
+import { DepositParams } from "./module/types/gov/gov";
+import { VotingParams } from "./module/types/gov/gov";
+import { TallyParams } from "./module/types/gov/gov";
+export { WeightedVoteOption, TextProposal, Deposit, Proposal, TallyResult, Vote, DepositParams, VotingParams, TallyParams };
+declare const _default;
+export default _default;
