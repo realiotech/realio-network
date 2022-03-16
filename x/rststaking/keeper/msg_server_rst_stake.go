@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"fmt"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -72,6 +73,9 @@ func (k msgServer) CreateRstStake(goCtx context.Context, msg *types.MsgCreateRst
 		ctx,
 		rstStake,
 	)
+
+	var valAddress = sdk.ValAddress("kdsjfhasdkhfdsak")
+	delegateMsg := stakingtypes.NewMsgDelegate(holdingAcc.GetAddress(), valAddress, rioCoin)
 	return &types.MsgCreateRstStakeResponse{}, nil
 }
 
