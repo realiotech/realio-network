@@ -7,7 +7,7 @@ import (
 	"github.com/tendermint/spm/cosmoscmd"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/simapp"
+	"github.com/realiotech/realio-network/simapp"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
