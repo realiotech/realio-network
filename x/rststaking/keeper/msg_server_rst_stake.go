@@ -10,7 +10,8 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/realiotech/realio-network/x/rststaking/types"
-)
+	"github.com/cosmos/cosmos-sdk/simapp"
+	)
 
 func (k msgServer) CreateRstStake(goCtx context.Context, msg *types.MsgCreateRstStake) (*types.MsgCreateRstStakeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
@@ -76,6 +77,18 @@ func (k msgServer) CreateRstStake(goCtx context.Context, msg *types.MsgCreateRst
 
 	var valAddress = sdk.ValAddress("kdsjfhasdkhfdsak")
 	delegateMsg := stakingtypes.NewMsgDelegate(holdingAcc.GetAddress(), valAddress, rioCoin)
+
+	encCfg := simapp.MakeTestEncodingConfig()
+
+	// Create a new TxBuilder.
+	txBuilder := encCfg.TxConfig.NewTxBuilder()
+
+	err = txBuilder.SetMsgs(delegateMsg)
+	if err != nil {
+		ctx.Logger().Error(err.Error())
+		panic(err)
+	}
+
 	return &types.MsgCreateRstStakeResponse{}, nil
 }
 
