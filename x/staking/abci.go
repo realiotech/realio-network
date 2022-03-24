@@ -7,8 +7,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/realiotech/realio-network/x/staking/keeper"
+	"github.com/realiotech/realio-network/x/staking/types"
 )
 
 // BeginBlocker will persist the current header and validator set as a historical entry

@@ -6,7 +6,7 @@ import (
 
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/realiotech/realio-network/x/staking/types"
 )
 
 // GetTmConsPubKey gets the validator's public key as a tmcrypto.PubKey.

@@ -18,9 +18,9 @@ import (
 	grpctypes "github.com/cosmos/cosmos-sdk/types/grpc"
 	"github.com/cosmos/cosmos-sdk/types/query"
 	"github.com/cosmos/cosmos-sdk/types/rest"
-	"github.com/cosmos/cosmos-sdk/x/staking/client/cli"
-	stakingtestutil "github.com/cosmos/cosmos-sdk/x/staking/client/testutil"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/realiotech/realio-network/x/staking/client/cli"
+	stakingtestutil "github.com/realiotech/realio-network/x/staking/client/testutil"
+	"github.com/realiotech/realio-network/x/staking/types"
 )
 
 type IntegrationTestSuite struct {

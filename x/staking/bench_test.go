@@ -5,9 +5,9 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-	"github.com/cosmos/cosmos-sdk/x/staking/teststaking"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/realiotech/realio-network/x/staking"
+	"github.com/realiotech/realio-network/x/staking/teststaking"
+	"github.com/realiotech/realio-network/x/staking/types"
 )
 
 func BenchmarkValidateGenesis10Validators(b *testing.B) {

@@ -15,9 +15,9 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	"github.com/cosmos/cosmos-sdk/x/staking/simulation"
-	"github.com/cosmos/cosmos-sdk/x/staking/teststaking"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/realiotech/realio-network/x/staking/simulation"
+	"github.com/realiotech/realio-network/x/staking/teststaking"
+	"github.com/realiotech/realio-network/x/staking/types"
 )
 
 // TestWeightedOperations tests the weights of the operations.

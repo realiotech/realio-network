@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	v034staking "github.com/cosmos/cosmos-sdk/x/staking/legacy/v034"
-	v038staking "github.com/cosmos/cosmos-sdk/x/staking/legacy/v038"
+	v034staking "github.com/realiotech/realio-network/x/staking/legacy/v034"
+	v038staking "github.com/realiotech/realio-network/x/staking/legacy/v038"
 )
 
 func migrateBondStatus(oldStatus v034staking.BondStatus) BondStatus {

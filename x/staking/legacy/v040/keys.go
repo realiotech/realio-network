@@ -11,7 +11,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	v040auth "github.com/cosmos/cosmos-sdk/x/auth/legacy/v040"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/realiotech/realio-network/x/staking/types"
 )
 
 const (

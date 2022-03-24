@@ -1,10 +1,10 @@
 syntax = "proto3";
-package realiotech.network.staking;
+package cosmos.staking.v1beta1;
 
-option go_package = "github.com/realiotech/realio-network/x/staking/types";
+option go_package = "github.com/cosmos/cosmos-sdk/x/staking/types";
 
 import "gogoproto/gogo.proto";
-import "staking/staking.proto";
+import "cosmos/staking/v1beta1/staking.proto";
 
 // GenesisState defines the staking module's genesis state.
 message GenesisState {

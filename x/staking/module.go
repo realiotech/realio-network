@@ -18,11 +18,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/cosmos/cosmos-sdk/x/staking/client/cli"
-	"github.com/cosmos/cosmos-sdk/x/staking/client/rest"
-	"github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	"github.com/cosmos/cosmos-sdk/x/staking/simulation"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/realiotech/realio-network/x/staking/client/cli"
+	"github.com/realiotech/realio-network/x/staking/client/rest"
+	"github.com/realiotech/realio-network/x/staking/keeper"
+	"github.com/realiotech/realio-network/x/staking/simulation"
+	"github.com/realiotech/realio-network/x/staking/types"
 )
 
 var (
