@@ -1,11 +1,11 @@
 accounts:
   - name: alice
-    coins: ["200000000rio"]
+    coins: ["200000000urio", "200000000urst"]
   - name: bob
-    coins: ["100000000rio"]
+    coins: ["100000000urio"]
 validator:
   name: alice
-  staked: "100000000rio"
+  staked: "100000000urio"
 client:
   vuex:
     path: "vue/src/store"
@@ -15,19 +15,19 @@ faucet:
   name: bob
   coins: ["1000rio"]
 genesis:
-  chain_id: "realionetwork-test1"
+  chain_id: "realionetwork"
   app_state:
     staking:
       params:
-        bond_denom: "rio"
+        bond_denom: "urio,urst"
         historical_entries: "10"
         max_validators: "10"
         unbonding_time: "300000000000ns"
     mint:
       params:
-        mint_denom: "rio"
+        mint_denom: "urio"
     crisis:
       constant_fee:
-        denom: "rio"
+        denom: "urio"
 
 
