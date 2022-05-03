@@ -18,7 +18,7 @@ message Token {
 }
 
 message TokenAuthorization {
-  string tokenIndex = 1;
+  string tokenSymbol = 1;
   string address = 2;
   bool authorized = 3;
 }

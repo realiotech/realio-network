@@ -26,6 +26,7 @@ service Query {
 
 message QueryGetTokenRequest {
 	  string index = 1;
+	  string symbol = 2;
 
 }
 

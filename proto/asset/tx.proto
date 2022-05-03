@@ -30,14 +30,14 @@ message MsgCreateTokenResponse {}
 
 message MsgUpdateToken {
   string creator = 1;
-  string index = 2;
+  string symbol = 2;
   bool authorizationRequired = 3;
 }
 message MsgUpdateTokenResponse { }
 
 message MsgAuthorizeAddress {
   string creator = 1;
-  string index = 2;
+  string symbol = 2;
   string address = 3;
 }
 
@@ -46,7 +46,7 @@ message MsgAuthorizeAddressResponse {
 
 message MsgUnAuthorizeAddress {
   string creator = 1;
-  string index = 2;
+  string symbol = 2;
   string address = 3;
 }
 
