@@ -22,12 +22,12 @@ func (suite *KeeperTestSuite) TestTransferTokenWithAuthorization() {
 	_, _ = suite.msgSrv.CreateToken(wctx, createMsg)
 
 	authUserMsg := &types.MsgAuthorizeAddress{Creator: creator,
-		Index: "1", Address: suite.testUser1Address,
+		Symbol: "RIO", Address: suite.testUser1Address,
 	}
 	_, _ = suite.msgSrv.AuthorizeAddress(wctx, authUserMsg)
 
 	authUserMsg2 := &types.MsgAuthorizeAddress{Creator: creator,
-		Index: "1", Address: creator,
+		Symbol: "RIO", Address: creator,
 	}
 	_, _ = suite.msgSrv.AuthorizeAddress(wctx, authUserMsg2)
 

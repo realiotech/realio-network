@@ -17,7 +17,7 @@ var _ = strconv.IntSize
 func createNToken(keeper *keeper.Keeper, ctx sdk.Context, n int) []types.Token {
 	items := make([]types.Token, n)
 	for i := range items {
-		items[i].Index = strconv.Itoa(i)
+		items[i].Symbol = strconv.Itoa(i)
 
 		keeper.SetToken(ctx, items[i])
 	}
@@ -29,7 +29,7 @@ func TestTokenGet(t *testing.T) {
 	items := createNToken(keeper, ctx, 10)
 	for _, item := range items {
 		rst, found := keeper.GetToken(ctx,
-			item.Index,
+			item.Symbol,
 		)
 		require.True(t, found)
 		require.Equal(t, item, rst)
@@ -40,10 +40,10 @@ func TestTokenRemove(t *testing.T) {
 	items := createNToken(keeper, ctx, 10)
 	for _, item := range items {
 		keeper.RemoveToken(ctx,
-			item.Index,
+			item.Symbol,
 		)
 		_, found := keeper.GetToken(ctx,
-			item.Index,
+			item.Symbol,
 		)
 		require.False(t, found)
 	}
@@ -66,12 +66,12 @@ func (suite *KeeperTestSuite) TestIsAddressAuthorized() {
 	}
 	_, _ = suite.msgSrv.CreateToken(wctx, createMsg)
 
-	suite.Require().False(suite.app.AssetKeeper.IsAddressAuthorizedToSend(suite.ctx, "1", suite.testUser1Acc))
+	suite.Require().False(suite.app.AssetKeeper.IsAddressAuthorizedToSend(suite.ctx, "RIO", suite.testUser1Acc))
 
 	authUserMsg := &types.MsgAuthorizeAddress{Creator: creator,
-		Index: "1", Address: suite.testUser1Address,
+		Symbol: "RIO", Address: suite.testUser1Address,
 	}
 	_, _ = suite.msgSrv.AuthorizeAddress(wctx, authUserMsg)
 
-	suite.Require().True(suite.app.AssetKeeper.IsAddressAuthorizedToSend(suite.ctx, "1", suite.testUser1Acc))
+	suite.Require().True(suite.app.AssetKeeper.IsAddressAuthorizedToSend(suite.ctx, "RIO", suite.testUser1Acc))
 }

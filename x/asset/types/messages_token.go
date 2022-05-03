@@ -61,13 +61,13 @@ var _ sdk.Msg = &MsgUpdateToken{}
 
 func NewMsgUpdateToken(
 	creator string,
-	index string,
+	symbol string,
 	authorizationRequired bool,
 
 ) *MsgUpdateToken {
 	return &MsgUpdateToken{
 		Creator:               creator,
-		Index:                 index,
+		Symbol:                 symbol,
 		AuthorizationRequired: authorizationRequired,
 	}
 }
@@ -103,10 +103,10 @@ func (msg *MsgUpdateToken) ValidateBasic() error {
 
 var _ sdk.Msg = &MsgAuthorizeAddress{}
 
-func NewMsgAuthorizeAddress(creator string, index string, address string) *MsgAuthorizeAddress {
+func NewMsgAuthorizeAddress(creator string, symbol string, address string) *MsgAuthorizeAddress {
 	return &MsgAuthorizeAddress{
 		Creator: creator,
-		Index:   index,
+		Symbol:   symbol,
 		Address: address,
 	}
 }
@@ -142,10 +142,10 @@ func (msg *MsgAuthorizeAddress) ValidateBasic() error {
 
 var _ sdk.Msg = &MsgUnAuthorizeAddress{}
 
-func NewMsgUnAuthorizeAddress(creator string, index string, address string) *MsgUnAuthorizeAddress {
+func NewMsgUnAuthorizeAddress(creator string, symbol string, address string) *MsgUnAuthorizeAddress {
 	return &MsgUnAuthorizeAddress{
 		Creator: creator,
-		Index:   index,
+		Symbol:   symbol,
 		Address: address,
 	}
 }

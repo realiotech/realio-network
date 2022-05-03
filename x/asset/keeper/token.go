@@ -6,25 +6,25 @@ import (
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
-// SetToken set a specific token in the store from its index
+// SetToken set a specific token in the store from its symbol
 func (k Keeper) SetToken(ctx sdk.Context, token types.Token) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TokenKeyPrefix))
 	b := k.cdc.MustMarshal(&token)
 	store.Set(types.TokenKey(
-		token.Index,
+		token.Symbol,
 	), b)
 }
 
-// GetToken returns a token from its index
+// GetToken returns a token from its symbol
 func (k Keeper) GetToken(
 	ctx sdk.Context,
-	index string,
+	symbol string,
 
 ) (val types.Token, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TokenKeyPrefix))
 
 	b := store.Get(types.TokenKey(
-		index,
+		symbol,
 	))
 	if b == nil {
 		return val, false
@@ -37,12 +37,12 @@ func (k Keeper) GetToken(
 // RemoveToken removes a token from the store
 func (k Keeper) RemoveToken(
 	ctx sdk.Context,
-	index string,
+	symbol string,
 
 ) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TokenKeyPrefix))
 	store.Delete(types.TokenKey(
-		index,
+		symbol,
 	))
 }
 
@@ -62,11 +62,11 @@ func (k Keeper) GetAllToken(ctx sdk.Context) (list []types.Token) {
 	return
 }
 
-func (k Keeper) IsAddressAuthorizedToSend(ctx sdk.Context, index string, address sdk.AccAddress) (authorized bool) {
+func (k Keeper) IsAddressAuthorizedToSend(ctx sdk.Context, symbol string, address sdk.AccAddress) (authorized bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TokenKeyPrefix))
 
 	b := store.Get(types.TokenKey(
-		index,
+		symbol,
 	))
 	if b == nil {
 		return false

@@ -18,15 +18,15 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 	// Check if the value already exists
 	token, isFound := k.GetToken(
 		ctx,
-		msg.Index,
+		msg.Symbol,
 	)
 	if !isFound {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, "token not found")
 	}
 
 	if token.AuthorizationRequired == true {
-		isAuthorizedFrom = k.IsAddressAuthorizedToSend(ctx, msg.Index, fromAddress)
-		isAuthorizedTo = k.IsAddressAuthorizedToSend(ctx, msg.Index, toAddress)
+		isAuthorizedFrom = k.IsAddressAuthorizedToSend(ctx, msg.Symbol, fromAddress)
+		isAuthorizedTo = k.IsAddressAuthorizedToSend(ctx, msg.Symbol, toAddress)
 	}
 
 	if isAuthorizedFrom && isAuthorizedTo {

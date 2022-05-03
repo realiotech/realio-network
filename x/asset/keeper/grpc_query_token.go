@@ -47,7 +47,7 @@ func (k Keeper) Token(c context.Context, req *types.QueryGetTokenRequest) (*type
 
 	val, found := k.GetToken(
 		ctx,
-		req.Index,
+		req.Symbol,
 	)
 	if !found {
 		return nil, status.Error(codes.InvalidArgument, "not found")

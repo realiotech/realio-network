@@ -30,21 +30,21 @@ func TestTokenQuerySingle(t *testing.T) {
 		{
 			desc: "First",
 			request: &types.QueryGetTokenRequest{
-				Index: msgs[0].Index,
+				Symbol: msgs[0].Symbol,
 			},
 			response: &types.QueryGetTokenResponse{Token: msgs[0]},
 		},
 		{
 			desc: "Second",
 			request: &types.QueryGetTokenRequest{
-				Index: msgs[1].Index,
+				Symbol: msgs[1].Symbol,
 			},
 			response: &types.QueryGetTokenResponse{Token: msgs[1]},
 		},
 		{
 			desc: "KeyNotFound",
 			request: &types.QueryGetTokenRequest{
-				Index: strconv.Itoa(100000),
+				Symbol: strconv.Itoa(100000),
 			},
 			err: status.Error(codes.InvalidArgument, "not found"),
 		},

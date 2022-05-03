@@ -16,10 +16,10 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 	// Check if the value already exists
 	_, isFound := k.GetToken(
 		ctx,
-		msg.Index,
+		msg.Symbol,
 	)
 	if isFound {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "index already set")
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidRequest, "symbol already set")
 	}
 
 	var creatorAccAddress, err = sdk.AccAddressFromBech32(msg.Creator)
@@ -39,6 +39,7 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 	}
 
 	// mint coins for the current module
+	//todo review denom metadata, decimas in ammont
 	var coin = sdk.Coins{{Denom: msg.Symbol, Amount: sdk.NewInt(msg.Total)}}
 
 	k.SetToken(
@@ -51,12 +52,21 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 		panic(err)
 	}
 
+	// todo review set denom meta data
 	k.bankKeeper.SetDenomMetaData(ctx, bank.Metadata{Base: msg.Symbol, Display: msg.Symbol, DenomUnits: []*bank.DenomUnit{{Denom: msg.Symbol, Exponent: 0}}})
 
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, creatorAccAddress, coin)
 	if err != nil {
 		panic(err)
 	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeTokenCreated,
+			sdk.NewAttribute(sdk.AttributeKeyAmount, fmt.Sprint(msg.Total)),
+			sdk.NewAttribute(types.AttributeKeySymbol, msg.Symbol),
+		),
+	)
 
 	return &types.MsgCreateTokenResponse{}, nil
 }
@@ -67,7 +77,7 @@ func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken)
 	// Check if the value exists
 	existing, isFound := k.GetToken(
 		ctx,
-		msg.Index,
+		msg.Symbol,
 	)
 	if !isFound {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, "index not set")
@@ -85,6 +95,13 @@ func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken)
 
 	k.SetToken(ctx, token)
 
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeTokenUpdated,
+			sdk.NewAttribute(types.AttributeKeySymbol, existing.Symbol),
+		),
+	)
+
 	return &types.MsgUpdateTokenResponse{}, nil
 }
 
@@ -92,9 +109,9 @@ func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthori
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Check if the value exists
-	token, isFound := k.GetToken(ctx, msg.Index)
+	token, isFound := k.GetToken(ctx, msg.Symbol)
 	if !isFound {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, fmt.Sprintf("index %v not set", msg.Index))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, fmt.Sprintf("index %v not set", msg.Symbol))
 	}
 
 	// Checks if the the msg sender is the same as the current owner
@@ -107,11 +124,19 @@ func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthori
 		m := make(map[string]*types.TokenAuthorization)
 		token.Authorized = m
 	}
-	var newAuthorization = types.TokenAuthorization{Address: msg.Address, TokenIndex: msg.Index, Authorized: true}
+	var newAuthorization = types.TokenAuthorization{Address: msg.Address, TokenSymbol: msg.Symbol, Authorized: true}
 
 	token.Authorized[msg.Address] = &newAuthorization
 
 	k.SetToken(ctx, token)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeTokenAuthorized,
+			sdk.NewAttribute(types.AttributeKeySymbol, fmt.Sprint(token.Symbol)),
+			sdk.NewAttribute(types.AttributeKeyAddress, msg.Address),
+		),
+	)
 
 	return &types.MsgAuthorizeAddressResponse{}, nil
 }
@@ -120,9 +145,9 @@ func (k msgServer) UnAuthorizeAddress(goCtx context.Context, msg *types.MsgUnAut
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Check if the value exists
-	token, isFound := k.GetToken(ctx, msg.Index)
+	token, isFound := k.GetToken(ctx, msg.Symbol)
 	if !isFound {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, fmt.Sprintf("index %v not set", msg.Index))
+		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, fmt.Sprintf("index %v not set", msg.Symbol))
 	}
 
 	// Checks if the the msg sender is the same as the current owner
@@ -133,6 +158,14 @@ func (k msgServer) UnAuthorizeAddress(goCtx context.Context, msg *types.MsgUnAut
 	delete(token.Authorized, msg.Address)
 
 	k.SetToken(ctx, token)
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeTokenUnAuthorized,
+			sdk.NewAttribute(types.AttributeKeySymbol, fmt.Sprint(token.Symbol)),
+			sdk.NewAttribute(types.AttributeKeyAddress, msg.Address),
+		),
+	)
 
 	return &types.MsgUnAuthorizeAddressResponse{}, nil
 }

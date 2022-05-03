@@ -23,7 +23,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 	_, err := srv.CreateToken(wctx, expected)
 	suite.Require().NoError(err)
 	rio, found := suite.app.AssetKeeper.GetToken(suite.ctx,
-		expected.Index,
+		expected.Symbol,
 	)
 	suite.Require().True(found)
 	suite.Require().Equal(expected.Creator, rio.Creator)
@@ -54,7 +54,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateAuthorizationDefaultFalse(
 	_, err := srv.CreateToken(wctx, expected)
 	suite.Require().NoError(err)
 	rio, _ := suite.app.AssetKeeper.GetToken(suite.ctx,
-		expected.Index,
+		expected.Symbol,
 	)
 	suite.Require().False(rio.AuthorizationRequired)
 }
@@ -113,18 +113,18 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUpdate() {
 	suite.Require().NoError(err)
 
 	rio, _ := suite.app.AssetKeeper.GetToken(suite.ctx,
-		t1.Index,
+		t1.Symbol,
 	)
 	suite.Require().False(rio.AuthorizationRequired)
 
 	updateMsg := &types.MsgUpdateToken{Creator: creator,
-		Index: "1", AuthorizationRequired: true,
+		Symbol: "RIO", AuthorizationRequired: true,
 	}
 
 	_, err = srv.UpdateToken(wctx, updateMsg)
 
 	rio, _ = suite.app.AssetKeeper.GetToken(suite.ctx,
-		t1.Index,
+		t1.Symbol,
 	)
 	suite.Require().NoError(err)
 	suite.Require().True(rio.AuthorizationRequired)
@@ -143,7 +143,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUpdateNotFound() {
 	_, err := srv.CreateToken(wctx, t1)
 
 	updateMsg := &types.MsgUpdateToken{Creator: creator,
-		Index: "2", AuthorizationRequired: true,
+		Symbol: "RST", AuthorizationRequired: true,
 	}
 
 	_, err = srv.UpdateToken(wctx, updateMsg)
@@ -164,21 +164,21 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeAddress() {
 	suite.Require().NoError(err)
 
 	rio, _ := suite.app.AssetKeeper.GetToken(suite.ctx,
-		t1.Index,
+		t1.Symbol,
 	)
 	suite.Require().Nil(rio.Authorized)
 
 	authUserMsg := &types.MsgAuthorizeAddress{Creator: creator,
-		Index: "1", Address: testUser,
+		Symbol: "RIO", Address: testUser,
 	}
 
 	_, err = srv.AuthorizeAddress(wctx, authUserMsg)
 
 	rio, _ = suite.app.AssetKeeper.GetToken(suite.ctx,
-		t1.Index,
+		t1.Symbol,
 	)
 	suite.Require().NotNil(rio.Authorized)
-	suite.Require().Equal(rio.Authorized[testUser].TokenIndex, "1")
+	suite.Require().Equal(rio.Authorized[testUser].TokenSymbol, "RIO")
 	suite.Require().Equal(rio.Authorized[testUser].Authorized, true)
 }
 
@@ -196,7 +196,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeTokenNotFound() {
 	suite.Require().NoError(err)
 
 	authUserMsg := &types.MsgAuthorizeAddress{Creator: creator,
-		Index: "2", Address: testUser,
+		Symbol: "RST", Address: testUser,
 	}
 
 	_, err = srv.AuthorizeAddress(wctx, authUserMsg)
@@ -218,7 +218,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeAddressSenderUnauthoriz
 	_, err := srv.CreateToken(wctx, t1)
 
 	authUserMsg := &types.MsgAuthorizeAddress{Creator: creator2,
-		Index: "1", Address: testUser,
+		Symbol: "RIO", Address: testUser,
 	}
 
 	_, err = srv.AuthorizeAddress(wctx, authUserMsg)
@@ -240,29 +240,29 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddress() {
 	suite.Require().NoError(err)
 
 	rio, _ := suite.app.AssetKeeper.GetToken(suite.ctx,
-		t1.Index,
+		t1.Symbol,
 	)
 	suite.Require().Nil(rio.Authorized)
 
 	authUserMsg := &types.MsgAuthorizeAddress{Creator: creator,
-		Index: "1", Address: testUser,
+		Symbol: "RIO", Address: testUser,
 	}
 
 	_, err = srv.AuthorizeAddress(wctx, authUserMsg)
 
 	rio, _ = suite.app.AssetKeeper.GetToken(suite.ctx,
-		t1.Index,
+		t1.Symbol,
 	)
-	suite.Require().Equal(rio.Authorized[testUser].TokenIndex, "1")
+	suite.Require().Equal(rio.Authorized[testUser].TokenSymbol, "RIO")
 
 	unAuthUserMsg := &types.MsgUnAuthorizeAddress{Creator: creator,
-		Index: "1", Address: testUser,
+		Symbol: "RIO", Address: testUser,
 	}
 
 	_, err = srv.UnAuthorizeAddress(wctx, unAuthUserMsg)
 
 	rio, _ = suite.app.AssetKeeper.GetToken(suite.ctx,
-		t1.Index,
+		t1.Symbol,
 	)
 	suite.Require().Nil(rio.Authorized[testUser])
 }
@@ -281,7 +281,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeTokenNotFound() {
 	suite.Require().NoError(err)
 
 	unAuthUserMsg := &types.MsgUnAuthorizeAddress{Creator: creator,
-		Index: "2", Address: testUser,
+		Symbol: "RST", Address: testUser,
 	}
 
 	_, err = srv.UnAuthorizeAddress(wctx, unAuthUserMsg)
@@ -304,7 +304,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddressSenderUnauthor
 	suite.Require().NoError(err)
 
 	unAuthUserMsg := &types.MsgUnAuthorizeAddress{Creator: creator2,
-		Index: "1", Address: testUser,
+		Symbol: "RIO", Address: testUser,
 	}
 
 	_, err = srv.UnAuthorizeAddress(wctx, unAuthUserMsg)
