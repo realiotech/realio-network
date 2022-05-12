@@ -1,0 +1,23 @@
+syntax = "proto3";
+package realiotech.realionetwork.asset;
+
+import "google/protobuf/timestamp.proto";
+option go_package = "github.com/realiotech/realio-network/x/asset/types";
+
+
+message Token {
+  string name = 1;
+  string symbol = 2;
+  int64 total = 3;
+  int64 decimals = 4;
+  bool authorizationRequired = 5;
+  string creator = 6;
+  map<string, TokenAuthorization> authorized = 7;
+  int64 created = 8;
+}
+
+message TokenAuthorization {
+  string tokenSymbol = 1;
+  string address = 2;
+  bool authorized = 3;
+}
