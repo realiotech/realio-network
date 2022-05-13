@@ -7,17 +7,18 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"github.com/ignite-hq/cli/ignite/pkg/cosmosibckeeper"
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 type (
 	Keeper struct {
-		cdc           codec.BinaryCodec
-		storeKey      sdk.StoreKey
-		memKey        sdk.StoreKey
-		channelKeeper types.ChannelKeeper
-		portKeeper    types.PortKeeper
-		scopedKeeper  types.ScopedKeeper
+		*cosmosibckeeper.Keeper
+		cdc        codec.BinaryCodec
+		storeKey   sdk.StoreKey
+		memKey     sdk.StoreKey
+		paramstore paramtypes.Subspace
 		bankKeeper    types.BankKeeper
 	}
 )
@@ -26,19 +27,30 @@ func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
 	memKey sdk.StoreKey,
-	channelKeeper types.ChannelKeeper,
-	portKeeper types.PortKeeper,
-	scopedKeeper types.ScopedKeeper,
-	bankKeeper types.BankKeeper,
+	ps paramtypes.Subspace,
+	channelKeeper cosmosibckeeper.ChannelKeeper,
+	portKeeper cosmosibckeeper.PortKeeper,
+	scopedKeeper cosmosibckeeper.ScopedKeeper,
+	bankKeeper    types.BankKeeper,
 
 ) *Keeper {
+	// set KeyTable if it has not already been set
+	if !ps.HasKeyTable() {
+		ps = ps.WithKeyTable(types.ParamKeyTable())
+	}
+
 	return &Keeper{
-		cdc:           cdc,
-		storeKey:      storeKey,
-		memKey:        memKey,
-		channelKeeper: channelKeeper,
-		portKeeper:    portKeeper,
-		scopedKeeper:  scopedKeeper,
+		Keeper: cosmosibckeeper.NewKeeper(
+			types.PortKey,
+			storeKey,
+			channelKeeper,
+			portKeeper,
+			scopedKeeper,
+		),
+		cdc:        cdc,
+		storeKey:   storeKey,
+		memKey:     memKey,
+		paramstore: ps,
 		bankKeeper:    bankKeeper,
 	}
 }

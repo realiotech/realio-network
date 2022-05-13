@@ -1,15 +1,15 @@
 syntax = "proto3";
-package realiotech.network.asset;
+package realiotech.realionetwork.asset;
 
-import "asset/token.proto";
-// this line is used by starport scaffolding # genesis/proto/import
 import "gogoproto/gogo.proto";
+import "asset/params.proto";
+// this line is used by starport scaffolding # genesis/proto/import
 
 option go_package = "github.com/realiotech/realio-network/x/asset/types";
 
 // GenesisState defines the asset module's genesis state.
 message GenesisState {
-    string port_id = 1;
-    repeated Token tokenList = 2 [(gogoproto.nullable) = false];
+  Params params = 1 [(gogoproto.nullable) = false];
+  string port_id = 2;
   // this line is used by starport scaffolding # genesis/proto/state
 }

@@ -5,12 +5,13 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 )
 
+const TypeMsgTransferToken = "transfer_token"
+
 var _ sdk.Msg = &MsgTransferToken{}
 
-func NewMsgTransferToken(creator string, index string, symbol string, from string, to string, amount int64) *MsgTransferToken {
+func NewMsgTransferToken(creator string, symbol string, from string, to string, amount int64) *MsgTransferToken {
 	return &MsgTransferToken{
 		Creator: creator,
-		Index:   index,
 		Symbol:  symbol,
 		From:    from,
 		To:      to,
@@ -23,7 +24,7 @@ func (msg *MsgTransferToken) Route() string {
 }
 
 func (msg *MsgTransferToken) Type() string {
-	return "TransferToken"
+	return TypeMsgTransferToken
 }
 
 func (msg *MsgTransferToken) GetSigners() []sdk.AccAddress {

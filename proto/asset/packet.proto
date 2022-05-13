@@ -1,5 +1,5 @@
 syntax = "proto3";
-package realiotech.network.asset;
+package realiotech.realionetwork.asset;
 
 // this line is used by starport scaffolding # proto/packet/import
 

@@ -29,12 +29,11 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type MsgCreateToken struct {
 	Creator               string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	Index                 string `protobuf:"bytes,2,opt,name=index,proto3" json:"index,omitempty"`
-	Name                  string `protobuf:"bytes,3,opt,name=name,proto3" json:"name,omitempty"`
-	Symbol                string `protobuf:"bytes,4,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Total                 int64  `protobuf:"varint,5,opt,name=total,proto3" json:"total,omitempty"`
-	Decimals              string `protobuf:"bytes,6,opt,name=decimals,proto3" json:"decimals,omitempty"`
-	AuthorizationRequired bool   `protobuf:"varint,7,opt,name=authorizationRequired,proto3" json:"authorizationRequired,omitempty"`
+	Name                  string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
+	Symbol                string `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	Total                 int64  `protobuf:"varint,4,opt,name=total,proto3" json:"total,omitempty"`
+	Decimals              int64  `protobuf:"varint,5,opt,name=decimals,proto3" json:"decimals,omitempty"`
+	AuthorizationRequired bool   `protobuf:"varint,6,opt,name=authorizationRequired,proto3" json:"authorizationRequired,omitempty"`
 }
 
 func (m *MsgCreateToken) Reset()         { *m = MsgCreateToken{} }
@@ -77,13 +76,6 @@ func (m *MsgCreateToken) GetCreator() string {
 	return ""
 }
 
-func (m *MsgCreateToken) GetIndex() string {
-	if m != nil {
-		return m.Index
-	}
-	return ""
-}
-
 func (m *MsgCreateToken) GetName() string {
 	if m != nil {
 		return m.Name
@@ -105,11 +97,11 @@ func (m *MsgCreateToken) GetTotal() int64 {
 	return 0
 }
 
-func (m *MsgCreateToken) GetDecimals() string {
+func (m *MsgCreateToken) GetDecimals() int64 {
 	if m != nil {
 		return m.Decimals
 	}
-	return ""
+	return 0
 }
 
 func (m *MsgCreateToken) GetAuthorizationRequired() bool {
@@ -445,11 +437,10 @@ var xxx_messageInfo_MsgUnAuthorizeAddressResponse proto.InternalMessageInfo
 
 type MsgTransferToken struct {
 	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	Index   string `protobuf:"bytes,2,opt,name=index,proto3" json:"index,omitempty"`
-	Symbol  string `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	From    string `protobuf:"bytes,4,opt,name=from,proto3" json:"from,omitempty"`
-	To      string `protobuf:"bytes,5,opt,name=to,proto3" json:"to,omitempty"`
-	Amount  int64  `protobuf:"varint,6,opt,name=amount,proto3" json:"amount,omitempty"`
+	Symbol  string `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	From    string `protobuf:"bytes,3,opt,name=from,proto3" json:"from,omitempty"`
+	To      string `protobuf:"bytes,4,opt,name=to,proto3" json:"to,omitempty"`
+	Amount  int64  `protobuf:"varint,5,opt,name=amount,proto3" json:"amount,omitempty"`
 }
 
 func (m *MsgTransferToken) Reset()         { *m = MsgTransferToken{} }
@@ -488,13 +479,6 @@ var xxx_messageInfo_MsgTransferToken proto.InternalMessageInfo
 func (m *MsgTransferToken) GetCreator() string {
 	if m != nil {
 		return m.Creator
-	}
-	return ""
-}
-
-func (m *MsgTransferToken) GetIndex() string {
-	if m != nil {
-		return m.Index
 	}
 	return ""
 }
@@ -564,55 +548,54 @@ func (m *MsgTransferTokenResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgTransferTokenResponse proto.InternalMessageInfo
 
 func init() {
-	proto.RegisterType((*MsgCreateToken)(nil), "realiotech.network.asset.MsgCreateToken")
-	proto.RegisterType((*MsgCreateTokenResponse)(nil), "realiotech.network.asset.MsgCreateTokenResponse")
-	proto.RegisterType((*MsgUpdateToken)(nil), "realiotech.network.asset.MsgUpdateToken")
-	proto.RegisterType((*MsgUpdateTokenResponse)(nil), "realiotech.network.asset.MsgUpdateTokenResponse")
-	proto.RegisterType((*MsgAuthorizeAddress)(nil), "realiotech.network.asset.MsgAuthorizeAddress")
-	proto.RegisterType((*MsgAuthorizeAddressResponse)(nil), "realiotech.network.asset.MsgAuthorizeAddressResponse")
-	proto.RegisterType((*MsgUnAuthorizeAddress)(nil), "realiotech.network.asset.MsgUnAuthorizeAddress")
-	proto.RegisterType((*MsgUnAuthorizeAddressResponse)(nil), "realiotech.network.asset.MsgUnAuthorizeAddressResponse")
-	proto.RegisterType((*MsgTransferToken)(nil), "realiotech.network.asset.MsgTransferToken")
-	proto.RegisterType((*MsgTransferTokenResponse)(nil), "realiotech.network.asset.MsgTransferTokenResponse")
+	proto.RegisterType((*MsgCreateToken)(nil), "realiotech.realionetwork.asset.MsgCreateToken")
+	proto.RegisterType((*MsgCreateTokenResponse)(nil), "realiotech.realionetwork.asset.MsgCreateTokenResponse")
+	proto.RegisterType((*MsgUpdateToken)(nil), "realiotech.realionetwork.asset.MsgUpdateToken")
+	proto.RegisterType((*MsgUpdateTokenResponse)(nil), "realiotech.realionetwork.asset.MsgUpdateTokenResponse")
+	proto.RegisterType((*MsgAuthorizeAddress)(nil), "realiotech.realionetwork.asset.MsgAuthorizeAddress")
+	proto.RegisterType((*MsgAuthorizeAddressResponse)(nil), "realiotech.realionetwork.asset.MsgAuthorizeAddressResponse")
+	proto.RegisterType((*MsgUnAuthorizeAddress)(nil), "realiotech.realionetwork.asset.MsgUnAuthorizeAddress")
+	proto.RegisterType((*MsgUnAuthorizeAddressResponse)(nil), "realiotech.realionetwork.asset.MsgUnAuthorizeAddressResponse")
+	proto.RegisterType((*MsgTransferToken)(nil), "realiotech.realionetwork.asset.MsgTransferToken")
+	proto.RegisterType((*MsgTransferTokenResponse)(nil), "realiotech.realionetwork.asset.MsgTransferTokenResponse")
 }
 
 func init() { proto.RegisterFile("asset/tx.proto", fileDescriptor_d916a3b302eb5de7) }
 
 var fileDescriptor_d916a3b302eb5de7 = []byte{
-	// 518 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x54, 0x31, 0x6f, 0xd3, 0x40,
-	0x14, 0x8e, 0xe3, 0x34, 0x69, 0x1f, 0x22, 0x2a, 0x07, 0xad, 0x4e, 0x46, 0x35, 0x91, 0xa7, 0x08,
-	0xa9, 0x36, 0x0a, 0x20, 0xe6, 0xc2, 0x4a, 0x16, 0xab, 0x2c, 0x6c, 0x17, 0xfb, 0xea, 0x58, 0x8d,
-	0x7d, 0xe1, 0xee, 0x22, 0x5c, 0x06, 0x7e, 0x03, 0x13, 0x3f, 0x09, 0x31, 0x76, 0x60, 0x60, 0x44,
-	0xc9, 0x1f, 0x41, 0xbe, 0x9c, 0x9d, 0xb8, 0x75, 0xd3, 0xb4, 0x52, 0xb7, 0xfb, 0x9e, 0xbf, 0xf7,
-	0xbe, 0xef, 0xc9, 0xdf, 0x1d, 0x74, 0x89, 0x10, 0x54, 0x7a, 0x32, 0x73, 0xa7, 0x9c, 0x49, 0x86,
-	0x30, 0xa7, 0x64, 0x12, 0x33, 0x49, 0x83, 0xb1, 0x9b, 0x52, 0xf9, 0x95, 0xf1, 0x73, 0x57, 0x51,
-	0xac, 0x27, 0x9a, 0xc9, 0xce, 0x69, 0xba, 0x24, 0x3b, 0x7f, 0x0c, 0xe8, 0x0e, 0x45, 0xf4, 0x81,
-	0x53, 0x22, 0xe9, 0x69, 0xfe, 0x01, 0x61, 0xe8, 0x04, 0x39, 0x64, 0x1c, 0x1b, 0x3d, 0xa3, 0xbf,
-	0xe7, 0x17, 0x10, 0x3d, 0x83, 0x9d, 0x38, 0x0d, 0x69, 0x86, 0x9b, 0xaa, 0xbe, 0x04, 0x08, 0x41,
-	0x2b, 0x25, 0x09, 0xc5, 0xa6, 0x2a, 0xaa, 0x33, 0x3a, 0x84, 0xb6, 0xb8, 0x48, 0x46, 0x6c, 0x82,
-	0x5b, 0xaa, 0xaa, 0x51, 0x3e, 0x41, 0x32, 0x49, 0x26, 0x78, 0xa7, 0x67, 0xf4, 0x4d, 0x7f, 0x09,
-	0x90, 0x05, 0xbb, 0x21, 0x0d, 0xe2, 0x84, 0x4c, 0x04, 0x6e, 0x2b, 0x7e, 0x89, 0xd1, 0x1b, 0x38,
-	0x20, 0x33, 0x39, 0x66, 0x3c, 0xfe, 0x46, 0x64, 0xcc, 0x52, 0x9f, 0x7e, 0x99, 0xc5, 0x9c, 0x86,
-	0xb8, 0xd3, 0x33, 0xfa, 0xbb, 0x7e, 0xfd, 0x47, 0x07, 0xc3, 0x61, 0x75, 0x2b, 0x9f, 0x8a, 0x29,
-	0x4b, 0x05, 0x75, 0x32, 0xb5, 0xef, 0xa7, 0x69, 0xb8, 0xc5, 0xbe, 0xab, 0x2d, 0x9a, 0x95, 0x2d,
-	0x6e, 0xf4, 0x64, 0xde, 0xee, 0x69, 0x4d, 0xb9, 0xf4, 0x44, 0xe0, 0xe9, 0x50, 0x44, 0x27, 0xba,
-	0x8b, 0x9e, 0x84, 0x21, 0xa7, 0x42, 0xdc, 0xc3, 0x18, 0x86, 0x0e, 0x59, 0x36, 0xeb, 0xbf, 0x51,
-	0x40, 0xe7, 0x08, 0x9e, 0xd7, 0x48, 0x94, 0x0e, 0x02, 0x38, 0xc8, 0xbd, 0xa5, 0x0f, 0xea, 0xe1,
-	0x05, 0x1c, 0xd5, 0x8a, 0x94, 0x2e, 0x7e, 0x1a, 0xb0, 0x3f, 0x14, 0xd1, 0x29, 0x27, 0xa9, 0x38,
-	0xa3, 0xfc, 0x7e, 0x71, 0x5c, 0xf9, 0x32, 0x2b, 0xbe, 0x10, 0xb4, 0xce, 0x38, 0x4b, 0x74, 0x20,
-	0xd5, 0x19, 0x75, 0xa1, 0x29, 0x99, 0xca, 0xe2, 0x9e, 0xdf, 0x94, 0x2c, 0xef, 0x25, 0x09, 0x9b,
-	0xa5, 0x52, 0xc5, 0xd0, 0xf4, 0x35, 0x72, 0x2c, 0xc0, 0x57, 0x7d, 0x15, 0xa6, 0x07, 0xbf, 0x5a,
-	0x60, 0x0e, 0x45, 0x84, 0x62, 0x78, 0xb4, 0x7e, 0x8b, 0xfa, 0xee, 0x4d, 0xd7, 0xd0, 0xad, 0x26,
-	0xd3, 0x7a, 0xb5, 0x2d, 0xb3, 0x90, 0xcc, 0xa5, 0xd6, 0x03, 0xbc, 0x59, 0x6a, 0x8d, 0x79, 0x8b,
-	0x54, 0x4d, 0x34, 0x51, 0x06, 0xfb, 0xd7, 0x32, 0x71, 0xbc, 0x71, 0xca, 0x55, 0xba, 0xf5, 0xf6,
-	0x4e, 0xf4, 0x52, 0xf9, 0x3b, 0xa0, 0x9a, 0x3c, 0x7a, 0x9b, 0x37, 0xb8, 0xd6, 0x60, 0xbd, 0xbb,
-	0x63, 0x43, 0xa9, 0xcf, 0xe0, 0x71, 0x35, 0x88, 0x2f, 0x37, 0x4e, 0xaa, 0x70, 0xad, 0xc1, 0xf6,
-	0xdc, 0x42, 0xf0, 0xfd, 0xc7, 0xdf, 0x73, 0xdb, 0xb8, 0x9c, 0xdb, 0xc6, 0xbf, 0xb9, 0x6d, 0xfc,
-	0x58, 0xd8, 0x8d, 0xcb, 0x85, 0xdd, 0xf8, 0xbb, 0xb0, 0x1b, 0x9f, 0x07, 0x51, 0x2c, 0xc7, 0xb3,
-	0x91, 0x1b, 0xb0, 0xc4, 0x5b, 0xcd, 0xd5, 0xc7, 0x63, 0x3d, 0xde, 0xcb, 0x3c, 0xfd, 0xbc, 0x5f,
-	0x4c, 0xa9, 0x18, 0xb5, 0xd5, 0xfb, 0xfe, 0xfa, 0x7f, 0x00, 0x00, 0x00, 0xff, 0xff, 0x44, 0x4c,
-	0x8e, 0x39, 0x1e, 0x06, 0x00, 0x00,
+	// 500 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x55, 0xbf, 0x6f, 0xd3, 0x40,
+	0x18, 0xcd, 0xe5, 0x57, 0xdb, 0x0f, 0x11, 0x55, 0x07, 0xad, 0x4e, 0x46, 0x35, 0x91, 0xa7, 0x2c,
+	0x38, 0xa8, 0x05, 0x84, 0x84, 0x18, 0x0a, 0x2b, 0x59, 0xac, 0xb2, 0xb0, 0x5d, 0xec, 0xab, 0x63,
+	0x35, 0xf6, 0x85, 0xbb, 0xb3, 0x48, 0x61, 0x61, 0xe8, 0xc4, 0xc4, 0x5f, 0xc4, 0xcc, 0xd8, 0x91,
+	0x11, 0x25, 0xff, 0x08, 0xca, 0xe5, 0xec, 0xc6, 0xad, 0x01, 0xd7, 0x52, 0xb7, 0xef, 0xdd, 0xdd,
+	0xfb, 0xde, 0xfb, 0xec, 0x77, 0x3a, 0xe8, 0x51, 0x29, 0x99, 0x1a, 0xaa, 0xb9, 0x3b, 0x13, 0x5c,
+	0x71, 0x6c, 0x0b, 0x46, 0xa7, 0x11, 0x57, 0xcc, 0x9f, 0xb8, 0xeb, 0x32, 0x61, 0xea, 0x13, 0x17,
+	0x67, 0xae, 0x3e, 0xe8, 0xfc, 0x40, 0xd0, 0x1b, 0xc9, 0xf0, 0xad, 0x60, 0x54, 0xb1, 0x13, 0x7e,
+	0xc6, 0x12, 0x4c, 0x60, 0xcb, 0x5f, 0x41, 0x2e, 0x08, 0xea, 0xa3, 0xc1, 0x8e, 0x97, 0x41, 0x8c,
+	0xa1, 0x9d, 0xd0, 0x98, 0x91, 0xa6, 0x5e, 0xd6, 0x35, 0xde, 0x87, 0xae, 0x3c, 0x8f, 0xc7, 0x7c,
+	0x4a, 0x5a, 0x7a, 0xd5, 0x20, 0xfc, 0x10, 0x3a, 0x8a, 0x2b, 0x3a, 0x25, 0xed, 0x3e, 0x1a, 0xb4,
+	0xbc, 0x35, 0xc0, 0x16, 0x6c, 0x07, 0xcc, 0x8f, 0x62, 0x3a, 0x95, 0xa4, 0xa3, 0x37, 0x72, 0x8c,
+	0x9f, 0xc1, 0x1e, 0x4d, 0xd5, 0x84, 0x8b, 0xe8, 0x33, 0x55, 0x11, 0x4f, 0x3c, 0xf6, 0x31, 0x8d,
+	0x04, 0x0b, 0x48, 0xb7, 0x8f, 0x06, 0xdb, 0x5e, 0xf9, 0xa6, 0x43, 0x60, 0xbf, 0xe8, 0xdf, 0x63,
+	0x72, 0xc6, 0x13, 0xc9, 0x9c, 0xb9, 0x9e, 0xec, 0xfd, 0x2c, 0xa8, 0x30, 0xd9, 0xd5, 0x14, 0xcd,
+	0xc2, 0x14, 0x7f, 0xf5, 0xd4, 0xfa, 0xbf, 0xa7, 0x0d, 0xe5, 0xdc, 0x13, 0x85, 0x07, 0x23, 0x19,
+	0x1e, 0x1b, 0x16, 0x3b, 0x0e, 0x02, 0xc1, 0xa4, 0xac, 0x61, 0x8c, 0xc0, 0x16, 0x5d, 0x93, 0xcd,
+	0x77, 0xcf, 0xa0, 0x73, 0x00, 0x8f, 0x4a, 0x24, 0x72, 0x07, 0x3e, 0xec, 0xad, 0xbc, 0x25, 0x77,
+	0xea, 0xe1, 0x31, 0x1c, 0x94, 0x8a, 0xe4, 0x2e, 0xbe, 0x22, 0xd8, 0x1d, 0xc9, 0xf0, 0x44, 0xd0,
+	0x44, 0x9e, 0x32, 0x51, 0xf7, 0xf7, 0x60, 0x68, 0x9f, 0x0a, 0x1e, 0x1b, 0x79, 0x5d, 0xe3, 0x1e,
+	0x34, 0x15, 0xd7, 0xa9, 0xdb, 0xf1, 0x9a, 0x8a, 0xaf, 0xb8, 0x34, 0xe6, 0x69, 0xa2, 0x4c, 0xe0,
+	0x0c, 0x72, 0x2c, 0x20, 0xd7, 0x1d, 0x64, 0xf6, 0x0e, 0x2f, 0x3a, 0xd0, 0x1a, 0xc9, 0x10, 0xa7,
+	0x70, 0x6f, 0xf3, 0x66, 0xb8, 0xee, 0xbf, 0x6f, 0x93, 0x5b, 0x4c, 0xa2, 0xf5, 0xe2, 0x76, 0xe7,
+	0x33, 0xf9, 0x95, 0xec, 0x66, 0x6c, 0xab, 0xc8, 0x6e, 0x9c, 0xaf, 0x24, 0x5b, 0x12, 0x4e, 0x7c,
+	0x81, 0x60, 0xf7, 0x46, 0x2c, 0x8e, 0x2a, 0x34, 0xbb, 0x4e, 0xb2, 0x5e, 0xd5, 0x20, 0xe5, 0x36,
+	0xbe, 0x21, 0xc0, 0x25, 0xf9, 0x7c, 0x5e, 0x65, 0xaa, 0x1b, 0x34, 0xeb, 0x75, 0x2d, 0x5a, 0x6e,
+	0xe6, 0x0b, 0xdc, 0x2f, 0x86, 0xf4, 0x69, 0x85, 0x7e, 0x05, 0x86, 0xf5, 0xf2, 0xb6, 0x8c, 0x4c,
+	0xfc, 0xcd, 0xbb, 0x9f, 0x0b, 0x1b, 0x5d, 0x2e, 0x6c, 0xf4, 0x7b, 0x61, 0xa3, 0xef, 0x4b, 0xbb,
+	0x71, 0xb9, 0xb4, 0x1b, 0xbf, 0x96, 0x76, 0xe3, 0xc3, 0x61, 0x18, 0xa9, 0x49, 0x3a, 0x76, 0x7d,
+	0x1e, 0x0f, 0xaf, 0xba, 0x9b, 0xf2, 0x89, 0x69, 0x3f, 0x9c, 0x0f, 0xcd, 0x6b, 0x70, 0x3e, 0x63,
+	0x72, 0xdc, 0xd5, 0x2f, 0xc2, 0xd1, 0x9f, 0x00, 0x00, 0x00, 0xff, 0xff, 0xeb, 0x4b, 0x35, 0x4e,
+	0x23, 0x06, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -644,7 +627,7 @@ func NewMsgClient(cc grpc1.ClientConn) MsgClient {
 
 func (c *msgClient) CreateToken(ctx context.Context, in *MsgCreateToken, opts ...grpc.CallOption) (*MsgCreateTokenResponse, error) {
 	out := new(MsgCreateTokenResponse)
-	err := c.cc.Invoke(ctx, "/realiotech.network.asset.Msg/CreateToken", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/realiotech.realionetwork.asset.Msg/CreateToken", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -653,7 +636,7 @@ func (c *msgClient) CreateToken(ctx context.Context, in *MsgCreateToken, opts ..
 
 func (c *msgClient) UpdateToken(ctx context.Context, in *MsgUpdateToken, opts ...grpc.CallOption) (*MsgUpdateTokenResponse, error) {
 	out := new(MsgUpdateTokenResponse)
-	err := c.cc.Invoke(ctx, "/realiotech.network.asset.Msg/UpdateToken", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/realiotech.realionetwork.asset.Msg/UpdateToken", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -662,7 +645,7 @@ func (c *msgClient) UpdateToken(ctx context.Context, in *MsgUpdateToken, opts ..
 
 func (c *msgClient) AuthorizeAddress(ctx context.Context, in *MsgAuthorizeAddress, opts ...grpc.CallOption) (*MsgAuthorizeAddressResponse, error) {
 	out := new(MsgAuthorizeAddressResponse)
-	err := c.cc.Invoke(ctx, "/realiotech.network.asset.Msg/AuthorizeAddress", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/realiotech.realionetwork.asset.Msg/AuthorizeAddress", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -671,7 +654,7 @@ func (c *msgClient) AuthorizeAddress(ctx context.Context, in *MsgAuthorizeAddres
 
 func (c *msgClient) UnAuthorizeAddress(ctx context.Context, in *MsgUnAuthorizeAddress, opts ...grpc.CallOption) (*MsgUnAuthorizeAddressResponse, error) {
 	out := new(MsgUnAuthorizeAddressResponse)
-	err := c.cc.Invoke(ctx, "/realiotech.network.asset.Msg/UnAuthorizeAddress", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/realiotech.realionetwork.asset.Msg/UnAuthorizeAddress", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -680,7 +663,7 @@ func (c *msgClient) UnAuthorizeAddress(ctx context.Context, in *MsgUnAuthorizeAd
 
 func (c *msgClient) TransferToken(ctx context.Context, in *MsgTransferToken, opts ...grpc.CallOption) (*MsgTransferTokenResponse, error) {
 	out := new(MsgTransferTokenResponse)
-	err := c.cc.Invoke(ctx, "/realiotech.network.asset.Msg/TransferToken", in, out, opts...)
+	err := c.cc.Invoke(ctx, "/realiotech.realionetwork.asset.Msg/TransferToken", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -730,7 +713,7 @@ func _Msg_CreateToken_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/realiotech.network.asset.Msg/CreateToken",
+		FullMethod: "/realiotech.realionetwork.asset.Msg/CreateToken",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).CreateToken(ctx, req.(*MsgCreateToken))
@@ -748,7 +731,7 @@ func _Msg_UpdateToken_Handler(srv interface{}, ctx context.Context, dec func(int
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/realiotech.network.asset.Msg/UpdateToken",
+		FullMethod: "/realiotech.realionetwork.asset.Msg/UpdateToken",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).UpdateToken(ctx, req.(*MsgUpdateToken))
@@ -766,7 +749,7 @@ func _Msg_AuthorizeAddress_Handler(srv interface{}, ctx context.Context, dec fun
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/realiotech.network.asset.Msg/AuthorizeAddress",
+		FullMethod: "/realiotech.realionetwork.asset.Msg/AuthorizeAddress",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).AuthorizeAddress(ctx, req.(*MsgAuthorizeAddress))
@@ -784,7 +767,7 @@ func _Msg_UnAuthorizeAddress_Handler(srv interface{}, ctx context.Context, dec f
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/realiotech.network.asset.Msg/UnAuthorizeAddress",
+		FullMethod: "/realiotech.realionetwork.asset.Msg/UnAuthorizeAddress",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).UnAuthorizeAddress(ctx, req.(*MsgUnAuthorizeAddress))
@@ -802,7 +785,7 @@ func _Msg_TransferToken_Handler(srv interface{}, ctx context.Context, dec func(i
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/realiotech.network.asset.Msg/TransferToken",
+		FullMethod: "/realiotech.realionetwork.asset.Msg/TransferToken",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(MsgServer).TransferToken(ctx, req.(*MsgTransferToken))
@@ -811,7 +794,7 @@ func _Msg_TransferToken_Handler(srv interface{}, ctx context.Context, dec func(i
 }
 
 var _Msg_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "realiotech.network.asset.Msg",
+	ServiceName: "realiotech.realionetwork.asset.Msg",
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -867,38 +850,29 @@ func (m *MsgCreateToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 			dAtA[i] = 0
 		}
 		i--
-		dAtA[i] = 0x38
+		dAtA[i] = 0x30
 	}
-	if len(m.Decimals) > 0 {
-		i -= len(m.Decimals)
-		copy(dAtA[i:], m.Decimals)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Decimals)))
+	if m.Decimals != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.Decimals))
 		i--
-		dAtA[i] = 0x32
+		dAtA[i] = 0x28
 	}
 	if m.Total != 0 {
 		i = encodeVarintTx(dAtA, i, uint64(m.Total))
 		i--
-		dAtA[i] = 0x28
+		dAtA[i] = 0x20
 	}
 	if len(m.Symbol) > 0 {
 		i -= len(m.Symbol)
 		copy(dAtA[i:], m.Symbol)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.Symbol)))
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x1a
 	}
 	if len(m.Name) > 0 {
 		i -= len(m.Name)
 		copy(dAtA[i:], m.Name)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.Name)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Index) > 0 {
-		i -= len(m.Index)
-		copy(dAtA[i:], m.Index)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Index)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -1162,33 +1136,26 @@ func (m *MsgTransferToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	if m.Amount != 0 {
 		i = encodeVarintTx(dAtA, i, uint64(m.Amount))
 		i--
-		dAtA[i] = 0x30
+		dAtA[i] = 0x28
 	}
 	if len(m.To) > 0 {
 		i -= len(m.To)
 		copy(dAtA[i:], m.To)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.To)))
 		i--
-		dAtA[i] = 0x2a
+		dAtA[i] = 0x22
 	}
 	if len(m.From) > 0 {
 		i -= len(m.From)
 		copy(dAtA[i:], m.From)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.From)))
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x1a
 	}
 	if len(m.Symbol) > 0 {
 		i -= len(m.Symbol)
 		copy(dAtA[i:], m.Symbol)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.Symbol)))
-		i--
-		dAtA[i] = 0x1a
-	}
-	if len(m.Index) > 0 {
-		i -= len(m.Index)
-		copy(dAtA[i:], m.Index)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Index)))
 		i--
 		dAtA[i] = 0x12
 	}
@@ -1246,10 +1213,6 @@ func (m *MsgCreateToken) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.Index)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
 	l = len(m.Name)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
@@ -1261,9 +1224,8 @@ func (m *MsgCreateToken) Size() (n int) {
 	if m.Total != 0 {
 		n += 1 + sovTx(uint64(m.Total))
 	}
-	l = len(m.Decimals)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
+	if m.Decimals != 0 {
+		n += 1 + sovTx(uint64(m.Decimals))
 	}
 	if m.AuthorizationRequired {
 		n += 2
@@ -1379,10 +1341,6 @@ func (m *MsgTransferToken) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	l = len(m.Index)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
 	l = len(m.Symbol)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
@@ -1479,38 +1437,6 @@ func (m *MsgCreateToken) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Index", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Index = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Name", wireType)
 			}
 			var stringLen uint64
@@ -1541,7 +1467,7 @@ func (m *MsgCreateToken) Unmarshal(dAtA []byte) error {
 			}
 			m.Name = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
 			}
@@ -1573,7 +1499,7 @@ func (m *MsgCreateToken) Unmarshal(dAtA []byte) error {
 			}
 			m.Symbol = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 5:
+		case 4:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Total", wireType)
 			}
@@ -1592,11 +1518,11 @@ func (m *MsgCreateToken) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-		case 6:
-			if wireType != 2 {
+		case 5:
+			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Decimals", wireType)
 			}
-			var stringLen uint64
+			m.Decimals = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowTx
@@ -1606,25 +1532,12 @@ func (m *MsgCreateToken) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				m.Decimals |= int64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Decimals = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 7:
+		case 6:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field AuthorizationRequired", wireType)
 			}
@@ -2354,38 +2267,6 @@ func (m *MsgTransferToken) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Index", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Index = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 3:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
 			}
 			var stringLen uint64
@@ -2416,7 +2297,7 @@ func (m *MsgTransferToken) Unmarshal(dAtA []byte) error {
 			}
 			m.Symbol = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field From", wireType)
 			}
@@ -2448,7 +2329,7 @@ func (m *MsgTransferToken) Unmarshal(dAtA []byte) error {
 			}
 			m.From = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 5:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field To", wireType)
 			}
@@ -2480,7 +2361,7 @@ func (m *MsgTransferToken) Unmarshal(dAtA []byte) error {
 			}
 			m.To = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 6:
+		case 5:
 			if wireType != 0 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
 			}

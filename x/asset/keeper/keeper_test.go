@@ -1,14 +1,20 @@
 package keeper_test
 
 import (
+	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
 	"github.com/realiotech/realio-network/app"
 	"github.com/realiotech/realio-network/x/asset/keeper"
-	assetSimapp "github.com/realiotech/realio-network/x/asset/simulation"
 	"github.com/realiotech/realio-network/x/asset/types"
 	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/log"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmtypes "github.com/tendermint/tendermint/types"
+	tmdb "github.com/tendermint/tm-db"
 	"testing"
+	"time"
 )
 
 type KeeperTestSuite struct {
@@ -23,22 +29,58 @@ type KeeperTestSuite struct {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	app := assetSimapp.New("")
-	suite.app = app
-	suite.msgSrv = keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	suite.ctx = app.BaseApp.NewContext(false, tmproto.Header{Height: 1})
+	simApp := New("")
+	suite.app = simApp
 
-	testUserAcc1 := app.AccountKeeper.NewAccountWithAddress(suite.ctx, sdk.AccAddress("addr1_______________"))
-	app.AccountKeeper.SetAccount(suite.ctx, testUserAcc1)
+	suite.msgSrv = keeper.NewMsgServerImpl(simApp.AssetKeeper)
+	suite.ctx = simApp.BaseApp.NewContext(false, tmproto.Header{Height: 1})
+
+	testUserAcc1 := simApp.AccountKeeper.NewAccountWithAddress(suite.ctx, sdk.AccAddress("addr1_______________"))
+	simApp.AccountKeeper.SetAccount(suite.ctx, testUserAcc1)
 	suite.testUser1Acc = testUserAcc1.GetAddress()
 	suite.testUser1Address = testUserAcc1.GetAddress().String()
 
-	testUserAcc2 := app.AccountKeeper.NewAccountWithAddress(suite.ctx, sdk.AccAddress("addr2_______________"))
-	app.AccountKeeper.SetAccount(suite.ctx, testUserAcc2)
+	testUserAcc2 := simApp.AccountKeeper.NewAccountWithAddress(suite.ctx, sdk.AccAddress("addr2_______________"))
+	simApp.AccountKeeper.SetAccount(suite.ctx, testUserAcc2)
 	suite.testUser2Acc = testUserAcc2.GetAddress()
 	suite.testUser2Address = testUserAcc1.GetAddress().String()
+	suite.app = simApp
 }
 
 func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
+}
+
+// New creates application instance with in-memory database and disabled logging.
+func New(dir string) *app.App {
+	db := tmdb.NewMemDB()
+	logger := log.NewNopLogger()
+	encoding := cosmoscmd.MakeEncodingConfig(app.ModuleBasics)
+
+	a := app.NewSimApp(logger, db, nil, true, map[int64]bool{}, dir, 0, cosmoscmd.EncodingConfig(encoding),
+		simapp.EmptyAppOptions{})
+	// InitChain updates deliverState which is required when app.NewContext is called
+	a.InitChain(abci.RequestInitChain{
+		Validators:      []abci.ValidatorUpdate{},
+		ConsensusParams: defaultConsensusParams,
+		AppStateBytes:   []byte("{}"),
+	})
+	return a
+}
+
+var defaultConsensusParams = &abci.ConsensusParams{
+	Block: &abci.BlockParams{
+		MaxBytes: 200000,
+		MaxGas:   2000000,
+	},
+	Evidence: &tmproto.EvidenceParams{
+		MaxAgeNumBlocks: 302400,
+		MaxAgeDuration:  504 * time.Hour, // 3 weeks is the max duration
+		MaxBytes:        10000,
+	},
+	Validator: &tmproto.ValidatorParams{
+		PubKeyTypes: []string{
+			tmtypes.ABCIPubKeyTypeEd25519,
+		},
+	},
 }

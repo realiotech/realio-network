@@ -17,6 +17,7 @@ var (
 
 const (
 	flagPacketTimeoutTimestamp = "packet-timeout-timestamp"
+	listSeparator              = ","
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -29,6 +30,8 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
+	cmd.AddCommand(CmdMsgCreateToken())
+	cmd.AddCommand(CmdMsgUpdateToken())
 	cmd.AddCommand(CmdCreateToken())
 	cmd.AddCommand(CmdUpdateToken())
 	cmd.AddCommand(CmdAuthorizeAddress())

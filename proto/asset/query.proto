@@ -1,46 +1,30 @@
 syntax = "proto3";
-package realiotech.network.asset;
+package realiotech.realionetwork.asset;
 
+import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/query/v1beta1/pagination.proto";
-import "asset/token.proto";
+import "asset/params.proto";
 // this line is used by starport scaffolding # 1
-import "gogoproto/gogo.proto";
 
 option go_package = "github.com/realiotech/realio-network/x/asset/types";
 
 // Query defines the gRPC querier service.
 service Query {
-    // Queries a token by index.
-	rpc Token(QueryGetTokenRequest) returns (QueryGetTokenResponse) {
-		option (google.api.http).get = "/realiotech/network/asset/token/{index}";
-	}
-
-	// Queries a list of token items.
-	rpc TokenAll(QueryAllTokenRequest) returns (QueryAllTokenResponse) {
-		option (google.api.http).get = "/realiotech/network/asset/token";
-	}
-
-// this line is used by starport scaffolding # 2
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/realiotech/realionetwork/asset/params";
+  }
+  // this line is used by starport scaffolding # 2
 }
 
-message QueryGetTokenRequest {
-	  string index = 1;
-	  string symbol = 2;
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
 
-}
-
-message QueryGetTokenResponse {
-	Token token = 1 [(gogoproto.nullable) = false];
-}
-
-message QueryAllTokenRequest {
-	cosmos.base.query.v1beta1.PageRequest pagination = 1;
-}
-
-message QueryAllTokenResponse {
-	repeated Token token = 1 [(gogoproto.nullable) = false];
-	cosmos.base.query.v1beta1.PageResponse pagination = 2;
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [(gogoproto.nullable) = false];
 }
 
 // this line is used by starport scaffolding # 3

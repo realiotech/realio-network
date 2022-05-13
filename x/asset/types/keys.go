@@ -21,6 +21,9 @@ const (
 
 	// PortID is the default port id that module binds to
 	PortID = "asset"
+
+	// TokenKeyPrefix is the prefix to retrieve all Token
+	TokenKeyPrefix = "Token/value/"
 )
 
 var (
@@ -30,4 +33,17 @@ var (
 
 func KeyPrefix(p string) []byte {
 	return []byte(p)
+}
+
+// TokenKey returns the store key to retrieve a Token from the index fields
+func TokenKey(
+	index string,
+) []byte {
+	var key []byte
+
+	indexBytes := []byte(index)
+	key = append(key, indexBytes...)
+	key = append(key, []byte("/")...)
+
+	return key
 }

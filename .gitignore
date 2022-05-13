@@ -1,14 +1,6 @@
 vue/node_modules
 vue/dist
 release/
-.idea
-
-realio-networkd
-
-s6/.s6-svscan/control
-s6/.s6-svscan/lock
-s6/*/supervise
-s6/*/event
-
-.*.swp
-*.swp
+.idea/
+.vscode/
+.DS_Store

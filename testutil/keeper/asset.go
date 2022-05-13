@@ -1,7 +1,9 @@
 package keeper
 
 import (
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -9,11 +11,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	typesparams "github.com/cosmos/cosmos-sdk/x/params/types"
-	ibckeeper "github.com/cosmos/ibc-go/modules/core/keeper"
+	ibckeeper "github.com/cosmos/ibc-go/v2/modules/core/keeper"
 	"github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/asset/types"
 	"github.com/stretchr/testify/require"
@@ -36,17 +36,14 @@ func AssetKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 
 	registry := codectypes.NewInterfaceRegistry()
 	appCodec := codec.NewProtoCodec(registry)
-	amino := codec.NewLegacyAmino()
+	capabilityKeeper := capabilitykeeper.NewKeeper(appCodec, storeKey, memStoreKey)
+
 	ss := typesparams.NewSubspace(appCodec,
-		amino,
+		types.Amino,
 		storeKey,
 		memStoreKey,
 		"AssetSubSpace",
 	)
-
-	capabilityKeeper := capabilitykeeper.NewKeeper(appCodec, storeKey, memStoreKey)
-	accountKeeper := authkeeper.NewAccountKeeper(appCodec, storeKey, ss, authtypes.ProtoBaseAccount, nil)
-
 	IBCKeeper := ibckeeper.NewKeeper(
 		appCodec,
 		storeKey,
@@ -55,6 +52,7 @@ func AssetKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		nil,
 		capabilityKeeper.ScopeToModule("AssetIBCKeeper"),
 	)
+	accountKeeper := authkeeper.NewAccountKeeper(appCodec, storeKey, ss, authtypes.ProtoBaseAccount, nil)
 
 	BankKeeper := bankkeeper.NewBaseKeeper(
 		appCodec,
@@ -64,16 +62,28 @@ func AssetKeeper(t testing.TB) (*keeper.Keeper, sdk.Context) {
 		nil,
 	)
 
-	k := keeper.NewKeeper(
-		codec.NewProtoCodec(registry),
+	paramsSubspace := typesparams.NewSubspace(appCodec,
+		types.Amino,
 		storeKey,
 		memStoreKey,
+		"AssetParams",
+	)
+	k := keeper.NewKeeper(
+		appCodec,
+		storeKey,
+		memStoreKey,
+		paramsSubspace,
 		IBCKeeper.ChannelKeeper,
 		&IBCKeeper.PortKeeper,
 		capabilityKeeper.ScopeToModule("AssetScopedKeeper"),
 		BankKeeper,
+
 	)
 
 	ctx := sdk.NewContext(stateStore, tmproto.Header{}, false, logger)
+
+	// Initialize params
+	k.SetParams(ctx, types.DefaultParams())
+
 	return k, ctx
 }
