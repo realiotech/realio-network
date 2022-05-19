@@ -21,6 +21,7 @@ import CosmosIbcGoIbcCoreClientV1 from './cosmos/ibc-go/ibc.core.client.v1'
 import CosmosIbcGoIbcCoreConnectionV1 from './cosmos/ibc-go/ibc.core.connection.v1'
 import CosmosIbcGoIbcCorePortV1 from './cosmos/ibc-go/ibc.core.port.v1'
 import RealiotechRealioNetworkRealiotechRealionetworkAsset from './realiotech/realio-network/realiotech.realionetwork.asset'
+import RealiotechRealioNetworkRealiotechRealionetworkMintV1Beta1 from './realiotech/realio-network/realiotech.realionetwork.mint.v1beta1'
 
 
 export default { 
@@ -45,6 +46,7 @@ export default {
   CosmosIbcGoIbcCoreConnectionV1: load(CosmosIbcGoIbcCoreConnectionV1, 'ibc.core.connection.v1'),
   CosmosIbcGoIbcCorePortV1: load(CosmosIbcGoIbcCorePortV1, 'ibc.core.port.v1'),
   RealiotechRealioNetworkRealiotechRealionetworkAsset: load(RealiotechRealioNetworkRealiotechRealionetworkAsset, 'realiotech.realionetwork.asset'),
+  RealiotechRealioNetworkRealiotechRealionetworkMintV1Beta1: load(RealiotechRealioNetworkRealiotechRealionetworkMintV1Beta1, 'realiotech.realionetwork.mint.v1beta1'),
   
 }
 
