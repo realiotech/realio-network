@@ -24,6 +24,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/cosmos/cosmos-sdk/simapp"
+	simappparams "github.com/cosmos/cosmos-sdk/simapp/params"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
@@ -95,7 +96,6 @@ import (
 	tmos "github.com/tendermint/tendermint/libs/os"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
 	"github.com/ignite-hq/cli/ignite/pkg/openapiconsole"
 
 	monitoringpkeeper "github.com/tendermint/spn/x/monitoringp/keeper"
@@ -111,8 +111,7 @@ import (
 )
 
 const (
-	AccountAddressPrefix = "realio"
-	Name                 = "realio-network"
+	Name = "realio-network"
 )
 
 // this line is used by starport scaffolding # stargate/wasm/app/enabledProposals
@@ -182,7 +181,6 @@ var (
 )
 
 var (
-	_ cosmoscmd.App           = (*App)(nil)
 	_ servertypes.Application = (*App)(nil)
 	_ simapp.App              = (*App)(nil)
 )
@@ -260,10 +258,10 @@ func New(
 	skipUpgradeHeights map[int64]bool,
 	homePath string,
 	invCheckPeriod uint,
-	encodingConfig cosmoscmd.EncodingConfig,
+	encodingConfig simappparams.EncodingConfig,
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
-) cosmoscmd.App {
+) *App {
 	appCodec := encodingConfig.Marshaler
 	cdc := encodingConfig.Amino
 	interfaceRegistry := encodingConfig.InterfaceRegistry

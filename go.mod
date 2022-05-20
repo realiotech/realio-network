@@ -5,6 +5,7 @@ go 1.16
 require (
 	github.com/cosmos/cosmos-sdk v0.45.4
 	github.com/cosmos/ibc-go/v2 v2.2.0
+	github.com/ethereum/go-ethereum v1.10.15
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
@@ -14,6 +15,7 @@ require (
 	github.com/rakyll/statik v0.1.7
 	github.com/spf13/cast v1.4.1
 	github.com/spf13/cobra v1.4.0
+	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.11.0
 	github.com/stretchr/testify v1.7.1
 	github.com/tendermint/spn v0.1.1-0.20220407154406-5cfd1bf28150
