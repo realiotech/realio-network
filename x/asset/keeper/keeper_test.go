@@ -1,10 +1,8 @@
 package keeper_test
 
 import (
-	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ignite-hq/cli/ignite/pkg/cosmoscmd"
-	"github.com/realiotech/realio-network/app"
+	"github.com/realiotech/realio-network/simapp"
 	"github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/asset/types"
 	"github.com/stretchr/testify/suite"
@@ -19,7 +17,7 @@ import (
 
 type KeeperTestSuite struct {
 	suite.Suite
-	app              *app.App
+	app              *simapp.SimApp
 	ctx              sdk.Context
 	msgSrv           types.MsgServer
 	testUser1Acc     sdk.AccAddress
@@ -29,7 +27,7 @@ type KeeperTestSuite struct {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	simApp := New("")
+	simApp := NewSimApp("")
 	suite.app = simApp
 
 	suite.msgSrv = keeper.NewMsgServerImpl(simApp.AssetKeeper)
@@ -51,13 +49,14 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
 }
 
+
 // New creates application instance with in-memory database and disabled logging.
-func New(dir string) *app.App {
+func NewSimApp(dir string) *simapp.SimApp {
 	db := tmdb.NewMemDB()
 	logger := log.NewNopLogger()
-	encoding := cosmoscmd.MakeEncodingConfig(app.ModuleBasics)
+	encoding := simapp.MakeTestEncodingConfig()
 
-	a := app.NewSimApp(logger, db, nil, true, map[int64]bool{}, dir, 0, cosmoscmd.EncodingConfig(encoding),
+	a := simapp.NewSimApp(logger, db, nil, true, map[int64]bool{}, dir, 0, encoding,
 		simapp.EmptyAppOptions{})
 	// InitChain updates deliverState which is required when app.NewContext is called
 	a.InitChain(abci.RequestInitChain{

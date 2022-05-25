@@ -4,10 +4,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
 )
 
-// AccountKeeper defines the expected account keeper used for simulations (noalias)
+// AccountKeeper defines the expected account keeper
 type AccountKeeper interface {
 	GetAccount(ctx sdk.Context, addr sdk.AccAddress) types.AccountI
 	// Methods imported from account should be defined here
@@ -22,3 +21,21 @@ type BankKeeper interface {
 	SetDenomMetaData(ctx sdk.Context, denomMetaData banktypes.Metadata)
 	// Methods imported from bank should be defined here
 }
+
+//leaving this here for ibc implemenation
+// TransferKeeper defines the expected IBC transfer keeper.
+//type TransferKeeper interface {
+//	GetDenomTrace(ctx sdk.Context, denomTraceHash tmbytes.HexBytes) (transfertypes.DenomTrace, bool)
+//	SendTransfer(
+//		ctx sdk.Context,
+//		sourcePort, sourceChannel string,
+//		token sdk.Coin,
+//		sender sdk.AccAddress, receiver string,
+//		timeoutHeight clienttypes.Height, timeoutTimestamp uint64,
+//	) error
+//}
+//
+//// ChannelKeeper defines the expected IBC channel keeper.
+//type ChannelKeeper interface {
+//	GetChannel(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool)
+//}

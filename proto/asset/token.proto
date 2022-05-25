@@ -1,7 +1,6 @@
 syntax = "proto3";
 package realiotech.realionetwork.asset;
 
-import "google/protobuf/timestamp.proto";
 option go_package = "github.com/realiotech/realio-network/x/asset/types";
 
 
