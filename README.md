@@ -10,9 +10,7 @@
 
 ## 1. Description
 
-Realio Network is a scalable, high-throughput Proof-of-Stake blockchain that is fully compatible and
-interoperable with Ethereum. It's built using the [Cosmos SDK](https://github.com/cosmos/cosmos-sdk/) which runs on top of [Tendermint Core](https://github.com/tendermint/tendermint) consensus engine.
-<a id="contributing" />
+Realio Network is an EVM compatible blockchain built using the [Cosmos SDK](https://github.com/cosmos/cosmos-sdk/) and the [Tendermint Core](https://github.com/tendermint/tendermint) consensus engine. It is focused on the issuance and management of digitally native and real-world assets across many chains.
 
 ## 2. Installation
 ```bash
