@@ -21,8 +21,8 @@ jobs:
         run: make release-dry-run
       - name: setup release environment
         env:
-          GITHUB_TOKEN: ${{ secrets.REALIO_NETWORK_CI_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |-
-          echo 'GITHUB_TOKEN=${{secrets.REALIO_NETWORK_CI_GITHUB_TOKEN}}' > .release-env
+          echo 'GITHUB_TOKEN=${{secrets.GITHUB_TOKEN}}' > .release-env
       - name: release publish
         run: make release
