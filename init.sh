@@ -35,6 +35,7 @@ cat $HOME/.realio-network/config/genesis.json | jq '.app_state["mint"]["params"]
 cat $HOME/.realio-network/config/genesis.json | jq '.app_state["crisis"]["constant_fee"]["denom"]="urio"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
 cat $HOME/.realio-network/config/genesis.json | jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="urio"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
 cat $HOME/.realio-network/config/genesis.json | jq '.app_state["evm"]["params"]["evm_denom"]="urio"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
+cat $HOME/.realio-network/config/genesis.json | jq '.app_state["feemarket"]["params"]["no_base_fee"]="true"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
 cat $HOME/.realio-network/config/genesis.json | jq '.app_state["inflation"]["params"]["mint_denom"]="urio"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
 
 # Add denom metadata for rio and rst
