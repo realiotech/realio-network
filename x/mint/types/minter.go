@@ -2,12 +2,11 @@ package types
 
 import (
 	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Supply cap 1 RIO : 10^6 uRIO
-var uRioSupplyCap = sdk.NewInt(75000000000000)
+// Supply cap 1 RIO : 10^18 uRIO
+var uRioSupplyCap, _ = sdk.NewIntFromString("75000000000000000000000000")
 
 // NewMinter returns a new Minter object with the given inflation and annual
 // provisions values.
