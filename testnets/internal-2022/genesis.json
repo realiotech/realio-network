@@ -81,7 +81,7 @@
           "coins": [
             {
               "denom": "urio",
-              "amount": "1000000000000"
+              "amount": "1100000000000"
             }
           ]
         }
@@ -89,7 +89,7 @@
       "supply": [
         {
           "denom": "urio",
-          "amount": "11000000000000"
+          "amount": "11100000000000"
         },
         {
           "denom": "urst",
@@ -209,7 +209,7 @@
         "base_fee_change_denominator": 8,
         "elasticity_multiplier": 2,
         "enable_height": "0",
-        "base_fee": "1000000000"
+        "base_fee": "7"
       },
       "block_gas": "0"
     },
@@ -287,7 +287,7 @@
         "min_deposit": [
           {
             "denom": "urio",
-            "amount": "1000000"
+            "amount": "10000000"
           }
         ],
         "max_deposit_period": "3600s"
