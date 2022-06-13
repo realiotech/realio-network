@@ -29,8 +29,8 @@ RUN echo "building secret-service" ; \
     #cd github.com/yousefvand/secret-service && \
     #go build -race --mod=readonly -o /go/bin/secretserviced ./cmd/app/secretserviced && \
     #go build -race --mod=readonly -o /go/bin/secretservice ./cmd/app/secretservice && \
-    go install -race github.com/yousefvand/secret-service/cmd/app/secretserviced@v0.2.1 && \
-    go install -race github.com/yousefvand/secret-service/cmd/app/secretservice@v0.2.1 && \
+    go install -race github.com/yousefvand/secret-service/cmd/app/secretserviced@v0.2.2 && \
+    go install -race github.com/yousefvand/secret-service/cmd/app/secretservice@v0.2.2 && \
     echo done
 
 FROM golang:1.17-buster AS realio-network-builder
