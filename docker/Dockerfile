@@ -78,7 +78,7 @@ RUN useradd -ms /bin/bash -d /data realio-cosmos && \
 
 COPY --from=realio-network-builder /go/bin/realio-networkd /usr/local/bin/
 COPY --from=secret-service-builder /go/bin/secretservice* /usr/local/bin/
-COPY genesis-testnet.json /usr/local/share/doc/realio-networkd/genesis-testnet.json
+COPY testnets/internal-2022/genesis.json /usr/local/share/doc/realio-networkd/testnets/internal-2022/genesis.json 
 COPY s6 /usr/local/etc/s6/
 
 VOLUME /data
