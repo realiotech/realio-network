@@ -18,7 +18,7 @@ FROM starport/cli:0.19.1 AS starport-cli
 
 #RUN npm run build
 
-FROM golang:1.16-buster AS secret-service-builder
+FROM golang:1.17-buster AS secret-service-builder
 
 ARG APTOPT
 WORKDIR /go/src
@@ -33,7 +33,7 @@ RUN echo "building secret-service" ; \
     go install -race github.com/yousefvand/secret-service/cmd/app/secretservice@v0.2.1 && \
     echo done
 
-FROM golang:1.16-buster AS realio-network-builder
+FROM golang:1.17-buster AS realio-network-builder
 
 # use something like --build-arg APTOPT='-o Acquire::HTTP::Proxy=http://proxy:3142' to use an apt-cacher for example
 ARG APTOPT
