@@ -1,5 +1,5 @@
 syntax = "proto3";
-package realionetwork.asset;
+package realionetwork.asset.v1;
 
 import "gogoproto/gogo.proto";
 
