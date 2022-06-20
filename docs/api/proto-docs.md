@@ -4,70 +4,70 @@
 
 ## Table of Contents
 
-- [asset/params.proto](#asset/params.proto)
-    - [Params](#realiotech.realionetwork.asset.Params)
+- [realionetwork/asset/params.proto](#realionetwork/asset/params.proto)
+    - [Params](#realionetwork.asset.Params)
   
-- [asset/genesis.proto](#asset/genesis.proto)
-    - [GenesisState](#realiotech.realionetwork.asset.GenesisState)
+- [realionetwork/asset/genesis.proto](#realionetwork/asset/genesis.proto)
+    - [GenesisState](#realionetwork.asset.GenesisState)
   
-- [asset/packet.proto](#asset/packet.proto)
-    - [AssetPacketData](#realiotech.realionetwork.asset.AssetPacketData)
-    - [NoData](#realiotech.realionetwork.asset.NoData)
+- [realionetwork/asset/packet.proto](#realionetwork/asset/packet.proto)
+    - [AssetPacketData](#realionetwork.asset.AssetPacketData)
+    - [NoData](#realionetwork.asset.NoData)
   
-- [asset/query.proto](#asset/query.proto)
-    - [QueryParamsRequest](#realiotech.realionetwork.asset.QueryParamsRequest)
-    - [QueryParamsResponse](#realiotech.realionetwork.asset.QueryParamsResponse)
+- [realionetwork/asset/query.proto](#realionetwork/asset/query.proto)
+    - [QueryParamsRequest](#realionetwork.asset.QueryParamsRequest)
+    - [QueryParamsResponse](#realionetwork.asset.QueryParamsResponse)
   
-    - [Query](#realiotech.realionetwork.asset.Query)
+    - [Query](#realionetwork.asset.Query)
   
-- [asset/token.proto](#asset/token.proto)
-    - [Token](#realiotech.realionetwork.asset.Token)
-    - [Token.AuthorizedEntry](#realiotech.realionetwork.asset.Token.AuthorizedEntry)
-    - [TokenAuthorization](#realiotech.realionetwork.asset.TokenAuthorization)
+- [realionetwork/asset/token.proto](#realionetwork/asset/token.proto)
+    - [Token](#realionetwork.asset.Token)
+    - [Token.AuthorizedEntry](#realionetwork.asset.Token.AuthorizedEntry)
+    - [TokenAuthorization](#realionetwork.asset.TokenAuthorization)
   
-- [asset/tx.proto](#asset/tx.proto)
-    - [MsgAuthorizeAddress](#realiotech.realionetwork.asset.MsgAuthorizeAddress)
-    - [MsgAuthorizeAddressResponse](#realiotech.realionetwork.asset.MsgAuthorizeAddressResponse)
-    - [MsgCreateToken](#realiotech.realionetwork.asset.MsgCreateToken)
-    - [MsgCreateTokenResponse](#realiotech.realionetwork.asset.MsgCreateTokenResponse)
-    - [MsgTransferToken](#realiotech.realionetwork.asset.MsgTransferToken)
-    - [MsgTransferTokenResponse](#realiotech.realionetwork.asset.MsgTransferTokenResponse)
-    - [MsgUnAuthorizeAddress](#realiotech.realionetwork.asset.MsgUnAuthorizeAddress)
-    - [MsgUnAuthorizeAddressResponse](#realiotech.realionetwork.asset.MsgUnAuthorizeAddressResponse)
-    - [MsgUpdateToken](#realiotech.realionetwork.asset.MsgUpdateToken)
-    - [MsgUpdateTokenResponse](#realiotech.realionetwork.asset.MsgUpdateTokenResponse)
+- [realionetwork/asset/tx.proto](#realionetwork/asset/tx.proto)
+    - [MsgAuthorizeAddress](#realionetwork.asset.MsgAuthorizeAddress)
+    - [MsgAuthorizeAddressResponse](#realionetwork.asset.MsgAuthorizeAddressResponse)
+    - [MsgCreateToken](#realionetwork.asset.MsgCreateToken)
+    - [MsgCreateTokenResponse](#realionetwork.asset.MsgCreateTokenResponse)
+    - [MsgTransferToken](#realionetwork.asset.MsgTransferToken)
+    - [MsgTransferTokenResponse](#realionetwork.asset.MsgTransferTokenResponse)
+    - [MsgUnAuthorizeAddress](#realionetwork.asset.MsgUnAuthorizeAddress)
+    - [MsgUnAuthorizeAddressResponse](#realionetwork.asset.MsgUnAuthorizeAddressResponse)
+    - [MsgUpdateToken](#realionetwork.asset.MsgUpdateToken)
+    - [MsgUpdateTokenResponse](#realionetwork.asset.MsgUpdateTokenResponse)
   
-    - [Msg](#realiotech.realionetwork.asset.Msg)
+    - [Msg](#realionetwork.asset.Msg)
   
-- [mint/v1beta1/mint.proto](#mint/v1beta1/mint.proto)
-    - [Minter](#realiotech.realionetwork.mint.v1beta1.Minter)
-    - [Params](#realiotech.realionetwork.mint.v1beta1.Params)
+- [realionetwork/mint/v1beta1/mint.proto](#realionetwork/mint/v1beta1/mint.proto)
+    - [Minter](#realionetwork.mint.v1beta1.Minter)
+    - [Params](#realionetwork.mint.v1beta1.Params)
   
-- [mint/v1beta1/genesis.proto](#mint/v1beta1/genesis.proto)
-    - [GenesisState](#realiotech.realionetwork.mint.v1beta1.GenesisState)
+- [realionetwork/mint/v1beta1/genesis.proto](#realionetwork/mint/v1beta1/genesis.proto)
+    - [GenesisState](#realionetwork.mint.v1beta1.GenesisState)
   
-- [mint/v1beta1/query.proto](#mint/v1beta1/query.proto)
-    - [QueryAnnualProvisionsRequest](#realiotech.realionetwork.mint.v1beta1.QueryAnnualProvisionsRequest)
-    - [QueryAnnualProvisionsResponse](#realiotech.realionetwork.mint.v1beta1.QueryAnnualProvisionsResponse)
-    - [QueryInflationRequest](#realiotech.realionetwork.mint.v1beta1.QueryInflationRequest)
-    - [QueryInflationResponse](#realiotech.realionetwork.mint.v1beta1.QueryInflationResponse)
-    - [QueryParamsRequest](#realiotech.realionetwork.mint.v1beta1.QueryParamsRequest)
-    - [QueryParamsResponse](#realiotech.realionetwork.mint.v1beta1.QueryParamsResponse)
+- [realionetwork/mint/v1beta1/query.proto](#realionetwork/mint/v1beta1/query.proto)
+    - [QueryAnnualProvisionsRequest](#realionetwork.mint.v1beta1.QueryAnnualProvisionsRequest)
+    - [QueryAnnualProvisionsResponse](#realionetwork.mint.v1beta1.QueryAnnualProvisionsResponse)
+    - [QueryInflationRequest](#realionetwork.mint.v1beta1.QueryInflationRequest)
+    - [QueryInflationResponse](#realionetwork.mint.v1beta1.QueryInflationResponse)
+    - [QueryParamsRequest](#realionetwork.mint.v1beta1.QueryParamsRequest)
+    - [QueryParamsResponse](#realionetwork.mint.v1beta1.QueryParamsResponse)
   
-    - [Query](#realiotech.realionetwork.mint.v1beta1.Query)
+    - [Query](#realionetwork.mint.v1beta1.Query)
   
 - [Scalar Value Types](#scalar-value-types)
 
 
 
-<a name="asset/params.proto"></a>
+<a name="realionetwork/asset/params.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## asset/params.proto
+## realionetwork/asset/params.proto
 
 
 
-<a name="realiotech.realionetwork.asset.Params"></a>
+<a name="realionetwork.asset.Params"></a>
 
 ### Params
 Params defines the parameters for the module.
@@ -86,14 +86,14 @@ Params defines the parameters for the module.
 
 
 
-<a name="asset/genesis.proto"></a>
+<a name="realionetwork/asset/genesis.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## asset/genesis.proto
+## realionetwork/asset/genesis.proto
 
 
 
-<a name="realiotech.realionetwork.asset.GenesisState"></a>
+<a name="realionetwork.asset.GenesisState"></a>
 
 ### GenesisState
 GenesisState defines the asset module's genesis state.
@@ -101,7 +101,7 @@ GenesisState defines the asset module's genesis state.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `params` | [Params](#realiotech.realionetwork.asset.Params) |  |  |
+| `params` | [Params](#realionetwork.asset.Params) |  |  |
 | `port_id` | [string](#string) |  | this line is used by starport scaffolding # genesis/proto/state |
 
 
@@ -118,14 +118,14 @@ GenesisState defines the asset module's genesis state.
 
 
 
-<a name="asset/packet.proto"></a>
+<a name="realionetwork/asset/packet.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## asset/packet.proto
+## realionetwork/asset/packet.proto
 
 
 
-<a name="realiotech.realionetwork.asset.AssetPacketData"></a>
+<a name="realionetwork.asset.AssetPacketData"></a>
 
 ### AssetPacketData
 
@@ -133,14 +133,14 @@ GenesisState defines the asset module's genesis state.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `noData` | [NoData](#realiotech.realionetwork.asset.NoData) |  | this line is used by starport scaffolding # ibc/packet/proto/field |
+| `noData` | [NoData](#realionetwork.asset.NoData) |  | this line is used by starport scaffolding # ibc/packet/proto/field |
 
 
 
 
 
 
-<a name="realiotech.realionetwork.asset.NoData"></a>
+<a name="realionetwork.asset.NoData"></a>
 
 ### NoData
 
@@ -159,14 +159,14 @@ GenesisState defines the asset module's genesis state.
 
 
 
-<a name="asset/query.proto"></a>
+<a name="realionetwork/asset/query.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## asset/query.proto
+## realionetwork/asset/query.proto
 
 
 
-<a name="realiotech.realionetwork.asset.QueryParamsRequest"></a>
+<a name="realionetwork.asset.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
 QueryParamsRequest is request type for the Query/Params RPC method.
@@ -176,7 +176,7 @@ QueryParamsRequest is request type for the Query/Params RPC method.
 
 
 
-<a name="realiotech.realionetwork.asset.QueryParamsResponse"></a>
+<a name="realionetwork.asset.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
 QueryParamsResponse is response type for the Query/Params RPC method.
@@ -184,7 +184,7 @@ QueryParamsResponse is response type for the Query/Params RPC method.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `params` | [Params](#realiotech.realionetwork.asset.Params) |  | params holds all the parameters of this module. |
+| `params` | [Params](#realionetwork.asset.Params) |  | params holds all the parameters of this module. |
 
 
 
@@ -197,29 +197,29 @@ QueryParamsResponse is response type for the Query/Params RPC method.
  <!-- end HasExtensions -->
 
 
-<a name="realiotech.realionetwork.asset.Query"></a>
+<a name="realionetwork.asset.Query"></a>
 
 ### Query
 Query defines the gRPC querier service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `Params` | [QueryParamsRequest](#realiotech.realionetwork.asset.QueryParamsRequest) | [QueryParamsResponse](#realiotech.realionetwork.asset.QueryParamsResponse) | Parameters queries the parameters of the module.
+| `Params` | [QueryParamsRequest](#realionetwork.asset.QueryParamsRequest) | [QueryParamsResponse](#realionetwork.asset.QueryParamsResponse) | Parameters queries the parameters of the module.
 
-this line is used by starport scaffolding # 2 | GET|/realiotech/realionetwork/asset/params|
+this line is used by starport scaffolding # 2 | GET|/realionetwork/asset/params|
 
  <!-- end services -->
 
 
 
-<a name="asset/token.proto"></a>
+<a name="realionetwork/asset/token.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## asset/token.proto
+## realionetwork/asset/token.proto
 
 
 
-<a name="realiotech.realionetwork.asset.Token"></a>
+<a name="realionetwork.asset.Token"></a>
 
 ### Token
 
@@ -233,7 +233,7 @@ this line is used by starport scaffolding # 2 | GET|/realiotech/realionetwork/as
 | `decimals` | [int64](#int64) |  |  |
 | `authorizationRequired` | [bool](#bool) |  |  |
 | `creator` | [string](#string) |  |  |
-| `authorized` | [Token.AuthorizedEntry](#realiotech.realionetwork.asset.Token.AuthorizedEntry) | repeated |  |
+| `authorized` | [Token.AuthorizedEntry](#realionetwork.asset.Token.AuthorizedEntry) | repeated |  |
 | `created` | [int64](#int64) |  |  |
 
 
@@ -241,7 +241,7 @@ this line is used by starport scaffolding # 2 | GET|/realiotech/realionetwork/as
 
 
 
-<a name="realiotech.realionetwork.asset.Token.AuthorizedEntry"></a>
+<a name="realionetwork.asset.Token.AuthorizedEntry"></a>
 
 ### Token.AuthorizedEntry
 
@@ -250,14 +250,14 @@ this line is used by starport scaffolding # 2 | GET|/realiotech/realionetwork/as
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `key` | [string](#string) |  |  |
-| `value` | [TokenAuthorization](#realiotech.realionetwork.asset.TokenAuthorization) |  |  |
+| `value` | [TokenAuthorization](#realionetwork.asset.TokenAuthorization) |  |  |
 
 
 
 
 
 
-<a name="realiotech.realionetwork.asset.TokenAuthorization"></a>
+<a name="realionetwork.asset.TokenAuthorization"></a>
 
 ### TokenAuthorization
 
@@ -283,14 +283,14 @@ this line is used by starport scaffolding # 2 | GET|/realiotech/realionetwork/as
 
 
 
-<a name="asset/tx.proto"></a>
+<a name="realionetwork/asset/tx.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## asset/tx.proto
+## realionetwork/asset/tx.proto
 
 
 
-<a name="realiotech.realionetwork.asset.MsgAuthorizeAddress"></a>
+<a name="realionetwork.asset.MsgAuthorizeAddress"></a>
 
 ### MsgAuthorizeAddress
 
@@ -307,7 +307,7 @@ this line is used by starport scaffolding # 2 | GET|/realiotech/realionetwork/as
 
 
 
-<a name="realiotech.realionetwork.asset.MsgAuthorizeAddressResponse"></a>
+<a name="realionetwork.asset.MsgAuthorizeAddressResponse"></a>
 
 ### MsgAuthorizeAddressResponse
 
@@ -317,7 +317,7 @@ this line is used by starport scaffolding # 2 | GET|/realiotech/realionetwork/as
 
 
 
-<a name="realiotech.realionetwork.asset.MsgCreateToken"></a>
+<a name="realionetwork.asset.MsgCreateToken"></a>
 
 ### MsgCreateToken
 
@@ -337,7 +337,7 @@ this line is used by starport scaffolding # 2 | GET|/realiotech/realionetwork/as
 
 
 
-<a name="realiotech.realionetwork.asset.MsgCreateTokenResponse"></a>
+<a name="realionetwork.asset.MsgCreateTokenResponse"></a>
 
 ### MsgCreateTokenResponse
 
@@ -347,7 +347,7 @@ this line is used by starport scaffolding # 2 | GET|/realiotech/realionetwork/as
 
 
 
-<a name="realiotech.realionetwork.asset.MsgTransferToken"></a>
+<a name="realionetwork.asset.MsgTransferToken"></a>
 
 ### MsgTransferToken
 
@@ -366,7 +366,7 @@ this line is used by starport scaffolding # 2 | GET|/realiotech/realionetwork/as
 
 
 
-<a name="realiotech.realionetwork.asset.MsgTransferTokenResponse"></a>
+<a name="realionetwork.asset.MsgTransferTokenResponse"></a>
 
 ### MsgTransferTokenResponse
 
@@ -376,7 +376,7 @@ this line is used by starport scaffolding # 2 | GET|/realiotech/realionetwork/as
 
 
 
-<a name="realiotech.realionetwork.asset.MsgUnAuthorizeAddress"></a>
+<a name="realionetwork.asset.MsgUnAuthorizeAddress"></a>
 
 ### MsgUnAuthorizeAddress
 
@@ -393,7 +393,7 @@ this line is used by starport scaffolding # 2 | GET|/realiotech/realionetwork/as
 
 
 
-<a name="realiotech.realionetwork.asset.MsgUnAuthorizeAddressResponse"></a>
+<a name="realionetwork.asset.MsgUnAuthorizeAddressResponse"></a>
 
 ### MsgUnAuthorizeAddressResponse
 
@@ -403,7 +403,7 @@ this line is used by starport scaffolding # 2 | GET|/realiotech/realionetwork/as
 
 
 
-<a name="realiotech.realionetwork.asset.MsgUpdateToken"></a>
+<a name="realionetwork.asset.MsgUpdateToken"></a>
 
 ### MsgUpdateToken
 
@@ -420,7 +420,7 @@ this line is used by starport scaffolding # 2 | GET|/realiotech/realionetwork/as
 
 
 
-<a name="realiotech.realionetwork.asset.MsgUpdateTokenResponse"></a>
+<a name="realionetwork.asset.MsgUpdateTokenResponse"></a>
 
 ### MsgUpdateTokenResponse
 
@@ -436,31 +436,31 @@ this line is used by starport scaffolding # 2 | GET|/realiotech/realionetwork/as
  <!-- end HasExtensions -->
 
 
-<a name="realiotech.realionetwork.asset.Msg"></a>
+<a name="realionetwork.asset.Msg"></a>
 
 ### Msg
 Msg defines the Msg service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `CreateToken` | [MsgCreateToken](#realiotech.realionetwork.asset.MsgCreateToken) | [MsgCreateTokenResponse](#realiotech.realionetwork.asset.MsgCreateTokenResponse) |  | |
-| `UpdateToken` | [MsgUpdateToken](#realiotech.realionetwork.asset.MsgUpdateToken) | [MsgUpdateTokenResponse](#realiotech.realionetwork.asset.MsgUpdateTokenResponse) |  | |
-| `AuthorizeAddress` | [MsgAuthorizeAddress](#realiotech.realionetwork.asset.MsgAuthorizeAddress) | [MsgAuthorizeAddressResponse](#realiotech.realionetwork.asset.MsgAuthorizeAddressResponse) |  | |
-| `UnAuthorizeAddress` | [MsgUnAuthorizeAddress](#realiotech.realionetwork.asset.MsgUnAuthorizeAddress) | [MsgUnAuthorizeAddressResponse](#realiotech.realionetwork.asset.MsgUnAuthorizeAddressResponse) |  | |
-| `TransferToken` | [MsgTransferToken](#realiotech.realionetwork.asset.MsgTransferToken) | [MsgTransferTokenResponse](#realiotech.realionetwork.asset.MsgTransferTokenResponse) | this line is used by starport scaffolding # proto/tx/rpc | |
+| `CreateToken` | [MsgCreateToken](#realionetwork.asset.MsgCreateToken) | [MsgCreateTokenResponse](#realionetwork.asset.MsgCreateTokenResponse) |  | |
+| `UpdateToken` | [MsgUpdateToken](#realionetwork.asset.MsgUpdateToken) | [MsgUpdateTokenResponse](#realionetwork.asset.MsgUpdateTokenResponse) |  | |
+| `AuthorizeAddress` | [MsgAuthorizeAddress](#realionetwork.asset.MsgAuthorizeAddress) | [MsgAuthorizeAddressResponse](#realionetwork.asset.MsgAuthorizeAddressResponse) |  | |
+| `UnAuthorizeAddress` | [MsgUnAuthorizeAddress](#realionetwork.asset.MsgUnAuthorizeAddress) | [MsgUnAuthorizeAddressResponse](#realionetwork.asset.MsgUnAuthorizeAddressResponse) |  | |
+| `TransferToken` | [MsgTransferToken](#realionetwork.asset.MsgTransferToken) | [MsgTransferTokenResponse](#realionetwork.asset.MsgTransferTokenResponse) | this line is used by starport scaffolding # proto/tx/rpc | |
 
  <!-- end services -->
 
 
 
-<a name="mint/v1beta1/mint.proto"></a>
+<a name="realionetwork/mint/v1beta1/mint.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## mint/v1beta1/mint.proto
+## realionetwork/mint/v1beta1/mint.proto
 
 
 
-<a name="realiotech.realionetwork.mint.v1beta1.Minter"></a>
+<a name="realionetwork.mint.v1beta1.Minter"></a>
 
 ### Minter
 Minter represents the minting state.
@@ -476,7 +476,7 @@ Minter represents the minting state.
 
 
 
-<a name="realiotech.realionetwork.mint.v1beta1.Params"></a>
+<a name="realionetwork.mint.v1beta1.Params"></a>
 
 ### Params
 Params holds parameters for the mint module.
@@ -505,14 +505,14 @@ Params holds parameters for the mint module.
 
 
 
-<a name="mint/v1beta1/genesis.proto"></a>
+<a name="realionetwork/mint/v1beta1/genesis.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## mint/v1beta1/genesis.proto
+## realionetwork/mint/v1beta1/genesis.proto
 
 
 
-<a name="realiotech.realionetwork.mint.v1beta1.GenesisState"></a>
+<a name="realionetwork.mint.v1beta1.GenesisState"></a>
 
 ### GenesisState
 GenesisState defines the mint module's genesis state.
@@ -520,8 +520,8 @@ GenesisState defines the mint module's genesis state.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `minter` | [Minter](#realiotech.realionetwork.mint.v1beta1.Minter) |  | minter is a space for holding current inflation information. |
-| `params` | [Params](#realiotech.realionetwork.mint.v1beta1.Params) |  | params defines all the paramaters of the module. |
+| `minter` | [Minter](#realionetwork.mint.v1beta1.Minter) |  | minter is a space for holding current inflation information. |
+| `params` | [Params](#realionetwork.mint.v1beta1.Params) |  | params defines all the paramaters of the module. |
 
 
 
@@ -537,14 +537,14 @@ GenesisState defines the mint module's genesis state.
 
 
 
-<a name="mint/v1beta1/query.proto"></a>
+<a name="realionetwork/mint/v1beta1/query.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
-## mint/v1beta1/query.proto
+## realionetwork/mint/v1beta1/query.proto
 
 
 
-<a name="realiotech.realionetwork.mint.v1beta1.QueryAnnualProvisionsRequest"></a>
+<a name="realionetwork.mint.v1beta1.QueryAnnualProvisionsRequest"></a>
 
 ### QueryAnnualProvisionsRequest
 QueryAnnualProvisionsRequest is the request type for the
@@ -555,7 +555,7 @@ Query/AnnualProvisions RPC method.
 
 
 
-<a name="realiotech.realionetwork.mint.v1beta1.QueryAnnualProvisionsResponse"></a>
+<a name="realionetwork.mint.v1beta1.QueryAnnualProvisionsResponse"></a>
 
 ### QueryAnnualProvisionsResponse
 QueryAnnualProvisionsResponse is the response type for the
@@ -571,7 +571,7 @@ Query/AnnualProvisions RPC method.
 
 
 
-<a name="realiotech.realionetwork.mint.v1beta1.QueryInflationRequest"></a>
+<a name="realionetwork.mint.v1beta1.QueryInflationRequest"></a>
 
 ### QueryInflationRequest
 QueryInflationRequest is the request type for the Query/Inflation RPC method.
@@ -581,7 +581,7 @@ QueryInflationRequest is the request type for the Query/Inflation RPC method.
 
 
 
-<a name="realiotech.realionetwork.mint.v1beta1.QueryInflationResponse"></a>
+<a name="realionetwork.mint.v1beta1.QueryInflationResponse"></a>
 
 ### QueryInflationResponse
 QueryInflationResponse is the response type for the Query/Inflation RPC
@@ -597,7 +597,7 @@ method.
 
 
 
-<a name="realiotech.realionetwork.mint.v1beta1.QueryParamsRequest"></a>
+<a name="realionetwork.mint.v1beta1.QueryParamsRequest"></a>
 
 ### QueryParamsRequest
 QueryParamsRequest is the request type for the Query/Params RPC method.
@@ -607,7 +607,7 @@ QueryParamsRequest is the request type for the Query/Params RPC method.
 
 
 
-<a name="realiotech.realionetwork.mint.v1beta1.QueryParamsResponse"></a>
+<a name="realionetwork.mint.v1beta1.QueryParamsResponse"></a>
 
 ### QueryParamsResponse
 QueryParamsResponse is the response type for the Query/Params RPC method.
@@ -615,7 +615,7 @@ QueryParamsResponse is the response type for the Query/Params RPC method.
 
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
-| `params` | [Params](#realiotech.realionetwork.mint.v1beta1.Params) |  | params defines the parameters of the module. |
+| `params` | [Params](#realionetwork.mint.v1beta1.Params) |  | params defines the parameters of the module. |
 
 
 
@@ -628,16 +628,16 @@ QueryParamsResponse is the response type for the Query/Params RPC method.
  <!-- end HasExtensions -->
 
 
-<a name="realiotech.realionetwork.mint.v1beta1.Query"></a>
+<a name="realionetwork.mint.v1beta1.Query"></a>
 
 ### Query
 Query provides defines the gRPC querier service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `Params` | [QueryParamsRequest](#realiotech.realionetwork.mint.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#realiotech.realionetwork.mint.v1beta1.QueryParamsResponse) | Params returns the total set of minting parameters. | GET|/realiotech/realionetwork/v1beta1/params|
-| `Inflation` | [QueryInflationRequest](#realiotech.realionetwork.mint.v1beta1.QueryInflationRequest) | [QueryInflationResponse](#realiotech.realionetwork.mint.v1beta1.QueryInflationResponse) | Inflation returns the current minting inflation value. | GET|/realiotech/realionetwork/mint/v1beta1/inflation|
-| `AnnualProvisions` | [QueryAnnualProvisionsRequest](#realiotech.realionetwork.mint.v1beta1.QueryAnnualProvisionsRequest) | [QueryAnnualProvisionsResponse](#realiotech.realionetwork.mint.v1beta1.QueryAnnualProvisionsResponse) | AnnualProvisions current minting annual provisions value. | GET|/realiotech/realionetwork/mint/v1beta1/annual_provisions|
+| `Params` | [QueryParamsRequest](#realionetwork.mint.v1beta1.QueryParamsRequest) | [QueryParamsResponse](#realionetwork.mint.v1beta1.QueryParamsResponse) | Params returns the total set of minting parameters. | GET|/realionetwork/v1beta1/params|
+| `Inflation` | [QueryInflationRequest](#realionetwork.mint.v1beta1.QueryInflationRequest) | [QueryInflationResponse](#realionetwork.mint.v1beta1.QueryInflationResponse) | Inflation returns the current minting inflation value. | GET|/realionetwork/mint/v1beta1/inflation|
+| `AnnualProvisions` | [QueryAnnualProvisionsRequest](#realionetwork.mint.v1beta1.QueryAnnualProvisionsRequest) | [QueryAnnualProvisionsResponse](#realionetwork.mint.v1beta1.QueryAnnualProvisionsResponse) | AnnualProvisions current minting annual provisions value. | GET|/realionetwork/mint/v1beta1/annual_provisions|
 
  <!-- end services -->
 
