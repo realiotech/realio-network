@@ -67,11 +67,11 @@
           "address": "realio1smp04p5qmzdnsex6hz72w3erlxch3q9hw9cwxk",
           "coins": [
             {
-              "denom": "urio",
+              "denom": "ario",
               "amount": "10000000000000"
             },
             {
-              "denom": "urst",
+              "denom": "arst",
               "amount": "50000000000000"
             }
           ]
@@ -80,7 +80,7 @@
           "address": "realio13gs80dr6nj62r97kn7tfde3es69garglr34w4k",
           "coins": [
             {
-              "denom": "urio",
+              "denom": "ario",
               "amount": "1000000000000"
             }
           ]
@@ -88,11 +88,11 @@
       ],
       "supply": [
         {
-          "denom": "urio",
+          "denom": "ario",
           "amount": "11000000000000"
         },
         {
-          "denom": "urst",
+          "denom": "arst",
           "amount": "50000000000000"
         }
       ],
@@ -101,7 +101,7 @@
           "description": "The native token of the Realio Network",
           "denom_units": [
             {
-              "denom": "urio",
+              "denom": "ario",
               "exponent": 0,
               "aliases": [
                 "microrio"
@@ -113,7 +113,7 @@
               "aliases": []
             }
           ],
-          "base": "urio",
+          "base": "ario",
           "display": "rio",
           "name": "Realio Network Rio",
           "symbol": "rio"
@@ -122,7 +122,7 @@
           "description": "Realio Security Token",
           "denom_units": [
             {
-              "denom": "urst",
+              "denom": "arst",
               "exponent": 0,
               "aliases": [
                 "microrst"
@@ -134,7 +134,7 @@
               "aliases": []
             }
           ],
-          "base": "urst",
+          "base": "arst",
           "display": "rst",
           "name": "Realio Security Token",
           "symbol": "rst"
@@ -147,7 +147,7 @@
     },
     "crisis": {
       "constant_fee": {
-        "denom": "urio",
+        "denom": "ario",
         "amount": "1000"
       }
     },
@@ -176,7 +176,7 @@
     "evm": {
       "accounts": [],
       "params": {
-        "evm_denom": "urio",
+        "evm_denom": "ario",
         "enable_create": true,
         "enable_call": true,
         "extra_eips": [],
@@ -240,7 +240,7 @@
                   "key": "Sgu/SlbCdHDo+wxLKCVvLduvxY9m8dDm0lNhxkKcbhA="
                 },
                 "value": {
-                  "denom": "urio",
+                  "denom": "ario",
                   "amount": "100000000000"
                 }
               }
@@ -286,7 +286,7 @@
       "deposit_params": {
         "min_deposit": [
           {
-            "denom": "urio",
+            "denom": "ario",
             "amount": "1000000"
           }
         ],
@@ -336,7 +336,7 @@
     },
     "inflation": {
       "params": {
-        "mint_denom": "urio"
+        "mint_denom": "ario"
       }
     },
     "mint": {
@@ -345,7 +345,7 @@
         "annual_provisions": "0.000000000000000000"
       },
       "params": {
-        "mint_denom": "urio",
+        "mint_denom": "ario",
         "inflation_rate_change": "0.130000000000000000",
         "inflation_max": "0.200000000000000000",
         "inflation_min": "0.070000000000000000",
@@ -371,7 +371,7 @@
         "max_validators": 100,
         "max_entries": 7,
         "historical_entries": 10000,
-        "bond_denom": "urio,urst"
+        "bond_denom": "ario,arst"
       },
       "last_total_power": "0",
       "last_validator_powers": [],
