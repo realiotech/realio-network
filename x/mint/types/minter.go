@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// Supply cap 1 RIO : 10^6 uRIO
-var uRioSupplyCap = sdk.NewInt(75000000000000)
+// Supply cap 1 RIO : 10^18 aRIO (attoRio)
+var rioSupplyCap, _ = sdk.NewIntFromString("75000000000000000000000000")
 
 // NewMinter returns a new Minter object with the given inflation and annual
 // provisions values.
@@ -72,7 +72,7 @@ func (m Minter) NextInflationRate(params Params, bondedRatio sdk.Dec) sdk.Dec {
 // NextAnnualProvisions returns the annual provisions based on current total
 // supply and inflation rate.
 func (m Minter) NextAnnualProvisions(_ Params, totalSupply sdk.Int) sdk.Dec {
-	remainingAnnualProvisions := uRioSupplyCap.Sub(totalSupply)
+	remainingAnnualProvisions := rioSupplyCap.Sub(totalSupply)
 	return m.Inflation.MulInt(remainingAnnualProvisions)
 }
 

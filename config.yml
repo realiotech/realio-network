@@ -1,11 +1,11 @@
 accounts:
   - name: alice
-    coins: ["200000000urio", "200000000urst"]
+    coins: ["200000000ario", "200000000arst"]
   - name: bob
-    coins: ["100000000urio"]
+    coins: ["100000000ario"]
 validator:
   name: alice
-  staked: "100000000urio"
+  staked: "100000000ario"
 client:
   vuex:
     path: "vue/src/store"
@@ -13,25 +13,25 @@ client:
     path: "docs/static/openapi.yml"
 faucet:
   name: bob
-  coins: ["1000rio"]
+  coins: ["1000000000000000000000ario"]
 genesis:
   chain_id: "realionetwork_1000-1"
   app_state:
     staking:
       params:
-        bond_denom: "urio,urst"
+        bond_denom: "ario,arst"
         historical_entries: "10"
         max_validators: "10"
         unbonding_time: "300000000000ns"
     mint:
       params:
-        mint_denom: "urio"
+        mint_denom: "ario"
     crisis:
       constant_fee:
-        denom: "urio"
+        denom: "ario"
     evm:
       params:
-        evm_denom: "urio"
+        evm_denom: "ario"
 build:
   binary: "realio-networkd"
 init:

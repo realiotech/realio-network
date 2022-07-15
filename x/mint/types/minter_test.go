@@ -124,7 +124,7 @@ func BenchmarkNextAnnualProvisions(b *testing.B) {
 	b.ReportAllocs()
 	minter := InitialMinter(sdk.NewDecWithPrec(1, 1))
 	params := DefaultParams()
-	totalSupply := sdk.NewInt(100000000000000)
+	totalSupply, _ := sdk.NewIntFromString("7000000000000000000000000")
 
 	// run the NextAnnualProvisions function b.N times
 	for n := 0; n < b.N; n++ {
@@ -137,16 +137,19 @@ func TestAnnualProvisionMaxSupply(t *testing.T) {
 	minter := InitialMinter(sdk.NewDecWithPrec(1, 1))
 	params := DefaultParams()
 
-
+	tc1Supply, _ := sdk.NewIntFromString("75000000000000000000000000")
+	tc2Supply, _ := sdk.NewIntFromString("35000000000000000000000000")
+	tc1Exp, _ := sdk.NewDecFromStr("0")
+	tc2Exp, _ := sdk.NewDecFromStr("4000000000000000000000000")
 	tests := []struct {
-		totalSupply int64
-		expProvisions    sdk.Dec
+		totalSupply   sdk.Int
+		expProvisions sdk.Dec
 	}{
-		{75000000000000, sdk.NewDec(0)},
-		{35000000000000, sdk.NewDec(4000000000000)},
+		{tc1Supply, tc1Exp},
+		{tc2Supply, tc2Exp},
 	}
 	for i, tc := range tests {
-		provisions := minter.NextAnnualProvisions(params, sdk.NewInt(tc.totalSupply))
+		provisions := minter.NextAnnualProvisions(params, tc.totalSupply)
 
 		require.True(t, tc.expProvisions.Equal(provisions),
 			"test: %v\n\tExp: %v\n\tGot: %v\n",

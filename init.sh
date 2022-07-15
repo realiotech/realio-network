@@ -29,22 +29,22 @@ realio-networkd config chain-id $CHAINID --home $HOMEDIR
 # if $KEY exists it should be deleted
 realio-networkd keys add $KEY --keyring-backend $KEYRING --algo $KEYALGO --home $HOMEDIR
 
-# Change parameter token denominations to urio
-cat $HOME/.realio-network/config/genesis.json | jq '.app_state["staking"]["params"]["bond_denom"]="urio,urst"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
-cat $HOME/.realio-network/config/genesis.json | jq '.app_state["mint"]["params"]["mint_denom"]="urio"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
-cat $HOME/.realio-network/config/genesis.json | jq '.app_state["crisis"]["constant_fee"]["denom"]="urio"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
-cat $HOME/.realio-network/config/genesis.json | jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="urio"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
-cat $HOME/.realio-network/config/genesis.json | jq '.app_state["evm"]["params"]["evm_denom"]="urio"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
-cat $HOME/.realio-network/config/genesis.json | jq '.app_state["inflation"]["params"]["mint_denom"]="urio"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
+# Change parameter token denominations to ario
+cat $HOME/.realio-network/config/genesis.json | jq '.app_state["staking"]["params"]["bond_denom"]="ario,arst"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
+cat $HOME/.realio-network/config/genesis.json | jq '.app_state["mint"]["params"]["mint_denom"]="ario"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
+cat $HOME/.realio-network/config/genesis.json | jq '.app_state["crisis"]["constant_fee"]["denom"]="ario"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
+cat $HOME/.realio-network/config/genesis.json | jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="ario"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
+cat $HOME/.realio-network/config/genesis.json | jq '.app_state["evm"]["params"]["evm_denom"]="ario"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
+cat $HOME/.realio-network/config/genesis.json | jq '.app_state["inflation"]["params"]["mint_denom"]="ario"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
 
 # Add denom metadata for rio and rst
-cat $HOME/.realio-network/config/genesis.json | jq '.app_state["bank"]["denom_metadata"]=[{ "description": "The native token of the Realio Network", "denom_units": [ { "denom": "urio", "exponent": 0, "aliases": [ "microrio" ] }, { "denom": "rio", "exponent": 6, "aliases": [] } ], "base": "urio", "display": "rio", "name": "Realio Network Rio", "symbol": "rio" }, { "description": "Realio Security Token", "denom_units": [ { "denom": "urst", "exponent": 0, "aliases": [ "microrst" ] }, { "denom": "rst", "exponent": 6, "aliases": [] } ], "base": "urst", "display": "rst", "name": "Realio Security Token", "symbol": "rst" }]' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
+cat $HOME/.realio-network/config/genesis.json | jq '.app_state["bank"]["denom_metadata"]=[{ "description": "The native token of the Realio Network", "denom_units": [ { "denom": "ario", "exponent": 0, "aliases": [ "microrio" ] }, { "denom": "rio", "exponent": 6, "aliases": [] } ], "base": "ario", "display": "rio", "name": "Realio Network Rio", "symbol": "rio" }, { "description": "Realio Security Token", "denom_units": [ { "denom": "arst", "exponent": 0, "aliases": [ "microrst" ] }, { "denom": "rst", "exponent": 6, "aliases": [] } ], "base": "arst", "display": "rst", "name": "Realio Security Token", "symbol": "rst" }]' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
 
 # Allocate genesis accounts (cosmos formatted addresses)
-realio-networkd add-genesis-account $KEY 10000000000000urio,10000000000000urst --keyring-backend $KEYRING
+realio-networkd add-genesis-account $KEY 10000000000000ario,10000000000000arst --keyring-backend $KEYRING
 
 # Sign genesis transaction
-realio-networkd gentx $KEY 1000000000000urio --keyring-backend $KEYRING --chain-id $CHAINID
+realio-networkd gentx $KEY 1000000000000ario --keyring-backend $KEYRING --chain-id $CHAINID
 
 # Collect genesis tx
 realio-networkd collect-gentxs
@@ -53,4 +53,4 @@ realio-networkd collect-gentxs
 realio-networkd validate-genesis
 
 # Start the node (remove the --pruning=nothing flag if historical queries are not needed)
-realio-networkd start --pruning=nothing $TRACE --log_level $LOGLEVEL --minimum-gas-prices=0.0001urio --json-rpc.api eth,txpool,personal,net,debug,web3
+realio-networkd start --pruning=nothing $TRACE --log_level $LOGLEVEL --minimum-gas-prices=0.0001ario --json-rpc.api eth,txpool,personal,net,debug,web3
