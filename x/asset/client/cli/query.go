@@ -10,7 +10,7 @@ import (
 	// "github.com/cosmos/cosmos-sdk/client/flags"
 	// sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/realiotech/realio-network/x/v1/asset/types"
 )
 
 // GetQueryCmd returns the cli query commands for this module

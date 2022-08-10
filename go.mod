@@ -1,4 +1,4 @@
-module github.com/realiotech/realio-network
+module github.com/realiotech/realio-network/v1
 
 go 1.18
 

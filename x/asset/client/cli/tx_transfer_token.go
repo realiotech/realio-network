@@ -6,7 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/realiotech/realio-network/x/v1/asset/types"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 )

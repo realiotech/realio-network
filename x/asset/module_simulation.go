@@ -10,8 +10,8 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	"github.com/realiotech/realio-network/testutil/sample"
-	assetsimulation "github.com/realiotech/realio-network/x/asset/simulation"
-	"github.com/realiotech/realio-network/x/asset/types"
+	assetsimulation "github.com/realiotech/realio-network/x/v1/asset/simulation"
+	"github.com/realiotech/realio-network/x/v1/asset/types"
 )
 
 // avoid unused import issue
@@ -161,7 +161,7 @@ func (am AppModule) WeightedOperations(simState module.SimulationState) []simtyp
 	)
 	operations = append(operations, simulation.NewWeightedOperation(
 		weightMsgTransferToken,
-		assetsimulation.SimulateMsgTransferToken( am.bankKeeper, am.keeper),
+		assetsimulation.SimulateMsgTransferToken(am.bankKeeper, am.keeper),
 	))
 
 	// this line is used by starport scaffolding # simapp/module/operation

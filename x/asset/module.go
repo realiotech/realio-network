@@ -16,9 +16,9 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/realiotech/realio-network/x/asset/client/cli"
-	"github.com/realiotech/realio-network/x/asset/keeper"
-	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/realiotech/realio-network/x/v1/asset/client/cli"
+	"github.com/realiotech/realio-network/x/v1/asset/keeper"
+	"github.com/realiotech/realio-network/x/v1/asset/types"
 )
 
 var (

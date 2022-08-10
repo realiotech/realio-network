@@ -3,7 +3,7 @@ package realionetwork.asset.v1;
 
 // this line is used by starport scaffolding # proto/tx/import
 
-option go_package = "github.com/realiotech/realio-network/x/asset/types";
+option go_package = "github.com/realiotech/realio-network/x/v1/asset/types";
 
 // Msg defines the Msg service.
 service Msg {

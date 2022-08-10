@@ -6,8 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	keepertest "github.com/realiotech/realio-network/testutil/keeper"
-	"github.com/realiotech/realio-network/x/asset/keeper"
-	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/realiotech/realio-network/x/v1/asset/keeper"
+	"github.com/realiotech/realio-network/x/v1/asset/types"
 )
 
 func setupMsgServer(t testing.TB) (types.MsgServer, context.Context) {

@@ -6,7 +6,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types/kv"
-	"github.com/realiotech/realio-network/x/mint/types"
+	"github.com/realiotech/realio-network/x/v1/mint/types"
 )
 
 // NewDecodeStore returns a decoder function closure that unmarshals the KVPair's

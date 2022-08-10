@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	testkeeper "github.com/realiotech/realio-network/testutil/keeper"
-	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/realiotech/realio-network/x/v1/asset/types"
 	"github.com/stretchr/testify/require"
 )
 

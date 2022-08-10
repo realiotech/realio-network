@@ -2,8 +2,8 @@ package mint
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/realiotech/realio-network/x/mint/keeper"
-	"github.com/realiotech/realio-network/x/mint/types"
+	"github.com/realiotech/realio-network/x/v1/mint/keeper"
+	"github.com/realiotech/realio-network/x/v1/mint/types"
 )
 
 // InitGenesis new mint genesis

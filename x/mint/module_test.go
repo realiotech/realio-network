@@ -9,7 +9,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/simapp"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/realiotech/realio-network/x/mint/types"
+	"github.com/realiotech/realio-network/x/v1/mint/types"
 )
 
 func TestItCreatesModuleAccountOnInitBlock(t *testing.T) {

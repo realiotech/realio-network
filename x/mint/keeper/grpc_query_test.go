@@ -10,7 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/realiotech/realio-network/simapp"
-	"github.com/realiotech/realio-network/x/mint/types"
+	"github.com/realiotech/realio-network/x/v1/mint/types"
 )
 
 type MintTestSuite struct {
