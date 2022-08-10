@@ -6,8 +6,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/realiotech/realio-network/x/v1/asset/keeper"
-	"github.com/realiotech/realio-network/x/v1/asset/types"
+	"github.com/realiotech/realio-network/v1/x/asset/keeper"
+	"github.com/realiotech/realio-network/v1/x/asset/types"
 )
 
 func SimulateUpdateToken(

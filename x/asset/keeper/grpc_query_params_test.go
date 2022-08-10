@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	testkeeper "github.com/realiotech/realio-network/testutil/keeper"
-	"github.com/realiotech/realio-network/x/v1/asset/types"
+	"github.com/realiotech/realio-network/v1/x/asset/types"
 	"github.com/stretchr/testify/require"
 )
 

@@ -3,7 +3,7 @@ package types_test
 import (
 	"testing"
 
-	"github.com/realiotech/realio-network/x/v1/asset/types"
+	"github.com/realiotech/realio-network/v1/x/asset/types"
 	"github.com/stretchr/testify/require"
 )
 

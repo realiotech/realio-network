@@ -11,8 +11,8 @@ import (
 	clitestutil "github.com/cosmos/cosmos-sdk/testutil/cli"
 	"github.com/cosmos/cosmos-sdk/testutil/network"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/realiotech/realio-network/x/v1/mint/client/cli"
-	minttypes "github.com/realiotech/realio-network/x/v1/mint/types"
+	"github.com/realiotech/realio-network/v1/x/mint/client/cli"
+	minttypes "github.com/realiotech/realio-network/v1/x/mint/types"
 )
 
 type IntegrationTestSuite struct {

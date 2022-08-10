@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	keep "github.com/realiotech/realio-network/x/v1/mint/keeper"
-	"github.com/realiotech/realio-network/x/v1/mint/types"
+	keep "github.com/realiotech/realio-network/v1/x/mint/keeper"
+	"github.com/realiotech/realio-network/v1/x/mint/types"
 
 	abci "github.com/tendermint/tendermint/abci/types"
 )

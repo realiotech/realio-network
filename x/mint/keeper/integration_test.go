@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/realiotech/realio-network/simapp"
-	"github.com/realiotech/realio-network/x/v1/mint/types"
+	"github.com/realiotech/realio-network/v1/x/mint/types"
 )
 
 // returns context and an app with updated mint keeper

@@ -86,9 +86,9 @@ import (
 	ibcporttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-	"github.com/realiotech/realio-network/x/v1/mint"
-	mintkeeper "github.com/realiotech/realio-network/x/v1/mint/keeper"
-	minttypes "github.com/realiotech/realio-network/x/v1/mint/types"
+	"github.com/realiotech/realio-network/v1/x/mint"
+	mintkeeper "github.com/realiotech/realio-network/v1/x/mint/keeper"
+	minttypes "github.com/realiotech/realio-network/v1/x/mint/types"
 	"github.com/spf13/cast"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
@@ -98,10 +98,10 @@ import (
 
 	"github.com/ignite-hq/cli/ignite/pkg/openapiconsole"
 
-	"github.com/realiotech/realio-network/docs"
-	assetmodule "github.com/realiotech/realio-network/x/v1/asset"
-	assetmodulekeeper "github.com/realiotech/realio-network/x/v1/asset/keeper"
-	assetmoduletypes "github.com/realiotech/realio-network/x/v1/asset/types"
+	"github.com/realiotech/realio-network/v1/docs"
+	assetmodule "github.com/realiotech/realio-network/v1/x/asset"
+	assetmodulekeeper "github.com/realiotech/realio-network/v1/x/asset/keeper"
+	assetmoduletypes "github.com/realiotech/realio-network/v1/x/asset/types"
 	"github.com/tharsis/ethermint/x/evm"
 	"github.com/tharsis/ethermint/x/feemarket"
 	// this line is used by starport scaffolding # stargate/app/moduleImport

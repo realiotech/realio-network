@@ -10,8 +10,8 @@ import (
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 	"github.com/realiotech/realio-network/testutil/sample"
-	assetsimulation "github.com/realiotech/realio-network/x/v1/asset/simulation"
-	"github.com/realiotech/realio-network/x/v1/asset/types"
+	assetsimulation "github.com/realiotech/realio-network/v1/x/asset/simulation"
+	"github.com/realiotech/realio-network/v1/x/asset/types"
 )
 
 // avoid unused import issue
