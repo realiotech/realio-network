@@ -1,21 +1,21 @@
 accounts:
-  - name: alice
-    coins: ["200000000ario", "200000000arst"]
-  - name: bob
-    coins: ["100000000ario"]
+  - name: eduardo
+    coins: ["2000000000000000000000000ario", "2000000000000000000000000arst"]
+  - name: aaron
+    coins: ["2000000000000000000000000ario", "2000000000000000000000000arst"]
 validator:
-  name: alice
-  staked: "100000000ario"
+  name: eduardo
+  staked: "100000000000000000000000ario"
 client:
   vuex:
     path: "vue/src/store"
   openapi:
     path: "docs/static/openapi.yml"
 faucet:
-  name: bob
+  name: aaron
   coins: ["1000000000000000000000ario"]
 genesis:
-  chain_id: "realionetwork_1000-1"
+  chain_id: "realio-local-1"
   app_state:
     staking:
       params:

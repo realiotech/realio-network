@@ -1,6 +1,6 @@
 {
-  "genesis_time": "2022-05-26T15:43:38.199979Z",
-  "chain_id": "realionetworktest_2022-2022",
+  "genesis_time": "2022-06-09T22:24:19.603892777Z",
+  "chain_id": "realionetworktest_2022-1",
   "initial_height": "1",
   "consensus_params": {
     "block": {
@@ -35,26 +35,7 @@
         "sig_verify_cost_secp256k1": "1000"
       },
       "accounts": [
-        {
-          "@type": "/ethermint.types.v1.EthAccount",
-          "base_account": {
-            "address": "realio1smp04p5qmzdnsex6hz72w3erlxch3q9hw9cwxk",
-            "pub_key": null,
-            "account_number": "0",
-            "sequence": "0"
-          },
-          "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
-        },
-        {
-          "@type": "/ethermint.types.v1.EthAccount",
-          "base_account": {
-            "address": "realio13gs80dr6nj62r97kn7tfde3es69garglr34w4k",
-            "pub_key": null,
-            "account_number": "0",
-            "sequence": "0"
-          },
-          "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
-        }
+
       ]
     },
     "bank": {
@@ -63,38 +44,9 @@
         "default_send_enabled": true
       },
       "balances": [
-        {
-          "address": "realio1smp04p5qmzdnsex6hz72w3erlxch3q9hw9cwxk",
-          "coins": [
-            {
-              "denom": "ario",
-              "amount": "10000000000000"
-            },
-            {
-              "denom": "arst",
-              "amount": "50000000000000"
-            }
-          ]
-        },
-        {
-          "address": "realio13gs80dr6nj62r97kn7tfde3es69garglr34w4k",
-          "coins": [
-            {
-              "denom": "ario",
-              "amount": "1000000000000"
-            }
-          ]
-        }
       ],
       "supply": [
-        {
-          "denom": "ario",
-          "amount": "11000000000000"
-        },
-        {
-          "denom": "arst",
-          "amount": "50000000000000"
-        }
+
       ],
       "denom_metadata": [
         {
@@ -104,19 +56,19 @@
               "denom": "ario",
               "exponent": 0,
               "aliases": [
-                "microrio"
+                "attorio"
               ]
             },
             {
               "denom": "rio",
-              "exponent": 6,
+              "exponent": 18,
               "aliases": []
             }
           ],
           "base": "ario",
           "display": "rio",
           "name": "Realio Network Rio",
-          "symbol": "rio"
+          "symbol": "RIO"
         },
         {
           "description": "Realio Security Token",
@@ -125,19 +77,19 @@
               "denom": "arst",
               "exponent": 0,
               "aliases": [
-                "microrst"
+                "attorst"
               ]
             },
             {
               "denom": "rst",
-              "exponent": 6,
+              "exponent": 18,
               "aliases": []
             }
           ],
           "base": "arst",
           "display": "rst",
           "name": "Realio Security Token",
-          "symbol": "rst"
+          "symbol": "RST"
         }
       ]
     },
@@ -148,7 +100,7 @@
     "crisis": {
       "constant_fee": {
         "denom": "ario",
-        "amount": "1000"
+        "amount": "5000000000000000000"
       }
     },
     "distribution": {
@@ -215,67 +167,6 @@
     },
     "genutil": {
       "gen_txs": [
-        {
-          "body": {
-            "messages": [
-              {
-                "@type": "/cosmos.staking.v1beta1.MsgCreateValidator",
-                "description": {
-                  "moniker": "realio-test-val-1",
-                  "identity": "",
-                  "website": "",
-                  "security_contact": "",
-                  "details": ""
-                },
-                "commission": {
-                  "rate": "0.100000000000000000",
-                  "max_rate": "0.200000000000000000",
-                  "max_change_rate": "0.010000000000000000"
-                },
-                "min_self_delegation": "1",
-                "delegator_address": "realio13gs80dr6nj62r97kn7tfde3es69garglr34w4k",
-                "validator_address": "realiovaloper13gs80dr6nj62r97kn7tfde3es69garglh9k5ys",
-                "pubkey": {
-                  "@type": "/cosmos.crypto.ed25519.PubKey",
-                  "key": "Sgu/SlbCdHDo+wxLKCVvLduvxY9m8dDm0lNhxkKcbhA="
-                },
-                "value": {
-                  "denom": "ario",
-                  "amount": "100000000000"
-                }
-              }
-            ],
-            "memo": "c135070cd3a8bde52a5319444cdd3ea0300be71b@143.198.11.84:26656",
-            "timeout_height": "0",
-            "extension_options": [],
-            "non_critical_extension_options": []
-          },
-          "auth_info": {
-            "signer_infos": [
-              {
-                "public_key": {
-                  "@type": "/ethermint.crypto.v1.ethsecp256k1.PubKey",
-                  "key": "A5sEIYQ9JCkfQQI4l24+4YXYyiDhlR2zyVrUg/oLxYIt"
-                },
-                "mode_info": {
-                  "single": {
-                    "mode": "SIGN_MODE_DIRECT"
-                  }
-                },
-                "sequence": "0"
-              }
-            ],
-            "fee": {
-              "amount": [],
-              "gas_limit": "200000",
-              "payer": "",
-              "granter": ""
-            }
-          },
-          "signatures": [
-            "7I35fvoXjb+H0mIacuba7lcfLwL1V6Iz0gDWevRdHIF9qW8WPhUNIhSToJVp0XSl7Lmj3vKRGbKnjgctXI9+GAA="
-          ]
-        }
       ]
     },
     "gov": {
@@ -287,7 +178,7 @@
         "min_deposit": [
           {
             "denom": "ario",
-            "amount": "1000000"
+            "amount": "10000000000000000000"
           }
         ],
         "max_deposit_period": "3600s"
@@ -332,11 +223,6 @@
         "recv_sequences": [],
         "ack_sequences": [],
         "next_channel_sequence": "0"
-      }
-    },
-    "inflation": {
-      "params": {
-        "mint_denom": "ario"
       }
     },
     "mint": {
