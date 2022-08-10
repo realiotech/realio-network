@@ -85,7 +85,7 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	simappparams "github.com/realiotech/realio-network/simapp/params"
+	simappparams "github.com/realiotech/realio-network/v1/simapp/params"
 	"github.com/realiotech/realio-network/v1/x/mint"
 	mintkeeper "github.com/realiotech/realio-network/v1/x/mint/keeper"
 	minttypes "github.com/realiotech/realio-network/v1/x/mint/types"

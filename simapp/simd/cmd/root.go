@@ -30,8 +30,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
-	"github.com/realiotech/realio-network/simapp"
-	"github.com/realiotech/realio-network/simapp/params"
+	"github.com/realiotech/realio-network/v1/simapp"
+	"github.com/realiotech/realio-network/v1/simapp/params"
 )
 
 // NewRootCmd creates a new root command for simd. It is called once in the

@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/cosmos/cosmos-sdk/x/simulation"
-	"github.com/realiotech/realio-network/testutil/sample"
+	"github.com/realiotech/realio-network/v1/testutil/sample"
 	assetsimulation "github.com/realiotech/realio-network/v1/x/asset/simulation"
 	"github.com/realiotech/realio-network/v1/x/asset/types"
 )

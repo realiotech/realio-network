@@ -32,7 +32,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
-	"github.com/realiotech/realio-network/app"
+	"github.com/realiotech/realio-network/v1/app"
 	ethermintclient "github.com/tharsis/ethermint/client"
 	"github.com/tharsis/ethermint/crypto/hd"
 	ethermintserver "github.com/tharsis/ethermint/server"

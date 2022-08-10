@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	keepertest "github.com/realiotech/realio-network/testutil/keeper"
+	keepertest "github.com/realiotech/realio-network/v1/testutil/keeper"
 	"github.com/realiotech/realio-network/v1/x/asset/keeper"
 	"github.com/realiotech/realio-network/v1/x/asset/types"
 )

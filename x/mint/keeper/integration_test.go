@@ -4,7 +4,7 @@ import (
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/realiotech/realio-network/simapp"
+	"github.com/realiotech/realio-network/v1/simapp"
 	"github.com/realiotech/realio-network/v1/x/mint/types"
 )
 

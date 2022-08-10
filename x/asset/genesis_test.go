@@ -3,8 +3,8 @@ package asset_test
 import (
 	"testing"
 
-	keepertest "github.com/realiotech/realio-network/testutil/keeper"
-	"github.com/realiotech/realio-network/testutil/nullify"
+	keepertest "github.com/realiotech/realio-network/v1/testutil/keeper"
+	"github.com/realiotech/realio-network/v1/testutil/nullify"
 	"github.com/realiotech/realio-network/v1/x/asset"
 	"github.com/realiotech/realio-network/v1/x/asset/types"
 	"github.com/stretchr/testify/require"

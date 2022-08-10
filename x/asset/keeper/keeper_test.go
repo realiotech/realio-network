@@ -2,7 +2,7 @@ package keeper_test
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/realiotech/realio-network/simapp"
+	"github.com/realiotech/realio-network/v1/simapp"
 	"github.com/realiotech/realio-network/v1/x/asset/keeper"
 	"github.com/realiotech/realio-network/v1/x/asset/types"
 	"github.com/stretchr/testify/suite"
