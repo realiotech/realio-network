@@ -7,9 +7,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
-	"github.com/realiotech/realio-network/simapp"
-	"github.com/realiotech/realio-network/simapp/simd/cmd"
 	"github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	"github.com/realiotech/realio-network/v1/simapp"
+	"github.com/realiotech/realio-network/v1/simapp/simd/cmd"
 )
 
 func TestInitCmd(t *testing.T) {

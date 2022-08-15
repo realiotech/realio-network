@@ -9,7 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/simulation"
 
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/realiotech/realio-network/x/mint/types"
+	"github.com/realiotech/realio-network/v1/x/mint/types"
 )
 
 const (

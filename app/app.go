@@ -3,7 +3,6 @@ package app
 import (
 	ibcclientclient "github.com/cosmos/ibc-go/v3/modules/core/02-client/client"
 	ibcclienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-
 	evmante "github.com/tharsis/ethermint/app/ante"
 	srvflags "github.com/tharsis/ethermint/server/flags"
 	ethermint "github.com/tharsis/ethermint/types"
@@ -86,9 +85,9 @@ import (
 	ibcporttypes "github.com/cosmos/ibc-go/v3/modules/core/05-port/types"
 	ibchost "github.com/cosmos/ibc-go/v3/modules/core/24-host"
 	ibckeeper "github.com/cosmos/ibc-go/v3/modules/core/keeper"
-	"github.com/realiotech/realio-network/x/mint"
-	mintkeeper "github.com/realiotech/realio-network/x/mint/keeper"
-	minttypes "github.com/realiotech/realio-network/x/mint/types"
+	"github.com/realiotech/realio-network/v1/x/mint"
+	mintkeeper "github.com/realiotech/realio-network/v1/x/mint/keeper"
+	minttypes "github.com/realiotech/realio-network/v1/x/mint/types"
 	"github.com/spf13/cast"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
@@ -98,10 +97,10 @@ import (
 
 	"github.com/ignite-hq/cli/ignite/pkg/openapiconsole"
 
-	"github.com/realiotech/realio-network/docs"
-	assetmodule "github.com/realiotech/realio-network/x/asset"
-	assetmodulekeeper "github.com/realiotech/realio-network/x/asset/keeper"
-	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
+	"github.com/realiotech/realio-network/v1/docs"
+	assetmodule "github.com/realiotech/realio-network/v1/x/asset"
+	assetmodulekeeper "github.com/realiotech/realio-network/v1/x/asset/keeper"
+	assetmoduletypes "github.com/realiotech/realio-network/v1/x/asset/types"
 	"github.com/tharsis/ethermint/x/evm"
 	"github.com/tharsis/ethermint/x/feemarket"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
@@ -239,6 +238,9 @@ type App struct {
 
 	// sm is the simulation manager
 	sm *module.SimulationManager
+
+	// the configurator
+	configurator module.Configurator
 }
 
 // New returns a reference to an initialized blockchain app
@@ -527,7 +529,8 @@ func New(
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
 	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
-	app.mm.RegisterServices(module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter()))
+	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
+	app.mm.RegisterServices(app.configurator)
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	app.sm = module.NewSimulationManager(
@@ -583,6 +586,8 @@ func New(
 
 	app.SetEndBlocker(app.EndBlocker)
 
+	app.setupUpgradeHandlers()
+
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
 			tmos.Exit(err.Error())
@@ -602,8 +607,12 @@ func (app *App) Name() string { return app.BaseApp.Name() }
 // GetBaseApp returns the base app of the application
 func (app App) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
-// BeginBlocker application updates every begin block
+// BeginBlocker runs the Tendermint ABCI BeginBlock logic. It executes state changes at the beginning
+// of the new block for every registered module. If there is a registered fork at the current height,
+// BeginBlocker will schedule the upgrade plan and perform the state migration (if any).
 func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	// Perform any scheduled forks before executing the modules logic
+	app.ScheduleForkUpgrade(ctx)
 	return app.mm.BeginBlock(ctx, req)
 }
 
@@ -727,6 +736,11 @@ func GetMaccPerms() map[string][]string {
 	return dupMaccPerms
 }
 
+// SimulationManager implements the SimulationApp interface
+func (app *App) SimulationManager() *module.SimulationManager {
+	return app.sm
+}
+
 // initParamsKeeper init params keeper and its subspaces
 func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey sdk.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
@@ -749,7 +763,36 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	return paramsKeeper
 }
 
-// SimulationManager implements the SimulationApp interface
-func (app *App) SimulationManager() *module.SimulationManager {
-	return app.sm
+func (app *App) setupUpgradeHandlers() {
+	return
+	// add upgrade handlers here
+	// stub for v2 upgrade handler
+	//app.UpgradeKeeper.SetUpgradeHandler(
+	//	v2.UpgradeName,
+	//	v2.CreateUpgradeHandler(app.mm, app.configurator),
+	//)
+	//
+	//// When a planned update height is reached, the old binary will panic
+	//// writing on disk the height and name of the update that triggered it
+	//// This will read that value, and execute the preparations for the upgrade.
+	//upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	//if err != nil {
+	//	panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
+	//}
+	//
+	//if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+	//	return
+	//}
+	//
+	//var storeUpgrades *storetypes.StoreUpgrades
+	//
+	//switch upgradeInfo.Name {
+	//case v2.UpgradeName:
+	//	// no store upgrades in v2
+	//}
+	//
+	//if storeUpgrades != nil {
+	//	// configure store loader that checks if version == upgradeHeight and applies store upgrades
+	//	app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
+	//}
 }

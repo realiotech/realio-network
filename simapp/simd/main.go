@@ -5,8 +5,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
-	"github.com/realiotech/realio-network/simapp"
-	"github.com/realiotech/realio-network/simapp/simd/cmd"
+	"github.com/realiotech/realio-network/v1/simapp"
+	"github.com/realiotech/realio-network/v1/simapp/simd/cmd"
 )
 
 func main() {

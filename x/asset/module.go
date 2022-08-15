@@ -16,9 +16,9 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/realiotech/realio-network/x/asset/client/cli"
-	"github.com/realiotech/realio-network/x/asset/keeper"
-	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/realiotech/realio-network/v1/x/asset/client/cli"
+	"github.com/realiotech/realio-network/v1/x/asset/keeper"
+	"github.com/realiotech/realio-network/v1/x/asset/types"
 )
 
 var (
@@ -160,7 +160,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // ConsensusVersion implements ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 2 }
+func (AppModule) ConsensusVersion() uint64 { return 1 }
 
 // BeginBlock executes all ABCI BeginBlock logic respective to the capability module.
 func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}

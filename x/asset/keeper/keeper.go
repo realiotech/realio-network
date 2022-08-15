@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/realiotech/realio-network/v1/x/asset/types"
 )
 
 type (

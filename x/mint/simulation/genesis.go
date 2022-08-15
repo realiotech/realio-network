@@ -9,7 +9,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	"github.com/realiotech/realio-network/x/mint/types"
+	"github.com/realiotech/realio-network/v1/x/mint/types"
 )
 
 // Simulation parameter constants

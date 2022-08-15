@@ -5,7 +5,7 @@ import (
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/realiotech/realio-network/v1/x/asset/types"
 )
 
 func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferToken) (*types.MsgTransferTokenResponse, error) {
@@ -39,7 +39,6 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 	} else {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "%s transfer not authorized", msg.Symbol)
 	}
-
 
 	return &types.MsgTransferTokenResponse{}, nil
 }

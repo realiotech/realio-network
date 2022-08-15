@@ -1,8 +1,8 @@
 package v040
 
 import (
-	v039mint "github.com/realiotech/realio-network/x/mint/legacy/v039"
-	v040mint "github.com/realiotech/realio-network/x/mint/types"
+	v039mint "github.com/realiotech/realio-network/v1/x/mint/legacy/v039"
+	v040mint "github.com/realiotech/realio-network/v1/x/mint/types"
 )
 
 // Migrate accepts exported v0.39 x/mint genesis state and

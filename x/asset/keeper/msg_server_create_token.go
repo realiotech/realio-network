@@ -7,7 +7,7 @@ import (
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/realiotech/realio-network/v1/x/asset/types"
 )
 
 func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken) (*types.MsgCreateTokenResponse, error) {
@@ -66,7 +66,6 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 			sdk.NewAttribute(types.AttributeKeySymbol, msg.Symbol),
 		),
 	)
-
 
 	return &types.MsgCreateTokenResponse{}, nil
 }
