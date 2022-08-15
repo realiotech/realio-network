@@ -1,12 +1,8 @@
 package app
 
 import (
-	"fmt"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	ibcclientclient "github.com/cosmos/ibc-go/v3/modules/core/02-client/client"
 	ibcclienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
-	v2 "github.com/realiotech/realio-network/v1/app/upgrades/v2"
-
 	evmante "github.com/tharsis/ethermint/app/ante"
 	srvflags "github.com/tharsis/ethermint/server/flags"
 	ethermint "github.com/tharsis/ethermint/types"
@@ -611,8 +607,12 @@ func (app *App) Name() string { return app.BaseApp.Name() }
 // GetBaseApp returns the base app of the application
 func (app App) GetBaseApp() *baseapp.BaseApp { return app.BaseApp }
 
-// BeginBlocker application updates every begin block
+// BeginBlocker runs the Tendermint ABCI BeginBlock logic. It executes state changes at the beginning
+// of the new block for every registered module. If there is a registered fork at the current height,
+// BeginBlocker will schedule the upgrade plan and perform the state migration (if any).
 func (app *App) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	// Perform any scheduled forks before executing the modules logic
+	app.ScheduleForkUpgrade(ctx)
 	return app.mm.BeginBlock(ctx, req)
 }
 
@@ -764,34 +764,35 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 }
 
 func (app *App) setupUpgradeHandlers() {
+	return
 	// add upgrade handlers here
 	// stub for v2 upgrade handler
-	app.UpgradeKeeper.SetUpgradeHandler(
-		v2.UpgradeName,
-		v2.CreateUpgradeHandler(app.mm, app.configurator),
-	)
-
-	// When a planned update height is reached, the old binary will panic
-	// writing on disk the height and name of the update that triggered it
-	// This will read that value, and execute the preparations for the upgrade.
-	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
-	if err != nil {
-		panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
-	}
-
-	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		return
-	}
-
-	var storeUpgrades *storetypes.StoreUpgrades
-
-	switch upgradeInfo.Name {
-	case v2.UpgradeName:
-		// no store upgrades in v2
-	}
-
-	if storeUpgrades != nil {
-		// configure store loader that checks if version == upgradeHeight and applies store upgrades
-		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
-	}
+	//app.UpgradeKeeper.SetUpgradeHandler(
+	//	v2.UpgradeName,
+	//	v2.CreateUpgradeHandler(app.mm, app.configurator),
+	//)
+	//
+	//// When a planned update height is reached, the old binary will panic
+	//// writing on disk the height and name of the update that triggered it
+	//// This will read that value, and execute the preparations for the upgrade.
+	//upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	//if err != nil {
+	//	panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
+	//}
+	//
+	//if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+	//	return
+	//}
+	//
+	//var storeUpgrades *storetypes.StoreUpgrades
+	//
+	//switch upgradeInfo.Name {
+	//case v2.UpgradeName:
+	//	// no store upgrades in v2
+	//}
+	//
+	//if storeUpgrades != nil {
+	//	// configure store loader that checks if version == upgradeHeight and applies store upgrades
+	//	app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
+	//}
 }
