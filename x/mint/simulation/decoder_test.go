@@ -9,8 +9,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/simapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/kv"
-	"github.com/realiotech/realio-network/v1/x/mint/simulation"
-	"github.com/realiotech/realio-network/v1/x/mint/types"
+	"github.com/realiotech/realio-network/x/mint/simulation"
+	"github.com/realiotech/realio-network/x/mint/types"
 )
 
 func TestDecodeStore(t *testing.T) {

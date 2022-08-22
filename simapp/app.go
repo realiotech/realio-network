@@ -7,9 +7,9 @@ import (
 	ibcclient "github.com/cosmos/ibc-go/v3/modules/core/02-client"
 	ibcclienttypes "github.com/cosmos/ibc-go/v3/modules/core/02-client/types"
 
-	assetmodule "github.com/realiotech/realio-network/v1/x/asset"
-	assetmodulekeeper "github.com/realiotech/realio-network/v1/x/asset/keeper"
-	assetmoduletypes "github.com/realiotech/realio-network/v1/x/asset/types"
+	assetmodule "github.com/realiotech/realio-network/x/asset"
+	assetmodulekeeper "github.com/realiotech/realio-network/x/asset/keeper"
+	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
 	"io"
 	"net/http"
 	"os"
@@ -85,10 +85,10 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	simappparams "github.com/realiotech/realio-network/v1/simapp/params"
-	"github.com/realiotech/realio-network/v1/x/mint"
-	mintkeeper "github.com/realiotech/realio-network/v1/x/mint/keeper"
-	minttypes "github.com/realiotech/realio-network/v1/x/mint/types"
+	simappparams "github.com/realiotech/realio-network/simapp/params"
+	"github.com/realiotech/realio-network/x/mint"
+	mintkeeper "github.com/realiotech/realio-network/x/mint/keeper"
+	minttypes "github.com/realiotech/realio-network/x/mint/types"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/cosmos/cosmos-sdk/client/docs/statik"

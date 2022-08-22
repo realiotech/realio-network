@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/realiotech/realio-network/v1/testutil/sample"
+	"github.com/realiotech/realio-network/testutil/sample"
 	"github.com/stretchr/testify/require"
 )
 

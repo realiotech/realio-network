@@ -17,11 +17,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
-	"github.com/realiotech/realio-network/v1/x/mint/client/cli"
-	"github.com/realiotech/realio-network/v1/x/mint/client/rest"
-	"github.com/realiotech/realio-network/v1/x/mint/keeper"
-	"github.com/realiotech/realio-network/v1/x/mint/simulation"
-	"github.com/realiotech/realio-network/v1/x/mint/types"
+	"github.com/realiotech/realio-network/x/mint/client/cli"
+	"github.com/realiotech/realio-network/x/mint/client/rest"
+	"github.com/realiotech/realio-network/x/mint/keeper"
+	"github.com/realiotech/realio-network/x/mint/simulation"
+	"github.com/realiotech/realio-network/x/mint/types"
 )
 
 var (

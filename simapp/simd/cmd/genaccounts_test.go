@@ -19,8 +19,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltest "github.com/cosmos/cosmos-sdk/x/genutil/client/testutil"
-	"github.com/realiotech/realio-network/v1/simapp"
-	simcmd "github.com/realiotech/realio-network/v1/simapp/simd/cmd"
+	"github.com/realiotech/realio-network/simapp"
+	simcmd "github.com/realiotech/realio-network/simapp/simd/cmd"
 )
 
 var testMbm = module.NewBasicManager(genutil.AppModuleBasic{})

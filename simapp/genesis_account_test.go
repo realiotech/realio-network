@@ -7,7 +7,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/realiotech/realio-network/v1/simapp"
+	"github.com/realiotech/realio-network/simapp"
 
 	"github.com/stretchr/testify/require"
 	"github.com/tendermint/tendermint/crypto"

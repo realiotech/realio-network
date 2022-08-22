@@ -6,7 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/realiotech/realio-network/v1/x/mint/simulation"
+	"github.com/realiotech/realio-network/x/mint/simulation"
 )
 
 func TestParamChangest(t *testing.T) {

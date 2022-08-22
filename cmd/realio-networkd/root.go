@@ -36,7 +36,7 @@ import (
 	"github.com/evmos/ethermint/crypto/hd"
 	ethermintserver "github.com/evmos/ethermint/server"
 	servercfg "github.com/evmos/ethermint/server/config"
-	"github.com/realiotech/realio-network/v1/app"
+	"github.com/realiotech/realio-network/app"
 	// this line is used by starport scaffolding # stargate/root/import
 )
 

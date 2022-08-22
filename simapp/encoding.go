@@ -2,7 +2,7 @@ package simapp
 
 import (
 	"github.com/cosmos/cosmos-sdk/std"
-	simappparams "github.com/realiotech/realio-network/v1/simapp/params"
+	simappparams "github.com/realiotech/realio-network/simapp/params"
 )
 
 // MakeTestEncodingConfig creates an EncodingConfig for testing. This function

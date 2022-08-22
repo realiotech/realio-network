@@ -29,7 +29,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/realiotech/realio-network/v1/simapp/helpers"
+	"github.com/realiotech/realio-network/simapp/helpers"
 )
 
 // DefaultConsensusParams defines the default Tendermint consensus params used in

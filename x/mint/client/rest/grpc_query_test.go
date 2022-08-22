@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/cosmos/cosmos-sdk/testutil/network"
-	minttypes "github.com/realiotech/realio-network/v1/x/mint/types"
+	minttypes "github.com/realiotech/realio-network/x/mint/types"
 )
 
 type IntegrationTestSuite struct {

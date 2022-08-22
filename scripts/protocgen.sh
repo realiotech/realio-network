@@ -40,5 +40,5 @@ $(find "$(pwd)/proto" -maxdepth 5 -name '*.proto')
 # go mod tidy
 
 # move proto files to the right places
-cp -r github.com/realiotech/realio-network/v*/x/* x/
+cp -r github.com/realiotech/realio-network/* ./
 rm -rf github.com
