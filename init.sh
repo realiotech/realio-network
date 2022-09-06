@@ -1,4 +1,5 @@
-KEY="mykey"
+KEY="eduardo"
+KEY2="realio-val-1"
 CHAINID="realionetwork_9000-1"
 MONIKER="realionetworklocal"
 KEYRING="test"
@@ -28,6 +29,7 @@ realio-networkd config chain-id $CHAINID --home $HOMEDIR
 
 # if $KEY exists it should be deleted
 realio-networkd keys add $KEY --keyring-backend $KEYRING --algo $KEYALGO --home $HOMEDIR
+realio-networkd keys add $KEY2 --keyring-backend $KEYRING --algo $KEYALGO --home $HOMEDIR
 
 # Change parameter token denominations to ario
 cat $HOME/.realio-network/config/genesis.json | jq '.app_state["staking"]["params"]["bond_denom"]="ario,arst"' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
@@ -41,10 +43,11 @@ cat $HOME/.realio-network/config/genesis.json | jq '.app_state["inflation"]["par
 cat $HOME/.realio-network/config/genesis.json | jq '.app_state["bank"]["denom_metadata"]=[{ "description": "The native token of the Realio Network", "denom_units": [ { "denom": "ario", "exponent": 0, "aliases": [ "attorio" ] }, { "denom": "rio", "exponent": 18, "aliases": [] } ], "base": "ario", "display": "rio", "name": "Realio Network Rio", "symbol": "rio" }, { "description": "Realio Security Token", "denom_units": [ { "denom": "arst", "exponent": 0, "aliases": [ "attorst" ] }, { "denom": "rst", "exponent": 18, "aliases": [] } ], "base": "arst", "display": "rst", "name": "Realio Security Token", "symbol": "rst" }]' > $HOME/.realio-network/config/tmp_genesis.json && mv $HOME/.realio-network/config/tmp_genesis.json $HOME/.realio-network/config/genesis.json
 
 # Allocate genesis accounts (cosmos formatted addresses)
-realio-networkd add-genesis-account $KEY 10000000000000ario,10000000000000arst --keyring-backend $KEYRING
+realio-networkd add-genesis-account $KEY 10000000000000000000000000ario,5000000000000000000000000arst --keyring-backend $KEYRING
+realio-networkd add-genesis-account $KEY2 1100000000000000000000000ario,1000000000000000000000000arst --keyring-backend $KEYRING
 
 # Sign genesis transaction
-realio-networkd gentx $KEY 1000000000000ario --keyring-backend $KEYRING --chain-id $CHAINID
+realio-networkd gentx $KEY2 1000000000000000000000000ario --keyring-backend $KEYRING --chain-id $CHAINID
 
 # Collect genesis tx
 realio-networkd collect-gentxs
