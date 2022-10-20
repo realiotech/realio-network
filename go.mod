@@ -3,10 +3,10 @@ module github.com/realiotech/realio-network
 go 1.18
 
 require (
-	github.com/cosmos/cosmos-sdk v0.45.5-0.20220523154235-2921a1c3c918
-	github.com/cosmos/ibc-go/v3 v3.1.0
+	github.com/cosmos/cosmos-sdk v0.45.9
+	github.com/cosmos/ibc-go/v3 v3.2.0
 	github.com/ethereum/go-ethereum v1.10.19
-	github.com/evmos/ethermint v0.19.0
+	github.com/evmos/ethermint v0.19.3
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
@@ -161,7 +161,6 @@ require (
 )
 
 replace (
-
 	// https://forum.cosmos.network/t/ibc-security-advisory-dragonberry/7702
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
 	// Our cosmos-sdk branch is:  https://github.com/realiotech/cosmos-sdk v0.45.x-realio-alpha-0.1
