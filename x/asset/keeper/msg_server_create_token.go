@@ -38,7 +38,6 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 	}
 
 	// mint coins for the current module
-	//todo review denom metadata, decimas in ammont
 	var coin = sdk.Coins{{Denom: msg.Symbol, Amount: sdk.NewInt(msg.Total)}}
 
 	k.SetToken(
@@ -51,7 +50,6 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 		panic(err)
 	}
 
-	// todo review set denom meta data
 	k.bankKeeper.SetDenomMetaData(ctx, bank.Metadata{Base: msg.Symbol, Display: msg.Symbol, DenomUnits: []*bank.DenomUnit{{Denom: msg.Symbol, Exponent: 0}}})
 
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, creatorAccAddress, coin)
