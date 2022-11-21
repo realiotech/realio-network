@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/realiotech/realio-network/x/mint/keeper"
 	"github.com/realiotech/realio-network/x/mint/types"
 )
@@ -20,8 +21,7 @@ func BeginBlocker(ctx sdk.Context, k keeper.Keeper) {
 	// recalculate inflation rate
 	totalStakingSupply := k.StakingTokenSupply(ctx)
 	bondedRatio := k.BondedRatio(ctx)
-	// inflation rate is constant for us
-	minter.Inflation = params.InflationRateChange
+	minter.Inflation = params.InflationRate
 	minter.AnnualProvisions = minter.NextAnnualProvisions(params, totalStakingSupply)
 	k.SetMinter(ctx, minter)
 

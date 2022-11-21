@@ -1,22 +1,16 @@
 package keeper_test
 
 import (
-	"testing"
-
-	"github.com/cosmos/cosmos-sdk/codec"
-
-	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	keep "github.com/realiotech/realio-network/x/mint/keeper"
 	"github.com/realiotech/realio-network/x/mint/types"
-
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-func TestNewQuerier(t *testing.T) {
-	app, ctx := createTestApp(true)
-	legacyQuerierCdc := codec.NewAminoCodec(app.LegacyAmino())
+func (suite *KeeperTestSuite) TestNewQuerier() {
+	app, ctx, legacyQuerierCdc := suite.app, suite.ctx, suite.legacyQuerierCdc
 	querier := keep.NewQuerier(app.MintKeeper, legacyQuerierCdc.LegacyAmino)
 
 	query := abci.RequestQuery{
@@ -25,62 +19,56 @@ func TestNewQuerier(t *testing.T) {
 	}
 
 	_, err := querier(ctx, []string{types.QueryParameters}, query)
-	require.NoError(t, err)
+	suite.Require().NoError(err)
 
 	_, err = querier(ctx, []string{types.QueryInflation}, query)
-	require.NoError(t, err)
+	suite.Require().NoError(err)
 
 	_, err = querier(ctx, []string{types.QueryAnnualProvisions}, query)
-	require.NoError(t, err)
+	suite.Require().NoError(err)
 
 	_, err = querier(ctx, []string{"foo"}, query)
-	require.Error(t, err)
+	suite.Require().Error(err)
 }
 
-func TestQueryParams(t *testing.T) {
-	app, ctx := createTestApp(true)
-	legacyQuerierCdc := codec.NewAminoCodec(app.LegacyAmino())
-	querier := keep.NewQuerier(app.MintKeeper, legacyQuerierCdc.LegacyAmino)
+func (suite *KeeperTestSuite) TestQueryParams() {
+	querier := keep.NewQuerier(suite.app.MintKeeper, suite.legacyQuerierCdc.LegacyAmino)
 
 	var params types.Params
 
-	res, sdkErr := querier(ctx, []string{types.QueryParameters}, abci.RequestQuery{})
-	require.NoError(t, sdkErr)
+	res, sdkErr := querier(suite.ctx, []string{types.QueryParameters}, abci.RequestQuery{})
+	suite.Require().NoError(sdkErr)
 
-	err := app.LegacyAmino().UnmarshalJSON(res, &params)
-	require.NoError(t, err)
+	err := suite.app.LegacyAmino().UnmarshalJSON(res, &params)
+	suite.Require().NoError(err)
 
-	require.Equal(t, app.MintKeeper.GetParams(ctx), params)
+	suite.Require().Equal(suite.app.MintKeeper.GetParams(suite.ctx), params)
 }
 
-func TestQueryInflation(t *testing.T) {
-	app, ctx := createTestApp(true)
-	legacyQuerierCdc := codec.NewAminoCodec(app.LegacyAmino())
-	querier := keep.NewQuerier(app.MintKeeper, legacyQuerierCdc.LegacyAmino)
+func (suite *KeeperTestSuite) TestQueryInflation() {
+	querier := keep.NewQuerier(suite.app.MintKeeper, suite.legacyQuerierCdc.LegacyAmino)
 
 	var inflation sdk.Dec
 
-	res, sdkErr := querier(ctx, []string{types.QueryInflation}, abci.RequestQuery{})
-	require.NoError(t, sdkErr)
+	res, sdkErr := querier(suite.ctx, []string{types.QueryInflation}, abci.RequestQuery{})
+	suite.Require().NoError(sdkErr)
 
-	err := app.LegacyAmino().UnmarshalJSON(res, &inflation)
-	require.NoError(t, err)
+	err := suite.app.LegacyAmino().UnmarshalJSON(res, &inflation)
+	suite.Require().NoError(err)
 
-	require.Equal(t, app.MintKeeper.GetMinter(ctx).Inflation, inflation)
+	suite.Require().Equal(suite.app.MintKeeper.GetMinter(suite.ctx).Inflation, inflation)
 }
 
-func TestQueryAnnualProvisions(t *testing.T) {
-	app, ctx := createTestApp(true)
-	legacyQuerierCdc := codec.NewAminoCodec(app.LegacyAmino())
-	querier := keep.NewQuerier(app.MintKeeper, legacyQuerierCdc.LegacyAmino)
+func (suite *KeeperTestSuite) TestQueryAnnualProvisions() {
+	querier := keep.NewQuerier(suite.app.MintKeeper, suite.legacyQuerierCdc.LegacyAmino)
 
 	var annualProvisions sdk.Dec
 
-	res, sdkErr := querier(ctx, []string{types.QueryAnnualProvisions}, abci.RequestQuery{})
-	require.NoError(t, sdkErr)
+	res, sdkErr := querier(suite.ctx, []string{types.QueryAnnualProvisions}, abci.RequestQuery{})
+	suite.Require().NoError(sdkErr)
 
-	err := app.LegacyAmino().UnmarshalJSON(res, &annualProvisions)
-	require.NoError(t, err)
+	err := suite.app.LegacyAmino().UnmarshalJSON(res, &annualProvisions)
+	suite.Require().NoError(err)
 
-	require.Equal(t, app.MintKeeper.GetMinter(ctx).AnnualProvisions, annualProvisions)
+	suite.Require().Equal(suite.app.MintKeeper.GetMinter(suite.ctx).AnnualProvisions, annualProvisions)
 }

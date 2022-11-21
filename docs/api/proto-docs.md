@@ -485,10 +485,7 @@ Params holds parameters for the mint module.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `mint_denom` | [string](#string) |  | type of coin to mint |
-| `inflation_rate_change` | [string](#string) |  | maximum annual change in inflation rate |
-| `inflation_max` | [string](#string) |  | maximum inflation rate |
-| `inflation_min` | [string](#string) |  | minimum inflation rate |
-| `goal_bonded` | [string](#string) |  | goal of percent bonded atoms |
+| `inflation_rate` | [string](#string) |  | annual change in inflation rate |
 | `blocks_per_year` | [uint64](#uint64) |  | expected blocks per year |
 
 
@@ -635,7 +632,7 @@ Query provides defines the gRPC querier service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `Params` | [QueryParamsRequest](#realionetwork.mint.v1.QueryParamsRequest) | [QueryParamsResponse](#realionetwork.mint.v1.QueryParamsResponse) | Params returns the total set of minting parameters. | GET|/realionetwork/v1/params|
+| `Params` | [QueryParamsRequest](#realionetwork.mint.v1.QueryParamsRequest) | [QueryParamsResponse](#realionetwork.mint.v1.QueryParamsResponse) | Params returns the total set of minting parameters. | GET|/realionetwork/mint/v1/params|
 | `Inflation` | [QueryInflationRequest](#realionetwork.mint.v1.QueryInflationRequest) | [QueryInflationResponse](#realionetwork.mint.v1.QueryInflationResponse) | Inflation returns the current minting inflation value. | GET|/realionetwork/mint/v1/inflation|
 | `AnnualProvisions` | [QueryAnnualProvisionsRequest](#realionetwork.mint.v1.QueryAnnualProvisionsRequest) | [QueryAnnualProvisionsResponse](#realionetwork.mint.v1.QueryAnnualProvisionsResponse) | AnnualProvisions current minting annual provisions value. | GET|/realionetwork/mint/v1/annual_provisions|
 

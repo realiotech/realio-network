@@ -1,11 +1,13 @@
 package keeper_test
 
 import (
+	"strconv"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+
 	"github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/asset/types"
-	"strconv"
 )
 
 // Prevent strconv unused error
@@ -16,7 +18,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := "cosmos19cm0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
+	creator := suite.testUser1Address
 	expected := &types.MsgCreateToken{Creator: creator,
 		Symbol: "RIO", Total: 1000,
 	}
@@ -47,7 +49,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateAuthorizationDefaultFalse(
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := "cosmos19cm0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
+	creator := suite.testUser1Address
 	expected := &types.MsgCreateToken{Creator: creator,
 		Symbol: "RIO", Total: 1000,
 	}
@@ -64,7 +66,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateErrorDupIndex() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := "cosmos19cm0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
+	creator := suite.testUser1Address
 	t1 := &types.MsgCreateToken{Creator: creator,
 		Symbol: "RIO", Total: 1000,
 	}
@@ -85,7 +87,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateVerifyDistribution() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := "cosmos19cm0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
+	creator := suite.testUser1Address
 	t1 := &types.MsgCreateToken{Creator: creator,
 		Symbol: "RIO", Total: 1000,
 	}
@@ -105,7 +107,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUpdate() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := "cosmos19cm0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
+	creator := suite.testUser1Address
 	t1 := &types.MsgCreateToken{Creator: creator,
 		Symbol: "RIO", Total: 1000,
 	}
@@ -136,7 +138,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUpdateNotFound() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := "cosmos19cm0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
+	creator := suite.testUser1Address
 	t1 := &types.MsgCreateToken{Creator: creator,
 		Symbol: "RIO", Total: 1000,
 	}
@@ -155,8 +157,8 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeAddress() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := "cosmos19cm0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
-	testUser := "cosmos18bc0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
+	creator := suite.testUser1Address
+	testUser := suite.testUser2Address
 	t1 := &types.MsgCreateToken{Creator: creator,
 		Symbol: "RIO", Total: 1000, AuthorizationRequired: true,
 	}
@@ -187,8 +189,8 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeTokenNotFound() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := "cosmos19cm0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
-	testUser := "cosmos18bc0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
+	creator := suite.testUser1Address
+	testUser := suite.testUser2Address
 	t1 := &types.MsgCreateToken{Creator: creator,
 		Symbol: "RIO", Total: 1000, AuthorizationRequired: true,
 	}
@@ -209,9 +211,10 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeAddressSenderUnauthoriz
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := "cosmos19cm0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
-	creator2 := "cosmos16ds7p4aep5j83j8d8evwhwwegepjrh9zjn030q"
-	testUser := "cosmos18bc0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
+	creator := suite.testUser1Address
+	creator2 := suite.testUser2Address
+	testUser := suite.testUser3Address
+
 	t1 := &types.MsgCreateToken{Creator: creator,
 		Symbol: "RIO", Total: 1000, AuthorizationRequired: true,
 	}
@@ -231,8 +234,8 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddress() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := "cosmos19cm0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
-	testUser := "cosmos18bc0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
+	creator := suite.testUser1Address
+	testUser := suite.testUser2Address
 	t1 := &types.MsgCreateToken{Creator: creator,
 		Symbol: "RIO", Total: 1000, AuthorizationRequired: true,
 	}
@@ -272,8 +275,8 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeTokenNotFound() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := "cosmos19cm0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
-	testUser := "cosmos18bc0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
+	creator := suite.testUser1Address
+	testUser := suite.testUser2Address
 	t1 := &types.MsgCreateToken{Creator: creator,
 		Symbol: "RIO", Total: 1000, AuthorizationRequired: true,
 	}
@@ -294,9 +297,9 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddressSenderUnauthor
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := "cosmos19cm0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
-	creator2 := "cosmos16ds7p4aep5j83j8d8evwhwwegepjrh9zjn030q"
-	testUser := "cosmos18bc0p4aep5j83j8d8evwhwwegepjrh9zjn030q"
+	creator := suite.testUser1Address
+	creator2 := suite.testUser2Address
+	testUser := suite.testUser3Address
 	t1 := &types.MsgCreateToken{Creator: creator,
 		Symbol: "RIO", Total: 1000, AuthorizationRequired: true,
 	}

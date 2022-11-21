@@ -1,21 +1,21 @@
 package keeper_test
 
 import (
-	"testing"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	testkeeper "github.com/realiotech/realio-network/testutil/keeper"
+
 	"github.com/realiotech/realio-network/x/asset/types"
-	"github.com/stretchr/testify/require"
 )
 
-func TestParamsQuery(t *testing.T) {
-	keeper, ctx := testkeeper.AssetKeeper(t)
-	wctx := sdk.WrapSDKContext(ctx)
-	params := types.DefaultParams()
-	keeper.SetParams(ctx, params)
+func (suite *KeeperTestSuite) TestParamsQuery() {
+	suite.SetupTest()
 
-	response, err := keeper.Params(wctx, &types.QueryParamsRequest{})
-	require.NoError(t, err)
-	require.Equal(t, &types.QueryParamsResponse{Params: params}, response)
+	k := suite.app.AssetKeeper
+	wctx := sdk.WrapSDKContext(suite.ctx)
+
+	params := types.DefaultParams()
+	k.SetParams(suite.ctx, params)
+
+	response, err := k.Params(wctx, &types.QueryParamsRequest{})
+	suite.Require().NoError(err)
+	suite.Require().Equal(&types.QueryParamsResponse{Params: params}, response)
 }

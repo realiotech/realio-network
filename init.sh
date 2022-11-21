@@ -14,11 +14,11 @@ TRACE=""
 command -v jq > /dev/null 2>&1 || { echo >&2 "jq not installed. More info: https://stedolan.github.io/jq/download/"; exit 1; }
 
 # remove remove existing node
-rm -rf $HOME/.realio-network
+#rm -rf $HOME/.realio-network
 
 # Reinstall daemon
-make clean
-make install
+#make clean
+#make install
 
 # Set moniker and chain-id for Realio Network (Moniker can be anything, chain-id must be an integer)
 realio-networkd init $MONIKER --chain-id $CHAINID
@@ -55,5 +55,5 @@ realio-networkd collect-gentxs
 # Run this to ensure everything worked and that the genesis file is setup correctly
 realio-networkd validate-genesis
 
-# Start the node (remove the --pruning=nothing flag if historical queries are not needed)
+## Start the node (remove the --pruning=nothing flag if historical queries are not needed)
 realio-networkd start --pruning=nothing $TRACE --log_level $LOGLEVEL --minimum-gas-prices=0.0001ario --json-rpc.api eth,txpool,personal,net,debug,web3

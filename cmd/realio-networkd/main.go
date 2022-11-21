@@ -1,11 +1,14 @@
 package main
 
 import (
+	"os"
+
+	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/realiotech/realio-network/app"
 	cmdcfg "github.com/realiotech/realio-network/cmd/config"
-	"os"
 )
 
 func main() {
@@ -13,8 +16,14 @@ func main() {
 	cmdcfg.RegisterDenoms()
 
 	rootCmd, _ := NewRootCmd()
-	if err := svrcmd.Execute(rootCmd, app.DefaultNodeHome); err != nil {
-		os.Exit(1)
+	if err := svrcmd.Execute(rootCmd, EnvPrefix, app.DefaultNodeHome); err != nil {
+		switch e := err.(type) {
+		case server.ErrorCode:
+			os.Exit(e.Code)
+
+		default:
+			os.Exit(1)
+		}
 	}
 }
 

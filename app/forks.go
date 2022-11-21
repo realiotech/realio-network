@@ -10,9 +10,9 @@ import (
 //
 // CONTRACT: for this logic to work properly it is required to:
 //
-// 	1) Release a non-breaking patch version so that the chain can set the scheduled upgrade plan at upgrade-height.
-// 	2) Release the software defined in the upgrade-info
-func (app *App) ScheduleForkUpgrade(ctx sdk.Context) {
+//  1. Release a non-breaking patch version so that the chain can set the scheduled upgrade plan at upgrade-height.
+//  2. Release the software defined in the upgrade-info
+func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 	// NOTE: there are no testnet forks for the existing versions
 	return
 	//if !types.IsMainnet(ctx.ChainID()) {

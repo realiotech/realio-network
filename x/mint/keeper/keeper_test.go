@@ -4,8 +4,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/evmos/ethermint/crypto/ethsecp256k1"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -14,25 +14,23 @@ import (
 	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
 	"github.com/tendermint/tendermint/version"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/realiotech/realio-network/app"
 	realiotypes "github.com/realiotech/realio-network/types"
-	"github.com/realiotech/realio-network/x/asset/types"
-
-	"github.com/realiotech/realio-network/testutil"
+	"github.com/realiotech/realio-network/x/mint/types"
 )
 
 type KeeperTestSuite struct {
 	suite.Suite
-	app              *app.RealioNetwork
-	ctx              sdk.Context
-	msgSrv           types.MsgServer
-	queryClient      types.QueryClient
-	testUser1Acc     sdk.AccAddress
-	testUser1Address string
-	testUser2Acc     sdk.AccAddress
-	testUser2Address string
-	testUser3Acc     sdk.AccAddress
-	testUser3Address string
+
+	app         *app.RealioNetwork
+	ctx         sdk.Context
+	queryClient types.QueryClient
+	address     common.Address
+
+	legacyQuerierCdc *codec.AminoCodec
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
@@ -42,20 +40,13 @@ func (suite *KeeperTestSuite) SetupTest() {
 func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 	checkTx := false
 
-	// user 1 key
-	suite.testUser1Acc = testutil.GenAddress()
-	suite.testUser1Address = suite.testUser1Acc.String()
-
-	// user 2 key
-	suite.testUser2Acc = testutil.GenAddress()
-	suite.testUser2Address = suite.testUser2Acc.String()
-
-	// user 3 key
-	suite.testUser3Acc = testutil.GenAddress()
-	suite.testUser3Address = suite.testUser3Acc.String()
+	// account key
+	priv, err := ethsecp256k1.GenerateKey()
+	require.NoError(t, err)
+	suite.address = common.BytesToAddress(priv.PubKey().Address().Bytes())
 
 	// consensus key
-	priv, err := ethsecp256k1.GenerateKey()
+	priv, err = ethsecp256k1.GenerateKey()
 	require.NoError(t, err)
 	consAddress := sdk.ConsAddress(priv.PubKey().Address())
 
@@ -89,9 +80,10 @@ func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 	})
 
 	queryHelper := baseapp.NewQueryServerTestHelper(suite.ctx, suite.app.InterfaceRegistry())
-	types.RegisterQueryServer(queryHelper, suite.app.AssetKeeper)
+	types.RegisterQueryServer(queryHelper, suite.app.MintKeeper)
 	suite.queryClient = types.NewQueryClient(queryHelper)
 
+	suite.legacyQuerierCdc = codec.NewAminoCodec(suite.app.LegacyAmino())
 }
 
 func TestKeeperTestSuite(t *testing.T) {
