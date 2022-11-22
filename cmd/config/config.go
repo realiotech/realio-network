@@ -50,7 +50,7 @@ func RegisterDenoms() {
 		panic(err)
 	}
 
-	if err := sdk.RegisterDenom(BaseDenom, sdk.NewDecWithPrec(1, 7)); err != nil {
+	if err := sdk.RegisterDenom(BaseDenom, sdk.NewDecWithPrec(1, ethermint.BaseDenomUnit)); err != nil {
 		panic(err)
 	}
 }
