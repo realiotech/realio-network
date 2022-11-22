@@ -3,8 +3,9 @@ package types_test
 import (
 	"testing"
 
-	"github.com/realiotech/realio-network/x/asset/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 func TestGenesisState_Validate(t *testing.T) {
@@ -21,7 +22,7 @@ func TestGenesisState_Validate(t *testing.T) {
 		{
 			desc: "valid genesis state",
 			genState: &types.GenesisState{
-				PortId: types.PortID,
+				Tokens: []types.Token{},
 				// this line is used by starport scaffolding # types/genesis/validField
 			},
 			valid: true,

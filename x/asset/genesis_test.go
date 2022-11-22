@@ -71,5 +71,5 @@ func (suite *GenesisTestSuite) TestGenesis() {
 	got := asset.ExportGenesis(suite.ctx, suite.app.AssetKeeper)
 	suite.Require().NotNil(got)
 
-	suite.Require().Equal(suite.genesis.PortId, got.PortId)
+	suite.Require().Equal(suite.genesis.Tokens, got.Tokens)
 }

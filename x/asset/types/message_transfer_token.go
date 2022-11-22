@@ -9,7 +9,7 @@ const TypeMsgTransferToken = "transfer_token"
 
 var _ sdk.Msg = &MsgTransferToken{}
 
-func NewMsgTransferToken(creator string, symbol string, from string, to string, amount int64) *MsgTransferToken {
+func NewMsgTransferToken(creator string, symbol string, from string, to string, amount string) *MsgTransferToken {
 	return &MsgTransferToken{
 		Creator: creator,
 		Symbol:  symbol,

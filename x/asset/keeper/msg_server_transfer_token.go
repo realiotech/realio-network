@@ -2,9 +2,11 @@ package keeper
 
 import (
 	"context"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
@@ -31,7 +33,8 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 	}
 
 	if isAuthorizedFrom && isAuthorizedTo {
-		var coin = sdk.Coins{{Denom: msg.Symbol, Amount: sdk.NewInt(msg.Amount)}}
+		amount, _ := sdk.NewIntFromString(msg.Amount)
+		var coin = sdk.Coins{{Denom: msg.Symbol, Amount: amount}}
 		err := k.bankKeeper.SendCoins(ctx, fromAddress, toAddress, coin)
 		if err != nil {
 			panic(err)

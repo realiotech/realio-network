@@ -6,9 +6,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/realiotech/realio-network/x/asset/types"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
+
+	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 var _ = strconv.Itoa(0)
@@ -21,14 +22,8 @@ func CmdMsgCreateToken() *cobra.Command {
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argName := args[0]
 			argSymbol := args[1]
-			argTotal, err := cast.ToInt64E(args[2])
-			if err != nil {
-				return err
-			}
-			argDecimals, err := cast.ToInt64E(args[3])
-			if err != nil {
-				return err
-			}
+			argTotal := args[2]
+			argDecimals := args[3]
 			argAuthorizationRequired, err := cast.ToBoolE(args[4])
 			if err != nil {
 				return err

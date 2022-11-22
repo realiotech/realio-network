@@ -20,7 +20,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 	wctx := sdk.WrapSDKContext(suite.ctx)
 	creator := suite.testUser1Address
 	expected := &types.MsgCreateToken{Creator: creator,
-		Symbol: "RIO", Total: 1000,
+		Symbol: "RIO", Total: "1000",
 	}
 	_, err := srv.CreateToken(wctx, expected)
 	suite.Require().NoError(err)
@@ -38,7 +38,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateInvalidSender() {
 	wctx := sdk.WrapSDKContext(suite.ctx)
 	creator := "invalid"
 	expected := &types.MsgCreateToken{Creator: creator,
-		Symbol: "RIO", Total: 1000,
+		Symbol: "RIO", Total: "1000",
 	}
 	_, err := srv.CreateToken(wctx, expected)
 	suite.Require().ErrorIs(err, sdkerrors.ErrInvalidAddress)
@@ -51,7 +51,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateAuthorizationDefaultFalse(
 	wctx := sdk.WrapSDKContext(suite.ctx)
 	creator := suite.testUser1Address
 	expected := &types.MsgCreateToken{Creator: creator,
-		Symbol: "RIO", Total: 1000,
+		Symbol: "RIO", Total: "1000",
 	}
 	_, err := srv.CreateToken(wctx, expected)
 	suite.Require().NoError(err)
@@ -68,13 +68,13 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateErrorDupIndex() {
 	wctx := sdk.WrapSDKContext(suite.ctx)
 	creator := suite.testUser1Address
 	t1 := &types.MsgCreateToken{Creator: creator,
-		Symbol: "RIO", Total: 1000,
+		Symbol: "RIO", Total: "1000",
 	}
 	_, err := srv.CreateToken(wctx, t1)
 	suite.Require().NoError(err)
 
 	t2 := &types.MsgCreateToken{Creator: creator,
-		Symbol: "RIO", Total: 1000,
+		Symbol: "RIO", Total: "1000",
 	}
 	_, err2 := srv.CreateToken(wctx, t2)
 	suite.Require().Error(err2)
@@ -89,7 +89,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateVerifyDistribution() {
 	wctx := sdk.WrapSDKContext(suite.ctx)
 	creator := suite.testUser1Address
 	t1 := &types.MsgCreateToken{Creator: creator,
-		Symbol: "RIO", Total: 1000,
+		Symbol: "RIO", Total: "1000",
 	}
 	_, err := srv.CreateToken(wctx, t1)
 	suite.Require().NoError(err)
@@ -109,7 +109,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUpdate() {
 	wctx := sdk.WrapSDKContext(suite.ctx)
 	creator := suite.testUser1Address
 	t1 := &types.MsgCreateToken{Creator: creator,
-		Symbol: "RIO", Total: 1000,
+		Symbol: "RIO", Total: "1000",
 	}
 	_, err := srv.CreateToken(wctx, t1)
 	suite.Require().NoError(err)
@@ -130,7 +130,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUpdate() {
 	)
 	suite.Require().NoError(err)
 	suite.Require().True(rio.AuthorizationRequired)
-	suite.Require().Equal(rio.Total, int64(1000))
+	suite.Require().Equal(rio.Total, "1000")
 }
 
 func (suite *KeeperTestSuite) TestTokenMsgServerUpdateNotFound() {
@@ -140,7 +140,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUpdateNotFound() {
 	wctx := sdk.WrapSDKContext(suite.ctx)
 	creator := suite.testUser1Address
 	t1 := &types.MsgCreateToken{Creator: creator,
-		Symbol: "RIO", Total: 1000,
+		Symbol: "RIO", Total: "1000",
 	}
 	_, err := srv.CreateToken(wctx, t1)
 
@@ -160,7 +160,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeAddress() {
 	creator := suite.testUser1Address
 	testUser := suite.testUser2Address
 	t1 := &types.MsgCreateToken{Creator: creator,
-		Symbol: "RIO", Total: 1000, AuthorizationRequired: true,
+		Symbol: "RIO", Total: "1000", AuthorizationRequired: true,
 	}
 	_, err := srv.CreateToken(wctx, t1)
 	suite.Require().NoError(err)
@@ -192,7 +192,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeTokenNotFound() {
 	creator := suite.testUser1Address
 	testUser := suite.testUser2Address
 	t1 := &types.MsgCreateToken{Creator: creator,
-		Symbol: "RIO", Total: 1000, AuthorizationRequired: true,
+		Symbol: "RIO", Total: "1000", AuthorizationRequired: true,
 	}
 	_, err := srv.CreateToken(wctx, t1)
 	suite.Require().NoError(err)
@@ -216,7 +216,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeAddressSenderUnauthoriz
 	testUser := suite.testUser3Address
 
 	t1 := &types.MsgCreateToken{Creator: creator,
-		Symbol: "RIO", Total: 1000, AuthorizationRequired: true,
+		Symbol: "RIO", Total: "1000", AuthorizationRequired: true,
 	}
 	_, err := srv.CreateToken(wctx, t1)
 
@@ -237,7 +237,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddress() {
 	creator := suite.testUser1Address
 	testUser := suite.testUser2Address
 	t1 := &types.MsgCreateToken{Creator: creator,
-		Symbol: "RIO", Total: 1000, AuthorizationRequired: true,
+		Symbol: "RIO", Total: "1000", AuthorizationRequired: true,
 	}
 	_, err := srv.CreateToken(wctx, t1)
 	suite.Require().NoError(err)
@@ -278,7 +278,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeTokenNotFound() {
 	creator := suite.testUser1Address
 	testUser := suite.testUser2Address
 	t1 := &types.MsgCreateToken{Creator: creator,
-		Symbol: "RIO", Total: 1000, AuthorizationRequired: true,
+		Symbol: "RIO", Total: "1000", AuthorizationRequired: true,
 	}
 	_, err := srv.CreateToken(wctx, t1)
 	suite.Require().NoError(err)
@@ -301,7 +301,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddressSenderUnauthor
 	creator2 := suite.testUser2Address
 	testUser := suite.testUser3Address
 	t1 := &types.MsgCreateToken{Creator: creator,
-		Symbol: "RIO", Total: 1000, AuthorizationRequired: true,
+		Symbol: "RIO", Total: "1000", AuthorizationRequired: true,
 	}
 	_, err := srv.CreateToken(wctx, t1)
 	suite.Require().NoError(err)

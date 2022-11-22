@@ -3,10 +3,12 @@ package keeper
 import (
 	"context"
 	"fmt"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
@@ -38,7 +40,8 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 	}
 
 	// mint coins for the current module
-	var coin = sdk.Coins{{Denom: msg.Symbol, Amount: sdk.NewInt(msg.Total)}}
+	amount, _ := sdk.NewIntFromString(msg.Total)
+	var coin = sdk.Coins{{Denom: msg.Symbol, Amount: amount}}
 
 	k.SetToken(
 		ctx,
