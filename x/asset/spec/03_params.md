@@ -1,13 +1,13 @@
 <!--
-order: 4
+order: 3
 -->
 
 # Parameters
 
-The minting module contains the following parameters:
+The asset module contains the following parameters:
 
 | Key           | Type            | Example                |
 |---------------|-----------------|------------------------|
-| MintDenom     | string          | "ario"                 |
+| port          | string          | "ario"                 |
 | InflationRate | string (dec)    | "0.130000000000000000" |
 | BlocksPerYear | string (uint64) | "6311520"              |

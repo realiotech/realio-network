@@ -1,56 +1,28 @@
 package keeper_test
 
 import (
-	gocontext "context"
-	"testing"
-
-	"github.com/stretchr/testify/suite"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/realiotech/realio-network/simapp"
+
 	"github.com/realiotech/realio-network/x/mint/types"
 )
 
-type MintTestSuite struct {
-	suite.Suite
+func (suite *KeeperTestSuite) TestGRPCParams() {
+	ctx := sdk.WrapSDKContext(suite.ctx)
 
-	app         *simapp.SimApp
-	ctx         sdk.Context
-	queryClient types.QueryClient
+	inflation, err := suite.queryClient.Inflation(ctx, &types.QueryInflationRequest{})
+	suite.Require().NoError(err)
+	suite.Require().Equal(inflation.Inflation, suite.app.MintKeeper.GetMinter(suite.ctx).Inflation)
+
+	annualProvisions, err := suite.queryClient.AnnualProvisions(ctx, &types.QueryAnnualProvisionsRequest{})
+	suite.Require().NoError(err)
+	suite.Require().Equal(annualProvisions.AnnualProvisions, suite.app.MintKeeper.GetMinter(suite.ctx).AnnualProvisions)
 }
 
-func (suite *MintTestSuite) SetupTest() {
-	app := simapp.Setup(false)
-	ctx := app.BaseApp.NewContext(false, tmproto.Header{})
+func (suite *KeeperTestSuite) TestGrpcQueryParams() {
+	ctx := sdk.WrapSDKContext(suite.ctx)
+	actualParams := suite.app.MintKeeper.GetParams(suite.ctx)
 
-	queryHelper := baseapp.NewQueryServerTestHelper(ctx, app.InterfaceRegistry())
-	types.RegisterQueryServer(queryHelper, app.MintKeeper)
-	queryClient := types.NewQueryClient(queryHelper)
-
-	suite.app = app
-	suite.ctx = ctx
-
-	suite.queryClient = queryClient
-}
-
-func (suite *MintTestSuite) TestGRPCParams() {
-	app, ctx, queryClient := suite.app, suite.ctx, suite.queryClient
-
-	params, err := queryClient.Params(gocontext.Background(), &types.QueryParamsRequest{})
+	params, err := suite.queryClient.Params(ctx, &types.QueryParamsRequest{})
 	suite.Require().NoError(err)
-	suite.Require().Equal(params.Params, app.MintKeeper.GetParams(ctx))
-
-	inflation, err := queryClient.Inflation(gocontext.Background(), &types.QueryInflationRequest{})
-	suite.Require().NoError(err)
-	suite.Require().Equal(inflation.Inflation, app.MintKeeper.GetMinter(ctx).Inflation)
-
-	annualProvisions, err := queryClient.AnnualProvisions(gocontext.Background(), &types.QueryAnnualProvisionsRequest{})
-	suite.Require().NoError(err)
-	suite.Require().Equal(annualProvisions.AnnualProvisions, app.MintKeeper.GetMinter(ctx).AnnualProvisions)
-}
-
-func TestMintTestSuite(t *testing.T) {
-	suite.Run(t, new(MintTestSuite))
+	suite.Require().Equal(params.Params, actualParams)
 }

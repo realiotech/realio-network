@@ -6,9 +6,11 @@ import (
 
 const (
 	// MainnetChainID defines the RealioNetwork EIP155 chain ID for mainnet
-	MainnetChainID = "realionetwork_3333"
+	MainnetChainID = "realionetwork_1111"
 	// TestnetChainID defines the RealioNetwork EIP155 chain ID for testnet
-	TestnetChainID = "realionetwork_3332"
+	TestnetChainID = "realionetwork_1110"
+	// BaseDenom defines the base denomination
+	BaseDenom = "ario"
 )
 
 // IsMainnet returns true if the chain-id has the RealioNetwork mainnet EIP155 chain prefix.

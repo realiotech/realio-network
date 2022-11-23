@@ -55,5 +55,5 @@ realio-networkd collect-gentxs
 # Run this to ensure everything worked and that the genesis file is setup correctly
 realio-networkd validate-genesis
 
-# Start the node (remove the --pruning=nothing flag if historical queries are not needed)
+## Start the node (remove the --pruning=nothing flag if historical queries are not needed)
 realio-networkd start --pruning=nothing $TRACE --log_level $LOGLEVEL --minimum-gas-prices=0.0001ario --json-rpc.api eth,txpool,personal,net,debug,web3

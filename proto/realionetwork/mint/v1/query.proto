@@ -11,7 +11,7 @@ option go_package = "github.com/realiotech/realio-network/x/mint/types";
 service Query {
   // Params returns the total set of minting parameters.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
-    option (google.api.http).get = "/realionetwork/v1/params";
+    option (google.api.http).get = "/realionetwork/mint/v1/params";
   }
 
   // Inflation returns the current minting inflation value.

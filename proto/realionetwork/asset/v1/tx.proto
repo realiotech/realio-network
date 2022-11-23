@@ -1,9 +1,9 @@
 syntax = "proto3";
 package realionetwork.asset.v1;
 
-// this line is used by starport scaffolding # proto/tx/import
-
 option go_package = "github.com/realiotech/realio-network/x/asset/types";
+
+import "gogoproto/gogo.proto";
 
 // Msg defines the Msg service.
 service Msg {
@@ -19,50 +19,50 @@ service Msg {
 
 
 message MsgCreateToken {
-  string creator = 1;
-  string name = 2;
-  string symbol = 3;
-  int64 total = 4;
-  int64 decimals = 5;
-  bool authorizationRequired = 6;
+  string creator = 1 ;
+  string name = 2 ;
+  string symbol = 3 ;
+  string total = 4;
+  string decimals = 5;
+  bool authorizationRequired = 6 ;
 }
 
 message MsgCreateTokenResponse {
 }
 
 message MsgUpdateToken {
-  string creator = 1;
-  string symbol = 2;
-  bool authorizationRequired = 3;
+  string creator = 1 ;
+  string symbol = 2 ;
+  bool authorizationRequired = 3 ;
 }
 
 message MsgUpdateTokenResponse {
 }
 
 message MsgAuthorizeAddress {
-  string creator = 1;
-  string symbol = 2;
-  string address = 3;
+  string creator = 1 ;
+  string symbol = 2 ;
+  string address = 3 ;
 }
 
 message MsgAuthorizeAddressResponse {
 }
 
 message MsgUnAuthorizeAddress {
-  string creator = 1;
-  string symbol = 2;
-  string address = 3;
+  string creator = 1 ;
+  string symbol = 2 ;
+  string address = 3 ;
 }
 
 message MsgUnAuthorizeAddressResponse {
 }
 
 message MsgTransferToken {
-  string creator = 1;
-  string symbol = 2;
-  string from = 3;
-  string to = 4;
-  int64 amount = 5;
+  string creator = 1 ;
+  string symbol = 2 ;
+  string from = 3 ;
+  string to = 4 ;
+  string amount = 5;
 }
 
 message MsgTransferTokenResponse {

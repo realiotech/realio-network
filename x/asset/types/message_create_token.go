@@ -9,7 +9,7 @@ const TypeMsgCreateToken = "create_token"
 
 var _ sdk.Msg = &MsgCreateToken{}
 
-func NewMsgCreateToken(creator string, name string, symbol string, total int64, decimals int64, authorizationRequired bool) *MsgCreateToken {
+func NewMsgCreateToken(creator string, name string, symbol string, total string, decimals string, authorizationRequired bool) *MsgCreateToken {
 	return &MsgCreateToken{
 		Creator:               creator,
 		Name:                  name,

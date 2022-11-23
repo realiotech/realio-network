@@ -4,53 +4,38 @@ import (
 	"math/rand"
 	"testing"
 
+	sdkmath "cosmossdk.io/math"
 	"github.com/stretchr/testify/require"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-func TestNextInflation(t *testing.T) {
+func TestNextAnnualProvision(t *testing.T) {
 	minter := DefaultInitialMinter()
 	params := DefaultParams()
-	blocksPerYr := sdk.NewDec(int64(params.BlocksPerYear))
-
-	// Governing Mechanism:
-	//    inflationRateChangePerYear = (1- BondedRatio/ GoalBonded) * MaxInflationRateChange
 
 	tests := []struct {
-		bondedRatio, setInflation, expChange sdk.Dec
+		totalSupply  string
+		setInflation sdk.Dec
+		expected     string
 	}{
-		// with 0% bonded atom supply the inflation should increase by InflationRateChange
-		{sdk.ZeroDec(), sdk.NewDecWithPrec(7, 2), params.InflationRateChange.Quo(blocksPerYr)},
+		// with 0 total staking token supply, next annual inflation should increase by InflationRate
+		{"0", sdk.NewDecWithPrec(13, 2), "9750000000000000000000000"},
 
-		// 100% bonded, starting at 20% inflation and being reduced
-		// (1 - (1/0.67))*(0.13/8667)
-		{sdk.OneDec(), sdk.NewDecWithPrec(20, 2),
-			sdk.OneDec().Sub(sdk.OneDec().Quo(params.GoalBonded)).Mul(params.InflationRateChange).Quo(blocksPerYr)},
+		// with 75 mil total staking token supply, next annual inflation should be 0
+		{"75000000000000000000000000", sdk.NewDecWithPrec(13, 2), "0"},
 
-		// 50% bonded, starting at 10% inflation and being increased
-		{sdk.NewDecWithPrec(5, 1), sdk.NewDecWithPrec(10, 2),
-			sdk.OneDec().Sub(sdk.NewDecWithPrec(5, 1).Quo(params.GoalBonded)).Mul(params.InflationRateChange).Quo(blocksPerYr)},
-
-		// test 7% minimum stop (testing with 100% bonded)
-		{sdk.OneDec(), sdk.NewDecWithPrec(7, 2), sdk.ZeroDec()},
-		{sdk.OneDec(), sdk.NewDecWithPrec(700000001, 10), sdk.NewDecWithPrec(-1, 10)},
-
-		// test 20% maximum stop (testing with 0% bonded)
-		{sdk.ZeroDec(), sdk.NewDecWithPrec(20, 2), sdk.ZeroDec()},
-		{sdk.ZeroDec(), sdk.NewDecWithPrec(1999999999, 10), sdk.NewDecWithPrec(1, 10)},
-
-		// perfect balance shouldn't change inflation
-		{sdk.NewDecWithPrec(67, 2), sdk.NewDecWithPrec(15, 2), sdk.ZeroDec()},
+		// with 35mil total staking token supply, next annual inflation should increase by InflationRate
+		{"35000000000000000000000000", sdk.NewDecWithPrec(13, 2), "5200000000000000000000000"},
 	}
 	for i, tc := range tests {
 		minter.Inflation = tc.setInflation
-
-		inflation := minter.NextInflationRate(params, tc.bondedRatio)
-		diffInflation := inflation.Sub(tc.setInflation)
-
-		require.True(t, diffInflation.Equal(tc.expChange),
-			"Test Index: %v\nDiff:  %v\nExpected: %v\n", i, diffInflation, tc.expChange)
+		expected, _ := sdk.NewDecFromStr(tc.expected)
+		totalSupplyConverted, _ := sdkmath.NewIntFromString(tc.totalSupply)
+		annualProv := minter.NextAnnualProvisions(params, totalSupplyConverted)
+		require.True(t, annualProv.Equal(expected),
+			"test: %v\n\tExp: %v\n\tGot: %v\n",
+			i, tc.expected, annualProv)
 	}
 }
 
@@ -83,7 +68,7 @@ func TestBlockProvision(t *testing.T) {
 }
 
 // Benchmarking :)
-// previously using sdk.Int operations:
+// previously using math.Int operations:
 // BenchmarkBlockProvision-4 5000000 220 ns/op
 //
 // using sdk.Dec operations: (current implementation)
@@ -103,56 +88,16 @@ func BenchmarkBlockProvision(b *testing.B) {
 	}
 }
 
-// Next inflation benchmarking
-// BenchmarkNextInflation-4 1000000 1828 ns/op
-func BenchmarkNextInflation(b *testing.B) {
-	b.ReportAllocs()
-	minter := InitialMinter(sdk.NewDecWithPrec(1, 1))
-	params := DefaultParams()
-	bondedRatio := sdk.NewDecWithPrec(1, 1)
-
-	// run the NextInflationRate function b.N times
-	for n := 0; n < b.N; n++ {
-		minter.NextInflationRate(params, bondedRatio)
-	}
-
-}
-
 // Next annual provisions benchmarking
 // BenchmarkNextAnnualProvisions-4 5000000 251 ns/op
 func BenchmarkNextAnnualProvisions(b *testing.B) {
 	b.ReportAllocs()
 	minter := InitialMinter(sdk.NewDecWithPrec(1, 1))
 	params := DefaultParams()
-	totalSupply, _ := sdk.NewIntFromString("7000000000000000000000000")
+	totalSupply := sdk.NewInt(100000000000000)
 
 	// run the NextAnnualProvisions function b.N times
 	for n := 0; n < b.N; n++ {
 		minter.NextAnnualProvisions(params, totalSupply)
-	}
-
-}
-
-func TestAnnualProvisionMaxSupply(t *testing.T) {
-	minter := InitialMinter(sdk.NewDecWithPrec(1, 1))
-	params := DefaultParams()
-
-	tc1Supply, _ := sdk.NewIntFromString("75000000000000000000000000")
-	tc2Supply, _ := sdk.NewIntFromString("35000000000000000000000000")
-	tc1Exp, _ := sdk.NewDecFromStr("0")
-	tc2Exp, _ := sdk.NewDecFromStr("4000000000000000000000000")
-	tests := []struct {
-		totalSupply   sdk.Int
-		expProvisions sdk.Dec
-	}{
-		{tc1Supply, tc1Exp},
-		{tc2Supply, tc2Exp},
-	}
-	for i, tc := range tests {
-		provisions := minter.NextAnnualProvisions(params, tc.totalSupply)
-
-		require.True(t, tc.expProvisions.Equal(provisions),
-			"test: %v\n\tExp: %v\n\tGot: %v\n",
-			i, tc.expProvisions, provisions)
 	}
 }

@@ -6,9 +6,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
-	"github.com/realiotech/realio-network/x/asset/types"
-	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
+
+	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 var _ = strconv.Itoa(0)
@@ -22,7 +22,7 @@ func CmdTransferToken() *cobra.Command {
 			argSymbol := args[0]
 			argFrom := args[1]
 			argTo := args[2]
-			argAmount, err := cast.ToInt64E(args[3])
+			argAmount := args[3]
 			if err != nil {
 				return err
 			}

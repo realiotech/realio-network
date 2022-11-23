@@ -1,7 +1,0 @@
-#!/bin/sh
-
-HOME=/data
-
-export HOME
-
-exec s6-setuidgid realio-cosmos dbus-daemon --session --address="$DBUS_SESSION_BUS_ADDRESS"

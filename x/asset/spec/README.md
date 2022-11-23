@@ -9,11 +9,11 @@ parent:
 
 ## Abstract
 
-The `x/mint` module mints new Rio tokens every block according to the inflation parameter and rio distribution model. 
+The `x/asset` module enables the creation and management of on chain assets in the Realio Network.
 
-It is based & replaces the original cosmos/x/mint module. It removes the logic around dynamic inflation calculation 
-from goal bonded, actual bonded, and instead calculates the provisions based on a parameritized inflation rate and 
-remaining Rio supply.
+With this module, you can create assets that represent digitally native and real-world assets such as security tokens and stablecoins. 
+There is functionality to place transfer restrictions via whitelists on an asset that help support securities, compliance, and certification use cases.
+
 
 ## Contents
 

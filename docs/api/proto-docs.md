@@ -7,23 +7,21 @@
 - [realionetwork/asset/v1/params.proto](#realionetwork/asset/v1/params.proto)
     - [Params](#realionetwork.asset.v1.Params)
   
-- [realionetwork/asset/v1/genesis.proto](#realionetwork/asset/v1/genesis.proto)
-    - [GenesisState](#realionetwork.asset.v1.GenesisState)
-  
-- [realionetwork/asset/v1/packet.proto](#realionetwork/asset/v1/packet.proto)
-    - [AssetPacketData](#realionetwork.asset.v1.AssetPacketData)
-    - [NoData](#realionetwork.asset.v1.NoData)
-  
-- [realionetwork/asset/v1/query.proto](#realionetwork/asset/v1/query.proto)
-    - [QueryParamsRequest](#realionetwork.asset.v1.QueryParamsRequest)
-    - [QueryParamsResponse](#realionetwork.asset.v1.QueryParamsResponse)
-  
-    - [Query](#realionetwork.asset.v1.Query)
-  
 - [realionetwork/asset/v1/token.proto](#realionetwork/asset/v1/token.proto)
     - [Token](#realionetwork.asset.v1.Token)
     - [Token.AuthorizedEntry](#realionetwork.asset.v1.Token.AuthorizedEntry)
     - [TokenAuthorization](#realionetwork.asset.v1.TokenAuthorization)
+  
+- [realionetwork/asset/v1/genesis.proto](#realionetwork/asset/v1/genesis.proto)
+    - [GenesisState](#realionetwork.asset.v1.GenesisState)
+  
+- [realionetwork/asset/v1/query.proto](#realionetwork/asset/v1/query.proto)
+    - [QueryParamsRequest](#realionetwork.asset.v1.QueryParamsRequest)
+    - [QueryParamsResponse](#realionetwork.asset.v1.QueryParamsResponse)
+    - [QueryTokensRequest](#realionetwork.asset.v1.QueryTokensRequest)
+    - [QueryTokensResponse](#realionetwork.asset.v1.QueryTokensResponse)
+  
+    - [Query](#realionetwork.asset.v1.Query)
   
 - [realionetwork/asset/v1/tx.proto](#realionetwork/asset/v1/tx.proto)
     - [MsgAuthorizeAddress](#realionetwork.asset.v1.MsgAuthorizeAddress)
@@ -86,6 +84,77 @@ Params defines the parameters for the module.
 
 
 
+<a name="realionetwork/asset/v1/token.proto"></a>
+<p align="right"><a href="#top">Top</a></p>
+
+## realionetwork/asset/v1/token.proto
+
+
+
+<a name="realionetwork.asset.v1.Token"></a>
+
+### Token
+Token represents an asset in the module
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `name` | [string](#string) |  |  |
+| `symbol` | [string](#string) |  |  |
+| `total` | [string](#string) |  |  |
+| `decimals` | [string](#string) |  |  |
+| `authorizationRequired` | [bool](#bool) |  |  |
+| `creator` | [string](#string) |  |  |
+| `authorized` | [Token.AuthorizedEntry](#realionetwork.asset.v1.Token.AuthorizedEntry) | repeated |  |
+| `created` | [int64](#int64) |  |  |
+
+
+
+
+
+
+<a name="realionetwork.asset.v1.Token.AuthorizedEntry"></a>
+
+### Token.AuthorizedEntry
+
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `key` | [string](#string) |  |  |
+| `value` | [TokenAuthorization](#realionetwork.asset.v1.TokenAuthorization) |  |  |
+
+
+
+
+
+
+<a name="realionetwork.asset.v1.TokenAuthorization"></a>
+
+### TokenAuthorization
+TokenAuthorization represents the current authorization state for an address:token
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `tokenSymbol` | [string](#string) |  |  |
+| `address` | [string](#string) |  |  |
+| `authorized` | [bool](#bool) |  |  |
+
+
+
+
+
+ <!-- end messages -->
+
+ <!-- end enums -->
+
+ <!-- end HasExtensions -->
+
+ <!-- end services -->
+
+
+
 <a name="realionetwork/asset/v1/genesis.proto"></a>
 <p align="right"><a href="#top">Top</a></p>
 
@@ -102,48 +171,7 @@ GenesisState defines the asset module's genesis state.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `params` | [Params](#realionetwork.asset.v1.Params) |  |  |
-| `port_id` | [string](#string) |  | this line is used by starport scaffolding # genesis/proto/state |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
-
- <!-- end services -->
-
-
-
-<a name="realionetwork/asset/v1/packet.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## realionetwork/asset/v1/packet.proto
-
-
-
-<a name="realionetwork.asset.v1.AssetPacketData"></a>
-
-### AssetPacketData
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `noData` | [NoData](#realionetwork.asset.v1.NoData) |  | this line is used by starport scaffolding # ibc/packet/proto/field |
-
-
-
-
-
-
-<a name="realionetwork.asset.v1.NoData"></a>
-
-### NoData
-
+| `tokens` | [Token](#realionetwork.asset.v1.Token) | repeated | registered tokens |
 
 
 
@@ -190,6 +218,31 @@ QueryParamsResponse is response type for the Query/Params RPC method.
 
 
 
+
+<a name="realionetwork.asset.v1.QueryTokensRequest"></a>
+
+### QueryTokensRequest
+QueryParamsRequest is request type for the Query/Params RPC method.
+
+
+
+
+
+
+<a name="realionetwork.asset.v1.QueryTokensResponse"></a>
+
+### QueryTokensResponse
+QueryParamsResponse is response type for the Query/Params RPC method.
+
+
+| Field | Type | Label | Description |
+| ----- | ---- | ----- | ----------- |
+| `tokens` | [Token](#realionetwork.asset.v1.Token) | repeated | params holds all the parameters of this module. |
+
+
+
+
+
  <!-- end messages -->
 
  <!-- end enums -->
@@ -204,80 +257,8 @@ Query defines the gRPC querier service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `Params` | [QueryParamsRequest](#realionetwork.asset.v1.QueryParamsRequest) | [QueryParamsResponse](#realionetwork.asset.v1.QueryParamsResponse) | Parameters queries the parameters of the module.
-
-this line is used by starport scaffolding # 2 | GET|/realionetwork/asset/v1/params|
-
- <!-- end services -->
-
-
-
-<a name="realionetwork/asset/v1/token.proto"></a>
-<p align="right"><a href="#top">Top</a></p>
-
-## realionetwork/asset/v1/token.proto
-
-
-
-<a name="realionetwork.asset.v1.Token"></a>
-
-### Token
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `name` | [string](#string) |  |  |
-| `symbol` | [string](#string) |  |  |
-| `total` | [int64](#int64) |  |  |
-| `decimals` | [int64](#int64) |  |  |
-| `authorizationRequired` | [bool](#bool) |  |  |
-| `creator` | [string](#string) |  |  |
-| `authorized` | [Token.AuthorizedEntry](#realionetwork.asset.v1.Token.AuthorizedEntry) | repeated |  |
-| `created` | [int64](#int64) |  |  |
-
-
-
-
-
-
-<a name="realionetwork.asset.v1.Token.AuthorizedEntry"></a>
-
-### Token.AuthorizedEntry
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `key` | [string](#string) |  |  |
-| `value` | [TokenAuthorization](#realionetwork.asset.v1.TokenAuthorization) |  |  |
-
-
-
-
-
-
-<a name="realionetwork.asset.v1.TokenAuthorization"></a>
-
-### TokenAuthorization
-
-
-
-| Field | Type | Label | Description |
-| ----- | ---- | ----- | ----------- |
-| `tokenSymbol` | [string](#string) |  |  |
-| `address` | [string](#string) |  |  |
-| `authorized` | [bool](#bool) |  |  |
-
-
-
-
-
- <!-- end messages -->
-
- <!-- end enums -->
-
- <!-- end HasExtensions -->
+| `Params` | [QueryParamsRequest](#realionetwork.asset.v1.QueryParamsRequest) | [QueryParamsResponse](#realionetwork.asset.v1.QueryParamsResponse) | Parameters queries the parameters of the module. | GET|/realionetwork/asset/v1/params|
+| `Tokens` | [QueryTokensRequest](#realionetwork.asset.v1.QueryTokensRequest) | [QueryTokensResponse](#realionetwork.asset.v1.QueryTokensResponse) | Parameters queries the tokens of the module. | GET|/realionetwork/asset/v1/tokens|
 
  <!-- end services -->
 
@@ -328,8 +309,8 @@ this line is used by starport scaffolding # 2 | GET|/realionetwork/asset/v1/para
 | `creator` | [string](#string) |  |  |
 | `name` | [string](#string) |  |  |
 | `symbol` | [string](#string) |  |  |
-| `total` | [int64](#int64) |  |  |
-| `decimals` | [int64](#int64) |  |  |
+| `total` | [string](#string) |  |  |
+| `decimals` | [string](#string) |  |  |
 | `authorizationRequired` | [bool](#bool) |  |  |
 
 
@@ -359,7 +340,7 @@ this line is used by starport scaffolding # 2 | GET|/realionetwork/asset/v1/para
 | `symbol` | [string](#string) |  |  |
 | `from` | [string](#string) |  |  |
 | `to` | [string](#string) |  |  |
-| `amount` | [int64](#int64) |  |  |
+| `amount` | [string](#string) |  |  |
 
 
 
@@ -485,10 +466,7 @@ Params holds parameters for the mint module.
 | Field | Type | Label | Description |
 | ----- | ---- | ----- | ----------- |
 | `mint_denom` | [string](#string) |  | type of coin to mint |
-| `inflation_rate_change` | [string](#string) |  | maximum annual change in inflation rate |
-| `inflation_max` | [string](#string) |  | maximum inflation rate |
-| `inflation_min` | [string](#string) |  | minimum inflation rate |
-| `goal_bonded` | [string](#string) |  | goal of percent bonded atoms |
+| `inflation_rate` | [string](#string) |  | annual change in inflation rate |
 | `blocks_per_year` | [uint64](#uint64) |  | expected blocks per year |
 
 
@@ -635,7 +613,7 @@ Query provides defines the gRPC querier service.
 
 | Method Name | Request Type | Response Type | Description | HTTP Verb | Endpoint |
 | ----------- | ------------ | ------------- | ------------| ------- | -------- |
-| `Params` | [QueryParamsRequest](#realionetwork.mint.v1.QueryParamsRequest) | [QueryParamsResponse](#realionetwork.mint.v1.QueryParamsResponse) | Params returns the total set of minting parameters. | GET|/realionetwork/v1/params|
+| `Params` | [QueryParamsRequest](#realionetwork.mint.v1.QueryParamsRequest) | [QueryParamsResponse](#realionetwork.mint.v1.QueryParamsResponse) | Params returns the total set of minting parameters. | GET|/realionetwork/mint/v1/params|
 | `Inflation` | [QueryInflationRequest](#realionetwork.mint.v1.QueryInflationRequest) | [QueryInflationResponse](#realionetwork.mint.v1.QueryInflationResponse) | Inflation returns the current minting inflation value. | GET|/realionetwork/mint/v1/inflation|
 | `AnnualProvisions` | [QueryAnnualProvisionsRequest](#realionetwork.mint.v1.QueryAnnualProvisionsRequest) | [QueryAnnualProvisionsResponse](#realionetwork.mint.v1.QueryAnnualProvisionsResponse) | AnnualProvisions current minting annual provisions value. | GET|/realionetwork/mint/v1/annual_provisions|
 
