@@ -2,13 +2,9 @@ package cli
 
 import (
 	"fmt"
-	// "strings"
-
-	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	// "github.com/cosmos/cosmos-sdk/client/flags"
-	// sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/spf13/cobra"
 
 	"github.com/realiotech/realio-network/x/asset/types"
 )
@@ -25,6 +21,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdQueryParams())
+	cmd.AddCommand(CmdQueryTokens())
 	// this line is used by starport scaffolding # 1
 
 	return cmd

@@ -10,17 +10,17 @@ import (
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
-func CmdQueryParams() *cobra.Command {
+func CmdQueryTokens() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "params",
-		Short: "shows the parameters of the module",
+		Use:   "tokens",
+		Short: "shows the tokens of the module",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.Params(context.Background(), &types.QueryParamsRequest{})
+			res, err := queryClient.Tokens(context.Background(), &types.QueryTokensRequest{})
 			if err != nil {
 				return err
 			}
