@@ -5,6 +5,7 @@ go 1.19
 require (
 	cosmossdk.io/math v1.0.0-beta.3
 	github.com/cosmos/cosmos-sdk v0.46.6
+	github.com/cosmos/gogoproto v1.4.3
 	github.com/cosmos/ibc-go/v5 v5.1.0
 	github.com/ethereum/go-ethereum v1.10.19
 	github.com/evmos/ethermint v0.20.0-rc2
@@ -58,7 +59,6 @@ require (
 	github.com/cosmos/btcutil v1.0.4 // indirect
 	github.com/cosmos/cosmos-proto v1.0.0-alpha7 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
-	github.com/cosmos/gogoproto v1.4.3 // indirect
 	github.com/cosmos/gorocksdb v1.2.0 // indirect
 	github.com/cosmos/iavl v0.19.4 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.11.1 // indirect
@@ -191,8 +191,8 @@ require (
 replace (
 	// ics23 patch for dragonberry
 	github.com/confio/ics23/go => github.com/cosmos/cosmos-sdk/ics23/go v0.8.0
-	// use Realio sdk v0.46.x-realio-alpha-0.3
-	github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.0-alpha3.0.20221123130653-772ff6f11f2c
+	// use Realio sdk v0.46.x-realio-alpha-0.5
+	github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.0-alpha3.0.20221206200716-5723ccbeeb51
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 )

@@ -115,6 +115,9 @@ import (
 	assetmodule "github.com/realiotech/realio-network/x/asset"
 	assetmodulekeeper "github.com/realiotech/realio-network/x/asset/keeper"
 	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
+
+	// unnamed import of statik for swagger UI support
+	_ "github.com/realiotech/realio-network/client/docs/statik"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
@@ -722,15 +725,9 @@ func (app *RealioNetwork) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config
 	// Register grpc-gateway routes for all modules.
 	ModuleBasics.RegisterGRPCGatewayRoutes(clientCtx, apiSvr.GRPCGatewayRouter)
 
-	//todo review/remove this because it relies on ignite..
-	//user swagger/provide without ignite
-	// register app's OpenAPI routes.
-	// apiSvr.Router.Handle("/static/openapi.yml", http.FileServer(http.FS(docs.Docs)))
-	//apiSvr.Router.HandleFunc("/", openapiconsole.Handler(Name, "/static/openapi.yml"))
-	// register swagger API from root so that other applications can override easily
-	//if apiConfig.Swagger {
-	//	RegisterSwaggerAPI(clientCtx, apiSvr.Router)
-	//}
+	if apiConfig.Swagger {
+		RegisterSwaggerAPI(clientCtx, apiSvr.Router)
+	}
 }
 
 // RegisterTxService implements the Application.RegisterTxService method.
