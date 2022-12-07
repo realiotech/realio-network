@@ -9,6 +9,7 @@ TESTNET_FLAGS ?=
 VERSION := $(shell echo $(shell git describe --tags 2>/dev/null ) | sed 's/^v//')
 COMMIT := $(shell git log -1 --format='%H')
 HTTPS_GIT := https://github.com/realiotech/realio-network.git
+PROJECT_NAME = realio-network
 
 export GO111MODULE = on
 
@@ -120,28 +121,32 @@ endif
 DOCKER := $(shell which docker)
 DOCKER_BUF := $(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace bufbuild/buf
 
-containerProtoVer=v0.3
-containerProtoImage=tendermintdev/sdk-proto-gen:$(containerProtoVer)
-containerProtoGen=cosmos-sdk-proto-gen-$(containerProtoVer)
-containerProtoGenSwagger=cosmos-sdk-proto-gen-swagger-$(containerProtoVer)
-containerProtoFmt=cosmos-sdk-proto-fmt-$(containerProtoVer)
+protoVer=v0.7
+protoImageName=tendermintdev/sdk-proto-gen:$(protoVer)
+containerProtoGen=$(PROJECT_NAME)-proto-gen-$(protoVer)
+containerProtoGenAny=$(PROJECT_NAME)-proto-gen-any-$(protoVer)
+containerProtoGenSwagger=$(PROJECT_NAME)-proto-gen-swagger-$(protoVer)
+containerProtoFmt=$(PROJECT_NAME)-proto-fmt-$(protoVer)
 
 proto-all: proto-format proto-lint proto-gen
 
 proto-gen:
 	@echo "Generating Protobuf files"
-	$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(containerProtoImage) sh ./scripts/protocgen.sh
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGen}$$"; then docker start -a $(containerProtoGen); else docker run --name $(containerProtoGen) -v $(CURDIR):/workspace --workdir /workspace $(protoImageName) \
+		sh ./scripts/protocgen.sh; fi
 
 proto-swagger-gen:
 	@echo "Generating Protobuf Swagger"
-	$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(containerProtoImage) sh ./scripts/protoc-swagger-gen.sh
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoGenSwagger}$$"; then docker start -a $(containerProtoGenSwagger); else docker run --name $(containerProtoGenSwagger) -v $(CURDIR):/workspace --workdir /workspace $(protoImageName) \
+		sh ./scripts/protoc-swagger-gen.sh; fi
 
 proto-format:
 	@echo "Formatting Protobuf files"
-	find ./ -not -path "./third_party/*" -name *.proto -exec clang-format -i {} \;
+	@if docker ps -a --format '{{.Names}}' | grep -Eq "^${containerProtoFmt}$$"; then docker start -a $(containerProtoFmt); else docker run --name $(containerProtoFmt) -v $(CURDIR):/workspace --workdir /workspace tendermintdev/docker-build-proto \
+		find ./ -not -path "./third_party/*" -name "*.proto" -exec clang-format -i {} \; ; fi
 
 proto-lint:
-	@$(DOCKER_BUF) lint --error-format=json
+	@$(DOCKER_BUF) lint proto --error-format=json
 
 proto-check-breaking:
 	@$(DOCKER_BUF) breaking --against $(HTTPS_GIT)#branch=main
