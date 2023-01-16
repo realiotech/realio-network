@@ -37,18 +37,6 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
-## Unreleased
-
-### State Machine Breaking
-
-### API Breaking
-
-### Features
-
-### Improvements
-
-### Bug Fixes
-
 ## [v0.7.0] - 2023-01-16
 
 ### State Machine Breaking
