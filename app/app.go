@@ -73,6 +73,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
+	gov46 "github.com/cosmos/cosmos-sdk/x/gov/migrations/v046"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -851,6 +852,11 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 	// "v0.7.0" is a coordinated upgrade on testnet to upgrade sdk to v0.46.7
 	planName := "v0.7.0"
 	app.UpgradeKeeper.SetUpgradeHandler(planName, func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+
+		// gov 46.6 -> 46.7 helper function
+		store := ctx.KVStore(app.keys[govtypes.StoreKey])
+		gov46.Migrate_V046_6_To_V046_7(store, app.appCodec)
+
 		return app.mm.RunMigrations(ctx, app.configurator, fromVM)
 	})
 
