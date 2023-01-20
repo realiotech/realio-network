@@ -1,15 +1,22 @@
-PACKAGES=$(shell go list ./...)
-COVERAGE ?= coverage.txt
-GOPATH ?= $(shell $(GO) env GOPATH)
-GOBIN ?= $(GOPATH)/bin
-BUILDDIR ?= $(CURDIR)/build
-NETWORK ?= testnet
-REALIO_NETWORK_BINARY = realio-networkd
-TESTNET_FLAGS ?=
-VERSION := $(shell echo $(shell git describe --tags 2>/dev/null ) | sed 's/^v//')
+PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simulation')
+VERSION ?= $(shell echo $(shell git describe --tags --always) | sed 's/^v//')
+TMVERSION := $(shell go list -m github.com/tendermint/tendermint | sed 's:.* ::')
 COMMIT := $(shell git log -1 --format='%H')
+LEDGER_ENABLED ?= true
+BINDIR ?= $(GOPATH)/bin
+REALIO_BINARY = realio-networkd
+REALIO_DIR = realio-network
+BUILDDIR ?= $(CURDIR)/build
 HTTPS_GIT := https://github.com/realiotech/realio-network.git
-PROJECT_NAME = realio-network
+DOCKER := $(shell which docker)
+NAMESPACE := tharsishq
+PROJECT := realio-network
+DOCKER_IMAGE := $(NAMESPACE)/$(PROJECT)
+COMMIT_HASH := $(shell git rev-parse --short=7 HEAD)
+DOCKER_TAG := $(COMMIT_HASH)
+# e2e env
+MOUNT_PATH := $(shell pwd)/build/:/root/
+E2E_SKIP_CLEANUP := false
 
 export GO111MODULE = on
 
@@ -20,50 +27,120 @@ default_target: all
 
 # process build tags
 build_tags = netgo
-ifeq ($(NETWORK),mainnet)
-    build_tags += mainnet
-else ifeq ($(NETWORK),testnet)
-    build_tags += testnet
+ifeq ($(LEDGER_ENABLED),true)
+  ifeq ($(OS),Windows_NT)
+    GCCEXE = $(shell where gcc.exe 2> NUL)
+    ifeq ($(GCCEXE),)
+      $(error gcc.exe not installed for ledger support, please install or set LEDGER_ENABLED=false)
+    else
+      build_tags += ledger
+    endif
+  else
+    UNAME_S = $(shell uname -s)
+    ifeq ($(UNAME_S),OpenBSD)
+      $(warning OpenBSD detected, disabling ledger support (https://github.com/cosmos/cosmos-sdk/issues/1988))
+    else
+      GCC = $(shell command -v gcc 2> /dev/null)
+      ifeq ($(GCC),)
+        $(error gcc not installed for ledger support, please install or set LEDGER_ENABLED=false)
+      else
+        build_tags += ledger
+      endif
+    endif
+  endif
 endif
 
-
+ifeq (cleveldb,$(findstring cleveldb,$(COSMOS_BUILD_OPTIONS)))
+  build_tags += gcc
+endif
 build_tags += $(BUILD_TAGS)
 build_tags := $(strip $(build_tags))
 
+# process linker flags
+
+ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=realio-network \
+          -X github.com/cosmos/cosmos-sdk/version.AppName=$(REALIO_BINARY) \
+          -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
+          -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
+          -X github.com/tendermint/tendermint/version.TMCoreSemVer=$(TMVERSION)
+
+# DB backend selection
+ifeq (cleveldb,$(findstring cleveldb,$(COSMOS_BUILD_OPTIONS)))
+  ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=cleveldb
+endif
+ifeq (badgerdb,$(findstring badgerdb,$(COSMOS_BUILD_OPTIONS)))
+  ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=badgerdb
+endif
+# handle rocksdb
+ifeq (rocksdb,$(findstring rocksdb,$(COSMOS_BUILD_OPTIONS)))
+  CGO_ENABLED=1
+  build_tags += rocksdb
+  ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=rocksdb
+endif
+# handle boltdb
+ifeq (boltdb,$(findstring boltdb,$(COSMOS_BUILD_OPTIONS)))
+  build_tags += boltdb
+  ldflags += -X github.com/cosmos/cosmos-sdk/types.DBBackend=boltdb
+endif
+
+# add build tags to linker flags
 whitespace := $(subst ,, )
 comma := ,
 build_tags_comma_sep := $(subst $(whitespace),$(comma),$(build_tags))
+ldflags += -X "github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)"
 
-# process linker flags
-ldflags += -X github.com/cosmos/cosmos-sdk/version.Name=realionetwork \
-	-X github.com/cosmos/cosmos-sdk/version.AppName=$(REALIO_NETWORK_BINARY) \
-	-X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
-	-X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-	-X github.com/cosmos/cosmos-sdk/version.BuildTags=$(build_tags_comma_sep)
+ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
+  ldflags += -w -s
+endif
+ldflags += $(LDFLAGS)
+ldflags := $(strip $(ldflags))
 
 BUILD_FLAGS := -tags "$(build_tags)" -ldflags '$(ldflags)'
+# check for nostrip option
+ifeq (,$(findstring nostrip,$(COSMOS_BUILD_OPTIONS)))
+  BUILD_FLAGS += -trimpath
+endif
+
+# check if no optimization option is passed
+# used for remote debugging
+ifneq (,$(findstring nooptimization,$(COSMOS_BUILD_OPTIONS)))
+  BUILD_FLAGS += -gcflags "all=-N -l"
+endif
+
 
 ###############################################################################
 ###                                  Build                                  ###
 ###############################################################################
 
+BUILD_TARGETS := build install
 
-all: build
-build: check-network go.sum
-	@go build -mod=readonly $(BUILD_FLAGS) -o $(BUILDDIR)/realio-networkd ./cmd/realio-networkd
+build: BUILD_ARGS=-o $(BUILDDIR)/
 
-install: check-network go.sum
-	@go install -mod=readonly $(BUILD_FLAGS) ./cmd/realio-networkd
+install-linux:
+	GOOS=linux GOARCH=amd64 LEDGER_ENABLED=false $(MAKE) build
 
-test:
-	@go test -v -mod=readonly $(PACKAGES) -coverprofile=$(COVERAGE) -covermode=atomic
+install-mac:
+	GOOS=darwin GOARCH=arm64 LEDGER_ENABLED=false $(MAKE) build
 
-.PHONY: clean build install test
+$(BUILD_TARGETS): go.sum $(BUILDDIR)/
+	go $@ $(BUILD_FLAGS) $(BUILD_ARGS) ./...
+
+$(BUILDDIR)/:
+	mkdir -p $(BUILDDIR)/
+
+distclean: clean tools-clean
 
 clean:
-	@echo "Cleaning up old build and daemons"
-	rm -rf $(BUILDDIR)/
-	$(RM) $(GOBIN)/realio-networkd
+	rm -rf \
+    $(BUILDDIR)/ \
+    artifacts/ \
+    tmp-swagger-gen/
+
+all: build
+
+build-all: tools build lint test vulncheck
+
+.PHONY: distclean clean build-all
 
 ###############################################################################
 ###                                Releasing                                ###
