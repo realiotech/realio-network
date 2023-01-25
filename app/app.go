@@ -849,8 +849,8 @@ func (app *RealioNetwork) setAnteHandler(txConfig client.TxConfig, maxGasWanted 
 }
 
 func (app *RealioNetwork) setupUpgradeHandlers() {
-	// "v0.7.0" is a coordinated upgrade on testnet to upgrade sdk to v0.46.7
-	planName := "v0.7.0"
+	// "v0.7.2" is a coordinated upgrade on testnet to upgrade sdk to v0.46.7
+	planName := "v0.7.2"
 	app.UpgradeKeeper.SetUpgradeHandler(planName, func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 
 		// gov 46.6 -> 46.7 helper function
