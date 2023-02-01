@@ -1,0 +1,63 @@
+version: '3'
+
+services:
+  node0:
+    container_name: realionetworknode0
+    image: "realio-network/node"
+    ports:
+      - "26656-26657:26656-26657"
+    volumes:
+      - ./build/node0/realio-network:/realio-network:Z
+    command:
+      - /realio-networkd start --home /realio-network
+    networks:
+      localnet:
+        ipv4_address: 192.167.10.2
+
+  node1:
+    container_name: realionetworknode1
+    image: "realio-network/node"
+    ports:
+      - "26659-26660:26656-26657"
+    volumes:
+      - ./build/node1/realio-network:/realio-network:Z
+    command:
+      - /realio-networkd start --home /realio-network
+    networks:
+      localnet:
+        ipv4_address: 192.167.10.3
+
+  node2:
+    container_name: realionetworknode2
+    image: "realio-network/node"
+    ports:
+      - "26661-26662:26656-26657"
+    volumes:
+      - ./build/node2/realio-network:/realio-network:Z
+    command:
+      - /realio-networkd start --home /realio-network
+    networks:
+      localnet:
+        ipv4_address: 192.167.10.4
+
+  node3:
+    container_name: realionetworknode3
+    image: "realio-network/node"
+    ports:
+      - "26663-26664:26656-26657"
+    volumes:
+      - ./build/node3/realio-network:/realio-network:Z
+    command:
+      - /realio-networkd start --home /realio-network
+    networks:
+      localnet:
+        ipv4_address: 192.167.10.5
+
+networks:
+  localnet:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        -
+          subnet: 192.167.10.0/16
