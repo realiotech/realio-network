@@ -109,7 +109,7 @@ func DefaultConfig() Config {
 		AppConstructor:    NewAppConstructor(encCfg),
 		GenesisState:      app.ModuleBasics.DefaultGenesis(encCfg.Codec),
 		TimeoutCommit:     2 * time.Second,
-		ChainID:           fmt.Sprintf("realionetworklocal%d-1", tmrand.Int63n(9999999999999)+1),
+		ChainID:           fmt.Sprintf("realionetworklocal_%d-1", tmrand.Int63n(9999999999999)+1),
 		NumValidators:     4,
 		BondDenom:         types.BaseDenom,
 		MinGasPrices:      fmt.Sprintf("0.000006%s", types.BaseDenom),
