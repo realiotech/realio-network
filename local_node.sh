@@ -3,7 +3,7 @@
 KEYS[0]="dev0"
 KEYS[1]="dev1"
 KEYS[2]="dev2"
-CHAINID="realionetwork_9000-1"
+CHAINID="realionetworklocal_7777-1"
 MONIKER="realionetworklocal"
 # Remember to change to other types of keyring like 'file' in-case exposing to outside world,
 # otherwise your balance will be wiped quickly
@@ -105,7 +105,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	## 2. Back to `realio-networkd add-genesis-account` step, add balance for those
 	## 3. Clone this ~/.realio-networkd home directory into some others, let's say `~/.clonedRealioNetwork`
 	## 4. Run `gentx` in each of those folders
-	## 5. Copy the `gentx-*` folders under `~/.clonedEvmosd/config/gentx/` folders into the original `~/.realio-networkd/config/gentx`
+	## 5. Copy the `gentx-*` folders under `~/.clonedRealioNetworkd/config/gentx/` folders into the original `~/.realio-networkd/config/gentx`
 
 	# Collect genesis tx
 	realio-networkd collect-gentxs --home "$HOMEDIR"
