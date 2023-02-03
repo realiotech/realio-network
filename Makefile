@@ -9,7 +9,7 @@ REALIO_DIR = realio-network
 BUILDDIR ?= $(CURDIR)/build
 HTTPS_GIT := https://github.com/realiotech/realio-network.git
 DOCKER := $(shell which docker)
-NAMESPACE := tharsishq
+NAMESPACE := realiotech
 PROJECT := realio-network
 DOCKER_IMAGE := $(NAMESPACE)/$(PROJECT)
 COMMIT_HASH := $(shell git rev-parse --short=7 HEAD)
@@ -116,10 +116,10 @@ BUILD_TARGETS := build install
 
 build: BUILD_ARGS=-o $(BUILDDIR)/
 
-install-linux:
+build-linux:
 	GOOS=linux GOARCH=amd64 LEDGER_ENABLED=false $(MAKE) build
 
-install-mac:
+build-darwin:
 	GOOS=darwin GOARCH=arm64 LEDGER_ENABLED=false $(MAKE) build
 
 $(BUILD_TARGETS): go.sum $(BUILDDIR)/
@@ -140,7 +140,51 @@ all: build
 
 build-all: tools build lint test vulncheck
 
-.PHONY: distclean clean build-all
+.PHONY: distclean clean build-all build
+
+
+###############################################################################
+###                                Localnet                                 ###
+###############################################################################
+
+# Build image for a local testnet
+localnet-build:
+	@$(MAKE) -C networks/local
+
+# Start a 4-node testnet locally
+localnet-start: localnet-stop localnet-build
+	@if ! [ -f build/node0/$(REALIO_DIR)/config/genesis.json ]; then docker run --rm -v $(CURDIR)/build:/$(REALIO_DIR):Z realio-network/node "./realio-networkd testnet init-files --v 4 -o /realio-network --keyring-backend=test --starting-ip-address 192.167.10.2"; fi
+	docker-compose up -d
+
+# Stop testnet
+localnet-stop:
+	docker-compose down
+
+# Clean testnet
+localnet-clean:
+	docker-compose down
+	sudo rm -rf build/*
+
+ # Reset testnet
+localnet-unsafe-reset:
+	docker-compose down
+ifeq ($(OS),Windows_NT)
+	@docker run --rm -v $(CURDIR)\build\node0\realio-network:/realio-network\Z realio-network/node "./realio-networkd tendermint unsafe-reset-all --home=/realio-network"
+	@docker run --rm -v $(CURDIR)\build\node1\realio-network:/realio-network\Z realio-network/node "./realio-networkd tendermint unsafe-reset-all --home=/realio-network"
+	@docker run --rm -v $(CURDIR)\build\node2\realio-network:/realio-network\Z realio-network/node "./realio-networkd tendermint unsafe-reset-all --home=/realio-network"
+	@docker run --rm -v $(CURDIR)\build\node3\realio-network:/realio-network\Z realio-network/node "./realio-networkd tendermint unsafe-reset-all --home=/realio-network"
+else
+	@docker run --rm -v $(CURDIR)/build/node0/realio-network:/realio-network:Z realio-network/node "./realio-networkd tendermint unsafe-reset-all --home=/realio-network"
+	@docker run --rm -v $(CURDIR)/build/node1/realio-network:/realio-network:Z realio-network/node "./realio-networkd tendermint unsafe-reset-all --home=/realio-network"
+	@docker run --rm -v $(CURDIR)/build/node2/realio-network:/realio-network:Z realio-network/node "./realio-networkd tendermint unsafe-reset-all --home=/realio-network"
+	@docker run --rm -v $(CURDIR)/build/node3/realio-network:/realio-network:Z realio-network/node "./realio-networkd tendermint unsafe-reset-all --home=/realio-network"
+endif
+
+# Clean testnet
+localnet-show-logstream:
+	docker-compose logs --tail=1000 -f
+
+.PHONY: localnet-build localnet-start localnet-stop
 
 ###############################################################################
 ###                                Releasing                                ###
