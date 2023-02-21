@@ -77,12 +77,13 @@ type Config struct {
 	AppConstructor    AppConstructor      // the ABCI application constructor
 	GenesisState      simapp.GenesisState // custom gensis state to provide
 	TimeoutCommit     time.Duration       // the consensus commitment timeout
-	AccountTokens     math.Int            // the amount of unique validator tokens (e.g. 1000node0)
-	StakingTokens     math.Int            // the amount of tokens each validator has available to stake
+	RSTTokens         math.Int            // the amount of RST tokens each validator has
+	BaseTokens        math.Int            // the amount of base tokens each validator has available
 	BondedTokens      math.Int            // the amount of tokens each validator stakes
 	NumValidators     int                 // the total number of validators to create and bond
 	ChainID           string              // the network chain-id
-	BondDenom         string              // the staking bond denomination
+	BaseDenom         string              // the base denom of the chain used for mint, gov, gas modules
+	BondDenom         string              // the staking bond denomination, supports multiple ie "ario,arst"
 	MinGasPrices      string              // the minimum gas prices each validator will accept
 	PruningStrategy   string              // the pruning strategy each validator will have
 	SigningAlgo       string              // signing algorithm for keys
@@ -111,11 +112,12 @@ func DefaultConfig() Config {
 		TimeoutCommit:     2 * time.Second,
 		ChainID:           fmt.Sprintf("realionetworklocal_%d-1", tmrand.Int63n(9999999999999)+1),
 		NumValidators:     4,
-		BondDenom:         types.BaseDenom,
+		BondDenom:         "ario,arst",
+		BaseDenom:         types.BaseDenom,
 		MinGasPrices:      fmt.Sprintf("0.000006%s", types.BaseDenom),
-		AccountTokens:     sdk.TokensFromConsensusPower(1000000000000000000, ethermint.PowerReduction),
-		StakingTokens:     sdk.TokensFromConsensusPower(500000000000000000, ethermint.PowerReduction),
-		BondedTokens:      sdk.TokensFromConsensusPower(100000000000000000, ethermint.PowerReduction),
+		RSTTokens:         sdk.TokensFromConsensusPower(500000, ethermint.PowerReduction),
+		BaseTokens:        sdk.TokensFromConsensusPower(1000000, ethermint.PowerReduction),
+		BondedTokens:      sdk.TokensFromConsensusPower(100000, ethermint.PowerReduction),
 		PruningStrategy:   pruningtypes.PruningOptionNothing,
 		CleanupDir:        true,
 		SigningAlgo:       string(hd.EthSecp256k1Type),
@@ -266,7 +268,6 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		appCfg.JSONRPC.Enable = false
 		apiListenAddr := ""
 		if i == 0 {
-			fmt.Println("hello")
 			if cfg.APIAddress != "" {
 				apiListenAddr = cfg.APIAddress
 			} else {
@@ -334,7 +335,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		ctx.Logger = logger
 
 		nodeDirName := fmt.Sprintf("node%d", i)
-		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "realio-networkd")
+		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "realio-network")
 		clientDir := filepath.Join(network.BaseDir, nodeDirName, "realionetworkcli")
 		gentxsDir := filepath.Join(network.BaseDir, "gentxs")
 
@@ -408,8 +409,8 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		}
 
 		balances := sdk.NewCoins(
-			sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), cfg.AccountTokens),
-			sdk.NewCoin(cfg.BondDenom, cfg.StakingTokens),
+			sdk.NewCoin("arst", cfg.RSTTokens),
+			sdk.NewCoin(cfg.BaseDenom, cfg.BaseTokens),
 		)
 
 		genFiles = append(genFiles, tmCfg.GenesisFile())
@@ -424,10 +425,16 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			return nil, err
 		}
 
+		tokenToBond := types.BaseDenom
+		if i == 0 && cfg.NumValidators > 1 {
+			// this ensures we have at least 1 rst validator if we bring up more than 1 val
+			tokenToBond = "arst"
+		}
+
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
 			sdk.ValAddress(addr),
 			valPubKeys[i],
-			sdk.NewCoin(cfg.BondDenom, cfg.BondedTokens),
+			sdk.NewCoin(tokenToBond, cfg.BondedTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
 			stakingtypes.NewCommissionRates(commission, sdk.OneDec(), sdk.OneDec()),
 			sdk.OneInt(),
@@ -442,7 +449,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		}
 
 		memo := fmt.Sprintf("%s@%s:%s", nodeIDs[i], p2pURL.Hostname(), p2pURL.Port())
-		fee := sdk.NewCoins(sdk.NewCoin(cfg.BondDenom, sdk.NewInt(0)))
+		fee := sdk.NewCoins(sdk.NewCoin(types.BaseDenom, sdk.NewInt(0)))
 		txBuilder := cfg.TxConfig.NewTxBuilder()
 		err = txBuilder.SetMsgs(createValMsg)
 		if err != nil {
