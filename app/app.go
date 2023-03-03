@@ -118,6 +118,8 @@ import (
 	assetmodulekeeper "github.com/realiotech/realio-network/x/asset/keeper"
 	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
 
+	realionetworktypes "github.com/realiotech/realio-network/types"
+
 	// unnamed import of statik for swagger UI support
 	_ "github.com/realiotech/realio-network/client/docs/statik"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
@@ -194,7 +196,7 @@ func init() {
 	DefaultNodeHome = filepath.Join(userHomeDir, "."+Name)
 
 	// manually update the power reduction by replacing micro (u) -> atto (a) rio
-	sdk.DefaultPowerReduction = ethermint.PowerReduction
+	sdk.DefaultPowerReduction = realionetworktypes.PowerReduction
 }
 
 // RealioNetwork extends an ABCI application, but with most of its parameters exported.
