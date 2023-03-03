@@ -19,11 +19,10 @@ service Msg {
 
 
 message MsgCreateToken {
-  string creator = 1 ;
+  string manager = 1 ;
   string name = 2 ;
   string symbol = 3 ;
   string total = 4;
-  string decimals = 5;
   bool authorizationRequired = 6 ;
 }
 
@@ -31,16 +30,16 @@ message MsgCreateTokenResponse {
 }
 
 message MsgUpdateToken {
-  string creator = 1 ;
+  string manager = 1 ;
   string symbol = 2 ;
-  bool authorizationRequired = 3 ;
+  bool authorizationRequired = 3;
 }
 
 message MsgUpdateTokenResponse {
 }
 
 message MsgAuthorizeAddress {
-  string creator = 1 ;
+  string manager = 1 ;
   string symbol = 2 ;
   string address = 3 ;
 }
@@ -49,7 +48,7 @@ message MsgAuthorizeAddressResponse {
 }
 
 message MsgUnAuthorizeAddress {
-  string creator = 1 ;
+  string manager = 1 ;
   string symbol = 2 ;
   string address = 3 ;
 }
@@ -58,11 +57,10 @@ message MsgUnAuthorizeAddressResponse {
 }
 
 message MsgTransferToken {
-  string creator = 1 ;
-  string symbol = 2 ;
-  string from = 3 ;
-  string to = 4 ;
-  string amount = 5;
+  string symbol = 1 ;
+  string from = 2 ;
+  string to = 3 ;
+  string amount = 4;
 }
 
 message MsgTransferTokenResponse {
