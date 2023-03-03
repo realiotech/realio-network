@@ -16,15 +16,14 @@ var _ = strconv.Itoa(0)
 
 func CmdMsgCreateToken() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "msg-create-token [name] [symbol] [total] [decimals] [authorization-required]",
+		Use:   "msg-create-token [name] [symbol] [total] [authorization-required]",
 		Short: "Broadcast message MsgCreateToken",
 		Args:  cobra.ExactArgs(5),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argName := args[0]
 			argSymbol := args[1]
 			argTotal := args[2]
-			argDecimals := args[3]
-			argAuthorizationRequired, err := cast.ToBoolE(args[4])
+			argAuthorizationRequired, err := cast.ToBoolE(args[3])
 			if err != nil {
 				return err
 			}
@@ -39,7 +38,6 @@ func CmdMsgCreateToken() *cobra.Command {
 				argName,
 				argSymbol,
 				argTotal,
-				argDecimals,
 				argAuthorizationRequired,
 			)
 			if err := msg.ValidateBasic(); err != nil {

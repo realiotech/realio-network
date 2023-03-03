@@ -9,13 +9,12 @@ const TypeMsgTransferToken = "transfer_token"
 
 var _ sdk.Msg = &MsgTransferToken{}
 
-func NewMsgTransferToken(creator string, symbol string, from string, to string, amount string) *MsgTransferToken {
+func NewMsgTransferToken(symbol string, from string, to string, amount string) *MsgTransferToken {
 	return &MsgTransferToken{
-		Creator: creator,
-		Symbol:  symbol,
-		From:    from,
-		To:      to,
-		Amount:  amount,
+		Symbol: symbol,
+		From:   from,
+		To:     to,
+		Amount: amount,
 	}
 }
 
@@ -28,11 +27,11 @@ func (msg *MsgTransferToken) Type() string {
 }
 
 func (msg *MsgTransferToken) GetSigners() []sdk.AccAddress {
-	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	signer, err := sdk.AccAddressFromBech32(msg.From)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{creator}
+	return []sdk.AccAddress{signer}
 }
 
 func (msg *MsgTransferToken) GetSignBytes() []byte {
@@ -41,9 +40,13 @@ func (msg *MsgTransferToken) GetSignBytes() []byte {
 }
 
 func (msg *MsgTransferToken) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
-	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+	if _, err := sdk.AccAddressFromBech32(msg.From); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid from address: %s", err)
 	}
+
+	if _, err := sdk.AccAddressFromBech32(msg.To); err != nil {
+		return sdkerrors.ErrInvalidAddress.Wrapf("invalid to address: %s", err)
+	}
+
 	return nil
 }

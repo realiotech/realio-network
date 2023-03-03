@@ -33,7 +33,6 @@ func CmdTransferToken() *cobra.Command {
 			}
 
 			msg := types.NewMsgTransferToken(
-				clientCtx.GetFromAddress().String(),
 				argSymbol,
 				argFrom,
 				argTo,

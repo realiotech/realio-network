@@ -26,13 +26,13 @@ func (suite *MessageTestSuite) TestMsgAuthorizeAddress_ValidateBasic() {
 		{
 			name: "invalid address",
 			msg: MsgAuthorizeAddress{
-				Creator: "invalid_address",
+				Manager: "invalid_address",
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
 			msg: MsgAuthorizeAddress{
-				Creator: testutil.GenAddress().String(),
+				Manager: testutil.GenAddress().String(),
 			},
 		},
 	}
@@ -55,13 +55,13 @@ func (suite *MessageTestSuite) TestMsgCreateToken_ValidateBasic() {
 		{
 			name: "invalid address",
 			msg: MsgCreateToken{
-				Creator: "invalid_address",
+				Manager: "invalid_address",
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
 			msg: MsgCreateToken{
-				Creator: testutil.GenAddress().String(),
+				Manager: testutil.GenAddress().String(),
 			},
 		},
 	}
@@ -84,13 +84,14 @@ func (suite *MessageTestSuite) TestMsgTransferToken_ValidateBasic() {
 		{
 			name: "invalid address",
 			msg: MsgTransferToken{
-				Creator: "invalid_address",
+				From: "invalid_address",
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
 			msg: MsgTransferToken{
-				Creator: testutil.GenAddress().String(),
+				To:   testutil.GenAddress().String(),
+				From: testutil.GenAddress().String(),
 			},
 		},
 	}
@@ -113,13 +114,13 @@ func (suite *MessageTestSuite) TestMsgUnAuthorizeAddress_ValidateBasic() {
 		{
 			name: "invalid address",
 			msg: MsgUnAuthorizeAddress{
-				Creator: "invalid_address",
+				Manager: "invalid_address",
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
 			msg: MsgUnAuthorizeAddress{
-				Creator: testutil.GenAddress().String(),
+				Manager: testutil.GenAddress().String(),
 			},
 		},
 	}
@@ -142,13 +143,13 @@ func (suite *MessageTestSuite) TestMsgUpdateToken_ValidateBasic() {
 		{
 			name: "invalid address",
 			msg: MsgUpdateToken{
-				Creator: "invalid_address",
+				Manager: "invalid_address",
 			},
 			err: sdkerrors.ErrInvalidAddress,
 		}, {
 			name: "valid address",
 			msg: MsgUpdateToken{
-				Creator: testutil.GenAddress().String(),
+				Manager: testutil.GenAddress().String(),
 			},
 		},
 	}

@@ -2,10 +2,8 @@ package keeper
 
 import (
 	"context"
-	"fmt"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
@@ -15,11 +13,17 @@ func (k msgServer) UnAuthorizeAddress(goCtx context.Context, msg *types.MsgUnAut
 	// Check if the value exists
 	token, isFound := k.GetToken(ctx, msg.Symbol)
 	if !isFound {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, fmt.Sprintf("index %v not set", msg.Symbol))
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists", msg.Symbol)
 	}
 
-	// Checks if the the msg sender is the same as the current owner
-	if msg.Creator != token.Creator {
+	// Checks if the token manager signed
+	signers := msg.GetSigners()
+	if len(signers) != 1 {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "invalid signers")
+	}
+
+	// assert that the manager account is the only signer of the message
+	if signers[0].String() != token.Manager {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "caller not authorized")
 	}
 
@@ -30,7 +34,7 @@ func (k msgServer) UnAuthorizeAddress(goCtx context.Context, msg *types.MsgUnAut
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeTokenUnAuthorized,
-			sdk.NewAttribute(types.AttributeKeySymbol, fmt.Sprint(token.Symbol)),
+			sdk.NewAttribute(types.AttributeKeySymbol, msg.Symbol),
 			sdk.NewAttribute(types.AttributeKeyAddress, msg.Address),
 		),
 	)

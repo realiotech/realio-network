@@ -29,11 +29,10 @@ var _ = math.Inf
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
 type MsgCreateToken struct {
-	Creator               string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Manager               string `protobuf:"bytes,1,opt,name=manager,proto3" json:"manager,omitempty"`
 	Name                  string `protobuf:"bytes,2,opt,name=name,proto3" json:"name,omitempty"`
 	Symbol                string `protobuf:"bytes,3,opt,name=symbol,proto3" json:"symbol,omitempty"`
 	Total                 string `protobuf:"bytes,4,opt,name=total,proto3" json:"total,omitempty"`
-	Decimals              string `protobuf:"bytes,5,opt,name=decimals,proto3" json:"decimals,omitempty"`
 	AuthorizationRequired bool   `protobuf:"varint,6,opt,name=authorizationRequired,proto3" json:"authorizationRequired,omitempty"`
 }
 
@@ -70,9 +69,9 @@ func (m *MsgCreateToken) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgCreateToken proto.InternalMessageInfo
 
-func (m *MsgCreateToken) GetCreator() string {
+func (m *MsgCreateToken) GetManager() string {
 	if m != nil {
-		return m.Creator
+		return m.Manager
 	}
 	return ""
 }
@@ -94,13 +93,6 @@ func (m *MsgCreateToken) GetSymbol() string {
 func (m *MsgCreateToken) GetTotal() string {
 	if m != nil {
 		return m.Total
-	}
-	return ""
-}
-
-func (m *MsgCreateToken) GetDecimals() string {
-	if m != nil {
-		return m.Decimals
 	}
 	return ""
 }
@@ -149,7 +141,7 @@ func (m *MsgCreateTokenResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgCreateTokenResponse proto.InternalMessageInfo
 
 type MsgUpdateToken struct {
-	Creator               string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Manager               string `protobuf:"bytes,1,opt,name=manager,proto3" json:"manager,omitempty"`
 	Symbol                string `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
 	AuthorizationRequired bool   `protobuf:"varint,3,opt,name=authorizationRequired,proto3" json:"authorizationRequired,omitempty"`
 }
@@ -187,9 +179,9 @@ func (m *MsgUpdateToken) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUpdateToken proto.InternalMessageInfo
 
-func (m *MsgUpdateToken) GetCreator() string {
+func (m *MsgUpdateToken) GetManager() string {
 	if m != nil {
-		return m.Creator
+		return m.Manager
 	}
 	return ""
 }
@@ -245,7 +237,7 @@ func (m *MsgUpdateTokenResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgUpdateTokenResponse proto.InternalMessageInfo
 
 type MsgAuthorizeAddress struct {
-	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Manager string `protobuf:"bytes,1,opt,name=manager,proto3" json:"manager,omitempty"`
 	Symbol  string `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
 	Address string `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
 }
@@ -283,9 +275,9 @@ func (m *MsgAuthorizeAddress) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgAuthorizeAddress proto.InternalMessageInfo
 
-func (m *MsgAuthorizeAddress) GetCreator() string {
+func (m *MsgAuthorizeAddress) GetManager() string {
 	if m != nil {
-		return m.Creator
+		return m.Manager
 	}
 	return ""
 }
@@ -341,7 +333,7 @@ func (m *MsgAuthorizeAddressResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgAuthorizeAddressResponse proto.InternalMessageInfo
 
 type MsgUnAuthorizeAddress struct {
-	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
+	Manager string `protobuf:"bytes,1,opt,name=manager,proto3" json:"manager,omitempty"`
 	Symbol  string `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
 	Address string `protobuf:"bytes,3,opt,name=address,proto3" json:"address,omitempty"`
 }
@@ -379,9 +371,9 @@ func (m *MsgUnAuthorizeAddress) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgUnAuthorizeAddress proto.InternalMessageInfo
 
-func (m *MsgUnAuthorizeAddress) GetCreator() string {
+func (m *MsgUnAuthorizeAddress) GetManager() string {
 	if m != nil {
-		return m.Creator
+		return m.Manager
 	}
 	return ""
 }
@@ -437,11 +429,10 @@ func (m *MsgUnAuthorizeAddressResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgUnAuthorizeAddressResponse proto.InternalMessageInfo
 
 type MsgTransferToken struct {
-	Creator string `protobuf:"bytes,1,opt,name=creator,proto3" json:"creator,omitempty"`
-	Symbol  string `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	From    string `protobuf:"bytes,3,opt,name=from,proto3" json:"from,omitempty"`
-	To      string `protobuf:"bytes,4,opt,name=to,proto3" json:"to,omitempty"`
-	Amount  string `protobuf:"bytes,5,opt,name=amount,proto3" json:"amount,omitempty"`
+	Symbol string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
+	From   string `protobuf:"bytes,2,opt,name=from,proto3" json:"from,omitempty"`
+	To     string `protobuf:"bytes,3,opt,name=to,proto3" json:"to,omitempty"`
+	Amount string `protobuf:"bytes,4,opt,name=amount,proto3" json:"amount,omitempty"`
 }
 
 func (m *MsgTransferToken) Reset()         { *m = MsgTransferToken{} }
@@ -476,13 +467,6 @@ func (m *MsgTransferToken) XXX_DiscardUnknown() {
 }
 
 var xxx_messageInfo_MsgTransferToken proto.InternalMessageInfo
-
-func (m *MsgTransferToken) GetCreator() string {
-	if m != nil {
-		return m.Creator
-	}
-	return ""
-}
 
 func (m *MsgTransferToken) GetSymbol() string {
 	if m != nil {
@@ -564,39 +548,38 @@ func init() {
 func init() { proto.RegisterFile("realionetwork/asset/v1/tx.proto", fileDescriptor_1cfda60866e68e13) }
 
 var fileDescriptor_1cfda60866e68e13 = []byte{
-	// 508 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x54, 0x41, 0x6e, 0xd3, 0x40,
-	0x14, 0x8d, 0x93, 0x34, 0x2d, 0x1f, 0x51, 0x55, 0x43, 0x1b, 0x8d, 0x8c, 0xea, 0x56, 0x59, 0xa0,
-	0x48, 0xa8, 0x36, 0x6d, 0xe1, 0x00, 0x85, 0x2d, 0xd9, 0x44, 0x65, 0xc3, 0x6e, 0x62, 0xff, 0x3a,
-	0x56, 0x62, 0x4f, 0x98, 0x99, 0x94, 0xb4, 0x2b, 0x8e, 0xc0, 0x59, 0x38, 0x00, 0x6b, 0x96, 0x5d,
-	0xb2, 0x44, 0xc9, 0x45, 0x90, 0x27, 0x63, 0x13, 0xb7, 0xc6, 0xa4, 0x95, 0xba, 0xfb, 0x6f, 0xfc,
-	0x66, 0xde, 0xfb, 0x9e, 0x37, 0x1f, 0x0e, 0x04, 0xb2, 0x71, 0xc4, 0x13, 0x54, 0x5f, 0xb8, 0x18,
-	0x79, 0x4c, 0x4a, 0x54, 0xde, 0xe5, 0xb1, 0xa7, 0x66, 0xee, 0x44, 0x70, 0xc5, 0x49, 0xbb, 0x40,
-	0x70, 0x35, 0xc1, 0xbd, 0x3c, 0xb6, 0x77, 0x43, 0x1e, 0x72, 0x4d, 0xf1, 0xd2, 0x6a, 0xc9, 0xee,
-	0xfc, 0xb0, 0x60, 0xbb, 0x27, 0xc3, 0xf7, 0x02, 0x99, 0xc2, 0x73, 0x3e, 0xc2, 0x84, 0x50, 0xd8,
-	0xf4, 0x53, 0xc8, 0x05, 0xb5, 0x0e, 0xad, 0xee, 0x93, 0x7e, 0x06, 0x09, 0x81, 0x66, 0xc2, 0x62,
-	0xa4, 0x75, 0xbd, 0xac, 0x6b, 0xd2, 0x86, 0x96, 0xbc, 0x8a, 0x07, 0x7c, 0x4c, 0x1b, 0x7a, 0xd5,
-	0x20, 0xb2, 0x0b, 0x1b, 0x8a, 0x2b, 0x36, 0xa6, 0x4d, 0xbd, 0xbc, 0x04, 0xc4, 0x86, 0xad, 0x00,
-	0xfd, 0x28, 0x66, 0x63, 0x49, 0x37, 0xf4, 0x87, 0x1c, 0x93, 0x37, 0xb0, 0xc7, 0xa6, 0x6a, 0xc8,
-	0x45, 0x74, 0xcd, 0x54, 0xc4, 0x93, 0x3e, 0x7e, 0x9e, 0x46, 0x02, 0x03, 0xda, 0x3a, 0xb4, 0xba,
-	0x5b, 0xfd, 0xf2, 0x8f, 0x1d, 0x0a, 0xed, 0xa2, 0xff, 0x3e, 0xca, 0x09, 0x4f, 0x24, 0x76, 0x66,
-	0xba, 0xb3, 0x8f, 0x93, 0x60, 0x8d, 0xce, 0xfe, 0x76, 0x51, 0x2f, 0x74, 0xf1, 0x4f, 0x4f, 0x8d,
-	0xff, 0x7b, 0x5a, 0x51, 0xce, 0x3d, 0x31, 0x78, 0xde, 0x93, 0xe1, 0x99, 0xd9, 0x85, 0x67, 0x41,
-	0x20, 0x50, 0xca, 0x07, 0x18, 0xa3, 0xb0, 0xc9, 0x96, 0x9b, 0xcd, 0x7f, 0xcf, 0x60, 0x67, 0x1f,
-	0x5e, 0x94, 0x48, 0xe4, 0x0e, 0x7c, 0xd8, 0x4b, 0xbd, 0x25, 0x8f, 0xea, 0xe1, 0x00, 0xf6, 0x4b,
-	0x45, 0x72, 0x17, 0x5f, 0x2d, 0xd8, 0xe9, 0xc9, 0xf0, 0x5c, 0xb0, 0x44, 0x5e, 0xa0, 0x78, 0xe8,
-	0xf5, 0x10, 0x68, 0x5e, 0x08, 0x1e, 0x1b, 0x79, 0x5d, 0x93, 0x6d, 0xa8, 0x2b, 0x6e, 0x52, 0x57,
-	0x4f, 0xdf, 0x03, 0xb4, 0x58, 0xcc, 0xa7, 0x89, 0x32, 0x81, 0x33, 0xa8, 0x63, 0x03, 0xbd, 0xed,
-	0x20, 0xb3, 0x77, 0xf2, 0xbd, 0x09, 0x8d, 0x9e, 0x0c, 0x09, 0xc2, 0xd3, 0xd5, 0x97, 0xf1, 0xd2,
-	0x2d, 0x7f, 0x5b, 0x6e, 0x31, 0x81, 0xb6, 0xbb, 0x1e, 0x2f, 0x93, 0x4b, 0x65, 0x56, 0x63, 0x5a,
-	0x25, 0xb3, 0xc2, 0xab, 0x94, 0x29, 0x09, 0x1f, 0x51, 0xb0, 0x73, 0xe7, 0xd6, 0x5f, 0x55, 0x9c,
-	0x71, 0x9b, 0x6c, 0x9f, 0xde, 0x83, 0x9c, 0xab, 0x5e, 0x03, 0x29, 0x49, 0xdb, 0x51, 0x95, 0xf7,
-	0x3b, 0x74, 0xfb, 0xed, 0xbd, 0xe8, 0xb9, 0xf6, 0x08, 0x9e, 0x15, 0x23, 0xd6, 0xad, 0x38, 0xa7,
-	0xc0, 0xb4, 0x5f, 0xaf, 0xcb, 0xcc, 0xc4, 0xde, 0x7d, 0xf8, 0x39, 0x77, 0xac, 0x9b, 0xb9, 0x63,
-	0xfd, 0x9e, 0x3b, 0xd6, 0xb7, 0x85, 0x53, 0xbb, 0x59, 0x38, 0xb5, 0x5f, 0x0b, 0xa7, 0xf6, 0xe9,
-	0x24, 0x8c, 0xd4, 0x70, 0x3a, 0x70, 0x7d, 0x1e, 0x7b, 0xcb, 0x53, 0x15, 0xfa, 0x43, 0x53, 0x1e,
-	0x65, 0xa3, 0x7c, 0x66, 0x86, 0xb9, 0xba, 0x9a, 0xa0, 0x1c, 0xb4, 0xf4, 0x7c, 0x3e, 0xfd, 0x13,
-	0x00, 0x00, 0xff, 0xff, 0x88, 0xaf, 0x14, 0x37, 0xf0, 0x05, 0x00, 0x00,
+	// 496 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x94, 0xc1, 0x6e, 0xd3, 0x30,
+	0x18, 0xc7, 0x9b, 0xb6, 0x74, 0xf0, 0x21, 0xa6, 0xc9, 0x6c, 0x95, 0x15, 0xb4, 0x6c, 0xca, 0x01,
+	0x55, 0x42, 0x4b, 0xd8, 0x06, 0x0f, 0x30, 0xb8, 0xd2, 0x4b, 0x35, 0x2e, 0xdc, 0xdc, 0xf6, 0x6b,
+	0x1a, 0xb5, 0xb1, 0x8b, 0xed, 0x8e, 0x6e, 0x4f, 0xc1, 0x33, 0xf0, 0x08, 0x3c, 0x05, 0xc7, 0x1d,
+	0x39, 0xa2, 0xf6, 0x45, 0x50, 0x12, 0x27, 0x6b, 0xb6, 0x10, 0x5a, 0x24, 0x6e, 0xfe, 0xdc, 0x7f,
+	0xfc, 0xfb, 0xa9, 0xf9, 0xc7, 0x70, 0x24, 0x91, 0x4d, 0x43, 0xc1, 0x51, 0x7f, 0x11, 0x72, 0xe2,
+	0x33, 0xa5, 0x50, 0xfb, 0x57, 0xa7, 0xbe, 0x5e, 0x78, 0x33, 0x29, 0xb4, 0x20, 0xed, 0x42, 0xc0,
+	0x4b, 0x02, 0xde, 0xd5, 0xa9, 0xbd, 0x1f, 0x88, 0x40, 0x24, 0x11, 0x3f, 0x5e, 0xa5, 0x69, 0xf7,
+	0x9b, 0x05, 0xbb, 0x5d, 0x15, 0xbc, 0x97, 0xc8, 0x34, 0x5e, 0x8a, 0x09, 0x72, 0x42, 0x61, 0x27,
+	0x62, 0x9c, 0x05, 0x28, 0xa9, 0x75, 0x6c, 0x75, 0x9e, 0xf4, 0xb2, 0x91, 0x10, 0x68, 0x72, 0x16,
+	0x21, 0xad, 0x27, 0xdb, 0xc9, 0x9a, 0xb4, 0xa1, 0xa5, 0xae, 0xa3, 0xbe, 0x98, 0xd2, 0x46, 0xb2,
+	0x6b, 0x26, 0xb2, 0x0f, 0x8f, 0xb4, 0xd0, 0x6c, 0x4a, 0x9b, 0xc9, 0x76, 0x3a, 0x90, 0x37, 0x70,
+	0xc0, 0xe6, 0x7a, 0x2c, 0x64, 0x78, 0xc3, 0x74, 0x28, 0x78, 0x0f, 0x3f, 0xcf, 0x43, 0x89, 0x43,
+	0xda, 0x3a, 0xb6, 0x3a, 0x8f, 0x7b, 0xe5, 0x3f, 0xba, 0x14, 0xda, 0x45, 0xc7, 0x1e, 0xaa, 0x99,
+	0xe0, 0x0a, 0xdd, 0x45, 0x62, 0xff, 0x71, 0x36, 0xdc, 0xc0, 0xfe, 0xce, 0xb4, 0x5e, 0x30, 0xfd,
+	0xa3, 0x53, 0xe3, 0xef, 0x4e, 0x6b, 0xe4, 0xdc, 0x89, 0xc1, 0xf3, 0xae, 0x0a, 0x2e, 0xcc, 0x53,
+	0x78, 0x31, 0x1c, 0x4a, 0x54, 0xea, 0x1f, 0xc4, 0x28, 0xec, 0xb0, 0xf4, 0x61, 0xf3, 0xdf, 0x66,
+	0xa3, 0x7b, 0x08, 0x2f, 0x4a, 0x10, 0xb9, 0xc1, 0x00, 0x0e, 0x62, 0x37, 0xfe, 0x5f, 0x1d, 0x8e,
+	0xe0, 0xb0, 0x14, 0x92, 0x5b, 0x8c, 0x60, 0xaf, 0xab, 0x82, 0x4b, 0xc9, 0xb8, 0x1a, 0xa1, 0x4c,
+	0xdf, 0xce, 0x1d, 0xc6, 0x2a, 0x60, 0x08, 0x34, 0x47, 0x52, 0x44, 0x59, 0xb3, 0xe2, 0x35, 0xd9,
+	0x85, 0xba, 0x16, 0x86, 0x5a, 0x8f, 0x8b, 0x0d, 0x2d, 0x16, 0x89, 0x39, 0xd7, 0xa6, 0x52, 0x66,
+	0x72, 0x6d, 0xa0, 0xf7, 0x39, 0x99, 0xc3, 0xd9, 0xf7, 0x26, 0x34, 0xba, 0x2a, 0x20, 0x08, 0x4f,
+	0xd7, 0x2b, 0xfe, 0xd2, 0x2b, 0xff, 0x48, 0xbc, 0x62, 0xcd, 0x6c, 0x6f, 0xb3, 0x5c, 0x86, 0x8b,
+	0x31, 0xeb, 0x5d, 0xac, 0xc2, 0xac, 0xe5, 0x2a, 0x31, 0x25, 0x0d, 0x23, 0x1a, 0xf6, 0x1e, 0xbc,
+	0xda, 0x57, 0x15, 0x67, 0xdc, 0x0f, 0xdb, 0xe7, 0x5b, 0x84, 0x73, 0xea, 0x0d, 0x90, 0x92, 0x4a,
+	0x9d, 0x54, 0xb9, 0x3f, 0x88, 0xdb, 0x6f, 0xb7, 0x8a, 0xe7, 0xec, 0x09, 0x3c, 0x2b, 0x16, 0xa9,
+	0x53, 0x71, 0x4e, 0x21, 0x69, 0xbf, 0xde, 0x34, 0x99, 0xc1, 0xde, 0x7d, 0xf8, 0xb1, 0x74, 0xac,
+	0xdb, 0xa5, 0x63, 0xfd, 0x5a, 0x3a, 0xd6, 0xd7, 0x95, 0x53, 0xbb, 0x5d, 0x39, 0xb5, 0x9f, 0x2b,
+	0xa7, 0xf6, 0xe9, 0x2c, 0x08, 0xf5, 0x78, 0xde, 0xf7, 0x06, 0x22, 0xf2, 0xd3, 0x53, 0x35, 0x0e,
+	0xc6, 0x66, 0x79, 0x92, 0xdd, 0xc9, 0x0b, 0x73, 0x2b, 0xeb, 0xeb, 0x19, 0xaa, 0x7e, 0x2b, 0xb9,
+	0x68, 0xcf, 0x7f, 0x07, 0x00, 0x00, 0xff, 0xff, 0xd7, 0x73, 0xaf, 0x67, 0xb9, 0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -853,13 +836,6 @@ func (m *MsgCreateToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x30
 	}
-	if len(m.Decimals) > 0 {
-		i -= len(m.Decimals)
-		copy(dAtA[i:], m.Decimals)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Decimals)))
-		i--
-		dAtA[i] = 0x2a
-	}
 	if len(m.Total) > 0 {
 		i -= len(m.Total)
 		copy(dAtA[i:], m.Total)
@@ -881,10 +857,10 @@ func (m *MsgCreateToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Creator) > 0 {
-		i -= len(m.Creator)
-		copy(dAtA[i:], m.Creator)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+	if len(m.Manager) > 0 {
+		i -= len(m.Manager)
+		copy(dAtA[i:], m.Manager)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Manager)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -951,10 +927,10 @@ func (m *MsgUpdateToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Creator) > 0 {
-		i -= len(m.Creator)
-		copy(dAtA[i:], m.Creator)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+	if len(m.Manager) > 0 {
+		i -= len(m.Manager)
+		copy(dAtA[i:], m.Manager)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Manager)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1018,10 +994,10 @@ func (m *MsgAuthorizeAddress) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Creator) > 0 {
-		i -= len(m.Creator)
-		copy(dAtA[i:], m.Creator)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+	if len(m.Manager) > 0 {
+		i -= len(m.Manager)
+		copy(dAtA[i:], m.Manager)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Manager)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1085,10 +1061,10 @@ func (m *MsgUnAuthorizeAddress) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		i--
 		dAtA[i] = 0x12
 	}
-	if len(m.Creator) > 0 {
-		i -= len(m.Creator)
-		copy(dAtA[i:], m.Creator)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
+	if len(m.Manager) > 0 {
+		i -= len(m.Manager)
+		copy(dAtA[i:], m.Manager)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Manager)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1143,33 +1119,26 @@ func (m *MsgTransferToken) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 		copy(dAtA[i:], m.Amount)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.Amount)))
 		i--
-		dAtA[i] = 0x2a
+		dAtA[i] = 0x22
 	}
 	if len(m.To) > 0 {
 		i -= len(m.To)
 		copy(dAtA[i:], m.To)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.To)))
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x1a
 	}
 	if len(m.From) > 0 {
 		i -= len(m.From)
 		copy(dAtA[i:], m.From)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.From)))
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x12
 	}
 	if len(m.Symbol) > 0 {
 		i -= len(m.Symbol)
 		copy(dAtA[i:], m.Symbol)
 		i = encodeVarintTx(dAtA, i, uint64(len(m.Symbol)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Creator) > 0 {
-		i -= len(m.Creator)
-		copy(dAtA[i:], m.Creator)
-		i = encodeVarintTx(dAtA, i, uint64(len(m.Creator)))
 		i--
 		dAtA[i] = 0xa
 	}
@@ -1216,7 +1185,7 @@ func (m *MsgCreateToken) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Creator)
+	l = len(m.Manager)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
@@ -1229,10 +1198,6 @@ func (m *MsgCreateToken) Size() (n int) {
 		n += 1 + l + sovTx(uint64(l))
 	}
 	l = len(m.Total)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
-	l = len(m.Decimals)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
@@ -1257,7 +1222,7 @@ func (m *MsgUpdateToken) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Creator)
+	l = len(m.Manager)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
@@ -1286,7 +1251,7 @@ func (m *MsgAuthorizeAddress) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Creator)
+	l = len(m.Manager)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
@@ -1316,7 +1281,7 @@ func (m *MsgUnAuthorizeAddress) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Creator)
+	l = len(m.Manager)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
@@ -1346,10 +1311,6 @@ func (m *MsgTransferToken) Size() (n int) {
 	}
 	var l int
 	_ = l
-	l = len(m.Creator)
-	if l > 0 {
-		n += 1 + l + sovTx(uint64(l))
-	}
 	l = len(m.Symbol)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
@@ -1415,7 +1376,7 @@ func (m *MsgCreateToken) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Manager", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1443,7 +1404,7 @@ func (m *MsgCreateToken) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Creator = string(dAtA[iNdEx:postIndex])
+			m.Manager = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -1540,38 +1501,6 @@ func (m *MsgCreateToken) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.Total = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 5:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Decimals", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Decimals = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 6:
 			if wireType != 0 {
@@ -1695,7 +1624,7 @@ func (m *MsgUpdateToken) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Manager", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1723,7 +1652,7 @@ func (m *MsgUpdateToken) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Creator = string(dAtA[iNdEx:postIndex])
+			m.Manager = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -1879,7 +1808,7 @@ func (m *MsgAuthorizeAddress) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Manager", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -1907,7 +1836,7 @@ func (m *MsgAuthorizeAddress) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Creator = string(dAtA[iNdEx:postIndex])
+			m.Manager = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -2075,7 +2004,7 @@ func (m *MsgUnAuthorizeAddress) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Manager", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2103,7 +2032,7 @@ func (m *MsgUnAuthorizeAddress) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Creator = string(dAtA[iNdEx:postIndex])
+			m.Manager = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
 			if wireType != 2 {
@@ -2271,38 +2200,6 @@ func (m *MsgTransferToken) Unmarshal(dAtA []byte) error {
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Creator", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowTx
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthTx
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthTx
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Creator = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
 			}
 			var stringLen uint64
@@ -2333,7 +2230,7 @@ func (m *MsgTransferToken) Unmarshal(dAtA []byte) error {
 			}
 			m.Symbol = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 3:
+		case 2:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field From", wireType)
 			}
@@ -2365,7 +2262,7 @@ func (m *MsgTransferToken) Unmarshal(dAtA []byte) error {
 			}
 			m.From = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 4:
+		case 3:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field To", wireType)
 			}
@@ -2397,7 +2294,7 @@ func (m *MsgTransferToken) Unmarshal(dAtA []byte) error {
 			}
 			m.To = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 5:
+		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
 			}

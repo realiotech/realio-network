@@ -3,6 +3,7 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
@@ -19,6 +20,8 @@ type BankKeeper interface {
 	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
 	MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
 	SetDenomMetaData(ctx sdk.Context, denomMetaData banktypes.Metadata)
+	AppendSendRestriction(restriction bankkeeper.SendRestrictionFn)
+	GetDenomMetaData(ctx sdk.Context, denom string) (banktypes.Metadata, bool)
 	// Methods imported from bank should be defined here
 }
 

@@ -9,9 +9,9 @@ const TypeMsgAuthorizeAddress = "authorize_address"
 
 var _ sdk.Msg = &MsgAuthorizeAddress{}
 
-func NewMsgAuthorizeAddress(creator string, symbol string, address string) *MsgAuthorizeAddress {
+func NewMsgAuthorizeAddress(manager string, symbol string, address string) *MsgAuthorizeAddress {
 	return &MsgAuthorizeAddress{
-		Creator: creator,
+		Manager: manager,
 		Symbol:  symbol,
 		Address: address,
 	}
@@ -26,11 +26,11 @@ func (msg *MsgAuthorizeAddress) Type() string {
 }
 
 func (msg *MsgAuthorizeAddress) GetSigners() []sdk.AccAddress {
-	creator, err := sdk.AccAddressFromBech32(msg.Creator)
+	manager, err := sdk.AccAddressFromBech32(msg.Manager)
 	if err != nil {
 		panic(err)
 	}
-	return []sdk.AccAddress{creator}
+	return []sdk.AccAddress{manager}
 }
 
 func (msg *MsgAuthorizeAddress) GetSignBytes() []byte {
@@ -39,9 +39,9 @@ func (msg *MsgAuthorizeAddress) GetSignBytes() []byte {
 }
 
 func (msg *MsgAuthorizeAddress) ValidateBasic() error {
-	_, err := sdk.AccAddressFromBech32(msg.Creator)
+	_, err := sdk.AccAddressFromBech32(msg.Manager)
 	if err != nil {
-		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid creator address (%s)", err)
+		return sdkerrors.Wrapf(sdkerrors.ErrInvalidAddress, "invalid manager address (%s)", err)
 	}
 	return nil
 }

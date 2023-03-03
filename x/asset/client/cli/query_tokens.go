@@ -33,3 +33,27 @@ func CmdQueryTokens() *cobra.Command {
 
 	return cmd
 }
+
+func CmdQueryToken() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "token [symbol]",
+		Short: "query token by symbol",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			argSymbol := args[0]
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			queryClient := types.NewQueryClient(clientCtx)
+			params := types.NewQueryTokenRequest(argSymbol)
+			res, err := queryClient.Token(context.Background(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}

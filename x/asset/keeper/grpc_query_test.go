@@ -46,11 +46,10 @@ func (suite *KeeperTestSuite) TestTokensQuery() {
 			func() {
 				req = &types.QueryTokensRequest{}
 				token := types.Token{
-					Creator:               suite.testUser1Address,
+					Manager:               suite.testUser1Address,
 					Name:                  "rst",
 					Symbol:                "rst",
 					Total:                 "1000",
-					Decimals:              "1",
 					AuthorizationRequired: false,
 				}
 				suite.app.AssetKeeper.SetToken(suite.ctx, token)
@@ -66,21 +65,19 @@ func (suite *KeeperTestSuite) TestTokensQuery() {
 			func() {
 				req = &types.QueryTokensRequest{}
 				token1 := types.Token{
-					Creator:               suite.testUser1Address,
+					Manager:               suite.testUser1Address,
 					Name:                  "rst",
 					Symbol:                "rst",
 					Total:                 "1000",
-					Decimals:              "1",
 					AuthorizationRequired: false,
 				}
 				suite.app.AssetKeeper.SetToken(suite.ctx, token1)
 
 				token2 := types.Token{
-					Creator:               suite.testUser1Address,
+					Manager:               suite.testUser1Address,
 					Name:                  "bitcoinEtf",
 					Symbol:                "btf",
 					Total:                 "1000",
-					Decimals:              "1",
 					AuthorizationRequired: false,
 				}
 				suite.app.AssetKeeper.SetToken(suite.ctx, token2)

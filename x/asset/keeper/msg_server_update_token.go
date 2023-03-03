@@ -2,30 +2,36 @@ package keeper
 
 import (
 	"context"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken) (*types.MsgUpdateTokenResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	// Check if the value exists
-	existing, isFound := k.GetToken(
-		ctx,
-		msg.Symbol,
-	)
+	existing, isFound := k.GetToken(ctx, msg.Symbol)
 	if !isFound {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, "index not set")
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists", msg.Symbol)
 	}
 
+	// Checks if the token manager signed
+	signers := msg.GetSigners()
+	if len(signers) != 1 {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "invalid signers")
+	}
+
+	// assert that the manager account is the only signer of the message
+	if signers[0].String() != existing.Manager {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "caller not authorized")
+	}
+
+	// only Authorization Flag is updatable at this time
 	var token = types.Token{
-		Creator:               existing.Creator,
 		Name:                  existing.Name,
 		Symbol:                existing.Symbol,
 		Total:                 existing.Total,
-		Decimals:              existing.Decimals,
+		Manager:               existing.Manager,
 		AuthorizationRequired: msg.AuthorizationRequired,
 	}
 
@@ -34,7 +40,7 @@ func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeTokenUpdated,
-			sdk.NewAttribute(types.AttributeKeySymbol, existing.Symbol),
+			sdk.NewAttribute(types.AttributeKeySymbol, msg.Symbol),
 		),
 	)
 
