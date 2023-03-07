@@ -3,6 +3,8 @@ package network
 import (
 	"encoding/json"
 	"fmt"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	minttypes "github.com/realiotech/realio-network/x/mint/types"
 	"path/filepath"
 	"time"
 
@@ -152,7 +154,7 @@ func collectGenFiles(cfg Config, vals []*Validator, outputDir string) error {
 	for i := 0; i < cfg.NumValidators; i++ {
 		tmCfg := vals[i].Ctx.Config
 
-		nodeDir := filepath.Join(outputDir, vals[i].Moniker, "realio-networkd")
+		nodeDir := filepath.Join(outputDir, vals[i].Moniker, "realio-network")
 		gentxsDir := filepath.Join(outputDir, "gentxs")
 
 		tmCfg.Moniker = vals[i].Moniker
@@ -197,31 +199,45 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	// set the balances in the genesis state
 	var bankGenState banktypes.GenesisState
 	bankGenState.Balances = genBalances
+	bankGenState.Params.DefaultSendEnabled = true
 	cfg.GenesisState[banktypes.ModuleName] = cfg.Codec.MustMarshalJSON(&bankGenState)
 
 	var stakingGenState stakingtypes.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[stakingtypes.ModuleName], &stakingGenState)
 
 	stakingGenState.Params.BondDenom = cfg.BondDenom
+	stakingGenState.Params.UnbondingTime = time.Minute * 3
 	cfg.GenesisState[stakingtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&stakingGenState)
+
+	var slashingGenState slashingtypes.GenesisState
+	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[slashingtypes.ModuleName], &slashingGenState)
+
+	slashingGenState.Params.SignedBlocksWindow = 20
+	cfg.GenesisState[slashingtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&slashingGenState)
 
 	var govGenState govv1.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[govtypes.ModuleName], &govGenState)
 
-	govGenState.DepositParams.MinDeposit[0].Denom = cfg.BondDenom
+	govGenState.DepositParams.MinDeposit[0].Denom = cfg.BaseDenom
 	cfg.GenesisState[govtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&govGenState)
 
 	var crisisGenState crisistypes.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[crisistypes.ModuleName], &crisisGenState)
 
-	crisisGenState.ConstantFee.Denom = cfg.BondDenom
+	crisisGenState.ConstantFee.Denom = cfg.BaseDenom
 	cfg.GenesisState[crisistypes.ModuleName] = cfg.Codec.MustMarshalJSON(&crisisGenState)
 
 	var evmGenState evmtypes.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[evmtypes.ModuleName], &evmGenState)
 
-	evmGenState.Params.EvmDenom = cfg.BondDenom
+	evmGenState.Params.EvmDenom = cfg.BaseDenom
 	cfg.GenesisState[evmtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&evmGenState)
+
+	var mintGenState minttypes.GenesisState
+	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[minttypes.ModuleName], &mintGenState)
+
+	mintGenState.Params.MintDenom = cfg.BaseDenom
+	cfg.GenesisState[minttypes.ModuleName] = cfg.Codec.MustMarshalJSON(&mintGenState)
 
 	appGenStateJSON, err := json.MarshalIndent(cfg.GenesisState, "", "  ")
 	if err != nil {
