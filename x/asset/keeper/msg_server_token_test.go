@@ -1,7 +1,10 @@
 package keeper_test
 
 import (
+	"cosmossdk.io/math"
+	realionetworktypes "github.com/realiotech/realio-network/types"
 	"strconv"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -18,17 +21,18 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := suite.testUser1Address
-	expected := &types.MsgCreateToken{Creator: creator,
+	manager := suite.testUser1Address
+	expected := &types.MsgCreateToken{Manager: manager,
 		Symbol: "RIO", Total: "1000",
 	}
 	_, err := srv.CreateToken(wctx, expected)
 	suite.Require().NoError(err)
+	lowercased := strings.ToLower(expected.Symbol)
 	rio, found := suite.app.AssetKeeper.GetToken(suite.ctx,
-		expected.Symbol,
+		strings.ToLower(lowercased),
 	)
 	suite.Require().True(found)
-	suite.Require().Equal(expected.Creator, rio.Creator)
+	suite.Require().Equal(expected.Manager, rio.Manager)
 }
 
 func (suite *KeeperTestSuite) TestTokenMsgServerCreateInvalidSender() {
@@ -36,8 +40,8 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateInvalidSender() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := "invalid"
-	expected := &types.MsgCreateToken{Creator: creator,
+	manager := "invalid"
+	expected := &types.MsgCreateToken{Manager: manager,
 		Symbol: "RIO", Total: "1000",
 	}
 	_, err := srv.CreateToken(wctx, expected)
@@ -49,8 +53,8 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateAuthorizationDefaultFalse(
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := suite.testUser1Address
-	expected := &types.MsgCreateToken{Creator: creator,
+	manager := suite.testUser1Address
+	expected := &types.MsgCreateToken{Manager: manager,
 		Symbol: "RIO", Total: "1000",
 	}
 	_, err := srv.CreateToken(wctx, expected)
@@ -66,14 +70,14 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateErrorDupIndex() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := suite.testUser1Address
-	t1 := &types.MsgCreateToken{Creator: creator,
+	manager := suite.testUser1Address
+	t1 := &types.MsgCreateToken{Manager: manager,
 		Symbol: "RIO", Total: "1000",
 	}
 	_, err := srv.CreateToken(wctx, t1)
 	suite.Require().NoError(err)
 
-	t2 := &types.MsgCreateToken{Creator: creator,
+	t2 := &types.MsgCreateToken{Manager: manager,
 		Symbol: "RIO", Total: "1000",
 	}
 	_, err2 := srv.CreateToken(wctx, t2)
@@ -87,19 +91,22 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateVerifyDistribution() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := suite.testUser1Address
-	t1 := &types.MsgCreateToken{Creator: creator,
-		Symbol: "RIO", Total: "1000",
+	manager := suite.testUser1Address
+	t1 := &types.MsgCreateToken{Manager: manager,
+		Symbol: "RST", Total: "1000",
 	}
 	_, err := srv.CreateToken(wctx, t1)
 	suite.Require().NoError(err)
 
-	account, _ := sdk.AccAddressFromBech32(creator)
-	creatorBalance := suite.app.BankKeeper.GetBalance(suite.ctx, account, "RIO")
-	suite.Require().Equal(creatorBalance.Amount, sdk.NewInt(1000))
+	totalInt, _ := math.NewIntFromString("1000")
+	canonicalAmount := totalInt.Mul(realionetworktypes.PowerReduction)
 
-	totalbalance := suite.app.BankKeeper.GetSupply(suite.ctx, "RIO")
-	suite.Require().Equal(totalbalance.Amount, sdk.NewInt(1000))
+	account, _ := sdk.AccAddressFromBech32(manager)
+	managerBalance := suite.app.BankKeeper.GetBalance(suite.ctx, account, "arst")
+	suite.Require().Equal(managerBalance.Amount, canonicalAmount)
+
+	totalbalance := suite.app.BankKeeper.GetSupply(suite.ctx, "arst")
+	suite.Require().Equal(totalbalance.Amount, canonicalAmount)
 }
 
 func (suite *KeeperTestSuite) TestTokenMsgServerUpdate() {
@@ -107,8 +114,8 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUpdate() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := suite.testUser1Address
-	t1 := &types.MsgCreateToken{Creator: creator,
+	manager := suite.testUser1Address
+	t1 := &types.MsgCreateToken{Manager: manager,
 		Symbol: "RIO", Total: "1000",
 	}
 	_, err := srv.CreateToken(wctx, t1)
@@ -119,14 +126,14 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUpdate() {
 	)
 	suite.Require().False(rio.AuthorizationRequired)
 
-	updateMsg := &types.MsgUpdateToken{Creator: creator,
+	updateMsg := &types.MsgUpdateToken{Manager: manager,
 		Symbol: "RIO", AuthorizationRequired: true,
 	}
 
 	_, err = srv.UpdateToken(wctx, updateMsg)
 
 	rio, _ = suite.app.AssetKeeper.GetToken(suite.ctx,
-		t1.Symbol,
+		strings.ToLower(t1.Symbol),
 	)
 	suite.Require().NoError(err)
 	suite.Require().True(rio.AuthorizationRequired)
@@ -138,13 +145,13 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUpdateNotFound() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := suite.testUser1Address
-	t1 := &types.MsgCreateToken{Creator: creator,
+	manager := suite.testUser1Address
+	t1 := &types.MsgCreateToken{Manager: manager,
 		Symbol: "RIO", Total: "1000",
 	}
 	_, err := srv.CreateToken(wctx, t1)
 
-	updateMsg := &types.MsgUpdateToken{Creator: creator,
+	updateMsg := &types.MsgUpdateToken{Manager: manager,
 		Symbol: "RST", AuthorizationRequired: true,
 	}
 
@@ -157,9 +164,9 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeAddress() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := suite.testUser1Address
+	manager := suite.testUser1Address
 	testUser := suite.testUser2Address
-	t1 := &types.MsgCreateToken{Creator: creator,
+	t1 := &types.MsgCreateToken{Manager: manager,
 		Symbol: "RIO", Total: "1000", AuthorizationRequired: true,
 	}
 	_, err := srv.CreateToken(wctx, t1)
@@ -170,7 +177,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeAddress() {
 	)
 	suite.Require().Nil(rio.Authorized)
 
-	authUserMsg := &types.MsgAuthorizeAddress{Creator: creator,
+	authUserMsg := &types.MsgAuthorizeAddress{Manager: manager,
 		Symbol: "RIO", Address: testUser,
 	}
 
@@ -180,7 +187,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeAddress() {
 		t1.Symbol,
 	)
 	suite.Require().NotNil(rio.Authorized)
-	suite.Require().Equal(rio.Authorized[testUser].TokenSymbol, "RIO")
+	suite.Require().Equal(rio.Authorized[testUser].TokenSymbol, "rio")
 	suite.Require().Equal(rio.Authorized[testUser].Authorized, true)
 }
 
@@ -189,15 +196,15 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeTokenNotFound() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := suite.testUser1Address
+	manager := suite.testUser1Address
 	testUser := suite.testUser2Address
-	t1 := &types.MsgCreateToken{Creator: creator,
+	t1 := &types.MsgCreateToken{Manager: manager,
 		Symbol: "RIO", Total: "1000", AuthorizationRequired: true,
 	}
 	_, err := srv.CreateToken(wctx, t1)
 	suite.Require().NoError(err)
 
-	authUserMsg := &types.MsgAuthorizeAddress{Creator: creator,
+	authUserMsg := &types.MsgAuthorizeAddress{Manager: manager,
 		Symbol: "RST", Address: testUser,
 	}
 
@@ -211,16 +218,16 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeAddressSenderUnauthoriz
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := suite.testUser1Address
-	creator2 := suite.testUser2Address
+	manager := suite.testUser1Address
+	manager2 := suite.testUser2Address
 	testUser := suite.testUser3Address
 
-	t1 := &types.MsgCreateToken{Creator: creator,
+	t1 := &types.MsgCreateToken{Manager: manager,
 		Symbol: "RIO", Total: "1000", AuthorizationRequired: true,
 	}
 	_, err := srv.CreateToken(wctx, t1)
 
-	authUserMsg := &types.MsgAuthorizeAddress{Creator: creator2,
+	authUserMsg := &types.MsgAuthorizeAddress{Manager: manager2,
 		Symbol: "RIO", Address: testUser,
 	}
 
@@ -234,9 +241,9 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddress() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := suite.testUser1Address
+	manager := suite.testUser1Address
 	testUser := suite.testUser2Address
-	t1 := &types.MsgCreateToken{Creator: creator,
+	t1 := &types.MsgCreateToken{Manager: manager,
 		Symbol: "RIO", Total: "1000", AuthorizationRequired: true,
 	}
 	_, err := srv.CreateToken(wctx, t1)
@@ -247,7 +254,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddress() {
 	)
 	suite.Require().Nil(rio.Authorized)
 
-	authUserMsg := &types.MsgAuthorizeAddress{Creator: creator,
+	authUserMsg := &types.MsgAuthorizeAddress{Manager: manager,
 		Symbol: "RIO", Address: testUser,
 	}
 
@@ -256,9 +263,9 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddress() {
 	rio, _ = suite.app.AssetKeeper.GetToken(suite.ctx,
 		t1.Symbol,
 	)
-	suite.Require().Equal(rio.Authorized[testUser].TokenSymbol, "RIO")
+	suite.Require().Equal(rio.Authorized[testUser].TokenSymbol, "rio")
 
-	unAuthUserMsg := &types.MsgUnAuthorizeAddress{Creator: creator,
+	unAuthUserMsg := &types.MsgUnAuthorizeAddress{Manager: manager,
 		Symbol: "RIO", Address: testUser,
 	}
 
@@ -275,15 +282,15 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeTokenNotFound() {
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := suite.testUser1Address
+	manager := suite.testUser1Address
 	testUser := suite.testUser2Address
-	t1 := &types.MsgCreateToken{Creator: creator,
+	t1 := &types.MsgCreateToken{Manager: manager,
 		Symbol: "RIO", Total: "1000", AuthorizationRequired: true,
 	}
 	_, err := srv.CreateToken(wctx, t1)
 	suite.Require().NoError(err)
 
-	unAuthUserMsg := &types.MsgUnAuthorizeAddress{Creator: creator,
+	unAuthUserMsg := &types.MsgUnAuthorizeAddress{Manager: manager,
 		Symbol: "RST", Address: testUser,
 	}
 
@@ -297,16 +304,16 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddressSenderUnauthor
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
 	wctx := sdk.WrapSDKContext(suite.ctx)
-	creator := suite.testUser1Address
-	creator2 := suite.testUser2Address
+	manager := suite.testUser1Address
+	manager2 := suite.testUser2Address
 	testUser := suite.testUser3Address
-	t1 := &types.MsgCreateToken{Creator: creator,
+	t1 := &types.MsgCreateToken{Manager: manager,
 		Symbol: "RIO", Total: "1000", AuthorizationRequired: true,
 	}
 	_, err := srv.CreateToken(wctx, t1)
 	suite.Require().NoError(err)
 
-	unAuthUserMsg := &types.MsgUnAuthorizeAddress{Creator: creator2,
+	unAuthUserMsg := &types.MsgUnAuthorizeAddress{Manager: manager2,
 		Symbol: "RIO", Address: testUser,
 	}
 

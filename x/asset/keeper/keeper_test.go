@@ -65,7 +65,7 @@ func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 	// Set Context
 	suite.ctx = suite.app.BaseApp.NewContext(checkTx, tmproto.Header{
 		Height:          1,
-		ChainID:         realiotypes.MainnetChainID,
+		ChainID:         realiotypes.TestnetChainID,
 		Time:            time.Now().UTC(),
 		ProposerAddress: consAddress.Bytes(),
 

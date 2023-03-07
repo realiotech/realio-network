@@ -23,8 +23,7 @@ func CmdCreateToken() *cobra.Command {
 			argName := args[0]
 			argSymbol := args[1]
 			argTotal := args[2]
-			argDecimals := args[3]
-			argAuthorizationRequired, err := cast.ToBoolE(args[4])
+			argAuthorizationRequired, err := cast.ToBoolE(args[3])
 			if err != nil {
 				return err
 			}
@@ -39,7 +38,6 @@ func CmdCreateToken() *cobra.Command {
 				argName,
 				argSymbol,
 				argTotal,
-				argDecimals,
 				argAuthorizationRequired,
 			)
 			if err := msg.ValidateBasic(); err != nil {

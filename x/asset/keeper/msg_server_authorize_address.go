@@ -2,8 +2,8 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/realiotech/realio-network/x/asset/types"
@@ -15,11 +15,17 @@ func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthori
 	// Check if the value exists
 	token, isFound := k.GetToken(ctx, msg.Symbol)
 	if !isFound {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, fmt.Sprintf("index %v not set", msg.Symbol))
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists", msg.Symbol)
 	}
 
-	// Checks if the the msg sender is the same as the current owner
-	if msg.Creator != token.Creator {
+	// Checks if the token manager signed
+	signers := msg.GetSigners()
+	if len(signers) != 1 {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "invalid signers")
+	}
+
+	// assert that the manager account is the only signer of the message
+	if signers[0].String() != token.Manager {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "caller not authorized")
 	}
 
@@ -28,7 +34,7 @@ func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthori
 		m := make(map[string]*types.TokenAuthorization)
 		token.Authorized = m
 	}
-	var newAuthorization = types.TokenAuthorization{Address: msg.Address, TokenSymbol: msg.Symbol, Authorized: true}
+	var newAuthorization = types.TokenAuthorization{Address: msg.Address, TokenSymbol: strings.ToLower(msg.Symbol), Authorized: true}
 
 	token.Authorized[msg.Address] = &newAuthorization
 
@@ -37,7 +43,7 @@ func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthori
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeTokenAuthorized,
-			sdk.NewAttribute(types.AttributeKeySymbol, fmt.Sprint(token.Symbol)),
+			sdk.NewAttribute(types.AttributeKeySymbol, msg.Symbol),
 			sdk.NewAttribute(types.AttributeKeyAddress, msg.Address),
 		),
 	)

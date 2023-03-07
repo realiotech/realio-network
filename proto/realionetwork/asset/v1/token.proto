@@ -11,11 +11,9 @@ message Token {
   string name = 1;
   string symbol = 2 ;
   string total = 3;
-  string decimals = 4;
-  bool authorizationRequired = 5 ;
-  string creator = 6 ;
-  map<string, TokenAuthorization> authorized = 7;
-  int64 created = 8;
+  bool authorizationRequired = 4 ;
+  string manager = 5 ;
+  map<string, TokenAuthorization> authorized = 6;
 }
 
 // TokenAuthorization represents the current authorization state for an address:token
