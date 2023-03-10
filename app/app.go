@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -73,7 +72,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/gov"
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
-	gov46 "github.com/cosmos/cosmos-sdk/x/gov/migrations/v046"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/params"
@@ -851,38 +849,34 @@ func (app *RealioNetwork) setAnteHandler(txConfig client.TxConfig, maxGasWanted 
 }
 
 func (app *RealioNetwork) setupUpgradeHandlers() {
-	// "v0.7.2" is a coordinated upgrade on testnet to upgrade sdk to v0.46.7
-	planName := "v0.7.2"
-	app.UpgradeKeeper.SetUpgradeHandler(planName, func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-
-		// gov 46.6 -> 46.7 helper function
-		store := ctx.KVStore(app.keys[govtypes.StoreKey])
-		gov46.Migrate_V046_6_To_V046_7(store, app.appCodec)
-
-		return app.mm.RunMigrations(ctx, app.configurator, fromVM)
-	})
-
-	//// When a planned update height is reached, the old binary will panic
-	//// writing on disk the height and name of the update that triggered it
-	//// This will read that value, and execute the preparations for the upgrade.
-	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
-	if err != nil {
-		panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
-	}
-
-	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		return
-	}
-
-	var storeUpgrades *storetypes.StoreUpgrades
-
-	switch upgradeInfo.Name {
-	case planName:
-		// no store upgrades here
-	}
-
-	if storeUpgrades != nil {
-		// configure store loader that checks if version == upgradeHeight and applies store upgrades
-		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
-	}
+	//// "v0.7.2" is a coordinated upgrade on testnet to upgrade sdk to v0.46.7
+	//planName := "v0.0.0"
+	//app.UpgradeKeeper.SetUpgradeHandler(planName, func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+	//
+	//	return app.mm.RunMigrations(ctx, app.configurator, fromVM)
+	//})
+	//
+	////// When a planned update height is reached, the old binary will panic
+	////// writing on disk the height and name of the update that triggered it
+	////// This will read that value, and execute the preparations for the upgrade.
+	//upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	//if err != nil {
+	//	panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
+	//}
+	//
+	//if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+	//	return
+	//}
+	//
+	//var storeUpgrades *storetypes.StoreUpgrades
+	//
+	//switch upgradeInfo.Name {
+	//case planName:
+	//	// no store upgrades here
+	//}
+	//
+	//if storeUpgrades != nil {
+	//	// configure store loader that checks if version == upgradeHeight and applies store upgrades
+	//	app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
+	//}
 }
