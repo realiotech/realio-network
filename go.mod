@@ -188,8 +188,8 @@ require (
 )
 
 replace (
-	// use Realio sdk v0.46.10-realio-rc1
-	github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.10-realio-rc1
+	// use Realio sdk v0.46.10-realio-1
+	github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.10-realio-1
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	// Informal Tendermint fork
