@@ -3,7 +3,7 @@ module github.com/realiotech/realio-network
 go 1.19
 
 require (
-	cosmossdk.io/math v1.0.0-beta.6
+	cosmossdk.io/math v1.0.0-rc.0
 	github.com/cosmos/cosmos-sdk v0.46.10
 	github.com/cosmos/gogoproto v1.4.6
 	github.com/cosmos/ibc-go/v6 v6.1.0
