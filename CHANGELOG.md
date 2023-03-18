@@ -38,6 +38,9 @@ Ref: https://keepachangelog.com/en/1.0.0/
 # Changelog
 
 ## Unreleased
+-
+
+## [v0.8.0-rc1] - 2023-03-18
 
 ### State Machine Breaking
 - (asset) [6529b19](https://github.com/realiotech/realio-network/commit/6529b19cba0b7abfefb5d476c628a1fe4224f5e5) x/asset add restriction support into bank keeper. clean up issuance logic
@@ -48,9 +51,11 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### Features
 
 ### Improvements
+- (fix) [7b450db](https://github.com/realiotech/realio-network/commit/7b450db63c66e1ce9022e97aba743c34aa183659) register the asset module query service
 - (deps) [fffc39](https://github.com/realiotech/realio-network/commit/fffc39c10369ae12691d58dd936d0d7f481dc486) migrate ethermint coin type 
 
 ### Bug Fixes
+
 ## [v0.7.1] - 2023-01-24
 
 ### State Machine Breaking
