@@ -33,6 +33,8 @@ func AssetSendRestriction(k Keeper) banktypes.SendRestrictionFn {
 			if token.AuthorizationRequired == true {
 				isAuthorizedFrom = k.IsAddressAuthorizedToSend(ctx, coin.Denom, fromAddr)
 				isAuthorizedTo = k.IsAddressAuthorizedToSend(ctx, coin.Denom, toAddr)
+			} else {
+				continue
 			}
 
 			if isAuthorizedFrom && isAuthorizedTo {
