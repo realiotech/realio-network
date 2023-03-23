@@ -10,7 +10,6 @@ import (
 // InitGenesis initializes the assets module's state from a provided genesis
 // state.
 func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	//k.SetTransferRestrictionFn()
 	k.SetParams(ctx, genState.Params)
 	for _, token := range genState.Tokens {
 		k.SetToken(ctx, token)

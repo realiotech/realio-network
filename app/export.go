@@ -18,7 +18,6 @@ import (
 func (app *RealioNetwork) ExportAppStateAndValidators(
 	forZeroHeight bool, jailAllowedAddrs []string,
 ) (servertypes.ExportedApp, error) {
-
 	// as if they could withdraw from the start of the next block
 	ctx := app.NewContext(true, tmproto.Header{Height: app.LastBlockHeight()})
 
@@ -111,14 +110,20 @@ func (app *RealioNetwork) prepForZeroHeightGenesis(ctx sdk.Context, jailAllowedA
 		feePool.CommunityPool = feePool.CommunityPool.Add(scraps...)
 		app.DistrKeeper.SetFeePool(ctx, feePool)
 
-		app.DistrKeeper.Hooks().AfterValidatorCreated(ctx, val.GetOperator())
-		return false
+		err := app.DistrKeeper.Hooks().AfterValidatorCreated(ctx, val.GetOperator())
+		return err != nil
 	})
 
 	// reinitialize all delegations
 	for _, del := range dels {
-		app.DistrKeeper.Hooks().BeforeDelegationCreated(ctx, del.GetDelegatorAddr(), del.GetValidatorAddr())
-		app.DistrKeeper.Hooks().AfterDelegationModified(ctx, del.GetDelegatorAddr(), del.GetValidatorAddr())
+		err := app.DistrKeeper.Hooks().BeforeDelegationCreated(ctx, del.GetDelegatorAddr(), del.GetValidatorAddr())
+		if err != nil {
+			panic(err)
+		}
+		err = app.DistrKeeper.Hooks().AfterDelegationModified(ctx, del.GetDelegatorAddr(), del.GetValidatorAddr())
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	// reset context height

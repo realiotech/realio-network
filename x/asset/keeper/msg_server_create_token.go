@@ -3,8 +3,9 @@ package keeper
 import (
 	"context"
 	"fmt"
-	realionetworktypes "github.com/realiotech/realio-network/types"
 	"strings"
+
+	realionetworktypes "github.com/realiotech/realio-network/types"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -31,13 +32,12 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "symbol %s already set", msg.Symbol)
 	}
 
-	var managerAccAddress, err = sdk.AccAddressFromBech32(msg.Manager)
-
+	managerAccAddress, err := sdk.AccAddressFromBech32(msg.Manager)
 	if err != nil {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid manager address")
 	}
 
-	var token = types.Token{
+	token := types.Token{
 		Name:                  lowerCaseName,
 		Symbol:                lowerCaseSymbol,
 		Total:                 msg.Total,
@@ -49,7 +49,7 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 	// normalize into chains 10^18 denomination
 	totalInt, _ := math.NewIntFromString(msg.Total)
 	canonicalAmount := totalInt.Mul(realionetworktypes.PowerReduction)
-	var coin = sdk.Coins{{Denom: baseDenom, Amount: canonicalAmount}}
+	coin := sdk.Coins{{Denom: baseDenom, Amount: canonicalAmount}}
 
 	k.SetToken(
 		ctx,
@@ -61,8 +61,10 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 		panic(err)
 	}
 
-	k.bankKeeper.SetDenomMetaData(ctx, bank.Metadata{Base: baseDenom, Symbol: lowerCaseSymbol, Name: lowerCaseName,
-		DenomUnits: []*bank.DenomUnit{{Denom: lowerCaseSymbol, Exponent: 18}, {Denom: baseDenom, Exponent: 0}}})
+	k.bankKeeper.SetDenomMetaData(ctx, bank.Metadata{
+		Base: baseDenom, Symbol: lowerCaseSymbol, Name: lowerCaseName,
+		DenomUnits: []*bank.DenomUnit{{Denom: lowerCaseSymbol, Exponent: 18}, {Denom: baseDenom, Exponent: 0}},
+	})
 
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, managerAccAddress, coin)
 	if err != nil {

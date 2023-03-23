@@ -1,10 +1,10 @@
 module github.com/realiotech/realio-network
 
-go 1.19
+go 1.20
 
 require (
 	cosmossdk.io/math v1.0.0-beta.6
-	github.com/cosmos/cosmos-sdk v0.46.10
+	github.com/cosmos/cosmos-sdk v0.46.11
 	github.com/cosmos/gogoproto v1.4.6
 	github.com/cosmos/ibc-go/v6 v6.1.0
 	github.com/ethereum/go-ethereum v1.10.26
@@ -189,9 +189,11 @@ require (
 
 replace (
 	// use Realio sdk v0.46.10-realio-2
+	// bump to v0.46.11-realio-1
 	github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.10-realio-2
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	// Informal Tendermint fork
+	// replace this line with: github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.27
 	github.com/tendermint/tendermint => github.com/informalsystems/tendermint v0.34.26
 )

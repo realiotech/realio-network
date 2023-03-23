@@ -26,10 +26,8 @@ const (
 	TokenKeyPrefix = "Token/value/"
 )
 
-var (
-	// PortKey defines the key to store the port ID in store
-	PortKey = KeyPrefix("asset-port-")
-)
+// PortKey defines the key to store the port ID in store
+var PortKey = KeyPrefix("asset-port-")
 
 func KeyPrefix(p string) []byte {
 	return []byte(p)

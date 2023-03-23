@@ -1,10 +1,11 @@
 package keeper
 
 import (
+	"strings"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/realiotech/realio-network/x/asset/types"
-	"strings"
 )
 
 // SetToken set a specific token in the store from its symbol
@@ -21,7 +22,6 @@ func (k Keeper) SetToken(ctx sdk.Context, token types.Token) {
 func (k Keeper) GetToken(
 	ctx sdk.Context,
 	symbol string,
-
 ) (val types.Token, found bool) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyPrefix(types.TokenKeyPrefix))
 	lowerCased := strings.ToLower(symbol)

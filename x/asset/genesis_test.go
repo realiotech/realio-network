@@ -66,7 +66,6 @@ func TestGenesisTestSuite(t *testing.T) {
 }
 
 func (suite *GenesisTestSuite) TestGenesis() {
-
 	asset.InitGenesis(suite.ctx, suite.app.AssetKeeper, suite.genesis)
 	got := asset.ExportGenesis(suite.ctx, suite.app.AssetKeeper)
 	suite.Require().NotNil(got)
