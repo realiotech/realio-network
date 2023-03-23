@@ -12,20 +12,19 @@ import (
 //
 //  1. Release a non-breaking patch version so that the chain can set the scheduled upgrade plan at upgrade-height.
 //  2. Release the software defined in the upgrade-info
-func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
+func (app *RealioNetwork) ScheduleForkUpgrade(_ sdk.Context) {
 	// NOTE: there are no testnet forks for the existing versions
-	return
-	//if !types.IsMainnet(ctx.ChainID()) {
+	// if !types.IsMainnet(ctx.ChainID()) {
 	//	return
 	//}
 	//
-	//upgradePlan := upgradetypes.Plan{
+	// upgradePlan := upgradetypes.Plan{
 	//	Height: ctx.BlockHeight(),
 	//}
 	//
 	//// handle mainnet forks with their corresponding upgrade name and info
-	//switch ctx.BlockHeight() {
-	//case v2.MainnetUpgradeHeight:
+	// switch ctx.BlockHeight() {
+	// case v2.MainnetUpgradeHeight:
 	//	upgradePlan.Name = v2.UpgradeName
 	//	upgradePlan.Info = v2.UpgradeInfo
 	//default:
@@ -35,7 +34,7 @@ func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 	//
 	//// schedule the upgrade plan to the current block height, effectively performing
 	//// a hard fork that uses the upgrade handler to manage the migration.
-	//if err := app.UpgradeKeeper.ScheduleUpgrade(ctx, upgradePlan); err != nil {
+	// if err := app.UpgradeKeeper.ScheduleUpgrade(ctx, upgradePlan); err != nil {
 	//	panic(
 	//		fmt.Errorf(
 	//			"failed to schedule upgrade %s during BeginBlock at height %d: %w",

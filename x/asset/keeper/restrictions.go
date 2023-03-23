@@ -8,7 +8,6 @@ import (
 )
 
 func AssetSendRestriction(k Keeper) banktypes.SendRestrictionFn {
-
 	return func(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) (newToAddr sdk.AccAddress, err error) {
 		newToAddr = toAddr
 		err = nil
@@ -30,7 +29,7 @@ func AssetSendRestriction(k Keeper) banktypes.SendRestrictionFn {
 			}
 
 			var isAuthorizedFrom, isAuthorizedTo bool
-			if token.AuthorizationRequired == true {
+			if token.AuthorizationRequired {
 				isAuthorizedFrom = k.IsAddressAuthorizedToSend(ctx, coin.Denom, fromAddr)
 				isAuthorizedTo = k.IsAddressAuthorizedToSend(ctx, coin.Denom, toAddr)
 			} else {
@@ -39,7 +38,7 @@ func AssetSendRestriction(k Keeper) banktypes.SendRestrictionFn {
 
 			if isAuthorizedFrom && isAuthorizedTo {
 				continue
-			} else {
+			} else { //nolint:revive // superfluous else, could fix, but not worth it?
 				err = sdkerrors.Wrapf(types.ErrNotAuthorized, "%s is not authorized to transact with %s", fromAddr, coin.Denom)
 				break
 			}

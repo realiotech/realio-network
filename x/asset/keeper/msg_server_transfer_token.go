@@ -2,10 +2,12 @@ package keeper
 
 import (
 	"context"
-	"cosmossdk.io/math"
 	"fmt"
-	realionetworktypes "github.com/realiotech/realio-network/types"
 	"strings"
+
+	"cosmossdk.io/math"
+
+	realionetworktypes "github.com/realiotech/realio-network/types"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -18,7 +20,7 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	var fromAddress, toAddress sdk.AccAddress
-	var isAuthorizedFrom, isAuthorizedTo = true, true
+	isAuthorizedFrom, isAuthorizedTo := true, true
 
 	fromAddress, _ = sdk.AccAddressFromBech32(msg.From)
 	toAddress, _ = sdk.AccAddressFromBech32(msg.To)
@@ -31,7 +33,7 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "token %s not found", msg.Symbol)
 	}
 
-	if token.AuthorizationRequired == true {
+	if token.AuthorizationRequired {
 		isAuthorizedFrom = k.IsAddressAuthorizedToSend(ctx, msg.Symbol, fromAddress)
 		isAuthorizedTo = k.IsAddressAuthorizedToSend(ctx, msg.Symbol, toAddress)
 	}
@@ -41,7 +43,7 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 		totalInt, _ := math.NewIntFromString(msg.Amount)
 		canonicalAmount := totalInt.Mul(realionetworktypes.PowerReduction)
 		baseDenom := fmt.Sprintf("a%s", strings.ToLower(msg.Symbol))
-		var coin = sdk.Coins{{Denom: baseDenom, Amount: canonicalAmount}}
+		coin := sdk.Coins{{Denom: baseDenom, Amount: canonicalAmount}}
 		err := k.bankKeeper.SendCoins(ctx, fromAddress, toAddress, coin)
 		if err != nil {
 			panic(err)

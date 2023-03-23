@@ -3,10 +3,11 @@ package network
 import (
 	"encoding/json"
 	"fmt"
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	minttypes "github.com/realiotech/realio-network/x/mint/types"
 	"path/filepath"
 	"time"
+
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	minttypes "github.com/realiotech/realio-network/x/mint/types"
 
 	"github.com/ethereum/go-ethereum/ethclient"
 	tmos "github.com/tendermint/tendermint/libs/os"

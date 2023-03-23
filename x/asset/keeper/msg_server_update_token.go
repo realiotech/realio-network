@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/realiotech/realio-network/x/asset/types"
@@ -27,7 +28,7 @@ func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken)
 	}
 
 	// only Authorization Flag is updatable at this time
-	var token = types.Token{
+	token := types.Token{
 		Name:                  existing.Name,
 		Symbol:                existing.Symbol,
 		Total:                 existing.Total,

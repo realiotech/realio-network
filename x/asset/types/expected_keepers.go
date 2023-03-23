@@ -25,9 +25,9 @@ type BankKeeper interface {
 	// Methods imported from bank should be defined here
 }
 
-//leaving this here for ibc implemenation
+// leaving this here for ibc implemenation
 // TransferKeeper defines the expected IBC transfer keeper.
-//type TransferKeeper interface {
+// type TransferKeeper interface {
 //	GetDenomTrace(ctx sdk.Context, denomTraceHash tmbytes.HexBytes) (transfertypes.DenomTrace, bool)
 //	SendTransfer(
 //		ctx sdk.Context,
@@ -39,6 +39,6 @@ type BankKeeper interface {
 //}
 //
 //// ChannelKeeper defines the expected IBC channel keeper.
-//type ChannelKeeper interface {
+// type ChannelKeeper interface {
 //	GetChannel(ctx sdk.Context, srcPort, srcChan string) (channel channeltypes.Channel, found bool)
 //}

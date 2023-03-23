@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/realiotech/realio-network/types"
 	"net/http"
 	"net/url"
 	"os"
@@ -15,6 +14,8 @@ import (
 	"sync"
 	"testing"
 	"time"
+
+	"github.com/realiotech/realio-network/types"
 
 	"cosmossdk.io/math"
 	"github.com/ethereum/go-ethereum/common"

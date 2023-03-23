@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -39,7 +40,7 @@ func (k Keeper) Token(c context.Context, req *types.QueryTokenRequest) (*types.Q
 
 	if t, found := k.GetToken(ctx, req.Symbol); !found {
 		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, "not found")
-	} else {
+	} else { //nolint:revive // fixing this causes t to be inaccessible, so let's leave all as is.
 		return &types.QueryTokenResponse{Token: t}, nil
 	}
 }

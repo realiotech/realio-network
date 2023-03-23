@@ -423,8 +423,7 @@ func New(
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
 
 	// create IBC module from top to bottom of stack
-	var transferStack porttypes.IBCModule
-	transferStack = transfer.NewIBCModule(app.TransferKeeper)
+	transferStack := transfer.NewIBCModule(app.TransferKeeper)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()
@@ -435,7 +434,7 @@ func New(
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
 	// we prefer to be more strict in what arguments the modules expect.
-	var skipGenesisInvariants = cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
+	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
 
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
@@ -818,7 +817,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// realio network subspaces
 	paramsKeeper.Subspace(assetmoduletypes.ModuleName)
 	// ethermint subspaces
-	paramsKeeper.Subspace(evmtypes.ModuleName).WithKeyTable(evmtypes.ParamKeyTable())
+	paramsKeeper.Subspace(evmtypes.ModuleName)
 	paramsKeeper.Subspace(feemarkettypes.ModuleName).WithKeyTable(feemarkettypes.ParamKeyTable())
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
@@ -840,7 +839,6 @@ func (app *RealioNetwork) setAnteHandler(txConfig client.TxConfig, maxGasWanted 
 		ExtensionOptionChecker: ethermint.HasDynamicFeeExtensionOption,
 		TxFeeChecker:           evmante.NewDynamicFeeChecker(app.EvmKeeper),
 	})
-
 	if err != nil {
 		panic(err)
 	}
@@ -850,32 +848,32 @@ func (app *RealioNetwork) setAnteHandler(txConfig client.TxConfig, maxGasWanted 
 
 func (app *RealioNetwork) setupUpgradeHandlers() {
 	//// "v0.7.2" is a coordinated upgrade on testnet to upgrade sdk to v0.46.7
-	//planName := "v0.0.0"
-	//app.UpgradeKeeper.SetUpgradeHandler(planName, func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+	// planName := "v0.0.0"
+	// app.UpgradeKeeper.SetUpgradeHandler(planName, func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
 	//
 	//	return app.mm.RunMigrations(ctx, app.configurator, fromVM)
-	//})
+	// })
 	//
 	////// When a planned update height is reached, the old binary will panic
 	////// writing on disk the height and name of the update that triggered it
 	////// This will read that value, and execute the preparations for the upgrade.
-	//upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
-	//if err != nil {
+	// upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+	// if err != nil {
 	//	panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
 	//}
 	//
-	//if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+	// if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 	//	return
 	//}
 	//
-	//var storeUpgrades *storetypes.StoreUpgrades
+	// var storeUpgrades *storetypes.StoreUpgrades
 	//
-	//switch upgradeInfo.Name {
-	//case planName:
+	// switch upgradeInfo.Name {
+	// case planName:
 	//	// no store upgrades here
 	//}
 	//
-	//if storeUpgrades != nil {
+	// if storeUpgrades != nil {
 	//	// configure store loader that checks if version == upgradeHeight and applies store upgrades
 	//	app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
 	//}

@@ -2,8 +2,9 @@ package keeper
 
 import (
 	"context"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"strings"
+
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/realiotech/realio-network/x/asset/types"
@@ -34,7 +35,7 @@ func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthori
 		m := make(map[string]*types.TokenAuthorization)
 		token.Authorized = m
 	}
-	var newAuthorization = types.TokenAuthorization{Address: msg.Address, TokenSymbol: strings.ToLower(msg.Symbol), Authorized: true}
+	newAuthorization := types.TokenAuthorization{Address: msg.Address, TokenSymbol: strings.ToLower(msg.Symbol), Authorized: true}
 
 	token.Authorized[msg.Address] = &newAuthorization
 

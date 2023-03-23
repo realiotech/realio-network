@@ -4,10 +4,11 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
-	minttypes "github.com/realiotech/realio-network/x/mint/types"
 	"net"
 	"os"
 	"path/filepath"
+
+	minttypes "github.com/realiotech/realio-network/x/mint/types"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -405,7 +406,7 @@ func initGenFiles(
 	stakingGenState.Params.BondDenom = coinDenom
 	appGenState[stakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&stakingGenState)
 
-	var mintGenState = *minttypes.DefaultGenesisState()
+	mintGenState := *minttypes.DefaultGenesisState()
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[minttypes.ModuleName], &mintGenState)
 	appGenState[minttypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&mintGenState)
 

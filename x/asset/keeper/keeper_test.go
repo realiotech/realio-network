@@ -25,7 +25,6 @@ type KeeperTestSuite struct {
 	suite.Suite
 	app              *app.RealioNetwork
 	ctx              sdk.Context
-	msgSrv           types.MsgServer
 	queryClient      types.QueryClient
 	testUser1Acc     sdk.AccAddress
 	testUser1Address string
@@ -91,7 +90,6 @@ func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 	queryHelper := baseapp.NewQueryServerTestHelper(suite.ctx, suite.app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, suite.app.AssetKeeper)
 	suite.queryClient = types.NewQueryClient(queryHelper)
-
 }
 
 func TestKeeperTestSuite(t *testing.T) {

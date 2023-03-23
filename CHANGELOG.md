@@ -39,7 +39,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
-## [v0.8.1] - 2023-03-21
+## [v0.8.2] - 2023-03-21
 
 ### State Machine Breaking
 - (asset) [6529b19](https://github.com/realiotech/realio-network/commit/6529b19cba0b7abfefb5d476c628a1fe4224f5e5) x/asset add restriction support into bank keeper. clean up issuance logic
