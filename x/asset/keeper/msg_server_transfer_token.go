@@ -46,7 +46,7 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 		var coin = sdk.Coins{{Denom: baseDenom, Amount: totalInt}}
 		err := k.bankKeeper.SendCoins(ctx, fromAddress, toAddress, coin)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 	} else {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "%s transfer not authorized", msg.Symbol)
