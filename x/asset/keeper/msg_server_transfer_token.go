@@ -43,7 +43,7 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 		}
 
 		baseDenom := fmt.Sprintf("a%s", strings.ToLower(msg.Symbol))
-		var coin = sdk.Coins{{Denom: baseDenom, Amount: totalInt}}
+		coin := sdk.Coins{{Denom: baseDenom, Amount: totalInt}}
 		err := k.bankKeeper.SendCoins(ctx, fromAddress, toAddress, coin)
 		if err != nil {
 			return nil, err

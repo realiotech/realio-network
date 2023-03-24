@@ -2,10 +2,11 @@ package keeper_test
 
 import (
 	"fmt"
+	"strconv"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/asset/types"
-	"strconv"
 )
 
 // Prevent strconv unused error
@@ -33,6 +34,7 @@ func (suite *KeeperTestSuite) TestTransferToken() {
 	}
 
 	_, err = srv.AuthorizeAddress(wctx, authUserMsg)
+	suite.Require().NoError(err)
 
 	authUser2Msg := &types.MsgAuthorizeAddress{
 		Manager: manager,
@@ -40,6 +42,7 @@ func (suite *KeeperTestSuite) TestTransferToken() {
 	}
 
 	_, err = srv.AuthorizeAddress(wctx, authUser2Msg)
+	suite.Require().NoError(err)
 
 	amount := "50000000000000000000"
 	expected := &types.MsgTransferToken{Symbol: "RST", From: manager, To: testUser, Amount: amount}
@@ -49,7 +52,6 @@ func (suite *KeeperTestSuite) TestTransferToken() {
 
 	balance := suite.app.BankKeeper.GetBalance(suite.ctx, suite.testUser2Acc, "arst")
 	suite.Require().Equal(balance.String(), fmt.Sprintf("%s%s", amount, "arst"))
-
 }
 
 func (suite *KeeperTestSuite) TestTransferTokenInvalidAmount() {
@@ -74,6 +76,7 @@ func (suite *KeeperTestSuite) TestTransferTokenInvalidAmount() {
 	}
 
 	_, err = srv.AuthorizeAddress(wctx, authUserMsg)
+	suite.Require().NoError(err)
 
 	authUser2Msg := &types.MsgAuthorizeAddress{
 		Manager: manager,
@@ -81,6 +84,7 @@ func (suite *KeeperTestSuite) TestTransferTokenInvalidAmount() {
 	}
 
 	_, err = srv.AuthorizeAddress(wctx, authUser2Msg)
+	suite.Require().NoError(err)
 
 	// amount is invalid, all amounts should be in base 10^18 amount
 	amount := "50000000000000000000.00"
@@ -112,6 +116,7 @@ func (suite *KeeperTestSuite) TestTransferTokenSenderBalanceToSmall() {
 	}
 
 	_, err = srv.AuthorizeAddress(wctx, authUserMsg)
+	suite.Require().NoError(err)
 
 	authUser2Msg := &types.MsgAuthorizeAddress{
 		Manager: manager,
@@ -119,6 +124,7 @@ func (suite *KeeperTestSuite) TestTransferTokenSenderBalanceToSmall() {
 	}
 
 	_, err = srv.AuthorizeAddress(wctx, authUser2Msg)
+	suite.Require().NoError(err)
 
 	// amount is invalid, all amounts should be in base 10^18 amount
 	amount := "1001000000000000000000"
