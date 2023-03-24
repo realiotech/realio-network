@@ -41,5 +41,5 @@ func (k Keeper) AssetSendRestriction(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 			break
 		}
 	}
-	return
+	return newToAddr, err
 }
