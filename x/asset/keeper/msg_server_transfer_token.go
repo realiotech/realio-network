@@ -7,8 +7,6 @@ import (
 
 	"cosmossdk.io/math"
 
-	realionetworktypes "github.com/realiotech/realio-network/types"
-
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -39,14 +37,16 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 	}
 
 	if isAuthorizedFrom && isAuthorizedTo {
-		// normalize into chains 10^18 denomination
-		totalInt, _ := math.NewIntFromString(msg.Amount)
-		canonicalAmount := totalInt.Mul(realionetworktypes.PowerReduction)
+		totalInt, totalIsValid := math.NewIntFromString(msg.Amount)
+		if !totalIsValid {
+			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "invalid coin amount %s", msg.Amount)
+		}
+
 		baseDenom := fmt.Sprintf("a%s", strings.ToLower(msg.Symbol))
-		coin := sdk.Coins{{Denom: baseDenom, Amount: canonicalAmount}}
+		coin := sdk.Coins{{Denom: baseDenom, Amount: totalInt}}
 		err := k.bankKeeper.SendCoins(ctx, fromAddress, toAddress, coin)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 	} else {
 		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "%s transfer not authorized", msg.Symbol)
