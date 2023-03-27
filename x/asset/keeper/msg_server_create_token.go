@@ -3,8 +3,9 @@ package keeper
 import (
 	"context"
 	"fmt"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"strings"
+
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	realionetworktypes "github.com/realiotech/realio-network/types"
 
