@@ -23,14 +23,14 @@ func (suite *KeeperTestSuite) TestTransferToken() {
 
 	t1 := &types.MsgCreateToken{
 		Manager: manager,
-		Symbol:  "RST", Total: "1000", AuthorizationRequired: true,
+		Symbol:  "rst", Total: "1000", AuthorizationRequired: true,
 	}
 	_, err := srv.CreateToken(wctx, t1)
 	suite.Require().NoError(err)
 
 	authUserMsg := &types.MsgAuthorizeAddress{
 		Manager: manager,
-		Symbol:  "RST", Address: manager,
+		Symbol:  "rst", Address: manager,
 	}
 
 	_, err = srv.AuthorizeAddress(wctx, authUserMsg)
@@ -65,14 +65,14 @@ func (suite *KeeperTestSuite) TestTransferTokenInvalidAmount() {
 
 	t1 := &types.MsgCreateToken{
 		Manager: manager,
-		Symbol:  "RST", Total: "1000", AuthorizationRequired: true,
+		Symbol:  "rst", Total: "1000", AuthorizationRequired: true,
 	}
 	_, err := srv.CreateToken(wctx, t1)
 	suite.Require().NoError(err)
 
 	authUserMsg := &types.MsgAuthorizeAddress{
 		Manager: manager,
-		Symbol:  "RST", Address: manager,
+		Symbol:  "rst", Address: manager,
 	}
 
 	_, err = srv.AuthorizeAddress(wctx, authUserMsg)
@@ -80,7 +80,7 @@ func (suite *KeeperTestSuite) TestTransferTokenInvalidAmount() {
 
 	authUser2Msg := &types.MsgAuthorizeAddress{
 		Manager: manager,
-		Symbol:  "RST", Address: testUser,
+		Symbol:  "rst", Address: testUser,
 	}
 
 	_, err = srv.AuthorizeAddress(wctx, authUser2Msg)
@@ -88,7 +88,7 @@ func (suite *KeeperTestSuite) TestTransferTokenInvalidAmount() {
 
 	// amount is invalid, all amounts should be in base 10^18 amount
 	amount := "50000000000000000000.00"
-	expected := &types.MsgTransferToken{Symbol: "RST", From: manager, To: testUser, Amount: amount}
+	expected := &types.MsgTransferToken{Symbol: "rst", From: manager, To: testUser, Amount: amount}
 
 	_, err = srv.TransferToken(wctx, expected)
 	suite.Require().Error(err)

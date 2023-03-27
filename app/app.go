@@ -381,6 +381,7 @@ func New(
 		keys[assetmoduletypes.MemStoreKey],
 		app.GetSubspace(assetmoduletypes.ModuleName),
 		app.BankKeeper,
+		app.AccountKeeper,
 	)
 
 	// Add transfer restriction

@@ -3,14 +3,13 @@ package keeper
 import (
 	"context"
 	"fmt"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"strings"
 
 	realionetworktypes "github.com/realiotech/realio-network/types"
 
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	"cosmossdk.io/math"
 	"github.com/realiotech/realio-network/x/asset/types"
@@ -45,26 +44,39 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 		AuthorizationRequired: msg.AuthorizationRequired,
 	}
 
+	if msg.AuthorizationRequired {
+		if token.Authorized == nil {
+			// initialize map on first write
+			m := make(map[string]*types.TokenAuthorization)
+			token.Authorized = m
+		}
+
+		newAuthorizationManager := types.TokenAuthorization{Address: msg.Manager, TokenSymbol: lowerCaseSymbol, Authorized: true}
+		assetModuleAddress := k.ak.GetModuleAddress(types.ModuleName)
+		newAuthorizationModule := types.TokenAuthorization{Address: assetModuleAddress.String(), TokenSymbol: lowerCaseSymbol, Authorized: true}
+
+		token.Authorized[msg.Manager] = &newAuthorizationManager
+		token.Authorized[assetModuleAddress.String()] = &newAuthorizationModule
+	}
+
+	k.SetToken(ctx, token)
+
+	k.bankKeeper.SetDenomMetaData(ctx, bank.Metadata{
+		Base: baseDenom, Symbol: lowerCaseSymbol, Name: lowerCaseName,
+		DenomUnits: []*bank.DenomUnit{{Denom: lowerCaseSymbol, Exponent: 18}, {Denom: baseDenom, Exponent: 0}},
+	})
+
 	// mint coins for the current module
 	// normalize into chains 10^18 denomination
 	totalInt, _ := math.NewIntFromString(msg.Total)
 	canonicalAmount := totalInt.Mul(realionetworktypes.PowerReduction)
 	coin := sdk.Coins{{Denom: baseDenom, Amount: canonicalAmount}}
 
-	k.SetToken(
-		ctx,
-		token,
-	)
-
 	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, coin)
+
 	if err != nil {
 		panic(err)
 	}
-
-	k.bankKeeper.SetDenomMetaData(ctx, bank.Metadata{
-		Base: baseDenom, Symbol: lowerCaseSymbol, Name: lowerCaseName,
-		DenomUnits: []*bank.DenomUnit{{Denom: lowerCaseSymbol, Exponent: 18}, {Denom: baseDenom, Exponent: 0}},
-	})
 
 	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, managerAccAddress, coin)
 	if err != nil {
