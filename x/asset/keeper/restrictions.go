@@ -28,8 +28,8 @@ func (k Keeper) AssetSendRestriction(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 
 		var isAuthorizedFrom, isAuthorizedTo bool
 		if token.AuthorizationRequired {
-			isAuthorizedFrom = k.IsAddressAuthorizedToSend(ctx, coin.Denom, fromAddr)
-			isAuthorizedTo = k.IsAddressAuthorizedToSend(ctx, coin.Denom, toAddr)
+			isAuthorizedFrom = k.IsAddressAuthorizedToSend(ctx, symbol, fromAddr)
+			isAuthorizedTo = k.IsAddressAuthorizedToSend(ctx, symbol, toAddr)
 		} else {
 			continue
 		}
