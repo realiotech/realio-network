@@ -187,7 +187,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeAddress() {
 	rio, _ := suite.app.AssetKeeper.GetToken(suite.ctx,
 		t1.Symbol,
 	)
-	suite.Require().Nil(rio.Authorized)
+	suite.Require().Equal(rio.Authorized[manager].TokenSymbol, "rio")
 
 	authUserMsg := &types.MsgAuthorizeAddress{
 		Manager: manager,
@@ -272,7 +272,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddress() {
 	rio, _ := suite.app.AssetKeeper.GetToken(suite.ctx,
 		t1.Symbol,
 	)
-	suite.Require().Nil(rio.Authorized)
+	suite.Require().Equal(rio.Authorized[manager].TokenSymbol, "rio")
 
 	authUserMsg := &types.MsgAuthorizeAddress{
 		Manager: manager,
