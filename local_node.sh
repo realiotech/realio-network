@@ -12,7 +12,7 @@ KEYRING="test"
 KEYALGO="eth_secp256k1"
 LOGLEVEL="info"
 # Set dedicated home directory for the realio-networkd instance
-HOMEDIR="$HOME/.tmp-realio-network"
+HOMEDIR="$HOME/.realio-network"
 # to trace evm
 #TRACE="--trace"
 TRACE=""
@@ -57,6 +57,8 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 		realio-networkd keys add $KEY --keyring-backend $KEYRING --algo $KEYALGO --home "$HOMEDIR"
 	done
 
+	RST_ISSUER=$(realio-networkd keys show ${KEYS[2]} --keyring-backend $KEYRING --home "$HOMEDIR" -a)
+
 	# Set moniker and chain-id for Realio Network (Moniker can be anything, chain-id must be an integer)
 	realio-networkd init $MONIKER -o --chain-id $CHAINID --home "$HOMEDIR"
 
@@ -66,6 +68,8 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["crisis"]["constant_fee"]["denom"]="ario"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="ario"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["evm"]["params"]["evm_denom"]="ario"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["asset"]["tokens"]=[{ "authorizationRequired": true, "authorized": { "'"$RST_ISSUER"'": { "address": "'"$RST_ISSUER"'", "authorized": true, "tokenSymbol": "rst" } }, "manager": "'"$RST_ISSUER"'", "name": "Realio Security Token", "symbol": "rst", "total": "50000000" }]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["bank"]["denom_metadata"]=[ { "description": "The native utility, gas, evm, governance and staking token of the Realio Network", "denom_units": [ { "denom": "ario", "exponent": 0, "aliases": [ "attorio" ] }, { "denom": "rio", "exponent": 18, "aliases": [] } ], "base": "ario", "display": "rio", "name": "Realio Network Rio", "symbol": "RIO", "uri": "", "uri_hash": "" }, { "description": "Realio Security Token", "denom_units": [ { "denom": "arst", "exponent": 0, "aliases": [ "attorst" ] }, { "denom": "rst", "exponent": 18, "aliases": [] } ], "base": "arst", "display": "rst", "name": "Realio Security Token", "symbol": "RST", "uri": "", "uri_hash": "" } ]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# Set gas limit in genesis
 	jq '.consensus_params["block"]["max_gas"]="10000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -93,9 +97,9 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	fi
 
 	# Allocate genesis accounts (cosmos formatted addresses)
-	for KEY in "${KEYS[@]}"; do
-		realio-networkd add-genesis-account $KEY 10000000000000000000000000ario --keyring-backend $KEYRING --home "$HOMEDIR"
-	done
+  realio-networkd add-genesis-account ${KEYS[0]} 10000000000000000000000000ario --keyring-backend $KEYRING --home "$HOMEDIR"
+  realio-networkd add-genesis-account ${KEYS[1]} 10000000000000000000000000ario --keyring-backend $KEYRING --home "$HOMEDIR"
+  realio-networkd add-genesis-account "$RST_ISSUER" 10000000000000000000000000ario,50000000000000000000000000arst --keyring-backend $KEYRING --home "$HOMEDIR"
 
 	# Sign genesis transaction
 	realio-networkd gentx ${KEYS[0]} 1000000000000000000000000ario --keyring-backend $KEYRING --chain-id $CHAINID --home "$HOMEDIR"
