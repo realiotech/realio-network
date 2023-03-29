@@ -1,6 +1,6 @@
 
 <div align="center">
-  <h1> Realio Network </h1>
+  <h1> <img src="./assets/network.svg" alt="Realio Logo" width="300px" /> </h1>
 </div>
 
 <div align="center">
