@@ -11,7 +11,6 @@ func NewToken(name string, symbol string, total string, manager string, authoriz
 		AuthorizationRequired: authorizationRequired,
 		Authorized:            []*TokenAuthorization{},
 	}
-
 }
 
 func NewAuthorization(address sdk.Address) *TokenAuthorization {
