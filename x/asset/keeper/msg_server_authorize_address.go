@@ -2,8 +2,6 @@ package keeper
 
 import (
 	"context"
-	"strings"
-
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -30,15 +28,12 @@ func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthori
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "caller not authorized")
 	}
 
-	if token.Authorized == nil {
-		// initialize map on first write
-		m := make(map[string]*types.TokenAuthorization)
-		token.Authorized = m
+	accAddress, err := sdk.AccAddressFromBech32(msg.Address)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid address")
 	}
-	newAuthorization := types.TokenAuthorization{Address: msg.Address, TokenSymbol: strings.ToLower(msg.Symbol), Authorized: true}
 
-	token.Authorized[msg.Address] = &newAuthorization
-
+	token.AuthorizeAddress(accAddress)
 	k.SetToken(ctx, token)
 
 	ctx.EventManager().EmitEvent(

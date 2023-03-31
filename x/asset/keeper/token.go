@@ -64,11 +64,5 @@ func (k Keeper) IsAddressAuthorizedToSend(ctx sdk.Context, symbol string, addres
 	var t types.Token
 	k.cdc.MustUnmarshal(b, &t)
 
-	value, found := t.Authorized[address.String()]
-
-	if found {
-		return value.Authorized
-	}
-
-	return false
+	return t.AddressIsAuthorized(address)
 }

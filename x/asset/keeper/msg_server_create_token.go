@@ -37,27 +37,14 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid manager address")
 	}
 
-	token := types.Token{
-		Name:                  lowerCaseName,
-		Symbol:                lowerCaseSymbol,
-		Total:                 msg.Total,
-		Manager:               msg.Manager,
-		AuthorizationRequired: msg.AuthorizationRequired,
-	}
+	token := types.NewToken(lowerCaseName, lowerCaseSymbol, msg.Total, msg.Manager, msg.AuthorizationRequired)
 
 	if msg.AuthorizationRequired {
-		if token.Authorized == nil {
-			// initialize map on first write
-			m := make(map[string]*types.TokenAuthorization)
-			token.Authorized = m
-		}
-
-		newAuthorizationManager := types.TokenAuthorization{Address: msg.Manager, TokenSymbol: lowerCaseSymbol, Authorized: true}
+		// create authorization for module account and manager
 		assetModuleAddress := k.ak.GetModuleAddress(types.ModuleName)
-		newAuthorizationModule := types.TokenAuthorization{Address: assetModuleAddress.String(), TokenSymbol: lowerCaseSymbol, Authorized: true}
-
-		token.Authorized[msg.Manager] = &newAuthorizationManager
-		token.Authorized[assetModuleAddress.String()] = &newAuthorizationModule
+		moduleAuthorization := types.NewAuthorization(assetModuleAddress)
+		newAuthorizationManager := types.NewAuthorization(managerAccAddress)
+		token.Authorized = append(token.Authorized, moduleAuthorization, newAuthorizationManager)
 	}
 
 	k.SetToken(ctx, token)

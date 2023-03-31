@@ -1,0 +1,13 @@
+syntax = "proto3";
+package realionetwork.asset.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/realiotech/realio-network/x/asset/types";
+
+// TokenAuthorization represents the current authorization state for an
+// address:token
+message TokenAuthorization {
+  string address = 2;
+  bool authorized = 3;
+}
