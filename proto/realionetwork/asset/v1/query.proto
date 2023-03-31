@@ -22,7 +22,12 @@ service Query {
 
   // Parameters queries the tokens of the module.
   rpc Token(QueryTokenRequest) returns (QueryTokenResponse) {
-    option (google.api.http).get = "/realionetwork/asset/v1/token/{symbol}";
+    option (google.api.http).get = "/realionetwork/asset/v1/tokens/{symbol}";
+  }
+
+  // Parameters queries the tokens of the module.
+  rpc IsAuthorized(QueryIsAuthorizedRequest) returns (QueryIsAuthorizedResponse) {
+    option (google.api.http).get = "/realionetwork/asset/v1/isauthorized/{symbol}/{address}";
   }
 }
 
@@ -54,4 +59,17 @@ message QueryTokenRequest {
 message QueryTokenResponse {
   // params holds all the parameters of this module.
   Token token = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryIsAuthorizedRequest {
+  // symbol is the token symbol to query for.
+  string symbol = 1;
+  string address = 2;
+}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryIsAuthorizedResponse {
+  // params holds all the parameters of this module.
+  bool isAuthorized = 1;
 }
