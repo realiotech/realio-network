@@ -24,7 +24,6 @@ service Query {
   rpc Token(QueryTokenRequest) returns (QueryTokenResponse) {
     option (google.api.http).get = "/realionetwork/asset/v1/token/{symbol}";
   }
-
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -33,7 +32,7 @@ message QueryParamsRequest {}
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryParamsResponse {
   // params holds all the parameters of this module.
-  Params params = 1 [(gogoproto.nullable) = false];
+  Params params = 1 [ (gogoproto.nullable) = false ];
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -42,7 +41,7 @@ message QueryTokensRequest {}
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryTokensResponse {
   // params holds all the parameters of this module.
-  repeated Token tokens = 1 [(gogoproto.nullable) = false];
+  repeated Token tokens = 1 [ (gogoproto.nullable) = false ];
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -54,5 +53,5 @@ message QueryTokenRequest {
 // QueryParamsResponse is response type for the Query/Params RPC method.
 message QueryTokenResponse {
   // params holds all the parameters of this module.
-  Token token = 1 [(gogoproto.nullable) = false];
+  Token token = 1 [ (gogoproto.nullable) = false ];
 }

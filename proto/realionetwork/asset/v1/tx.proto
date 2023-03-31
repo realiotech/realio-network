@@ -10,60 +10,55 @@ service Msg {
 
   rpc CreateToken(MsgCreateToken) returns (MsgCreateTokenResponse);
   rpc UpdateToken(MsgUpdateToken) returns (MsgUpdateTokenResponse);
-  rpc AuthorizeAddress(MsgAuthorizeAddress) returns (MsgAuthorizeAddressResponse);
-  rpc UnAuthorizeAddress(MsgUnAuthorizeAddress) returns (MsgUnAuthorizeAddressResponse);
+  rpc AuthorizeAddress(MsgAuthorizeAddress)
+      returns (MsgAuthorizeAddressResponse);
+  rpc UnAuthorizeAddress(MsgUnAuthorizeAddress)
+      returns (MsgUnAuthorizeAddressResponse);
   rpc TransferToken(MsgTransferToken) returns (MsgTransferTokenResponse);
-// this line is used by starport scaffolding # proto/tx/rpc
+  // this line is used by starport scaffolding # proto/tx/rpc
 }
-
-
 
 message MsgCreateToken {
-  string manager = 1 ;
-  string name = 2 ;
-  string symbol = 3 ;
+  string manager = 1;
+  string name = 2;
+  string symbol = 3;
   string total = 4;
-  bool authorizationRequired = 6 ;
+  bool authorizationRequired = 6;
 }
 
-message MsgCreateTokenResponse {
-}
+message MsgCreateTokenResponse {}
 
 message MsgUpdateToken {
-  string manager = 1 ;
-  string symbol = 2 ;
+  string manager = 1;
+  string symbol = 2;
   bool authorizationRequired = 3;
 }
 
-message MsgUpdateTokenResponse {
-}
+message MsgUpdateTokenResponse {}
 
 message MsgAuthorizeAddress {
-  string manager = 1 ;
-  string symbol = 2 ;
-  string address = 3 ;
+  string manager = 1;
+  string symbol = 2;
+  string address = 3;
 }
 
-message MsgAuthorizeAddressResponse {
-}
+message MsgAuthorizeAddressResponse {}
 
 message MsgUnAuthorizeAddress {
-  string manager = 1 ;
-  string symbol = 2 ;
-  string address = 3 ;
+  string manager = 1;
+  string symbol = 2;
+  string address = 3;
 }
 
-message MsgUnAuthorizeAddressResponse {
-}
+message MsgUnAuthorizeAddressResponse {}
 
 message MsgTransferToken {
-  string symbol = 1 ;
-  string from = 2 ;
-  string to = 3 ;
+  string symbol = 1;
+  string from = 2;
+  string to = 3;
   string amount = 4;
 }
 
-message MsgTransferTokenResponse {
-}
+message MsgTransferTokenResponse {}
 
 // this line is used by starport scaffolding # proto/tx/message

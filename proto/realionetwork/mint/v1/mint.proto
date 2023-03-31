@@ -10,12 +10,12 @@ message Minter {
   // current annual inflation rate
   string inflation = 1 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
+    (gogoproto.nullable) = false
   ];
   // current annual expected provisions
   string annual_provisions = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
+    (gogoproto.nullable) = false
   ];
 }
 
@@ -28,7 +28,7 @@ message Params {
   // annual change in inflation rate
   string inflation_rate = 2 [
     (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
-    (gogoproto.nullable)   = false
+    (gogoproto.nullable) = false
   ];
   // expected blocks per year
   uint64 blocks_per_year = 3;
