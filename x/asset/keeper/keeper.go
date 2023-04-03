@@ -24,6 +24,9 @@ type (
 	}
 )
 
+// NewKeeper returns a new Keeper object with a given codec, dedicated
+// store key, a BankKeeper implementation, an AccountKeeper implementation, and a parameter Subspace used to
+// store and fetch module parameters.
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
