@@ -59,7 +59,7 @@ type MockAnteHandler struct {
 	CalledCtx sdk.Context
 }
 
-func (mah *MockAnteHandler) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
+func (mah *MockAnteHandler) AnteHandle(ctx sdk.Context, _ sdk.Tx, _ bool) (sdk.Context, error) {
 	mah.WasCalled = true
 	mah.CalledCtx = ctx
 	return ctx, nil
@@ -135,7 +135,7 @@ func (suite *AnteTestSuite) CommitAfter(t time.Duration) {
 	suite.ctx = suite.app.BaseApp.NewContext(false, header)
 }
 
-func (s *AnteTestSuite) CreateTestTxBuilder(gasPrice math.Int, denom string, msgs ...sdk.Msg) client.TxBuilder {
+func (suite *AnteTestSuite) CreateTestTxBuilder(gasPrice math.Int, denom string, msgs ...sdk.Msg) client.TxBuilder {
 	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
 	gasLimit := uint64(1000000)
 
@@ -145,25 +145,25 @@ func (s *AnteTestSuite) CreateTestTxBuilder(gasPrice math.Int, denom string, msg
 	fees := &sdk.Coins{{Denom: denom, Amount: gasPrice.MulRaw(int64(gasLimit))}}
 	txBuilder.SetFeeAmount(*fees)
 	err := txBuilder.SetMsgs(msgs...)
-	s.Require().NoError(err)
+	suite.Require().NoError(err)
 	return txBuilder
 }
 
-func (s *AnteTestSuite) CreateEthTestTxBuilder(msgEthereumTx *evmtypes.MsgEthereumTx) client.TxBuilder {
+func (suite *AnteTestSuite) CreateEthTestTxBuilder(msgEthereumTx *evmtypes.MsgEthereumTx) client.TxBuilder {
 	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
 	option, err := codectypes.NewAnyWithValue(&evmtypes.ExtensionOptionsEthereumTx{})
-	s.Require().NoError(err)
+	suite.Require().NoError(err)
 
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 	builder, ok := txBuilder.(authtx.ExtensionOptionsTxBuilder)
-	s.Require().True(ok)
+	suite.Require().True(ok)
 	builder.SetExtensionOptions(option)
 
 	err = txBuilder.SetMsgs(msgEthereumTx)
-	s.Require().NoError(err)
+	suite.Require().NoError(err)
 
 	txData, err := evmtypes.UnpackTxData(msgEthereumTx.Data)
-	s.Require().NoError(err)
+	suite.Require().NoError(err)
 
 	fees := sdk.Coins{{Denom: s.denom, Amount: sdk.NewIntFromBigInt(txData.Fee())}}
 	builder.SetFeeAmount(fees)
@@ -172,7 +172,7 @@ func (s *AnteTestSuite) CreateEthTestTxBuilder(msgEthereumTx *evmtypes.MsgEthere
 	return txBuilder
 }
 
-func (s *AnteTestSuite) BuildTestEthTx(
+func (suite *AnteTestSuite) BuildTestEthTx(
 	from common.Address,
 	to common.Address,
 	gasPrice *big.Int,
@@ -180,9 +180,9 @@ func (s *AnteTestSuite) BuildTestEthTx(
 	gasTipCap *big.Int,
 	accesses *ethtypes.AccessList,
 ) *evmtypes.MsgEthereumTx {
-	chainID := s.app.EvmKeeper.ChainID()
-	nonce := s.app.EvmKeeper.GetNonce(
-		s.ctx,
+	chainID := suite.app.EvmKeeper.ChainID()
+	nonce := suite.app.EvmKeeper.GetNonce(
+		suite.ctx,
 		common.BytesToAddress(from.Bytes()),
 	)
 	data := make([]byte, 0)
@@ -319,7 +319,7 @@ func createEIP712CosmosTx(
 	amount := sdk.NewCoins(coinAmount)
 	gas := uint64(200000)
 
-	fee := legacytx.NewStdFee(gas, amount)
+	fee := legacytx.NewStdFee(gas, amount) //nolint:staticcheck // ignore staticcheck for deprecated NewStdFee
 	data := legacytx.StdSignBytes(realionetworktypes.MainnetChainID, 0, 0, 0, fee, msgs, "", nil)
 	typedData, err := eip712.WrapTxToTypedData(ethermintCodec, 9000, msgs[0], data, &eip712.FeeDelegationOptions{
 		FeePayer: from,

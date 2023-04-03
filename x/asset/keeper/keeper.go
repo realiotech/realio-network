@@ -21,12 +21,13 @@ type (
 		paramstore paramtypes.Subspace
 		bankKeeper types.BankKeeper
 		ak         types.AccountKeeper
+		allowAddrs map[string]bool
 	}
 )
 
 // NewKeeper returns a new Keeper object with a given codec, dedicated
 // store key, a BankKeeper implementation, an AccountKeeper implementation, and a parameter Subspace used to
-// store and fetch module parameters.
+// store and fetch module parameters. It also has an allowAddrs map[string]bool to skip restrictions for module addresses.
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey,
@@ -34,6 +35,7 @@ func NewKeeper(
 	ps paramtypes.Subspace,
 	bankKeeper types.BankKeeper,
 	ak types.AccountKeeper,
+	allowAddrs map[string]bool,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
@@ -47,6 +49,7 @@ func NewKeeper(
 		paramstore: ps,
 		bankKeeper: bankKeeper,
 		ak:         ak,
+		allowAddrs: allowAddrs,
 	}
 }
 

@@ -1,11 +1,12 @@
 package app
 
 import (
-	"github.com/realiotech/realio-network/app/ante"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
+
+	"github.com/realiotech/realio-network/app/ante"
 
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
@@ -383,6 +384,7 @@ func New(
 		app.GetSubspace(assetmoduletypes.ModuleName),
 		app.BankKeeper,
 		app.AccountKeeper,
+		app.ModuleAccountAddrs(),
 	)
 
 	// Add transfer restriction
