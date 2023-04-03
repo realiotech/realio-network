@@ -1025,8 +1025,8 @@ github.com/rakyll/statik v0.1.7/go.mod h1:AlZONWzMtEnMs7W4e/1LURLiI49pIMmp6V9Ung
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:N/ElC8H3+5XpJzTSTfLsJV/mx9Q9g7kxmchpfZyxgzM=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
-github.com/realiotech/cosmos-sdk v0.46.11-realio-1 h1:pOqweMJgUvNYcIN2cA3cm8PMsE9F4X2QYRoXvlo85/s=
-github.com/realiotech/cosmos-sdk v0.46.11-realio-1/go.mod h1:INxTBJpv7zqrROoAlBtucfTPvQPoVgTTrfkNv1EN+vY=
+github.com/realiotech/cosmos-sdk v0.46.11-realio-2 h1:gh3cUzUch2tcYYNlu3Z9ndgtF1+nlmiHzKY6RbXvEd0=
+github.com/realiotech/cosmos-sdk v0.46.11-realio-2/go.mod h1:INxTBJpv7zqrROoAlBtucfTPvQPoVgTTrfkNv1EN+vY=
 github.com/realiotech/ethermint v0.21.0-realio-1 h1:x+RYL/yjTI+QTN0mppmwGR3N8h/DZAVnz8d1wTFtORM=
 github.com/realiotech/ethermint v0.21.0-realio-1/go.mod h1:0c+GK/UxT/wykI8InX9U1Pmnj1M4wPRMgJtibd/RnqI=
 github.com/regen-network/cosmos-proto v0.3.1 h1:rV7iM4SSFAagvy8RiyhiACbWEGotmqzywPxOvwMdxcg=
