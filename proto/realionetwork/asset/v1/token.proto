@@ -2,23 +2,16 @@ syntax = "proto3";
 package realionetwork.asset.v1;
 
 import "gogoproto/gogo.proto";
+import "realionetwork/asset/v1/tokenauthorization.proto";
 
 option go_package = "github.com/realiotech/realio-network/x/asset/types";
-
 
 // Token represents an asset in the module
 message Token {
   string name = 1;
-  string symbol = 2 ;
+  string symbol = 2;
   string total = 3;
-  bool authorizationRequired = 4 ;
-  string manager = 5 ;
-  map<string, TokenAuthorization> authorized = 6;
-}
-
-// TokenAuthorization represents the current authorization state for an address:token
-message TokenAuthorization {
-  string tokenSymbol = 1 ;
-  string address = 2 ;
-  bool authorized = 3 ;
+  bool authorizationRequired = 4;
+  string manager = 5;
+  repeated TokenAuthorization authorized = 6;
 }

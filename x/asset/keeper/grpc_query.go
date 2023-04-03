@@ -44,3 +44,18 @@ func (k Keeper) Token(c context.Context, req *types.QueryTokenRequest) (*types.Q
 		return &types.QueryTokenResponse{Token: t}, nil
 	}
 }
+
+func (k Keeper) IsAuthorized(c context.Context, req *types.QueryIsAuthorizedRequest) (*types.QueryIsAuthorizedResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(c)
+
+	if t, found := k.GetToken(ctx, req.Symbol); !found {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, "not found")
+	} else { //nolint:revive // fixing this causes t to be inaccessible, so let's leave all as is.
+		accAddress, _ := sdk.AccAddressFromBech32(req.Address)
+		isAuthorized := t.AddressIsAuthorized(accAddress)
+		return &types.QueryIsAuthorizedResponse{IsAuthorized: isAuthorized}, nil
+	}
+}

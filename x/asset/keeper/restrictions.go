@@ -10,6 +10,11 @@ func (k Keeper) AssetSendRestriction(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 	newToAddr = toAddr
 	err = nil
 
+	// module whitelisted addresses can send coins without restrictions
+	if allow := k.AllowAddr(fromAddr); allow {
+		return newToAddr, nil
+	}
+
 	for _, coin := range amt {
 		// Check if the value already exists
 		// fetch bank metadata to get symbol from denom
@@ -42,4 +47,9 @@ func (k Keeper) AssetSendRestriction(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 		}
 	}
 	return newToAddr, err
+}
+
+// AllowAddr addr checks if a given address is in the list of allowAddrs to skip restrictions
+func (k Keeper) AllowAddr(addr sdk.AccAddress) bool {
+	return k.allowAddrs[addr.String()]
 }

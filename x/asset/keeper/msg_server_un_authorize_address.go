@@ -28,8 +28,12 @@ func (k msgServer) UnAuthorizeAddress(goCtx context.Context, msg *types.MsgUnAut
 		return nil, sdkerrors.Wrap(sdkerrors.ErrUnauthorized, "caller not authorized")
 	}
 
-	delete(token.Authorized, msg.Address)
+	accAddress, err := sdk.AccAddressFromBech32(msg.Address)
+	if err != nil {
+		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid address")
+	}
 
+	token.UnAuthorizeAddress(accAddress)
 	k.SetToken(ctx, token)
 
 	ctx.EventManager().EmitEvent(

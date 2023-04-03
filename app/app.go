@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/realiotech/realio-network/app/ante"
+
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
@@ -382,6 +384,7 @@ func New(
 		app.GetSubspace(assetmoduletypes.ModuleName),
 		app.BankKeeper,
 		app.AccountKeeper,
+		app.ModuleAccountAddrs(),
 	)
 
 	// Add transfer restriction
@@ -610,7 +613,28 @@ func New(
 	app.SetInitChainer(app.InitChainer)
 	app.SetBeginBlocker(app.BeginBlocker)
 	app.SetEndBlocker(app.EndBlocker)
-	app.setAnteHandler(encodingConfig.TxConfig, cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted)))
+
+	maxGasWanted := cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted))
+	options := ante.HandlerOptions{
+		AccountKeeper:          app.AccountKeeper,
+		BankKeeper:             app.BankKeeper,
+		SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
+		FeegrantKeeper:         app.FeeGrantKeeper,
+		SigGasConsumer:         evmante.DefaultSigVerificationGasConsumer,
+		IBCKeeper:              app.IBCKeeper,
+		EvmKeeper:              app.EvmKeeper,
+		FeeMarketKeeper:        app.FeeMarketKeeper,
+		MaxTxGasWanted:         maxGasWanted,
+		ExtensionOptionChecker: ethermint.HasDynamicFeeExtensionOption,
+		TxFeeChecker:           evmante.NewDynamicFeeChecker(app.EvmKeeper),
+	}
+
+	if err := options.Validate(); err != nil {
+		panic(err)
+	}
+
+	app.SetAnteHandler(ante.NewAnteHandler(options))
+
 	app.setupUpgradeHandlers()
 
 	if loadLatest {
@@ -826,28 +850,6 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
-}
-
-func (app *RealioNetwork) setAnteHandler(txConfig client.TxConfig, maxGasWanted uint64) {
-	// use Ethermint's custom AnteHandler
-	anteHandler, err := evmante.NewAnteHandler(evmante.HandlerOptions{
-		AccountKeeper:          app.AccountKeeper,
-		BankKeeper:             app.BankKeeper,
-		EvmKeeper:              app.EvmKeeper,
-		FeegrantKeeper:         app.FeeGrantKeeper,
-		IBCKeeper:              app.IBCKeeper,
-		FeeMarketKeeper:        app.FeeMarketKeeper,
-		SignModeHandler:        txConfig.SignModeHandler(),
-		SigGasConsumer:         evmante.DefaultSigVerificationGasConsumer,
-		MaxTxGasWanted:         maxGasWanted,
-		ExtensionOptionChecker: ethermint.HasDynamicFeeExtensionOption,
-		TxFeeChecker:           evmante.NewDynamicFeeChecker(app.EvmKeeper),
-	})
-	if err != nil {
-		panic(err)
-	}
-
-	app.SetAnteHandler(anteHandler)
 }
 
 func (app *RealioNetwork) setupUpgradeHandlers() {

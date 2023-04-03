@@ -11,7 +11,7 @@ option go_package = "github.com/realiotech/realio-network/x/asset/types";
 
 // GenesisState defines the asset module's genesis state.
 message GenesisState {
-  Params params = 1 [(gogoproto.nullable) = false];
+  Params params = 1 [ (gogoproto.nullable) = false ];
   // registered tokens
-  repeated Token tokens = 2 [(gogoproto.nullable) = false];
+  repeated Token tokens = 2 [ (gogoproto.nullable) = false ];
 }
