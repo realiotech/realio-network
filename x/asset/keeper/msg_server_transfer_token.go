@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -28,7 +29,7 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 		msg.Symbol,
 	)
 	if !isFound {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrKeyNotFound, "token %s not found", msg.Symbol)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "token %s not found", msg.Symbol)
 	}
 
 	if token.AuthorizationRequired {
@@ -39,7 +40,7 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 	if isAuthorizedFrom && isAuthorizedTo {
 		totalInt, totalIsValid := math.NewIntFromString(msg.Amount)
 		if !totalIsValid {
-			return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidCoins, "invalid coin amount %s", msg.Amount)
+			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "invalid coin amount %s", msg.Amount)
 		}
 
 		baseDenom := fmt.Sprintf("a%s", strings.ToLower(msg.Symbol))
@@ -49,7 +50,7 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 			return nil, err
 		}
 	} else {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "%s transfer not authorized", msg.Symbol)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "%s transfer not authorized", msg.Symbol)
 	}
 
 	return &types.MsgTransferTokenResponse{}, nil
