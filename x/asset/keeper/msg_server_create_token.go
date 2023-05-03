@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	errorsmod "cosmossdk.io/errors"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	realionetworktypes "github.com/realiotech/realio-network/types"
@@ -29,12 +30,12 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 		msg.Symbol,
 	)
 	if isFound {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrInvalidRequest, "symbol %s already set", msg.Symbol)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "symbol %s already set", msg.Symbol)
 	}
 
 	managerAccAddress, err := sdk.AccAddressFromBech32(msg.Manager)
 	if err != nil {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrInvalidAddress, "invalid manager address")
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidAddress, "invalid manager address")
 	}
 
 	token := types.NewToken(lowerCaseName, lowerCaseSymbol, msg.Total, msg.Manager, msg.AuthorizationRequired)

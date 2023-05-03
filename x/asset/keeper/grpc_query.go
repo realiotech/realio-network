@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 
+	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -39,7 +40,7 @@ func (k Keeper) Token(c context.Context, req *types.QueryTokenRequest) (*types.Q
 	ctx := sdk.UnwrapSDKContext(c)
 
 	if t, found := k.GetToken(ctx, req.Symbol); !found {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, "not found")
+		return nil, errorsmod.Wrap(sdkerrors.ErrKeyNotFound, "not found")
 	} else { //nolint:revive // fixing this causes t to be inaccessible, so let's leave all as is.
 		return &types.QueryTokenResponse{Token: t}, nil
 	}
@@ -52,7 +53,7 @@ func (k Keeper) IsAuthorized(c context.Context, req *types.QueryIsAuthorizedRequ
 	ctx := sdk.UnwrapSDKContext(c)
 
 	if t, found := k.GetToken(ctx, req.Symbol); !found {
-		return nil, sdkerrors.Wrap(sdkerrors.ErrKeyNotFound, "not found")
+		return nil, errorsmod.Wrap(sdkerrors.ErrKeyNotFound, "not found")
 	} else { //nolint:revive // fixing this causes t to be inaccessible, so let's leave all as is.
 		accAddress, _ := sdk.AccAddressFromBech32(req.Address)
 		isAuthorized := t.AddressIsAuthorized(accAddress)

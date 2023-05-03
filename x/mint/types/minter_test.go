@@ -79,7 +79,7 @@ func BenchmarkBlockProvision(b *testing.B) {
 	params := DefaultParams()
 
 	s1 := rand.NewSource(100)
-	r1 := rand.New(s1)
+	r1 := rand.New(s1) //nolint:gosec // this is a benchmark and is not relevant to security
 	minter.AnnualProvisions = sdk.NewDec(r1.Int63n(1000000))
 
 	// run the BlockProvision function b.N times
