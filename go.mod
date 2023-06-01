@@ -190,8 +190,8 @@ require (
 )
 
 replace (
-	// use Realio sdk v0.46.11-realio-2
-	github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.11-realio-2
+	// use Realio sdk v0.46.11-realio-3
+	github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.11-realio-3
 	// temporary fork of ethermint while evmos upgrades
 	github.com/evmos/ethermint => github.com/realiotech/ethermint v0.21.0-realio-1
 	// use cosmos flavored protobufs
