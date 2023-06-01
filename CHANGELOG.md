@@ -39,6 +39,17 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.8.0.1] - 2023-06-1
+
+### Improvements
+
+- (deps) [#76](https://github.com/realioteach/realio-network/pull/76) Bump IBC-go version to v6.1.1
+
+### Bug Fixes
+
+- (deps) [#77](https://github.com/realiotech/realio-network/pull/77) Bump cosmos-sdk version to `v0.46.11-realio-3`.
+  Modify redelegation logic in `x/staking` module.
+
 ## [v0.8.0-rc4] - 2023-04-2
 
 ### State Machine Breaking
