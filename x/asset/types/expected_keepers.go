@@ -23,6 +23,7 @@ type BankKeeper interface {
 	SetDenomMetaData(ctx sdk.Context, denomMetaData banktypes.Metadata)
 	AppendSendRestriction(restriction bankkeeper.SendRestrictionFn)
 	GetDenomMetaData(ctx sdk.Context, denom string) (banktypes.Metadata, bool)
+	BlockedAddr(addr sdk.AccAddress) bool
 	// Methods imported from bank should be defined here
 }
 

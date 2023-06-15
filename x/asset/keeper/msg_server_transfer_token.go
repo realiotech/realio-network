@@ -32,6 +32,10 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "token %s not found", msg.Symbol)
 	}
 
+	if k.bankKeeper.BlockedAddr(toAddress) {
+		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "%s is not allowed to receive funds", msg.To)
+	}
+
 	if token.AuthorizationRequired {
 		isAuthorizedFrom = k.IsAddressAuthorizedToSend(ctx, msg.Symbol, fromAddress)
 		isAuthorizedTo = k.IsAddressAuthorizedToSend(ctx, msg.Symbol, toAddress)
