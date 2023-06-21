@@ -33,6 +33,8 @@ import (
 
 	"github.com/evmos/ethermint/server"
 	evmtypes "github.com/evmos/ethermint/x/evm/types"
+
+	assettypes "github.com/realiotech/realio-network/x/asset/types"
 )
 
 func startInProcess(cfg Config, val *Validator) error {
@@ -239,6 +241,19 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 
 	mintGenState.Params.MintDenom = cfg.BaseDenom
 	cfg.GenesisState[minttypes.ModuleName] = cfg.Codec.MustMarshalJSON(&mintGenState)
+
+	var assetGenState assettypes.GenesisState
+	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[assettypes.ModuleName], &assetGenState)
+
+	assetGenState.Tokens = append(assetGenState.Tokens, assettypes.Token{
+		Manager:               genAccounts[0].GetAddress().String(),
+		Name:                  "Realio Security Token",
+		Symbol:                "RST",
+		Total:                 "50000000",
+		AuthorizationRequired: true,
+		Authorized:            []*assettypes.TokenAuthorization{{Address: genAccounts[0].GetAddress().String(), Authorized: true}},
+	})
+	cfg.GenesisState[assettypes.ModuleName] = cfg.Codec.MustMarshalJSON(&assetGenState)
 
 	appGenStateJSON, err := json.MarshalIndent(cfg.GenesisState, "", "  ")
 	if err != nil {
