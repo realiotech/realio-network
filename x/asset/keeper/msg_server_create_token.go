@@ -25,12 +25,9 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 	lowerCaseName := strings.ToLower(msg.Name)
 	baseDenom := fmt.Sprintf("a%s", lowerCaseSymbol)
 
-	_, isFound := k.GetToken(
-		ctx,
-		msg.Symbol,
-	)
+	isFound := k.bankKeeper.HasSupply(ctx, baseDenom)
 	if isFound {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "symbol %s already set", msg.Symbol)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "token with denom %s already exists", baseDenom)
 	}
 
 	managerAccAddress, err := sdk.AccAddressFromBech32(msg.Manager)
