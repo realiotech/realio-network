@@ -18,23 +18,84 @@ import (
 var _ = strconv.IntSize
 
 func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
-	suite.SetupTest()
 
-	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
-	manager := suite.testUser1Address
-	expected := &types.MsgCreateToken{
-		Manager: manager,
-		Symbol:  "RIO", Total: "1000",
+	testCases := []struct {
+		name      string
+		msg       types.MsgCreateToken
+		expectErr bool
+		errString string
+	}{
+		{
+			name: "valid MsgCreateToken",
+			msg: types.MsgCreateToken{
+				Manager: suite.testUser1Address,
+				Symbol:  "FOO", Total: "1000",
+			},
+			expectErr: false,
+		},
+		{
+			name: "invalid MsgCreateToken; duplicated denom ario",
+			msg: types.MsgCreateToken{
+				Manager: suite.testUser1Address,
+				Symbol:  "RIO", Total: "100",
+			},
+			expectErr: true,
+			errString: "token with denom ario already exists: invalid request",
+		},
+		{
+			name: "invalid MsgCreateToken; duplicated denom abar",
+			msg: types.MsgCreateToken{
+				Manager: suite.testUser1Address,
+				Symbol:  "BAR", Total: "100",
+			},
+			expectErr: true,
+			errString: "token with denom abar already exists: invalid request",
+		},
+		{
+			name: "invalid MsgCreateToken; invalid manager address",
+			msg: types.MsgCreateToken{
+				Manager: "invalid address",
+				Symbol:  "FOO", Total: "100",
+			},
+			expectErr: true,
+			errString: "invalid manager address: invalid address",
+		},
 	}
-	_, err := srv.CreateToken(wctx, expected)
-	suite.Require().NoError(err)
-	lowercased := strings.ToLower(expected.Symbol)
-	rio, found := suite.app.AssetKeeper.GetToken(suite.ctx,
-		strings.ToLower(lowercased),
-	)
-	suite.Require().True(found)
-	suite.Require().Equal(expected.Manager, rio.Manager)
+
+	for _, tc := range testCases {
+
+		suite.Run(tc.name, func() {
+			suite.SetupTest()
+
+			srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
+			wctx := sdk.WrapSDKContext(suite.ctx)
+
+			// we created a token here with symbol "BAR"
+			// there's a test case to make sure we CANNOT create tokens with the same symbol
+			_, err := srv.CreateToken(wctx, &types.MsgCreateToken{
+				Manager: suite.testUser1Address,
+				Symbol:  "BAR", Total: "999999",
+			})
+			suite.Require().NoError(err)
+
+			_, err = srv.CreateToken(wctx, &tc.msg)
+			if tc.expectErr {
+				suite.Require().EqualError(err, tc.errString)
+			} else {
+				suite.Require().NoError(err)
+
+				lowercased := strings.ToLower(tc.msg.Symbol)
+				token, found := suite.app.AssetKeeper.GetToken(suite.ctx,
+					strings.ToLower(lowercased),
+				)
+				suite.Require().True(found)
+				suite.Require().Equal(token.Manager, tc.msg.Manager)
+				suite.Require().Equal(token.Symbol, strings.ToLower(tc.msg.Symbol))
+				suite.Require().Equal(token.Total, tc.msg.Total)
+				suite.Require().Equal(token.AuthorizationRequired, tc.msg.AuthorizationRequired)
+			}
+		})
+	}
 }
 
 func (suite *KeeperTestSuite) TestTokenMsgServerCreateInvalidSender() {
