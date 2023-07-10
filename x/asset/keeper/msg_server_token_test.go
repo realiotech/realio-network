@@ -18,7 +18,6 @@ import (
 var _ = strconv.IntSize
 
 func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
-
 	testCases := []struct {
 		name      string
 		msg       types.MsgCreateToken
@@ -63,7 +62,6 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 	}
 
 	for _, tc := range testCases {
-
 		suite.Run(tc.name, func() {
 			suite.SetupTest()
 

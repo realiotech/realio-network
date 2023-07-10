@@ -33,7 +33,7 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 	}
 
 	if k.bankKeeper.BlockedAddr(toAddress) {
-		return nil, sdkerrors.Wrapf(sdkerrors.ErrUnauthorized, "%s is not allowed to receive funds", msg.To)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "%s is not allowed to receive funds", msg.To)
 	}
 
 	if token.AuthorizationRequired {
