@@ -20,6 +20,8 @@ import (
 	"github.com/realiotech/realio-network/app"
 	realiotypes "github.com/realiotech/realio-network/types"
 	"github.com/realiotech/realio-network/x/mint/types"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"cosmossdk.io/math"
 )
 
 type KeeperTestSuite struct {
@@ -88,4 +90,88 @@ func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 
 func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
+}
+
+func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
+	suite.DoSetupTest(suite.T())
+	rioSupplyCap, _ := math.NewIntFromString("75000000000000000000000000")
+
+	// params.MintDenom, params.BlocksPerYear and minter.Inflation are not changed when go to next block
+	params := suite.app.MintKeeper.GetParams(suite.ctx)
+	minter := suite.app.MintKeeper.GetMinter(suite.ctx)
+
+	// block 1 vs block 2
+	currentSupply := suite.app.BankKeeper.GetSupply(suite.ctx, params.MintDenom).Amount
+	annualProvisions :=  minter.Inflation.MulInt(rioSupplyCap.Sub(currentSupply))
+	blockProvision := annualProvisions.QuoInt(math.NewInt(int64(params.BlocksPerYear))).TruncateInt()
+	currentHeight := suite.app.LastBlockHeight()
+
+	// block 2
+	header := tmproto.Header{Height: currentHeight + 1}
+	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
+
+	newSupply := suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
+	expectedMintedAmount := newSupply.Sub(currentSupply).String()
+	calculatedMintedAmount := blockProvision.String()
+	suite.Require().Equal(expectedMintedAmount, calculatedMintedAmount)
+
+	// block 2 vs block 3
+	currentSupply = suite.app.BankKeeper.GetSupply(suite.ctx, params.MintDenom).Amount
+	annualProvisions =  minter.Inflation.MulInt(rioSupplyCap.Sub(currentSupply))
+	blockProvision = annualProvisions.QuoInt(math.NewInt(int64(params.BlocksPerYear))).TruncateInt()
+	currentHeight = suite.app.LastBlockHeight()
+
+	// block 3
+	header = tmproto.Header{Height: currentHeight + 1}
+	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
+
+	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
+	expectedMintedAmount = newSupply.Sub(currentSupply).String()
+	calculatedMintedAmount = blockProvision.String()
+	suite.Require().Equal(expectedMintedAmount, calculatedMintedAmount)
+
+	// block 3 vs block 4
+	currentSupply = suite.app.BankKeeper.GetSupply(suite.ctx, params.MintDenom).Amount
+	annualProvisions =  minter.Inflation.MulInt(rioSupplyCap.Sub(currentSupply))
+	blockProvision = annualProvisions.QuoInt(math.NewInt(int64(params.BlocksPerYear))).TruncateInt()
+	currentHeight = suite.app.LastBlockHeight()
+
+	// block 4
+	header = tmproto.Header{Height: currentHeight + 1}
+	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
+
+	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
+	expectedMintedAmount = newSupply.Sub(currentSupply).String()
+	calculatedMintedAmount = blockProvision.String()
+	suite.Require().Equal(expectedMintedAmount, calculatedMintedAmount)
+
+	// block 4 vs block 5
+	currentSupply = suite.app.BankKeeper.GetSupply(suite.ctx, params.MintDenom).Amount
+	annualProvisions =  minter.Inflation.MulInt(rioSupplyCap.Sub(currentSupply))
+	blockProvision = annualProvisions.QuoInt(math.NewInt(int64(params.BlocksPerYear))).TruncateInt()
+	currentHeight = suite.app.LastBlockHeight()
+
+	// block 5
+	header = tmproto.Header{Height: currentHeight + 1}
+	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
+
+	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
+	expectedMintedAmount = newSupply.Sub(currentSupply).String()
+	calculatedMintedAmount = blockProvision.String()
+	suite.Require().Equal(expectedMintedAmount, calculatedMintedAmount)
+
+	// block 5 vs block 6
+	currentSupply = suite.app.BankKeeper.GetSupply(suite.ctx, params.MintDenom).Amount
+	annualProvisions =  minter.Inflation.MulInt(rioSupplyCap.Sub(currentSupply))
+	blockProvision = annualProvisions.QuoInt(math.NewInt(int64(params.BlocksPerYear))).TruncateInt()
+	currentHeight = suite.app.LastBlockHeight()
+
+	// block 6
+	header = tmproto.Header{Height: currentHeight + 1}
+	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
+
+	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
+	expectedMintedAmount = newSupply.Sub(currentSupply).String()
+	calculatedMintedAmount = blockProvision.String()
+	suite.Require().Equal(expectedMintedAmount, calculatedMintedAmount)
 }
