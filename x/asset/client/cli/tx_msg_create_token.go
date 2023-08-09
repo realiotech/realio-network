@@ -18,7 +18,7 @@ func CmdMsgCreateToken() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "msg-create-token [name] [symbol] [total] [authorization-required]",
 		Short: "Broadcast message MsgCreateToken",
-		Args:  cobra.ExactArgs(5),
+		Args:  cobra.ExactArgs(4),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			argName := args[0]
 			argSymbol := args[1]
