@@ -1,0 +1,2 @@
+### End-to-End Testing Suite
+The End-to-End (E2E) testing suite provides an environment for running end-to-end tests on Realio-Network. It is used for testing chain upgrades, as it allows for initializing multiple Realio chains with different versions.
