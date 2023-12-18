@@ -8,7 +8,6 @@ REALIO_BINARY = realio-networkd
 REALIO_DIR = realio-network
 BUILDDIR ?= $(CURDIR)/build
 HTTPS_GIT := https://github.com/realiotech/realio-network.git
-DOCKER := $(shell which docker)
 NAMESPACE := realiotech
 PROJECT := realio-network
 DOCKER := $(shell which docker)
@@ -331,3 +330,26 @@ proto-update-deps:
 	@curl -sSL $(TM_URL)/crypto/keys.proto > $(TM_CRYPTO_TYPES)/keys.proto
 
 .PHONY: proto-all proto-gen proto-format proto-lint proto-check-breaking proto-update-deps
+
+
+build-docker:
+	$(DOCKER) build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
+	$(DOCKER) tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:latest
+	# docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:${COMMIT_HASH}
+	# update old container
+	$(DOCKER) rm realio || true
+	# create a new container from the latest image
+	$(DOCKER) create --name realio -t -i ${DOCKER_IMAGE}:latest realio
+	# move the binaries to the ./build directory
+	mkdir -p ./build/
+	$(DOCKER) cp realio:/usr/bin/realio-networkd ./build/
+
+test-upgrade:
+ifeq (, $(TARGET_VERSION))
+	@make build-docker
+endif
+	mkdir -p ./build
+	rm -rf build/.realio-networkd
+	INITIAL_VERSION=$(INITIAL_VERSION) TARGET_VERSION=$(TARGET_VERSION) \
+	E2E_SKIP_CLEANUP=$(E2E_SKIP_CLEANUP) MOUNT_PATH=$(MOUNT_PATH) CHAIN_ID=$(CHAIN_ID) \
+	go test -v ./tests/e2e/...
