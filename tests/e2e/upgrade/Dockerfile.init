@@ -1,0 +1,19 @@
+# argument to provide specific version of realio-network node
+ARG INITIAL_VERSION
+FROM hoanotional/realio-network:$INITIAL_VERSION
+
+RUN apt-get update -y
+# jq needs to perform changes of node parameters
+RUN apt-get install ca-certificates jq -y
+
+WORKDIR /go/src/github.com/realiotech/realio-network
+
+COPY ./upgrade/upgrade-init.sh .
+
+# perms to make upgrade-init.sh executable
+RUN chmod +x upgrade-init.sh
+
+# JSON-RPC server
+EXPOSE 8545 1317 26656 26657
+
+CMD ["sh", "./upgrade-init.sh"]
