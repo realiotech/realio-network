@@ -195,13 +195,19 @@ require (
 
 replace (
 	// use Realio sdk v0.46.11-realio-4
-	github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.11-realio-4
+	// github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.11-realio-4
+
+	// github.com/cosmos/cosmos-sdk => github.com/decentrio/cosmos-sdk v0.46.12-0.20231226160407-ac48f5bbb39b
+	github.com/cosmos/cosmos-sdk => ./cosmos-sdk
+
 	// temporary fork of ethermint while evmos upgrades
 	github.com/evmos/ethermint => github.com/realiotech/ethermint v0.21.0-realio-1
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-	github.com/realio-tech/multi-staking-module => github.com/realiotech/multi-staking v0.0.0-20231226070930-b791bdab0c17
+	// github.com/realio-tech/multi-staking-module => github.com/realiotech/multi-staking v0.0.0-20231226070930-b791bdab0c17
+
+	github.com/realio-tech/multi-staking-module => github.com/GNaD13/multi-staking v0.0.0-20231227073926-bc714b6aa4f0
 	// Informal Tendermint fork
 	github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.27
 )

@@ -663,7 +663,7 @@ func New(
 
 	app.SetAnteHandler(ante.NewAnteHandler(options))
 
-	app.setupUpgradeHandlers()
+	app.setupUpgradeHandlers(appOpts)
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
@@ -880,35 +880,35 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	return paramsKeeper
 }
 
-func (app *RealioNetwork) setupUpgradeHandlers() {
-	//// "v0.7.2" is a coordinated upgrade on testnet to upgrade sdk to v0.46.7
-	// planName := "v0.0.0"
-	// app.UpgradeKeeper.SetUpgradeHandler(planName, func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-	//
-	//	return app.mm.RunMigrations(ctx, app.configurator, fromVM)
-	// })
-	//
-	////// When a planned update height is reached, the old binary will panic
-	////// writing on disk the height and name of the update that triggered it
-	////// This will read that value, and execute the preparations for the upgrade.
-	// upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
-	// if err != nil {
-	//	panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
-	//}
-	//
-	// if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-	//	return
-	//}
-	//
-	// var storeUpgrades *storetypes.StoreUpgrades
-	//
-	// switch upgradeInfo.Name {
-	// case planName:
-	//	// no store upgrades here
-	//}
-	//
-	// if storeUpgrades != nil {
-	//	// configure store loader that checks if version == upgradeHeight and applies store upgrades
-	//	app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
-	//}
-}
+// func (app *RealioNetwork) setupUpgradeHandlers() {
+//// "v0.7.2" is a coordinated upgrade on testnet to upgrade sdk to v0.46.7
+// planName := "v0.0.0"
+// app.UpgradeKeeper.SetUpgradeHandler(planName, func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
+//
+//	return app.mm.RunMigrations(ctx, app.configurator, fromVM)
+// })
+//
+////// When a planned update height is reached, the old binary will panic
+////// writing on disk the height and name of the update that triggered it
+////// This will read that value, and execute the preparations for the upgrade.
+// upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
+// if err != nil {
+//	panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
+//}
+//
+// if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+//	return
+//}
+//
+// var storeUpgrades *storetypes.StoreUpgrades
+//
+// switch upgradeInfo.Name {
+// case planName:
+//	// no store upgrades here
+//}
+//
+// if storeUpgrades != nil {
+//	// configure store loader that checks if version == upgradeHeight and applies store upgrades
+//	app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
+//}
+// }
