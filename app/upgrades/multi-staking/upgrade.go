@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"time"
 
-	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -23,9 +22,9 @@ import (
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 
+	"cosmossdk.io/math"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	"github.com/realiotech/realio-network/app/upgrades/multi-staking/legacy"
-	"cosmossdk.io/math"
 
 	"github.com/spf13/cast"
 )
@@ -70,15 +69,39 @@ func CreateUpgradeHandler(
 		if err != nil {
 			panic("Unable to migrate staking module to multi-staking module")
 		}
-		var multistakingGenesis = multistakingtypes.GenesisState{}
-		err = cdc.UnmarshalJSON(appState["multi-staking"], &multistakingGenesis)
-		if err != nil {
-			fmt.Println("multistakingGenesis", err)
-		}
-		msk.InitGenesis(ctx, multistakingGenesis)
+		vm[multistakingtypes.ModuleName] = multistaking.AppModule{}.ConsensusVersion()
+		mm.Modules[multistakingtypes.ModuleName].InitGenesis(ctx, cdc, appState["multi-staking"])
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
+}
+
+func migrateBank(ctx sdk.Context, bk bankkeeper.Keeper) {
+	// Send coins from bonded pool add same amout to multistaking account
+	bondedPoolBalances := bk.GetAllBalances(ctx, bondedPoolAddress)
+	bk.SendCoins(ctx, bondedPoolAddress, multiStakingAddress, bondedPoolBalances)
+	// mint stake to bonded pool
+	bondedCoinsAmount := math.ZeroInt()
+	for _, coinAmount := range bondedPoolBalances {
+		bondedCoinsAmount = bondedCoinsAmount.Add(coinAmount.Amount)
+	}
+	amount := sdk.NewCoins(sdk.NewCoin(newBondedCoinDenom, bondedCoinsAmount))
+	bk.MintCoins(ctx, minttypes.ModuleName, amount)
+	bk.SendCoins(ctx, mintModuleAddress, bondedPoolAddress, amount)
+
+	//----------------------//
+
+	// Send coins from unbonded pool add same amout to multistaking account
+	unbondedPoolBalances := bk.GetAllBalances(ctx, unbondedPoolAddress)
+	bk.SendCoins(ctx, unbondedPoolAddress, multiStakingAddress, unbondedPoolBalances)
+	// mint stake to unbonded pool
+	unbondedCoinsAmount := math.ZeroInt()
+	for _, coinAmount := range unbondedPoolBalances {
+		unbondedCoinsAmount = unbondedCoinsAmount.Add(coinAmount.Amount)
+	}
+	amount = sdk.NewCoins(sdk.NewCoin(newBondedCoinDenom, unbondedCoinsAmount))
+	bk.MintCoins(ctx, minttypes.ModuleName, amount)
+	bk.SendCoins(ctx, mintModuleAddress, unbondedPoolAddress, amount)
 }
 
 func migrateMultiStaking(appState map[string]json.RawMessage) (map[string]json.RawMessage, error) {
