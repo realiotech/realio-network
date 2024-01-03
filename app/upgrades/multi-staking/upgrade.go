@@ -52,11 +52,9 @@ func CreateUpgradeHandler(
 
 		nodeHome := cast.ToString(appOpts.Get(flags.FlagHome))
 		upgradeGenFile := nodeHome + "/config/state.json"
-		fmt.Println(upgradeGenFile)
 		appState, _, err := genutiltypes.GenesisStateFromGenFile(upgradeGenFile)
 		if err != nil {
-			fmt.Println(err)
-			panic("Unable to read genesis")
+			panic(err)
 		}
 		// migrate bank
 		migrateBank(ctx, bk)
