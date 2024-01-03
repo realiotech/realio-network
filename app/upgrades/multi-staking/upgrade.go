@@ -42,9 +42,12 @@ func CreateUpgradeHandler(
 		}
 
 		// migrate bank
-		//
+		// Send coins from bonded and unbonded pool to multistaking account
+
+		// Mint stake to replace multi-staking coins
 
 		// migrate distribute
+		// delaccount to interdiate account
 		//
 
 		// migrate multistaking
