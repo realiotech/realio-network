@@ -6,9 +6,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -20,6 +23,11 @@ import (
 	"github.com/spf13/cast"
 )
 
+var (
+	bondedPoolAddress   = authtypes.NewModuleAddress(stakingtypes.BondedPoolName)
+	unbondedPoolAddress = authtypes.NewModuleAddress(stakingtypes.NotBondedPoolName)
+)
+
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
@@ -28,6 +36,7 @@ func CreateUpgradeHandler(
 	bk bankkeeper.Keeper,
 	msk multistakingkeeper.Keeper,
 	dk distrkeeper.Keeper,
+	keys map[string]*storetypes.KVStoreKey,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade for multi staking...")
