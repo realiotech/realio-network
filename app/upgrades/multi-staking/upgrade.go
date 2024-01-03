@@ -14,6 +14,7 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	multistaking "github.com/realio-tech/multi-staking-module/x/multi-staking"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
 
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -58,16 +59,16 @@ func CreateUpgradeHandler(
 		migrateBank(ctx, bk)
 
 		// migrate distribute
-		// delaccount to interdiate account
 		//
 
 		// migrate multistaking
+		vm[multistakingtypes.ModuleName] = multistaking.AppModule{}.ConsensusVersion()
 		var multistakingGenesis = multistakingtypes.GenesisState{}
 		err = cdc.UnmarshalJSON(appState["multi-staking"], &multistakingGenesis)
 		if err != nil {
 			fmt.Println("multistakingGenesis", err)
 		}
-		msk.InitGenesis(ctx, multistakingGenesis)
+		mm.Modules[multistakingtypes.ModuleName].InitGenesis(ctx, cdc, appState["multi-staking"])
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
@@ -99,4 +100,8 @@ func migrateBank(ctx sdk.Context, bk bankkeeper.Keeper) {
 	amount = sdk.NewCoins(sdk.NewCoin(newBondedCoinDenom, unbondedCoinsAmount))
 	bk.MintCoins(ctx, minttypes.ModuleName, amount)
 	bk.SendCoins(ctx, mintModuleAddress, unbondedPoolAddress, amount)
+}
+
+func migrateBankDistr(ctx sdk.Context, distKeeper distrkeeper.Keeper) {
+
 }
