@@ -14,10 +14,10 @@ realio-networkd tx gov vote 1 yes --from dev0 --keyring-backend test --chain-id 
 git checkout intergrate-multistaking
 # copy state to config
 # export new state
-realio-networkd export --home "$HOMEDIR" >> scripts/state.json
+realio-networkd export --home "$HOME/.realio-network-tmp" >> scripts/state.json
 # copy state
 cp scripts/state.json ~/.realio-network-tmp/config/state.json
 # build new binary
 make install
 # run node
-realio-networkd start --pruning=nothing "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0.00001ario --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --home "$HOME/.realio-network-tmp"
+realio-networkd start --log_level "info" --minimum-gas-prices=0.00001ario --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --home "$HOME/.realio-network-tmp"
