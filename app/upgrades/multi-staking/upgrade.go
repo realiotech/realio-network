@@ -194,13 +194,8 @@ func migrateMultiStaking(appState map[string]json.RawMessage) (map[string]json.R
 	// Migrate state.StakingGenesisState
 	stakingGenesisState := GenesisState{}
 
-	unbondingTime, err := time.ParseDuration(oldState.Params.UnbondingTime)
-	if err != nil {
-		return nil, err
-	}
-	unbondingTimeSecond := strconv.FormatInt(int64(unbondingTime), 10)
 	stakingGenesisState.Params = Params{
-		UnbondingTime:     unbondingTimeSecond,
+		UnbondingTime:     oldState.Params.UnbondingTime,
 		MaxValidators:     oldState.Params.MaxValidators,
 		MaxEntries:        oldState.Params.MaxEntries,
 		HistoricalEntries: oldState.Params.HistoricalEntries,
