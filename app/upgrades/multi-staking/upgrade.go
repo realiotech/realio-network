@@ -66,11 +66,17 @@ func CreateUpgradeHandler(
 
 		// migrate multistaking
 		appState, err = migrateMultiStaking(appState)
+
+		fmt.Println()
+		fmt.Println("=============UpgradeHandler=============")
+		fmt.Printf("%s", appState[multistakingtypes.ModuleName])
+		fmt.Println("=============UpgradeHandler=============")
+
 		if err != nil {
 			panic("Unable to migrate staking module to multi-staking module")
 		}
 		vm[multistakingtypes.ModuleName] = multistaking.AppModule{}.ConsensusVersion()
-		mm.Modules[multistakingtypes.ModuleName].InitGenesis(ctx, cdc, appState["multi-staking"])
+		mm.Modules[multistakingtypes.ModuleName].InitGenesis(ctx, cdc, appState[multistakingtypes.ModuleName])
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
