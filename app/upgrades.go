@@ -14,7 +14,16 @@ import (
 func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		multistaking.UpgradeName,
-		multistaking.CreateUpgradeHandler(app.mm, app.configurator, appOpts, app.AppCodec(), app.BankKeeper, app.MultiStakingKeeper, app.DistrKeeper),
+		multistaking.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			appOpts,
+			app.AppCodec(),
+			app.BankKeeper,
+			app.MultiStakingKeeper,
+			app.DistrKeeper,
+			app.keys,
+		),
 	)
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
