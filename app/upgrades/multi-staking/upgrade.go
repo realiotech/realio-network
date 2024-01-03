@@ -137,14 +137,14 @@ func migrateMultiStaking(appState map[string]json.RawMessage) (map[string]json.R
 	newState.StakingGenesisState = stakingGenesisState
 
 	// Migrate state.ValidatorAllowedToken field
-	newState.ValidatorMultiStakingCoin = make([]multistakingtypes.ValidatorMultiStakingCoin, 0)
+	newState.ValidatorMultiStakingCoins = make([]multistakingtypes.ValidatorMultiStakingCoin, 0)
 
 	for _, val := range oldState.Validators {
 		allowedToken := multistakingtypes.ValidatorMultiStakingCoin{
 			ValAddr:   val.OperatorAddress,
 			CoinDenom: val.BondDenom,
 		}
-		newState.ValidatorMultiStakingCoin = append(newState.ValidatorMultiStakingCoin, allowedToken)
+		newState.ValidatorMultiStakingCoins = append(newState.ValidatorMultiStakingCoins, allowedToken)
 	}
 
 	// Migrate state.MultiStakingLock field
