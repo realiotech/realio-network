@@ -63,11 +63,6 @@ func CreateUpgradeHandler(
 
 		// migrate multistaking
 		vm[multistakingtypes.ModuleName] = multistaking.AppModule{}.ConsensusVersion()
-		var multistakingGenesis = multistakingtypes.GenesisState{}
-		err = cdc.UnmarshalJSON(appState["multi-staking"], &multistakingGenesis)
-		if err != nil {
-			fmt.Println("multistakingGenesis", err)
-		}
 		mm.Modules[multistakingtypes.ModuleName].InitGenesis(ctx, cdc, appState["multi-staking"])
 
 		return mm.RunMigrations(ctx, configurator, vm)
