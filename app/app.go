@@ -186,6 +186,7 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner}, // used for secure addition and subtraction of balance using module account
 		assetmoduletypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		multistakingtypes.ModuleName:   nil,
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
