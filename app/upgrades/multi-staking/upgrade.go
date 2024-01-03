@@ -15,8 +15,6 @@ import (
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 
 	"github.com/spf13/cast"
@@ -43,25 +41,14 @@ func CreateUpgradeHandler(
 			panic("Unable to read genesis")
 		}
 
-		// burn old balances on bonded address
-		var bankGenesis = banktypes.GenesisState{}
-		err = cdc.UnmarshalJSON(appState[banktypes.ModuleName], &bankGenesis)
-		if err != nil {
-			fmt.Println("bankGenesis", err)
-		}
-		bk.InitGenesis(ctx, &bankGenesis)
+		// migrate bank
+		//
 
-		var distrGenesis = distrtypes.GenesisState{}
-		err = cdc.UnmarshalJSON(appState[distrtypes.ModuleName], &distrGenesis)
-		if err != nil {
-			fmt.Println("distrGenesis", err)
-		}
-		dk.InitGenesis(ctx, distrGenesis)
+		// migrate distribute
+		//
 
+		// migrate multistaking
 		var multistakingGenesis = multistakingtypes.GenesisState{}
-
-		fmt.Printf("%v\n", appState["multi-staking"])
-
 		err = cdc.UnmarshalJSON(appState["multi-staking"], &multistakingGenesis)
 		if err != nil {
 			fmt.Println("multistakingGenesis", err)
