@@ -23,9 +23,9 @@ import (
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 
 	"cosmossdk.io/math"
+	types1 "github.com/cosmos/cosmos-sdk/codec/types"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	"github.com/realiotech/realio-network/app/upgrades/multi-staking/legacy"
-	types1 "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/spf13/cast"
 )
 
@@ -73,7 +73,7 @@ func CreateUpgradeHandler(
 		fmt.Println("=============UpgradeHandler=============")
 
 		if err != nil {
-			panic("Unable to migrate staking module to multi-staking module")
+			panic(err)
 		}
 		vm[multistakingtypes.ModuleName] = multistaking.AppModule{}.ConsensusVersion()
 		mm.Modules[multistakingtypes.ModuleName].InitGenesis(ctx, cdc, appState[multistakingtypes.ModuleName])
@@ -169,7 +169,7 @@ type GenesisState struct {
 	UnbondingDelegations []stakingtypes.UnbondingDelegation `protobuf:"bytes,6,rep,name=unbonding_delegations,json=unbondingDelegations,proto3" json:"unbonding_delegations"`
 	// redelegations defines the redelegations active at genesis.
 	Redelegations []stakingtypes.Redelegation `protobuf:"bytes,7,rep,name=redelegations,proto3" json:"redelegations"`
-	Exported      bool           `protobuf:"varint,8,opt,name=exported,proto3" json:"exported,omitempty"`
+	Exported      bool                        `protobuf:"varint,8,opt,name=exported,proto3" json:"exported,omitempty"`
 }
 
 type MultiStakingGenesisState struct {
@@ -177,8 +177,8 @@ type MultiStakingGenesisState struct {
 	MultiStakingUnlocks        []multistakingtypes.MultiStakingUnlock        `protobuf:"bytes,2,rep,name=multi_staking_unlocks,json=multiStakingUnlocks,proto3" json:"multi_staking_unlocks"`
 	MultiStakingCoinInfo       []multistakingtypes.MultiStakingCoinInfo      `protobuf:"bytes,3,rep,name=multi_staking_coin_info,json=multiStakingCoinInfo,proto3" json:"multi_staking_coin_info"`
 	ValidatorMultiStakingCoins []multistakingtypes.ValidatorMultiStakingCoin `protobuf:"bytes,4,rep,name=validator_multi_staking_coins,json=validatorMultiStakingCoins,proto3" json:"validator_multi_staking_coins"`
-	IntermediaryDelegators     []string                    `protobuf:"bytes,5,rep,name=IntermediaryDelegators,proto3" json:"IntermediaryDelegators,omitempty"`
-	StakingGenesisState        GenesisState          `protobuf:"bytes,6,opt,name=staking_genesis_state,json=stakingGenesisState,proto3" json:"staking_genesis_state"`
+	IntermediaryDelegators     []string                                      `protobuf:"bytes,5,rep,name=IntermediaryDelegators,proto3" json:"IntermediaryDelegators,omitempty"`
+	StakingGenesisState        GenesisState                                  `protobuf:"bytes,6,opt,name=staking_genesis_state,json=stakingGenesisState,proto3" json:"staking_genesis_state"`
 }
 
 func migrateMultiStaking(appState map[string]json.RawMessage) (map[string]json.RawMessage, error) {
