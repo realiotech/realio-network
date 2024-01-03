@@ -43,6 +43,7 @@ func CreateUpgradeHandler(
 			panic("Unable to read genesis")
 		}
 
+		// burn old balances on bonded address
 		var bankGenesis = banktypes.GenesisState{}
 		err = cdc.UnmarshalJSON(appState[banktypes.ModuleName], &bankGenesis)
 		if err != nil {
