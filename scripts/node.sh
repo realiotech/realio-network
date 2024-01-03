@@ -13,6 +13,9 @@ realio-networkd tx gov vote 1 yes --from dev0 --keyring-backend test --chain-id 
 # checkout intergrate-multistaking
 git checkout intergrate-multistaking
 # copy state to config
+# export new state
+realio-networkd export --home "$HOMEDIR" >> scripts/state.json
+# copy state
 cp scripts/state.json ~/.realio-network-tmp/config/state.json
 # build new binary
 make install
