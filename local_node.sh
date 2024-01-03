@@ -54,7 +54,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 
 	# If keys exist they should be deleted
 	for KEY in "${KEYS[@]}"; do
-		realio-networkd keys add $KEY --keyring-backend $KEYRING --algo $KEYALGO --home "$HOMEDIR"
+		realio-networkd keys add $KEY --keyring-backend $KEYRING --algo $KEYALGO --home "$HOME/.realio-network-tmp"
 	done
 
 	RST_ISSUER=$(realio-networkd keys show ${KEYS[2]} --keyring-backend $KEYRING --home "$HOMEDIR" -a)
@@ -67,6 +67,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["mint"]["params"]["mint_denom"]="ario"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["crisis"]["constant_fee"]["denom"]="ario"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="ario"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["gov"]["voting_params"]["voting_period"]="45s"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["evm"]["params"]["evm_denom"]="ario"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["asset"]["tokens"]=[{ "authorizationRequired": true, "authorized": [{ "address": "'"$RST_ISSUER"'", "authorized": true }], "manager": "'"$RST_ISSUER"'", "name": "Realio Security Token", "symbol": "rst", "total": "50000000" }]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["bank"]["denom_metadata"]=[ { "description": "The native utility, gas, evm, governance and staking token of the Realio Network", "denom_units": [ { "denom": "ario", "exponent": 0, "aliases": [ "attorio" ] }, { "denom": "rio", "exponent": 18, "aliases": [] } ], "base": "ario", "display": "rio", "name": "Realio Network Rio", "symbol": "RIO", "uri": "", "uri_hash": "" }, { "description": "Realio Security Token", "denom_units": [ { "denom": "arst", "exponent": 0, "aliases": [ "attorst" ] }, { "denom": "rst", "exponent": 18, "aliases": [] } ], "base": "arst", "display": "rst", "name": "Realio Security Token", "symbol": "RST", "uri": "", "uri_hash": "" } ]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -122,4 +123,6 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 fi
 
 # Start the node (remove the --pruning=nothing flag if historical queries are not needed)
-realio-networkd start --pruning=nothing "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0.0001ario --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --home "$HOMEDIR"
+realio-networkd start --pruning=nothing "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0.00001ario --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --home "$HOMEDIR"
+
+#realio-networkd start --pruning=nothing "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0ario --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --home "$HOMEDIR"
