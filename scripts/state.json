@@ -8,11 +8,11 @@
           "authorizationRequired": true,
           "authorized": [
             {
-              "address": "realio1uu0s78xrwgflt4kecpn8nd3y5n6n7uu3q20ks0",
+              "address": "realio1a6zwdatcwc62kpw4rl47pekfph0hv2fx7tlvd4",
               "authorized": true
             }
           ],
-          "manager": "realio1uu0s78xrwgflt4kecpn8nd3y5n6n7uu3q20ks0",
+          "manager": "realio1a6zwdatcwc62kpw4rl47pekfph0hv2fx7tlvd4",
           "name": "Realio Security Token",
           "symbol": "rst",
           "total": "50000000"
@@ -21,6 +21,19 @@
     },
     "auth": {
       "accounts": [
+        {
+          "@type": "/ethermint.types.v1.EthAccount",
+          "base_account": {
+            "account_number": "0",
+            "address": "realio180w824kck05rj6aj9wjah2an7le3z5fdpzdhm5",
+            "pub_key": {
+              "@type": "/ethermint.crypto.v1.ethsecp256k1.PubKey",
+              "key": "Ap8vUU5YA/ngCGJhjhyX4nKn1kIL3aEYu8tQlXEPwYoA"
+            },
+            "sequence": "3"
+          },
+          "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
+        },
         {
           "@type": "/cosmos.auth.v1beta1.ModuleAccount",
           "base_account": {
@@ -50,19 +63,6 @@
           ]
         },
         {
-          "@type": "/ethermint.types.v1.EthAccount",
-          "base_account": {
-            "account_number": "0",
-            "address": "realio1da6x0klnc94zwwj8p2hnvx43dulx3y5ndmelz2",
-            "pub_key": {
-              "@type": "/ethermint.crypto.v1.ethsecp256k1.PubKey",
-              "key": "Az0HBSdCqgCFg+p4IUTD5vRLa16MDYwSKYhaK9tvZDYf"
-            },
-            "sequence": "3"
-          },
-          "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
-        },
-        {
           "@type": "/cosmos.auth.v1beta1.ModuleAccount",
           "base_account": {
             "account_number": "7",
@@ -76,16 +76,6 @@
           ]
         },
         {
-          "@type": "/ethermint.types.v1.EthAccount",
-          "base_account": {
-            "account_number": "1",
-            "address": "realio13sc3dgzdg24ptcdevqn3zl65kp0enp0sm7cjv4",
-            "pub_key": null,
-            "sequence": "0"
-          },
-          "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
-        },
-        {
           "@type": "/cosmos.auth.v1beta1.ModuleAccount",
           "base_account": {
             "account_number": "4",
@@ -95,6 +85,16 @@
           },
           "name": "distribution",
           "permissions": []
+        },
+        {
+          "@type": "/ethermint.types.v1.EthAccount",
+          "base_account": {
+            "account_number": "1",
+            "address": "realio16zvg7jf36n2sqav453m62kpxwe63sk3hzwzqnm",
+            "pub_key": null,
+            "sequence": "0"
+          },
+          "code_hash": "0xc5d2460186f7233c927e7db2dcc703c0e500b653ca82273b7bfad8045d85a470"
         },
         {
           "@type": "/cosmos.auth.v1beta1.ModuleAccount",
@@ -113,7 +113,7 @@
           "@type": "/ethermint.types.v1.EthAccount",
           "base_account": {
             "account_number": "2",
-            "address": "realio1uu0s78xrwgflt4kecpn8nd3y5n6n7uu3q20ks0",
+            "address": "realio1a6zwdatcwc62kpw4rl47pekfph0hv2fx7tlvd4",
             "pub_key": null,
             "sequence": "0"
           },
@@ -145,16 +145,7 @@
     "bank": {
       "balances": [
         {
-          "address": "realio1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3uwd99d",
-          "coins": [
-            {
-              "amount": "1000000000000000000000000",
-              "denom": "ario"
-            }
-          ]
-        },
-        {
-          "address": "realio1da6x0klnc94zwwj8p2hnvx43dulx3y5ndmelz2",
+          "address": "realio180w824kck05rj6aj9wjah2an7le3z5fdpzdhm5",
           "coins": [
             {
               "amount": "7000000000000000000000000",
@@ -163,10 +154,10 @@
           ]
         },
         {
-          "address": "realio13sc3dgzdg24ptcdevqn3zl65kp0enp0sm7cjv4",
+          "address": "realio1fl48vsnmsdzcv85q5d2q4z5ajdha8yu3uwd99d",
           "coins": [
             {
-              "amount": "10000000000000000000000000",
+              "amount": "1000000000000000000000000",
               "denom": "ario"
             }
           ]
@@ -181,7 +172,16 @@
           ]
         },
         {
-          "address": "realio1uu0s78xrwgflt4kecpn8nd3y5n6n7uu3q20ks0",
+          "address": "realio16zvg7jf36n2sqav453m62kpxwe63sk3hzwzqnm",
+          "coins": [
+            {
+              "amount": "10000000000000000000000000",
+              "denom": "ario"
+            }
+          ]
+        },
+        {
+          "address": "realio1a6zwdatcwc62kpw4rl47pekfph0hv2fx7tlvd4",
           "coins": [
             {
               "amount": "10000000000000000000000000",
@@ -295,13 +295,13 @@
     "distribution": {
       "delegator_starting_infos": [
         {
-          "delegator_address": "realio1da6x0klnc94zwwj8p2hnvx43dulx3y5ndmelz2",
+          "delegator_address": "realio180w824kck05rj6aj9wjah2an7le3z5fdpzdhm5",
           "starting_info": {
             "height": "0",
             "previous_period": "1",
             "stake": "1000000000000000000000000.000000000000000000"
           },
-          "validator_address": "realiovaloper1da6x0klnc94zwwj8p2hnvx43dulx3y5ne069nv"
+          "validator_address": "realiovaloper180w824kck05rj6aj9wjah2an7le3z5fd4kwd2j"
         }
       ],
       "delegator_withdraw_infos": [],
@@ -321,7 +321,7 @@
               "denom": "ario"
             }
           ],
-          "validator_address": "realiovaloper1da6x0klnc94zwwj8p2hnvx43dulx3y5ne069nv"
+          "validator_address": "realiovaloper180w824kck05rj6aj9wjah2an7le3z5fd4kwd2j"
         }
       ],
       "params": {
@@ -330,7 +330,7 @@
         "community_tax": "0.020000000000000000",
         "withdraw_addr_enabled": true
       },
-      "previous_proposer": "realiovalcons10y47t7l0an2n5sprt6mx75tyzpawqmf8agz80w",
+      "previous_proposer": "realiovalcons1yvn45s49y50pfgsetyk8s20tehk4thqcf6r7ft",
       "validator_accumulated_commissions": [
         {
           "accumulated": {
@@ -341,7 +341,7 @@
               }
             ]
           },
-          "validator_address": "realiovaloper1da6x0klnc94zwwj8p2hnvx43dulx3y5ne069nv"
+          "validator_address": "realiovaloper180w824kck05rj6aj9wjah2an7le3z5fd4kwd2j"
         }
       ],
       "validator_current_rewards": [
@@ -355,7 +355,7 @@
               }
             ]
           },
-          "validator_address": "realiovaloper1da6x0klnc94zwwj8p2hnvx43dulx3y5ne069nv"
+          "validator_address": "realiovaloper180w824kck05rj6aj9wjah2an7le3z5fd4kwd2j"
         }
       ],
       "validator_historical_rewards": [
@@ -365,7 +365,7 @@
             "cumulative_reward_ratio": [],
             "reference_count": 2
           },
-          "validator_address": "realiovaloper1da6x0klnc94zwwj8p2hnvx43dulx3y5ne069nv"
+          "validator_address": "realiovaloper180w824kck05rj6aj9wjah2an7le3z5fd4kwd2j"
         }
       ],
       "validator_slash_events": []
@@ -376,17 +376,17 @@
     "evm": {
       "accounts": [
         {
-          "address": "0x6F7467DBf3C16A273A470aaF361AB16F3E689293",
+          "address": "0x3Bdc7556d8b3E8396BB22bA5dbABb3f7F311512D",
           "code": "",
           "storage": []
         },
         {
-          "address": "0x8C3116A04d42AA15e1b96027117f54b05F9985f0",
+          "address": "0xd0988F4931d4d5007595A477a558267675185A37",
           "code": "",
           "storage": []
         },
         {
-          "address": "0xE71F0f1Cc37213f5d6d9c06679B624A4F53F7391",
+          "address": "0xEe84e6F5787634Ab05d51Febe0E6c90dDf762926",
           "code": "",
           "storage": []
         }
@@ -451,7 +451,7 @@
       "deposits": [],
       "proposals": [
         {
-          "deposit_end_time": "2024-01-05T09:22:42.368808Z",
+          "deposit_end_time": "2024-01-05T11:09:51.257211Z",
           "final_tally_result": {
             "abstain_count": "0",
             "no_count": "0",
@@ -479,15 +479,15 @@
           ],
           "metadata": "",
           "status": "PROPOSAL_STATUS_PASSED",
-          "submit_time": "2024-01-03T09:22:42.368808Z",
+          "submit_time": "2024-01-03T11:09:51.257211Z",
           "total_deposit": [
             {
               "amount": "10000000",
               "denom": "ario"
             }
           ],
-          "voting_end_time": "2024-01-03T09:23:27.368808Z",
-          "voting_start_time": "2024-01-03T09:22:42.368808Z"
+          "voting_end_time": "2024-01-03T11:10:36.257211Z",
+          "voting_start_time": "2024-01-03T11:09:51.257211Z"
         }
       ],
       "starting_proposal_id": "2",
@@ -549,7 +549,7 @@
     "slashing": {
       "missed_blocks": [
         {
-          "address": "realiovalcons10y47t7l0an2n5sprt6mx75tyzpawqmf8agz80w",
+          "address": "realiovalcons1yvn45s49y50pfgsetyk8s20tehk4thqcf6r7ft",
           "missed_blocks": []
         }
       ],
@@ -562,9 +562,9 @@
       },
       "signing_infos": [
         {
-          "address": "realiovalcons10y47t7l0an2n5sprt6mx75tyzpawqmf8agz80w",
+          "address": "realiovalcons1yvn45s49y50pfgsetyk8s20tehk4thqcf6r7ft",
           "validator_signing_info": {
-            "address": "realiovalcons10y47t7l0an2n5sprt6mx75tyzpawqmf8agz80w",
+            "address": "realiovalcons1yvn45s49y50pfgsetyk8s20tehk4thqcf6r7ft",
             "index_offset": "48",
             "jailed_until": "1970-01-01T00:00:00Z",
             "missed_blocks_counter": "0",
@@ -577,16 +577,16 @@
     "staking": {
       "delegations": [
         {
-          "delegator_address": "realio1da6x0klnc94zwwj8p2hnvx43dulx3y5ndmelz2",
+          "delegator_address": "realio180w824kck05rj6aj9wjah2an7le3z5fdpzdhm5",
           "shares": "1000000000000000000000000.000000000000000000",
-          "validator_address": "realiovaloper1da6x0klnc94zwwj8p2hnvx43dulx3y5ne069nv"
+          "validator_address": "realiovaloper180w824kck05rj6aj9wjah2an7le3z5fd4kwd2j"
         }
       ],
       "exported": true,
       "last_total_power": "1000000",
       "last_validator_powers": [
         {
-          "address": "realiovaloper1da6x0klnc94zwwj8p2hnvx43dulx3y5ne069nv",
+          "address": "realiovaloper180w824kck05rj6aj9wjah2an7le3z5fd4kwd2j",
           "power": "1000000"
         }
       ],
@@ -609,11 +609,11 @@
               "max_rate": "0.200000000000000000",
               "rate": "0.100000000000000000"
             },
-            "update_time": "2024-01-03T09:22:31.545799Z"
+            "update_time": "2024-01-03T11:09:40.321392Z"
           },
           "consensus_pubkey": {
             "@type": "/cosmos.crypto.ed25519.PubKey",
-            "key": "RtxNtz771XRL/Ao3g2GsABy8rSdT7pziDt/oW5BaLrI="
+            "key": "GvVhyP8HvEBNNPxFR85WQC1ZhkSiqBt2+PXocpOrqz8="
           },
           "delegator_shares": "1000000000000000000000000.000000000000000000",
           "description": {
@@ -625,7 +625,7 @@
           },
           "jailed": false,
           "min_self_delegation": "1",
-          "operator_address": "realiovaloper1da6x0klnc94zwwj8p2hnvx43dulx3y5ne069nv",
+          "operator_address": "realiovaloper180w824kck05rj6aj9wjah2an7le3z5fd4kwd2j",
           "status": "BOND_STATUS_BONDED",
           "tokens": "1000000000000000000000000",
           "unbonding_height": "0",
@@ -663,16 +663,16 @@
     },
     "version": {}
   },
-  "genesis_time": "2024-01-03T09:22:31.545799Z",
+  "genesis_time": "2024-01-03T11:09:40.321392Z",
   "initial_height": "50",
   "validators": [
     {
-      "address": "792BE5FBEFECD53A40235EB66F5164107AE06D27",
+      "address": "23275A42A5251E14A219592C7829EBCDED55DC18",
       "name": "realionetworklocal",
       "power": "1000000",
       "pub_key": {
         "type": "tendermint/PubKeyEd25519",
-        "value": "RtxNtz771XRL/Ao3g2GsABy8rSdT7pziDt/oW5BaLrI="
+        "value": "GvVhyP8HvEBNNPxFR85WQC1ZhkSiqBt2+PXocpOrqz8="
       }
     }
   ]
