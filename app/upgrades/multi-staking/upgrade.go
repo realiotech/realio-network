@@ -54,19 +54,12 @@ func CreateUpgradeHandler(
 			fmt.Println(err)
 			panic("Unable to read genesis")
 		}
-
-		fmt.Println("")
-		fmt.Println("bank")
-
 		// migrate bank
 		migrateBank(ctx, bk)
-		// Mint stake to replace multi-staking coins
 
 		// migrate distribute
 		// delaccount to interdiate account
 		//
-		fmt.Println("")
-		fmt.Println("multistakingGenesis")
 
 		// migrate multistaking
 		var multistakingGenesis = multistakingtypes.GenesisState{}
