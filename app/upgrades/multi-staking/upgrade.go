@@ -26,8 +26,6 @@ import (
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	"github.com/realiotech/realio-network/app/upgrades/multi-staking/legacy"
 	types1 "github.com/cosmos/cosmos-sdk/codec/types"
-	"strconv"
-
 	"github.com/spf13/cast"
 )
 
