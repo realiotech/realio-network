@@ -12,6 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
@@ -21,6 +22,7 @@ import (
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
+	"github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 
 	"cosmossdk.io/math"
 	types1 "github.com/cosmos/cosmos-sdk/codec/types"
@@ -60,7 +62,7 @@ func CreateUpgradeHandler(
 		migrateBank(ctx, bk)
 
 		// migrate distribute
-		//
+		migrateDistr(ctx, dk)
 
 		// migrate multistaking
 		appState, err = migrateMultiStaking(appState)
@@ -106,6 +108,68 @@ func migrateBank(ctx sdk.Context, bk bankkeeper.Keeper) {
 	amount = sdk.NewCoins(sdk.NewCoin(newBondedCoinDenom, unbondedCoinsAmount))
 	bk.MintCoins(ctx, minttypes.ModuleName, amount)
 	bk.SendCoins(ctx, mintModuleAddress, unbondedPoolAddress, amount)
+}
+
+func migrateDistr(ctx sdk.Context, distrKeeper distrkeeper.Keeper) {
+	// convert DelegatorStartingInfos
+	convertDelegatorStartingInfos(ctx, distrKeeper)
+	// convert DelegatorWithdrawInfos
+	convertDelegatorWithdrawInfos(ctx, distrKeeper)
+}
+
+// convert delegator start info
+func convertDelegatorStartingInfos(ctx sdk.Context, distrKeeper distrkeeper.Keeper) {
+	delegatorStartingInfos := make([]distrtypes.DelegatorStartingInfoRecord, 0)
+	distrKeeper.IterateDelegatorStartingInfos(ctx, func(val sdk.ValAddress, del sdk.AccAddress, info distrtypes.DelegatorStartingInfo) (stop bool) {
+		delegatorStartingInfo := distrtypes.DelegatorStartingInfoRecord{
+			DelegatorAddress: del.String(),
+			ValidatorAddress: val.String(),
+			StartingInfo:     info,
+		}
+		delegatorStartingInfos = append(delegatorStartingInfos, delegatorStartingInfo)
+		return false
+	})
+
+	for _, delegatorStartingInfo := range delegatorStartingInfos {
+		delAccAddr := sdk.AccAddress(delegatorStartingInfo.DelegatorAddress)
+		valAddr := sdk.ValAddress(delegatorStartingInfo.ValidatorAddress)
+
+		// delete current state
+		distrKeeper.DeleteDelegatorStartingInfo(ctx, valAddr, delAccAddr)
+
+		// set new state
+		intermediaryAccount := types.IntermediaryDelegator(delAccAddr)
+		distrKeeper.SetDelegatorStartingInfo(ctx, valAddr, intermediaryAccount, delegatorStartingInfo.StartingInfo)
+	}
+
+}
+
+// convert delegator withdraw info
+func convertDelegatorWithdrawInfos(ctx sdk.Context, distrKeeper distrkeeper.Keeper) {
+	// Iterate current withdraw info
+	delegatorWithdrawInfos := make([]distrtypes.DelegatorWithdrawInfo, 0)
+	distrKeeper.IterateDelegatorWithdrawAddrs(ctx, func(del sdk.AccAddress, withdrawAddr sdk.AccAddress) bool {
+		delegatorWithdrawInfo := distrtypes.DelegatorWithdrawInfo{
+			DelegatorAddress: del.String(),
+			WithdrawAddress:  withdrawAddr.String(),
+		}
+		delegatorWithdrawInfos = append(delegatorWithdrawInfos, delegatorWithdrawInfo)
+		return false
+	})
+
+	// convert to new withdraw info
+	for _, delegatorWithdrawInfo := range delegatorWithdrawInfos {
+		delAccAddr := sdk.AccAddress(delegatorWithdrawInfo.DelegatorAddress)
+		withdrawAccAddr := sdk.AccAddress(delegatorWithdrawInfo.WithdrawAddress)
+
+		// delete current state
+		distrKeeper.DeleteDelegatorWithdrawAddr(ctx, delAccAddr, withdrawAccAddr)
+
+		// set new state
+		intermediaryAccount := types.IntermediaryDelegator(delAccAddr)
+		distrKeeper.SetDelegatorWithdrawAddr(ctx, intermediaryAccount, withdrawAccAddr)
+	}
+
 }
 
 type Params struct {
