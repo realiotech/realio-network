@@ -14,7 +14,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 
 	// staking
-
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -483,7 +482,6 @@ func New(
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		multistaking.NewAppModule(appCodec, app.MultiStakingKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
-		// staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		upgrade.NewAppModule(app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		params.NewAppModule(app.ParamsKeeper),
@@ -518,7 +516,6 @@ func New(
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName,
 		multistakingtypes.ModuleName,
-		// stakingtypes.ModuleName,
 		ibchost.ModuleName,
 		// no-op modules
 		ibctransfertypes.ModuleName,
@@ -541,7 +538,6 @@ func New(
 		crisistypes.ModuleName,
 		govtypes.ModuleName,
 		multistakingtypes.ModuleName,
-		// stakingtypes.ModuleName,
 		evmtypes.ModuleName,
 		feemarkettypes.ModuleName,
 		// no-op modules
@@ -576,7 +572,6 @@ func New(
 		banktypes.ModuleName,
 		distrtypes.ModuleName,
 		multistakingtypes.ModuleName,
-		// stakingtypes.ModuleName,
 		vestingtypes.ModuleName,
 		slashingtypes.ModuleName,
 		govtypes.ModuleName,
@@ -615,7 +610,6 @@ func New(
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
-		// multistaking.NewAppModule(appCodec, app.MultiStakingKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
@@ -878,36 +872,3 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 
 	return paramsKeeper
 }
-
-// func (app *RealioNetwork) setupUpgradeHandlers() {
-//// "v0.7.2" is a coordinated upgrade on testnet to upgrade sdk to v0.46.7
-// planName := "v0.0.0"
-// app.UpgradeKeeper.SetUpgradeHandler(planName, func(ctx sdk.Context, _ upgradetypes.Plan, fromVM module.VersionMap) (module.VersionMap, error) {
-//
-//	return app.mm.RunMigrations(ctx, app.configurator, fromVM)
-// })
-//
-////// When a planned update height is reached, the old binary will panic
-////// writing on disk the height and name of the update that triggered it
-////// This will read that value, and execute the preparations for the upgrade.
-// upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
-// if err != nil {
-//	panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
-//}
-//
-// if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-//	return
-//}
-//
-// var storeUpgrades *storetypes.StoreUpgrades
-//
-// switch upgradeInfo.Name {
-// case planName:
-//	// no store upgrades here
-//}
-//
-// if storeUpgrades != nil {
-//	// configure store loader that checks if version == upgradeHeight and applies store upgrades
-//	app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
-//}
-// }

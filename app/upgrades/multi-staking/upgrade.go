@@ -77,31 +77,25 @@ func CreateUpgradeHandler(
 }
 
 func migrateBank(ctx sdk.Context, bk bankkeeper.Keeper) {
-	// Send coins from bonded pool add same amout to multistaking account
-	bondedPoolBalances := bk.GetAllBalances(ctx, bondedPoolAddress)
-	bk.SendCoins(ctx, bondedPoolAddress, multiStakingAddress, bondedPoolBalances)
+	// convert bonded pool balances and send MsCoins to multi-staking module account
+	convertMsCoinsToLockCoin(ctx, bk, bondedPoolAddress)
+
+	// convert unbonded pool balances and send MsCoins to multi-staking module account
+	convertMsCoinsToLockCoin(ctx, bk, unbondedPoolAddress)
+}
+
+func convertMsCoinsToLockCoin(ctx sdk.Context, bk bankkeeper.Keeper, accAddr sdk.AccAddress) {
+	// Send coins from accAddr add same amout to multistaking account
+	accountBalances := bk.GetAllBalances(ctx, accAddr)
+	bk.SendCoins(ctx, accAddr, multiStakingAddress, accountBalances)
 	// mint stake to bonded pool
-	bondedCoinsAmount := math.ZeroInt()
-	for _, coinAmount := range bondedPoolBalances {
-		bondedCoinsAmount = bondedCoinsAmount.Add(coinAmount.Amount)
+	convertedCoinsAmount := math.ZeroInt()
+	for _, coinAmount := range accountBalances {
+		convertedCoinsAmount = convertedCoinsAmount.Add(coinAmount.Amount)
 	}
-	amount := sdk.NewCoins(sdk.NewCoin(newBondedCoinDenom, bondedCoinsAmount))
+	amount := sdk.NewCoins(sdk.NewCoin(newBondedCoinDenom, convertedCoinsAmount))
 	bk.MintCoins(ctx, minttypes.ModuleName, amount)
-	bk.SendCoins(ctx, mintModuleAddress, bondedPoolAddress, amount)
-
-	//----------------------//
-
-	// Send coins from unbonded pool add same amout to multistaking account
-	unbondedPoolBalances := bk.GetAllBalances(ctx, unbondedPoolAddress)
-	bk.SendCoins(ctx, unbondedPoolAddress, multiStakingAddress, unbondedPoolBalances)
-	// mint stake to unbonded pool
-	unbondedCoinsAmount := math.ZeroInt()
-	for _, coinAmount := range unbondedPoolBalances {
-		unbondedCoinsAmount = unbondedCoinsAmount.Add(coinAmount.Amount)
-	}
-	amount = sdk.NewCoins(sdk.NewCoin(newBondedCoinDenom, unbondedCoinsAmount))
-	bk.MintCoins(ctx, minttypes.ModuleName, amount)
-	bk.SendCoins(ctx, mintModuleAddress, unbondedPoolAddress, amount)
+	bk.SendCoins(ctx, mintModuleAddress, accAddr, amount)
 }
 
 func migrateMultiStaking(appState map[string]json.RawMessage) (map[string]json.RawMessage, error) {
