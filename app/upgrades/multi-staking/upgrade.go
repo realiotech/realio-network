@@ -234,7 +234,12 @@ func convertValidators(validators []legacy.Validator) []Validator {
 func convertDelegations(delegations []legacy.Delegation) []stakingtypes.Delegation {
 	newDelegations := make([]stakingtypes.Delegation, 0)
 	for _, del := range delegations {
-		newDel := stakingtypes.Delegation(del)
+		newDel := stakingtypes.Delegation{
+			DelegatorAddress: multistakingtypes.IntermediaryDelegator(sdk.MustAccAddressFromBech32(del.DelegatorAddress)).String(),
+			ValidatorAddress: del.ValidatorAddress,
+			Shares: del.Shares,
+		}
+
 		newDelegations = append(newDelegations, newDel)
 	}
 	return newDelegations
@@ -254,7 +259,7 @@ func convertUnbondings(ubds []legacy.UnbondingDelegation) []stakingtypes.Unbondi
 			newEntries = append(newEntries, newEntry)
 		}
 		newUbd := stakingtypes.UnbondingDelegation{
-			DelegatorAddress: ubd.DelegatorAddress,
+			DelegatorAddress: multistakingtypes.IntermediaryDelegator(sdk.MustAccAddressFromBech32(ubd.DelegatorAddress)).String(),
 			ValidatorAddress: ubd.ValidatorAddress,
 			Entries:          newEntries,
 		}
@@ -277,7 +282,7 @@ func convertRedelegations(reDels []legacy.Redelegation) []stakingtypes.Redelegat
 			newEntries = append(newEntries, newEntry)
 		}
 		newRedel := stakingtypes.Redelegation{
-			DelegatorAddress:    reDel.DelegatorAddress,
+			DelegatorAddress:    multistakingtypes.IntermediaryDelegator(sdk.MustAccAddressFromBech32(reDel.DelegatorAddress)).String(),
 			ValidatorSrcAddress: reDel.ValidatorSrcAddress,
 			ValidatorDstAddress: reDel.ValidatorDstAddress,
 			Entries:             newEntries,
