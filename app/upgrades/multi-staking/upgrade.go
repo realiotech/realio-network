@@ -78,13 +78,13 @@ func CreateUpgradeHandler(
 
 func migrateBank(ctx sdk.Context, bk bankkeeper.Keeper) {
 	// convert bonded pool balances and send MsCoins to multi-staking module account
-	convertMsCoinsToLockCoin(ctx, bk, bondedPoolAddress)
+	convertStakingModulePoolBalances(ctx, bk, bondedPoolAddress)
 
 	// convert unbonded pool balances and send MsCoins to multi-staking module account
-	convertMsCoinsToLockCoin(ctx, bk, unbondedPoolAddress)
+	convertStakingModulePoolBalances(ctx, bk, unbondedPoolAddress)
 }
 
-func convertMsCoinsToLockCoin(ctx sdk.Context, bk bankkeeper.Keeper, accAddr sdk.AccAddress) {
+func convertStakingModulePoolBalances(ctx sdk.Context, bk bankkeeper.Keeper, accAddr sdk.AccAddress) {
 	// Send coins from accAddr add same amout to multistaking account
 	accountBalances := bk.GetAllBalances(ctx, accAddr)
 	bk.SendCoins(ctx, accAddr, multiStakingAddress, accountBalances)
