@@ -34,6 +34,7 @@ var (
 	multiStakingAddress = authtypes.NewModuleAddress(multistakingtypes.ModuleName)
 	mintModuleAddress   = authtypes.NewModuleAddress(minttypes.ModuleName)
 	newBondedCoinDenom  = "stake"
+	msCoinDenomLists    = []string{"ario", "arst"}
 )
 
 func CreateUpgradeHandler(
@@ -163,6 +164,44 @@ func migrateMultiStaking(appState map[string]json.RawMessage) (map[string]json.R
 			}
 
 		}
+	}
+
+	newState.MultiStakingCoinInfo = make([]multistakingtypes.MultiStakingCoinInfo, 0)
+	for _, msCoinDenom := range msCoinDenomLists {
+		msCoinInfo := multistakingtypes.MultiStakingCoinInfo{
+			Denom:      msCoinDenom,
+			BondWeight: sdk.OneDec(),
+		}
+		newState.MultiStakingCoinInfo = append(newState.MultiStakingCoinInfo, msCoinInfo)
+	}
+
+	// Migrate state.MultiStakingUnlock field
+	newState.MultiStakingUnlocks = make([]multistakingtypes.MultiStakingUnlock, 0)
+	for _, ubd := range oldState.UnbondingDelegations {
+		unlockID := multistakingtypes.UnlockID{
+			MultiStakerAddr: ubd.DelegatorAddress,
+			ValAddr:         ubd.ValidatorAddress,
+		}
+
+		unlockEntries := make([]multistakingtypes.UnlockEntry, 0)
+		for _, entry := range ubd.Entries {
+			unlockEntry := multistakingtypes.UnlockEntry{
+				CreationHeight: entry.CreationHeight,
+				UnlockingCoin: multistakingtypes.MultiStakingCoin{
+					Denom:      entry.InitialBalance.Denom,
+					Amount:     entry.InitialBalance.Amount,
+					BondWeight: sdk.OneDec(),
+				},
+			}
+			unlockEntries = append(unlockEntries, unlockEntry)
+		}
+
+		msUnLock := multistakingtypes.MultiStakingUnlock{
+			UnlockID: unlockID,
+			Entries:  unlockEntries,
+		}
+
+		newState.MultiStakingUnlocks = append(newState.MultiStakingUnlocks, msUnLock)
 	}
 
 	newData, err := json.Marshal(&newState)
