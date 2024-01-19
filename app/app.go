@@ -435,6 +435,7 @@ func New(
 	// multi-staking keeper
 	app.MultiStakingKeeper = *multistakingkeeper.NewKeeper(
 		appCodec,
+		app.AccountKeeper,
 		app.StakingKeeper,
 		app.BankKeeper,
 		keys[multistakingtypes.StoreKey],
