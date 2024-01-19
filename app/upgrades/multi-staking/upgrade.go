@@ -18,8 +18,8 @@ import (
 	multistaking "github.com/realio-tech/multi-staking-module/x/multi-staking"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
 
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 
 	"cosmossdk.io/math"
@@ -43,7 +43,7 @@ func CreateUpgradeHandler(
 	cdc codec.Codec,
 	bk bankkeeper.Keeper,
 	msk multistakingkeeper.Keeper,
-	dk distrkeeper.Keeper,
+	ak authkeeper.AccountKeeper,
 	keys map[string]*storetypes.KVStoreKey,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
@@ -55,6 +55,10 @@ func CreateUpgradeHandler(
 		if err != nil {
 			panic(err)
 		}
+
+		// create multi staking module account
+		ak.GetModuleAccount(ctx, multistakingtypes.ModuleName)
+
 		// migrate bank
 		migrateBank(ctx, bk)
 

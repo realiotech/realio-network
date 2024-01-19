@@ -21,7 +21,7 @@ func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.AppCodec(),
 			app.BankKeeper,
 			app.MultiStakingKeeper,
-			app.DistrKeeper,
+			app.AccountKeeper,
 			app.keys,
 		),
 	)
