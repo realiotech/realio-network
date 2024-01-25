@@ -439,7 +439,6 @@ func New(
 		app.StakingKeeper,
 		app.BankKeeper,
 		keys[multistakingtypes.StoreKey],
-		tkeys[multistakingtypes.StoreKey],
 	)
 
 	// Create Transfer Keepers
