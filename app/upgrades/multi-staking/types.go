@@ -76,6 +76,5 @@ type MultiStakingGenesisState struct {
 	MultiStakingUnlocks        []multistakingtypes.MultiStakingUnlock        `protobuf:"bytes,2,rep,name=multi_staking_unlocks,json=multiStakingUnlocks,proto3" json:"multi_staking_unlocks"`
 	MultiStakingCoinInfo       []multistakingtypes.MultiStakingCoinInfo      `protobuf:"bytes,3,rep,name=multi_staking_coin_info,json=multiStakingCoinInfo,proto3" json:"multi_staking_coin_info"`
 	ValidatorMultiStakingCoins []multistakingtypes.ValidatorMultiStakingCoin `protobuf:"bytes,4,rep,name=validator_multi_staking_coins,json=validatorMultiStakingCoins,proto3" json:"validator_multi_staking_coins"`
-	IntermediaryDelegators     []string                                      `protobuf:"bytes,5,rep,name=IntermediaryDelegators,proto3" json:"IntermediaryDelegators,omitempty"`
 	StakingGenesisState        GenesisState                                  `protobuf:"bytes,6,opt,name=staking_genesis_state,json=stakingGenesisState,proto3" json:"staking_genesis_state"`
 }
