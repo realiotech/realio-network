@@ -65,15 +65,18 @@ func CreateUpgradeHandler(
 
 		// migrate multistaking
 		appState, err = migrateMultiStaking(appState)
-
-		fmt.Println()
-		fmt.Println("=============UpgradeHandler=============")
-		fmt.Printf("%s", appState[multistakingtypes.ModuleName])
-		fmt.Println("=============UpgradeHandler=============")
-
 		if err != nil {
 			panic(err)
 		}
+
+		// validate genesis
+		var genesisState multistakingtypes.GenesisState
+		cdc.MustUnmarshalJSON(appState[multistakingtypes.ModuleName], &genesisState)
+		err = genesisState.Validate()
+		if err != nil {
+			panic(err)
+		}
+
 		vm[multistakingtypes.ModuleName] = multistaking.AppModule{}.ConsensusVersion()
 		mm.Modules[multistakingtypes.ModuleName].InitGenesis(ctx, cdc, appState[multistakingtypes.ModuleName])
 
