@@ -388,6 +388,15 @@ func New(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
 
+	// multi-staking keeper
+	app.MultiStakingKeeper = *multistakingkeeper.NewKeeper(
+		appCodec,
+		app.AccountKeeper,
+		app.StakingKeeper,
+		app.BankKeeper,
+		keys[multistakingtypes.StoreKey],
+	)
+
 	// realio keeper
 	app.AssetKeeper = *assetmodulekeeper.NewKeeper(
 		appCodec,
@@ -430,15 +439,6 @@ func New(
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
 		&stakingKeeper, govRouter, app.MsgServiceRouter(), govConfig,
-	)
-
-	// multi-staking keeper
-	app.MultiStakingKeeper = *multistakingkeeper.NewKeeper(
-		appCodec,
-		app.AccountKeeper,
-		app.StakingKeeper,
-		app.BankKeeper,
-		keys[multistakingtypes.StoreKey],
 	)
 
 	// Create Transfer Keepers
