@@ -10,13 +10,12 @@ realio-networkd tx gov vote 1 yes --from dev0 --keyring-backend test --chain-id 
 
 # wait until upgrade height and cancel node process
 
-# checkout intergrate-multistaking
-git checkout intergrate-multistaking
 # copy state to config
 # export new state
-realio-networkd export --home "$HOME/.realio-network-tmp" >> scripts/state.json
-# copy state
-cp scripts/state.json ~/.realio-network-tmp/config/state.json
+realio-networkd export --home "$HOME/.realio-network-tmp" >> ~/.realio-network-tmp/config/state.json
+
+# checkout intergrate-multistaking
+git checkout intergrate-multistaking
 # build new binary
 make install
 # run node
