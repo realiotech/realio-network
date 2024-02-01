@@ -71,11 +71,13 @@ func CreateUpgradeHandler(
 			panic(err)
 		}
 
-		vm[multistakingtypes.ModuleName] = multistaking.AppModule{}.ConsensusVersion()
-		mm.Modules[multistakingtypes.ModuleName].InitGenesis(ctx, cdc, appState[multistakingtypes.ModuleName])
+		ak.GetModuleAccount(ctx, multistakingtypes.ModuleName)
 
 		// migrate bank
 		migrateBank(ctx, bk)
+
+		vm[multistakingtypes.ModuleName] = multistaking.AppModule{}.ConsensusVersion()
+		mm.Modules[multistakingtypes.ModuleName].InitGenesis(ctx, cdc, appState[multistakingtypes.ModuleName])
 
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
