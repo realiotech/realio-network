@@ -39,6 +39,22 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+## [v0.8.0.4] - 2024-03-07
+
+### Feature
+
+- [#104](https://github.com/realiotech/realio-network/pull/104):  Intergrate [multi-staking module](https://github.com/realiotech/multi-staking) version v1.0.0-rc4
+
+### Improvements
+
+- (deps) Bump cosmos-sdk version to `v0.46.12`
+- (tests) [#85](https://github.com/realiotech/realio-network/pull/85) Add test to calculate expect mint amount each block
+
+### Deprecated
+
+- Unfork module `x/staking`
+- (chore) [#84](https://github.com/realiotech/realio-network/pull/84)  Remove useless param from create-token cmd
+
 ## [v0.8.0.3] - 2023-07-10
 
 ### Bug Fixes
