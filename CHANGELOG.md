@@ -39,7 +39,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
-## [v0.8.0.4] - 2024-03-07
+## [v0.8.4] - 2024-03-07
 
 ### Feature
 
@@ -55,20 +55,20 @@ Ref: https://keepachangelog.com/en/1.0.0/
 - Unfork module `x/staking`
 - (chore) [#84](https://github.com/realiotech/realio-network/pull/84)  Remove useless param from create-token cmd
 
-## [v0.8.0.3] - 2023-07-10
+## [v0.8.3] - 2023-07-10
 
 ### Bug Fixes
 
 - (x/asset) [#80](https://github.com/realiotech/realio-network/pull/80) Update transfer token to use bank keepers BlockAddrs
 - (x/asset) [#83](https://github.com/realiotech/realio-network/pull/83) Create token will check for denom existence in bank module state
 
-## [v0.8.0.2] - 2023-06-9
+## [v0.8.2] - 2023-06-9
 
 ### Bug Fixes
 
 - (deps) [#79](https://github.com/realiotech/realio-network/pull/79) Barberry patch. Bump cosmos-sdk version to `v0.46.11-realio-4`.
 
-## [v0.8.0.1] - 2023-06-1
+## [v0.8.1] - 2023-06-1
 
 ### Improvements
 
