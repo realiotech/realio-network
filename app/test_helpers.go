@@ -170,8 +170,8 @@ func GenesisStateWithValSet(app *RealioNetwork, genesisState simapp.GenesisState
 			CoinDenom: valMsCoin.Denom,
 		})
 
-		lockId := multistakingtypes.MultiStakingLockID(genAccs[0].GetAddress().String(), sdk.ValAddress(val.Address).String())
-		lockRecord := multistakingtypes.NewMultiStakingLock(lockId, valMsCoin)
+		lockID := multistakingtypes.MultiStakingLockID(genAccs[0].GetAddress().String(), sdk.ValAddress(val.Address).String())
+		lockRecord := multistakingtypes.NewMultiStakingLock(lockID, valMsCoin)
 
 		locks = append(locks, lockRecord)
 		lockCoins = lockCoins.Add(valMsCoin.ToCoin())

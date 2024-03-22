@@ -8,7 +8,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -20,7 +19,6 @@ import (
 
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 
 	"cosmossdk.io/math"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
@@ -43,9 +41,7 @@ func CreateUpgradeHandler(
 	appOpts servertypes.AppOptions,
 	cdc codec.Codec,
 	bk bankkeeper.Keeper,
-	msk multistakingkeeper.Keeper,
 	ak authkeeper.AccountKeeper,
-	keys map[string]*storetypes.KVStoreKey,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade for multi staking...")
@@ -94,15 +90,24 @@ func migrateBank(ctx sdk.Context, bk bankkeeper.Keeper) {
 func convertStakingModulePoolBalances(ctx sdk.Context, bk bankkeeper.Keeper, accAddr sdk.AccAddress) {
 	// Send coins from accAddr add same amout to multistaking account
 	accountBalances := bk.GetAllBalances(ctx, accAddr)
-	bk.SendCoins(ctx, accAddr, multiStakingAddress, accountBalances)
+	err := bk.SendCoins(ctx, accAddr, multiStakingAddress, accountBalances)
+	if err != nil {
+		panic(err)
+	}
 	// mint stake to bonded pool
 	convertedCoinsAmount := math.ZeroInt()
 	for _, coinAmount := range accountBalances {
 		convertedCoinsAmount = convertedCoinsAmount.Add(coinAmount.Amount)
 	}
 	amount := sdk.NewCoins(sdk.NewCoin(newBondedCoinDenom, convertedCoinsAmount))
-	bk.MintCoins(ctx, minttypes.ModuleName, amount)
-	bk.SendCoins(ctx, mintModuleAddress, accAddr, amount)
+	err = bk.MintCoins(ctx, minttypes.ModuleName, amount)
+	if err != nil {
+		panic(err)
+	}
+	err = bk.SendCoins(ctx, mintModuleAddress, accAddr, amount)
+	if err != nil {
+		panic(err)
+	}
 }
 
 func migrateMultiStaking(appState map[string]json.RawMessage) (map[string]json.RawMessage, error) {
@@ -164,7 +169,6 @@ func migrateMultiStaking(appState map[string]json.RawMessage) (map[string]json.R
 				}
 				newState.MultiStakingLocks = append(newState.MultiStakingLocks, lock)
 			}
-
 		}
 	}
 

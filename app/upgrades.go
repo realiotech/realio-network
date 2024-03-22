@@ -20,15 +20,13 @@ func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			appOpts,
 			app.AppCodec(),
 			app.BankKeeper,
-			app.MultiStakingKeeper,
 			app.AccountKeeper,
-			app.keys,
 		),
 	)
 
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
-		panic(fmt.Errorf("Failed to read upgrade info from disk: %w", err))
+		panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
 	}
 
 	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
@@ -37,8 +35,7 @@ func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 
 	var storeUpgrades *storetypes.StoreUpgrades
 
-	switch upgradeInfo.Name {
-	case multistaking.UpgradeName:
+	if upgradeInfo.Name == multistaking.UpgradeName {
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{multistakingtypes.ModuleName},
 		}

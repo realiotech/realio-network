@@ -34,6 +34,7 @@ type Validator struct {
 	// status is the validator status (bonded/unbonding/unbonded).
 	Status string `protobuf:"varint,4,opt,name=status,proto3,enum=cosmos.staking.v1beta1.BondStatus" json:"status,omitempty"`
 	// tokens define the delegated tokens (incl. self-delegation).
+	//nolint:staticcheck
 	Tokens sdk.Int `protobuf:"bytes,5,opt,name=tokens,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"tokens"`
 	// delegator_shares defines total shares issued to a validator's delegators.
 	DelegatorShares sdk.Dec `protobuf:"bytes,6,opt,name=delegator_shares,json=delegatorShares,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Dec" json:"delegator_shares"`
@@ -48,14 +49,16 @@ type Validator struct {
 	// min_self_delegation is the validator's self declared minimum self delegation.
 	//
 	// Since: cosmos-sdk 0.46
+	//nolint:staticcheck
 	MinSelfDelegation sdk.Int `protobuf:"bytes,11,opt,name=min_self_delegation,json=minSelfDelegation,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"min_self_delegation"`
 }
 
 type GenesisState struct {
-	// params defines all the paramaters of related to deposit.
+	// params defines all the parameters of related to deposit.
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
 	// last_total_power tracks the total amounts of bonded tokens recorded during
 	// the previous end block.
+	//nolint:staticcheck
 	LastTotalPower sdk.Int `protobuf:"bytes,2,opt,name=last_total_power,json=lastTotalPower,proto3,customtype=github.com/cosmos/cosmos-sdk/types.Int" json:"last_total_power"`
 	// last_validator_powers is a special index that provides a historical list
 	// of the last-block's bonded validators.
@@ -71,6 +74,7 @@ type GenesisState struct {
 	Exported      bool                        `protobuf:"varint,8,opt,name=exported,proto3" json:"exported,omitempty"`
 }
 
+//nolint:revive
 type MultiStakingGenesisState struct {
 	MultiStakingLocks          []multistakingtypes.MultiStakingLock          `protobuf:"bytes,1,rep,name=multi_staking_locks,json=multiStakingLocks,proto3" json:"multi_staking_locks"`
 	MultiStakingUnlocks        []multistakingtypes.MultiStakingUnlock        `protobuf:"bytes,2,rep,name=multi_staking_unlocks,json=multiStakingUnlocks,proto3" json:"multi_staking_unlocks"`

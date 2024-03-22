@@ -17,11 +17,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"cosmossdk.io/math"
 	"github.com/realiotech/realio-network/app"
 	realiotypes "github.com/realiotech/realio-network/types"
 	"github.com/realiotech/realio-network/x/mint/types"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"cosmossdk.io/math"
 )
 
 type KeeperTestSuite struct {
@@ -102,7 +102,7 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 
 	// block 1 vs block 2
 	currentSupply := suite.app.BankKeeper.GetSupply(suite.ctx, params.MintDenom).Amount
-	annualProvisions :=  minter.Inflation.MulInt(rioSupplyCap.Sub(currentSupply))
+	annualProvisions := minter.Inflation.MulInt(rioSupplyCap.Sub(currentSupply))
 	blockProvision := annualProvisions.QuoInt(math.NewInt(int64(params.BlocksPerYear))).TruncateInt()
 	currentHeight := suite.app.LastBlockHeight()
 
@@ -117,7 +117,7 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 
 	// block 2 vs block 3
 	currentSupply = suite.app.BankKeeper.GetSupply(suite.ctx, params.MintDenom).Amount
-	annualProvisions =  minter.Inflation.MulInt(rioSupplyCap.Sub(currentSupply))
+	annualProvisions = minter.Inflation.MulInt(rioSupplyCap.Sub(currentSupply))
 	blockProvision = annualProvisions.QuoInt(math.NewInt(int64(params.BlocksPerYear))).TruncateInt()
 	currentHeight = suite.app.LastBlockHeight()
 
@@ -132,7 +132,7 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 
 	// block 3 vs block 4
 	currentSupply = suite.app.BankKeeper.GetSupply(suite.ctx, params.MintDenom).Amount
-	annualProvisions =  minter.Inflation.MulInt(rioSupplyCap.Sub(currentSupply))
+	annualProvisions = minter.Inflation.MulInt(rioSupplyCap.Sub(currentSupply))
 	blockProvision = annualProvisions.QuoInt(math.NewInt(int64(params.BlocksPerYear))).TruncateInt()
 	currentHeight = suite.app.LastBlockHeight()
 
@@ -147,7 +147,7 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 
 	// block 4 vs block 5
 	currentSupply = suite.app.BankKeeper.GetSupply(suite.ctx, params.MintDenom).Amount
-	annualProvisions =  minter.Inflation.MulInt(rioSupplyCap.Sub(currentSupply))
+	annualProvisions = minter.Inflation.MulInt(rioSupplyCap.Sub(currentSupply))
 	blockProvision = annualProvisions.QuoInt(math.NewInt(int64(params.BlocksPerYear))).TruncateInt()
 	currentHeight = suite.app.LastBlockHeight()
 
@@ -162,7 +162,7 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 
 	// block 5 vs block 6
 	currentSupply = suite.app.BankKeeper.GetSupply(suite.ctx, params.MintDenom).Amount
-	annualProvisions =  minter.Inflation.MulInt(rioSupplyCap.Sub(currentSupply))
+	annualProvisions = minter.Inflation.MulInt(rioSupplyCap.Sub(currentSupply))
 	blockProvision = annualProvisions.QuoInt(math.NewInt(int64(params.BlocksPerYear))).TruncateInt()
 	currentHeight = suite.app.LastBlockHeight()
 
