@@ -47,6 +47,9 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ### Improvements
 
+- (docs) [#127](https://github.com/realiotech/realio-network/pull/127): Update swagger docs
+- (deps) [#126](https://github.com/realiotech/realio-network/pull/126): Bump multistaking module version to v1.0.0-rc6
+- (chore) [#125](https://github.com/realiotech/realio-network/pull/125): Fix lint errors
 - (deps) Bump cosmos-sdk version to `v0.46.12`
 - (tests) [#85](https://github.com/realiotech/realio-network/pull/85) Add test to calculate expect mint amount each block
 
