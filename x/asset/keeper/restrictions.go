@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"fmt"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/realiotech/realio-network/x/asset/types"
@@ -42,6 +44,7 @@ func (k Keeper) AssetSendRestriction(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 		if isAuthorizedFrom && isAuthorizedTo {
 			continue
 		} else { //nolint:revive // superfluous else, could fix, but not worth it?
+			fmt.Println("%s is not authorized to send coin to %s with %s", fromAddr, toAddr, coin.Denom)
 			err = errorsmod.Wrapf(types.ErrNotAuthorized, "%s is not authorized to send coin to %s with %s", fromAddr, toAddr, coin.Denom)
 			break
 		}
