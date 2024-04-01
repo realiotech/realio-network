@@ -54,7 +54,7 @@ func CreateUpgradeHandler(
 		}
 
 		// migrate multistaking
-		appState, err = migrateMultiStaking(appState)
+		appState, err = MigrateMultiStaking(appState)
 		if err != nil {
 			panic(err)
 		}
@@ -76,6 +76,37 @@ func CreateUpgradeHandler(
 		mm.Modules[multistakingtypes.ModuleName].InitGenesis(ctx, cdc, appState[multistakingtypes.ModuleName])
 
 		return mm.RunMigrations(ctx, configurator, vm)
+	}
+}
+
+func UpgradeHandler2(
+	mm *module.Manager,
+	appOpts servertypes.AppOptions,
+	cdc codec.Codec,
+	bk bankkeeper.Keeper,
+	ak authkeeper.AccountKeeper,
+
+) {
+
+	nodeHome := cast.ToString(appOpts.Get(flags.FlagHome))
+	upgradeGenFile := nodeHome + "/config/state.json"
+	appState, _, err := genutiltypes.GenesisStateFromGenFile(upgradeGenFile)
+	if err != nil {
+		panic(err)
+	}
+
+	// migrate multistaking
+	appState, err = MigrateMultiStaking(appState)
+	if err != nil {
+		panic(err)
+	}
+
+	// validate genesis
+	var genesisState multistakingtypes.GenesisState
+	cdc.MustUnmarshalJSON(appState[multistakingtypes.ModuleName], &genesisState)
+	err = genesisState.Validate()
+	if err != nil {
+		panic(err)
 	}
 }
 
@@ -110,7 +141,7 @@ func convertStakingModulePoolBalances(ctx sdk.Context, bk bankkeeper.Keeper, acc
 	}
 }
 
-func migrateMultiStaking(appState map[string]json.RawMessage) (map[string]json.RawMessage, error) {
+func MigrateMultiStaking(appState map[string]json.RawMessage) (map[string]json.RawMessage, error) {
 	var oldState legacy.GenesisState
 	err := json.Unmarshal(appState[stakingtypes.ModuleName], &oldState)
 	if err != nil {

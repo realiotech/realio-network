@@ -110,6 +110,7 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v6/modules/core/keeper"
 	ibctesting "github.com/cosmos/ibc-go/v6/testing"
 	ibctestingtypes "github.com/cosmos/ibc-go/v6/testing/types"
+	multistaking_upgrades "github.com/realiotech/realio-network/app/upgrades/multi-staking"
 
 	"github.com/spf13/cast"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -665,6 +666,7 @@ func New(
 	app.SetAnteHandler(ante.NewAnteHandler(options))
 
 	app.setupUpgradeHandlers(appOpts)
+	multistaking_upgrades.UpgradeHandler2(app.mm, appOpts, appCodec, app.BankKeeper, app.AccountKeeper)
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
