@@ -11,7 +11,7 @@ func (k Keeper) AssetSendRestriction(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 	err = nil
 
 	// module whitelisted addresses can send coins without restrictions
-	if allow := k.AllowAddr(fromAddr); allow {
+	if allow := k.AllowAddr(fromAddr) || k.AllowAddr(toAddr); allow {
 		return newToAddr, nil
 	}
 
