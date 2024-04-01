@@ -1,8 +1,6 @@
 package types
 
 import (
-	"fmt"
-
 	"cosmossdk.io/math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -22,7 +20,6 @@ func (lock MultiStakingLock) Validate() error {
 	if _, err := sdk.ValAddressFromBech32(lock.LockID.ValAddr); err != nil {
 		return err
 	}
-	fmt.Println(lock.LockID)
 	return lock.LockedCoin.Validate()
 }
 
