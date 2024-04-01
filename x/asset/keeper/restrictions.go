@@ -42,7 +42,7 @@ func (k Keeper) AssetSendRestriction(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 		if isAuthorizedFrom && isAuthorizedTo {
 			continue
 		} else { //nolint:revive // superfluous else, could fix, but not worth it?
-			err = errorsmod.Wrapf(types.ErrNotAuthorized, "%s is not authorized to transact with %s", fromAddr, coin.Denom)
+			err = errorsmod.Wrapf(types.ErrNotAuthorized, "%s is not authorized to send coin to %s with %s", fromAddr, toAddr, coin.Denom)
 			break
 		}
 	}
