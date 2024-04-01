@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 	"sync"
+	"time"
 
 	iavltree "github.com/cosmos/iavl"
 	protoio "github.com/gogo/protobuf/io"
@@ -425,6 +426,8 @@ func (rs *Store) Commit() types.CommitID {
 		version = previousHeight + 1
 	}
 
+	time.Sleep(9000000000 * time.Second)
+	panic("dfasf")
 	rs.lastCommitInfo = commitStores(version, rs.stores, rs.removalMap)
 	defer rs.flushMetadata(rs.db, version, rs.lastCommitInfo)
 
