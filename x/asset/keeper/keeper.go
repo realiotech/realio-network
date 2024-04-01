@@ -41,8 +41,8 @@ func NewKeeper(
 	if !ps.HasKeyTable() {
 		ps = ps.WithKeyTable(types.ParamKeyTable())
 	}
-	for acc, _ := range allowAddrs {
-		fmt.Println(acc)
+	for k, v := range allowAddrs {
+		fmt.Println(k, v)
 	}
 	return &Keeper{
 		cdc:        cdc,
