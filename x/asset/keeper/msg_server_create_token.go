@@ -59,7 +59,6 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 	coin := sdk.Coins{{Denom: baseDenom, Amount: canonicalAmount}}
 
 	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, coin)
-
 	if err != nil {
 		panic(err)
 	}
