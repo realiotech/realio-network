@@ -2,6 +2,7 @@ package app
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/staking/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -49,6 +50,51 @@ func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 	//}
 }
 
+func removeDuplicateValueRedelegationQueueKey(app *RealioNetwork, ctx sdk.Context) {
+	// Get Staking keeper, codec and staking store
+	sk := app.StakingKeeper
+	cdc := app.AppCodec()
+	store := ctx.KVStore(app.keys[stakingtypes.ModuleName])
+
+	// remove duplicate UnbondingQueueKey
+	ubdTime := sk.UnbondingTime(ctx)
+	currTime := ctx.BlockTime()
+
+	redelegationTimesliceIterator := sk.RedelegationQueueIterator(ctx, currTime.Add(ubdTime)) // make sure to iterate all queue
+	defer redelegationTimesliceIterator.Close()
+
+	for ; redelegationTimesliceIterator.Valid(); redelegationTimesliceIterator.Next() {
+		timeslice := types.DVVTriplets{}
+		value := redelegationTimesliceIterator.Value()
+		cdc.MustUnmarshal(value, &timeslice)
+
+		triplets := removeDuplicateDVVTriplets(timeslice.Triplets)
+		bz := cdc.MustMarshal(&stakingtypes.DVVTriplets{Triplets: triplets})
+
+		store.Set(redelegationTimesliceIterator.Key(), bz)
+	}
+
+}
+
+func removeDuplicateDVVTriplets(triplets []stakingtypes.DVVTriplet) []stakingtypes.DVVTriplet {
+	var list []stakingtypes.DVVTriplet
+	for _, item := range triplets {
+		if containsDVVTriplets(list, item) == false {
+			list = append(list, item)
+		}
+	}
+	return list
+}
+
+func containsDVVTriplets(s []stakingtypes.DVVTriplet, e stakingtypes.DVVTriplet) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
+}
+
 func removeDuplicateValueUnbondingQueueKey(app *RealioNetwork, ctx sdk.Context) {
 	// Get Staking keeper, codec and staking store
 	sk := app.StakingKeeper
@@ -67,24 +113,24 @@ func removeDuplicateValueUnbondingQueueKey(app *RealioNetwork, ctx sdk.Context) 
 		value := unbondingTimesliceIterator.Value()
 		cdc.MustUnmarshal(value, &timeslice)
 
-		dvPairs := removeDuplicates(timeslice.Pairs)
+		dvPairs := removeDuplicatesDVPairs(timeslice.Pairs)
 		bz := cdc.MustMarshal(&stakingtypes.DVPairs{Pairs: dvPairs})
 
 		store.Set(unbondingTimesliceIterator.Key(), bz)
 	}
 }
 
-func removeDuplicates(dvPairs []stakingtypes.DVPair) []stakingtypes.DVPair {
+func removeDuplicatesDVPairs(dvPairs []stakingtypes.DVPair) []stakingtypes.DVPair {
 	var list []stakingtypes.DVPair
 	for _, item := range dvPairs {
-		if contains(list, item) == false {
+		if containsDVPairs(list, item) == false {
 			list = append(list, item)
 		}
 	}
 	return list
 }
 
-func contains(s []stakingtypes.DVPair, e stakingtypes.DVPair) bool {
+func containsDVPairs(s []stakingtypes.DVPair, e stakingtypes.DVPair) bool {
 	for _, a := range s {
 		if a == e {
 			return true
