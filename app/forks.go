@@ -103,7 +103,7 @@ func removeDuplicateValueRedelegationQueueKey(app *RealioNetwork, ctx sdk.Contex
 func removeDuplicateDVVTriplets(triplets []stakingtypes.DVVTriplet) []stakingtypes.DVVTriplet {
 	var list []stakingtypes.DVVTriplet
 	for _, item := range triplets {
-		if containsDVVTriplets(list, item) == false {
+		if !containsDVVTriplets(list, item) {
 			list = append(list, item)
 		}
 	}
@@ -147,7 +147,7 @@ func removeDuplicateValueUnbondingQueueKey(app *RealioNetwork, ctx sdk.Context) 
 func removeDuplicatesDVPairs(dvPairs []stakingtypes.DVPair) []stakingtypes.DVPair {
 	var list []stakingtypes.DVPair
 	for _, item := range dvPairs {
-		if containsDVPairs(list, item) == false {
+		if !containsDVPairs(list, item) {
 			list = append(list, item)
 		}
 	}
