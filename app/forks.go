@@ -9,7 +9,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-var ForkHeight = 5989487
+var ForkHeight = int64(5989487)
 var oneEnternityLater = time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC)
 
 // ScheduleForkUpgrade executes any necessary fork logic for based upon the current
@@ -21,7 +21,7 @@ var oneEnternityLater = time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC)
 //  1. Release a non-breaking patch version so that the chain can set the scheduled upgrade plan at upgrade-height.
 //  2. Release the software defined in the upgrade-info
 func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
-	if ctx.BlockHeight() == 5989487 {
+	if ctx.BlockHeight() == ForkHeight {
 
 		// remove duplicate UnbondingQueueKey
 		removeDuplicateValueUnbondingQueueKey(app, ctx)
