@@ -8,7 +8,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-var ForkHeight = 5989487
+var (
+	ForkHeight        = int64(5989487)
+	oneEnternityLater = time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC)
+)
 
 // ScheduleForkUpgrade executes any necessary fork logic for based upon the current
 // block height and chain ID (mainnet or testnet). It sets an upgrade plan once
@@ -19,7 +22,7 @@ var ForkHeight = 5989487
 //  1. Release a non-breaking patch version so that the chain can set the scheduled upgrade plan at upgrade-height.
 //  2. Release the software defined in the upgrade-info
 func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
-	if ctx.BlockHeight() == 5989487 {
+	if ctx.BlockHeight() == ForkHeight {
 
 		// remove duplicate UnbondingQueueKey
 		removeDuplicateValueUnbondingQueueKey(app, ctx)
@@ -63,11 +66,7 @@ func removeDuplicateValueRedelegationQueueKey(app *RealioNetwork, ctx sdk.Contex
 	cdc := app.AppCodec()
 	store := ctx.KVStore(app.keys[stakingtypes.ModuleName])
 
-	// remove duplicate UnbondingQueueKey
-	ubdTime := sk.UnbondingTime(ctx)
-	currTime := ctx.BlockTime()
-
-	redelegationTimesliceIterator := sk.RedelegationQueueIterator(ctx, currTime.Add(ubdTime)) // make sure to iterate all queue
+	redelegationTimesliceIterator := sk.RedelegationQueueIterator(ctx, oneEnternityLater) // make sure to iterate all queue
 	defer redelegationTimesliceIterator.Close()
 
 	for ; redelegationTimesliceIterator.Valid(); redelegationTimesliceIterator.Next() {
@@ -80,7 +79,6 @@ func removeDuplicateValueRedelegationQueueKey(app *RealioNetwork, ctx sdk.Contex
 
 		store.Set(redelegationTimesliceIterator.Key(), bz)
 	}
-
 }
 
 func removeDuplicateDVVTriplets(triplets []stakingtypes.DVVTriplet) []stakingtypes.DVVTriplet {
@@ -105,7 +103,7 @@ func containsDVVTriplets(s []stakingtypes.DVVTriplet, e stakingtypes.DVVTriplet)
 }
 
 func removeDuplicateUnbondingValidator(app *RealioNetwork, ctx sdk.Context) {
-	valIter := app.StakingKeeper.ValidatorQueueIterator(ctx, time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC), 99999999999999)
+	valIter := app.StakingKeeper.ValidatorQueueIterator(ctx, oneEnternityLater, 99999999999999)
 	defer valIter.Close()
 
 	for ; valIter.Valid(); valIter.Next() {
@@ -117,13 +115,13 @@ func removeDuplicateUnbondingValidator(app *RealioNetwork, ctx sdk.Context) {
 			vals[valAddr] = true
 		}
 
-		unique_addrs := []string{}
-		for valAddr, _ := range vals {
-			unique_addrs = append(unique_addrs, valAddr)
+		uniqueAddrs := []string{}
+		for valAddr := range vals {
+			uniqueAddrs = append(uniqueAddrs, valAddr)
 		}
-		sort.Strings(unique_addrs)
+		sort.Strings(uniqueAddrs)
 
-		ctx.KVStore(app.GetKey(stakingtypes.StoreKey)).Set(valIter.Key(), app.appCodec.MustMarshal(&stakingtypes.ValAddresses{Addresses: unique_addrs}))
+		ctx.KVStore(app.GetKey(stakingtypes.StoreKey)).Set(valIter.Key(), app.appCodec.MustMarshal(&stakingtypes.ValAddresses{Addresses: uniqueAddrs}))
 	}
 }
 
@@ -133,11 +131,7 @@ func removeDuplicateValueUnbondingQueueKey(app *RealioNetwork, ctx sdk.Context) 
 	cdc := app.AppCodec()
 	store := ctx.KVStore(app.keys[stakingtypes.ModuleName])
 
-	// remove duplicate UnbondingQueueKey
-	ubdTime := sk.UnbondingTime(ctx)
-	currTime := ctx.BlockTime()
-
-	unbondingTimesliceIterator := sk.UBDQueueIterator(ctx, currTime.Add(ubdTime)) // make sure to iterate all queue
+	unbondingTimesliceIterator := sk.UBDQueueIterator(ctx, oneEnternityLater) // make sure to iterate all queue
 	defer unbondingTimesliceIterator.Close()
 
 	for ; unbondingTimesliceIterator.Valid(); unbondingTimesliceIterator.Next() {
