@@ -1,8 +1,9 @@
 package app
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/staking/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
@@ -16,8 +17,31 @@ import (
 //  2. Release the software defined in the upgrade-info
 func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 	if ctx.BlockHeight() == 5989487 {
+
 		// remove duplicate UnbondingQueueKey
 		removeDuplicateValueUnbondingQueueKey(app, ctx)
+		removeDuplicateValueRedelegationQueueKey(app, ctx)
+
+		valIter := app.StakingKeeper.ValidatorQueueIterator(ctx, time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC), 99999999999999)
+		defer valIter.Close()
+
+		for ; valIter.Valid(); valIter.Next() {
+			addrs := stakingtypes.ValAddresses{}
+			app.appCodec.MustUnmarshal(valIter.Value(), &addrs)
+
+			vals := map[string]bool{}
+			for _, valAddr := range addrs.Addresses {
+				vals[valAddr] = true
+			}
+
+			unique_addrs := []string{}
+			for valAddr, _ := range vals {
+				unique_addrs = append(unique_addrs, valAddr)
+			}
+
+			ctx.KVStore(app.GetKey(stakingtypes.StoreKey)).Set(valIter.Key(), app.appCodec.MustMarshal(&stakingtypes.ValAddresses{Addresses: unique_addrs}))
+		}
+
 	}
 	// NOTE: there are no testnet forks for the existing versions
 	// if !types.IsMainnet(ctx.ChainID()) {
@@ -64,7 +88,7 @@ func removeDuplicateValueRedelegationQueueKey(app *RealioNetwork, ctx sdk.Contex
 	defer redelegationTimesliceIterator.Close()
 
 	for ; redelegationTimesliceIterator.Valid(); redelegationTimesliceIterator.Next() {
-		timeslice := types.DVVTriplets{}
+		timeslice := stakingtypes.DVVTriplets{}
 		value := redelegationTimesliceIterator.Value()
 		cdc.MustUnmarshal(value, &timeslice)
 
