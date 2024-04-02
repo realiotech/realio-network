@@ -1,7 +1,10 @@
 package app
 
 import (
+	"time"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // ScheduleForkUpgrade executes any necessary fork logic for based upon the current
@@ -14,6 +17,25 @@ import (
 //  2. Release the software defined in the upgrade-info
 func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 	if ctx.BlockHeight() == 5989487 {
+		valIter := app.StakingKeeper.ValidatorQueueIterator(ctx, time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC), 99999999999999)
+		defer valIter.Close()
+
+		for ; valIter.Valid(); valIter.Next() {
+			addrs := stakingtypes.ValAddresses{}
+			app.appCodec.MustUnmarshal(valIter.Value(), &addrs)
+
+			vals := map[string]bool{}
+			for _, valAddr := range addrs.Addresses {
+				vals[valAddr] = true
+			}
+
+			unique_addrs := []string{}
+			for valAddr, _ := range vals {
+				unique_addrs = append(unique_addrs, valAddr)
+			}
+
+			ctx.KVStore(app.GetKey(stakingtypes.StoreKey)).Set(valIter.Key(), app.appCodec.MustMarshal(&stakingtypes.ValAddresses{Addresses: unique_addrs}))
+		}
 
 	}
 	// NOTE: there are no testnet forks for the existing versions
