@@ -8,6 +8,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
+var ForkHeight = 5989487
+
 // ScheduleForkUpgrade executes any necessary fork logic for based upon the current
 // block height and chain ID (mainnet or testnet). It sets an upgrade plan once
 // the chain reaches the pre-defined upgrade height.
