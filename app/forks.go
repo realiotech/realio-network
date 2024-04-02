@@ -2,6 +2,7 @@ package app
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
 // ScheduleForkUpgrade executes any necessary fork logic for based upon the current
@@ -14,7 +15,8 @@ import (
 //  2. Release the software defined in the upgrade-info
 func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 	if ctx.BlockHeight() == 5989487 {
-
+		// remove duplicate UnbondingQueueKey
+		removeDuplicateValueUnbondingQueueKey(app, ctx)
 	}
 	// NOTE: there are no testnet forks for the existing versions
 	// if !types.IsMainnet(ctx.ChainID()) {
@@ -45,4 +47,48 @@ func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 	//		),
 	//	)
 	//}
+}
+
+func removeDuplicateValueUnbondingQueueKey(app *RealioNetwork, ctx sdk.Context) {
+	// Get Staking keeper, codec and staking store
+	sk := app.StakingKeeper
+	cdc := app.AppCodec()
+	store := ctx.KVStore(app.keys[stakingtypes.ModuleName])
+
+	// remove duplicate UnbondingQueueKey
+	ubdTime := sk.UnbondingTime(ctx)
+	currTime := ctx.BlockTime()
+
+	unbondingTimesliceIterator := sk.UBDQueueIterator(ctx, currTime.Add(ubdTime)) // make sure to iterate all queue
+	defer unbondingTimesliceIterator.Close()
+
+	for ; unbondingTimesliceIterator.Valid(); unbondingTimesliceIterator.Next() {
+		timeslice := stakingtypes.DVPairs{}
+		value := unbondingTimesliceIterator.Value()
+		cdc.MustUnmarshal(value, &timeslice)
+
+		dvPairs := removeDuplicates(timeslice.Pairs)
+		bz := cdc.MustMarshal(&stakingtypes.DVPairs{Pairs: dvPairs})
+
+		store.Set(unbondingTimesliceIterator.Key(), bz)
+	}
+}
+
+func removeDuplicates(dvPairs []stakingtypes.DVPair) []stakingtypes.DVPair {
+	var list []stakingtypes.DVPair
+	for _, item := range dvPairs {
+		if contains(list, item) == false {
+			list = append(list, item)
+		}
+	}
+	return list
+}
+
+func contains(s []stakingtypes.DVPair, e stakingtypes.DVPair) bool {
+	for _, a := range s {
+		if a == e {
+			return true
+		}
+	}
+	return false
 }
