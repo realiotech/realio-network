@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"sort"
 	"time"
 
@@ -9,6 +10,7 @@ import (
 )
 
 var ForkHeight = 5989487
+var oneEnternityLater = time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC)
 
 // ScheduleForkUpgrade executes any necessary fork logic for based upon the current
 // block height and chain ID (mainnet or testnet). It sets an upgrade plan once
@@ -63,11 +65,7 @@ func removeDuplicateValueRedelegationQueueKey(app *RealioNetwork, ctx sdk.Contex
 	cdc := app.AppCodec()
 	store := ctx.KVStore(app.keys[stakingtypes.ModuleName])
 
-	// remove duplicate UnbondingQueueKey
-	ubdTime := sk.UnbondingTime(ctx)
-	currTime := ctx.BlockTime()
-
-	redelegationTimesliceIterator := sk.RedelegationQueueIterator(ctx, currTime.Add(ubdTime)) // make sure to iterate all queue
+	redelegationTimesliceIterator := sk.RedelegationQueueIterator(ctx, oneEnternityLater) // make sure to iterate all queue
 	defer redelegationTimesliceIterator.Close()
 
 	for ; redelegationTimesliceIterator.Valid(); redelegationTimesliceIterator.Next() {
@@ -105,7 +103,7 @@ func containsDVVTriplets(s []stakingtypes.DVVTriplet, e stakingtypes.DVVTriplet)
 }
 
 func removeDuplicateUnbondingValidator(app *RealioNetwork, ctx sdk.Context) {
-	valIter := app.StakingKeeper.ValidatorQueueIterator(ctx, time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC), 99999999999999)
+	valIter := app.StakingKeeper.ValidatorQueueIterator(ctx, oneEnternityLater, 99999999999999)
 	defer valIter.Close()
 
 	for ; valIter.Valid(); valIter.Next() {
@@ -133,11 +131,7 @@ func removeDuplicateValueUnbondingQueueKey(app *RealioNetwork, ctx sdk.Context) 
 	cdc := app.AppCodec()
 	store := ctx.KVStore(app.keys[stakingtypes.ModuleName])
 
-	// remove duplicate UnbondingQueueKey
-	ubdTime := sk.UnbondingTime(ctx)
-	currTime := ctx.BlockTime()
-
-	unbondingTimesliceIterator := sk.UBDQueueIterator(ctx, currTime.Add(ubdTime)) // make sure to iterate all queue
+	unbondingTimesliceIterator := sk.UBDQueueIterator(ctx, oneEnternityLater) // make sure to iterate all queue
 	defer unbondingTimesliceIterator.Close()
 
 	for ; unbondingTimesliceIterator.Valid(); unbondingTimesliceIterator.Next() {
@@ -159,6 +153,7 @@ func removeDuplicatesDVPairs(dvPairs []stakingtypes.DVPair) []stakingtypes.DVPai
 			list = append(list, item)
 		}
 	}
+	fmt.Println(list, "remove dv dup")
 	return list
 }
 

@@ -13,8 +13,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var oneEnternityLater = time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC)
-
 func TestFork(t *testing.T) {
 	realio := Setup(false, nil)
 
