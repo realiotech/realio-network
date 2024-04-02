@@ -91,12 +91,12 @@ func checkDuplicateUBDQueue(ctx sdk.Context, realio RealioNetwork) bool {
 }
 
 func checkDuplicateUBD(eels []stakingtypes.DVPair) bool {
-	unique_eels := map[string]bool{}
+	uniqueEles := map[string]bool{}
 	for _, ele := range eels {
-		unique_eels[ele.String()] = true
+		uniqueEles[ele.String()] = true
 	}
 
-	return len(unique_eels) != len(eels)
+	return len(uniqueEles) != len(eels)
 }
 
 func checkDuplicateRelegationQueue(ctx sdk.Context, realio RealioNetwork) bool {
@@ -115,12 +115,12 @@ func checkDuplicateRelegationQueue(ctx sdk.Context, realio RealioNetwork) bool {
 }
 
 func checkDuplicateRedelegation(eels []stakingtypes.DVVTriplet) bool {
-	unique_eels := map[string]bool{}
+	uniqueEles := map[string]bool{}
 	for _, ele := range eels {
-		unique_eels[ele.String()] = true
+		uniqueEles[ele.String()] = true
 	}
 
-	return len(unique_eels) != len(eels)
+	return len(uniqueEles) != len(eels)
 }
 
 func checkDuplicateValQueue(ctx sdk.Context, realio RealioNetwork) bool {
@@ -139,10 +139,10 @@ func checkDuplicateValQueue(ctx sdk.Context, realio RealioNetwork) bool {
 }
 
 func checkDuplicateValAddr(eels []string) bool {
-	unique_eels := map[string]bool{}
+	uniqueEles := map[string]bool{}
 	for _, ele := range eels {
-		unique_eels[ele] = true
+		uniqueEles[ele] = true
 	}
 
-	return len(unique_eels) != len(eels)
+	return len(uniqueEles) != len(eels)
 }

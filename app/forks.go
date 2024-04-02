@@ -115,13 +115,13 @@ func removeDuplicateUnbondingValidator(app *RealioNetwork, ctx sdk.Context) {
 			vals[valAddr] = true
 		}
 
-		unique_addrs := []string{}
+		uniqueAddrs := []string{}
 		for valAddr := range vals {
-			unique_addrs = append(unique_addrs, valAddr)
+			uniqueAddrs = append(uniqueAddrs, valAddr)
 		}
-		sort.Strings(unique_addrs)
+		sort.Strings(uniqueAddrs)
 
-		ctx.KVStore(app.GetKey(stakingtypes.StoreKey)).Set(valIter.Key(), app.appCodec.MustMarshal(&stakingtypes.ValAddresses{Addresses: unique_addrs}))
+		ctx.KVStore(app.GetKey(stakingtypes.StoreKey)).Set(valIter.Key(), app.appCodec.MustMarshal(&stakingtypes.ValAddresses{Addresses: uniqueAddrs}))
 	}
 }
 
