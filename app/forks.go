@@ -12,7 +12,10 @@ import (
 //
 //  1. Release a non-breaking patch version so that the chain can set the scheduled upgrade plan at upgrade-height.
 //  2. Release the software defined in the upgrade-info
-func (app *RealioNetwork) ScheduleForkUpgrade(_ sdk.Context) {
+func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
+	if ctx.BlockHeight() == 5989487 {
+
+	}
 	// NOTE: there are no testnet forks for the existing versions
 	// if !types.IsMainnet(ctx.ChainID()) {
 	//	return
