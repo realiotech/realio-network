@@ -1,6 +1,7 @@
 package app
 
 import (
+	"sort"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -38,6 +39,7 @@ func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 			for valAddr, _ := range vals {
 				unique_addrs = append(unique_addrs, valAddr)
 			}
+			sort.Strings(unique_addrs)
 
 			ctx.KVStore(app.GetKey(stakingtypes.StoreKey)).Set(valIter.Key(), app.appCodec.MustMarshal(&stakingtypes.ValAddresses{Addresses: unique_addrs}))
 		}
