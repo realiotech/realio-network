@@ -8,8 +8,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-var ForkHeight = int64(5989487)
-var oneEnternityLater = time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC)
+var (
+	ForkHeight        = int64(5989487)
+	oneEnternityLater = time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC)
+)
 
 // ScheduleForkUpgrade executes any necessary fork logic for based upon the current
 // block height and chain ID (mainnet or testnet). It sets an upgrade plan once
@@ -77,7 +79,6 @@ func removeDuplicateValueRedelegationQueueKey(app *RealioNetwork, ctx sdk.Contex
 
 		store.Set(redelegationTimesliceIterator.Key(), bz)
 	}
-
 }
 
 func removeDuplicateDVVTriplets(triplets []stakingtypes.DVVTriplet) []stakingtypes.DVVTriplet {
@@ -114,13 +115,13 @@ func removeDuplicateUnbondingValidator(app *RealioNetwork, ctx sdk.Context) {
 			vals[valAddr] = true
 		}
 
-		unique_addrs := []string{}
-		for valAddr, _ := range vals {
-			unique_addrs = append(unique_addrs, valAddr)
+		uniqueAddrs := []string{}
+		for valAddr := range vals {
+			uniqueAddrs = append(uniqueAddrs, valAddr)
 		}
-		sort.Strings(unique_addrs)
+		sort.Strings(uniqueAddrs)
 
-		ctx.KVStore(app.GetKey(stakingtypes.StoreKey)).Set(valIter.Key(), app.appCodec.MustMarshal(&stakingtypes.ValAddresses{Addresses: unique_addrs}))
+		ctx.KVStore(app.GetKey(stakingtypes.StoreKey)).Set(valIter.Key(), app.appCodec.MustMarshal(&stakingtypes.ValAddresses{Addresses: uniqueAddrs}))
 	}
 }
 

@@ -73,7 +73,6 @@ func TestFork(t *testing.T) {
 
 	vals := stakingKeeper.GetUnbondingValidators(ctx, timeKey, ForkHeight)
 	require.Equal(t, vals[0], duplicativeVal.OperatorAddress)
-
 }
 
 func checkDuplicateUBDQueue(ctx sdk.Context, realio RealioNetwork) bool {
@@ -91,13 +90,13 @@ func checkDuplicateUBDQueue(ctx sdk.Context, realio RealioNetwork) bool {
 	return false
 }
 
-func checkDuplicateUBD(eles []stakingtypes.DVPair) bool {
-	unique_eles := map[string]bool{}
-	for _, ele := range eles {
-		unique_eles[ele.String()] = true
+func checkDuplicateUBD(eels []stakingtypes.DVPair) bool {
+	uniqueEels := map[string]bool{}
+	for _, ele := range eels {
+		uniqueEels[ele.String()] = true
 	}
 
-	return len(unique_eles) != len(eles)
+	return len(uniqueEels) != len(eels)
 }
 
 func checkDuplicateRelegationQueue(ctx sdk.Context, realio RealioNetwork) bool {
@@ -115,13 +114,13 @@ func checkDuplicateRelegationQueue(ctx sdk.Context, realio RealioNetwork) bool {
 	return false
 }
 
-func checkDuplicateRedelegation(eles []stakingtypes.DVVTriplet) bool {
-	unique_eles := map[string]bool{}
-	for _, ele := range eles {
-		unique_eles[ele.String()] = true
+func checkDuplicateRedelegation(eels []stakingtypes.DVVTriplet) bool {
+	uniqueEels := map[string]bool{}
+	for _, ele := range eels {
+		uniqueEels[ele.String()] = true
 	}
 
-	return len(unique_eles) != len(eles)
+	return len(uniqueEels) != len(eels)
 }
 
 func checkDuplicateValQueue(ctx sdk.Context, realio RealioNetwork) bool {
@@ -138,11 +137,12 @@ func checkDuplicateValQueue(ctx sdk.Context, realio RealioNetwork) bool {
 	}
 	return false
 }
-func checkDuplicateValAddr(eles []string) bool {
-	unique_eles := map[string]bool{}
-	for _, ele := range eles {
-		unique_eles[ele] = true
+
+func checkDuplicateValAddr(eels []string) bool {
+	uniqueEels := map[string]bool{}
+	for _, ele := range eels {
+		uniqueEels[ele] = true
 	}
 
-	return len(unique_eles) != len(eles)
+	return len(uniqueEels) != len(eels)
 }
