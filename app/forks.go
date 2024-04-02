@@ -112,7 +112,9 @@ func removeDuplicateDVVTriplets(triplets []stakingtypes.DVVTriplet) []stakingtyp
 
 func containsDVVTriplets(s []stakingtypes.DVVTriplet, e stakingtypes.DVVTriplet) bool {
 	for _, a := range s {
-		if a == e {
+		if a.DelegatorAddress == e.DelegatorAddress &&
+			a.ValidatorSrcAddress == e.ValidatorSrcAddress &&
+			a.ValidatorDstAddress == e.ValidatorDstAddress {
 			return true
 		}
 	}
@@ -156,7 +158,8 @@ func removeDuplicatesDVPairs(dvPairs []stakingtypes.DVPair) []stakingtypes.DVPai
 
 func containsDVPairs(s []stakingtypes.DVPair, e stakingtypes.DVPair) bool {
 	for _, a := range s {
-		if a == e {
+		if a.DelegatorAddress == e.DelegatorAddress &&
+			a.ValidatorAddress == e.ValidatorAddress {
 			return true
 		}
 	}
