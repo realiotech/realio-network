@@ -22,28 +22,7 @@ func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 		// remove duplicate UnbondingQueueKey
 		removeDuplicateValueUnbondingQueueKey(app, ctx)
 		removeDuplicateValueRedelegationQueueKey(app, ctx)
-
-		valIter := app.StakingKeeper.ValidatorQueueIterator(ctx, time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC), 99999999999999)
-		defer valIter.Close()
-
-		for ; valIter.Valid(); valIter.Next() {
-			addrs := stakingtypes.ValAddresses{}
-			app.appCodec.MustUnmarshal(valIter.Value(), &addrs)
-
-			vals := map[string]bool{}
-			for _, valAddr := range addrs.Addresses {
-				vals[valAddr] = true
-			}
-
-			unique_addrs := []string{}
-			for valAddr, _ := range vals {
-				unique_addrs = append(unique_addrs, valAddr)
-			}
-			sort.Strings(unique_addrs)
-
-			ctx.KVStore(app.GetKey(stakingtypes.StoreKey)).Set(valIter.Key(), app.appCodec.MustMarshal(&stakingtypes.ValAddresses{Addresses: unique_addrs}))
-		}
-
+		removeDuplicateUnbondingValidator(app, ctx)
 	}
 	// NOTE: there are no testnet forks for the existing versions
 	// if !types.IsMainnet(ctx.ChainID()) {
@@ -121,6 +100,29 @@ func containsDVVTriplets(s []stakingtypes.DVVTriplet, e stakingtypes.DVVTriplet)
 		}
 	}
 	return false
+}
+
+func removeDuplicateUnbondingValidator(app *RealioNetwork, ctx sdk.Context) {
+	valIter := app.StakingKeeper.ValidatorQueueIterator(ctx, time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC), 99999999999999)
+	defer valIter.Close()
+
+	for ; valIter.Valid(); valIter.Next() {
+		addrs := stakingtypes.ValAddresses{}
+		app.appCodec.MustUnmarshal(valIter.Value(), &addrs)
+
+		vals := map[string]bool{}
+		for _, valAddr := range addrs.Addresses {
+			vals[valAddr] = true
+		}
+
+		unique_addrs := []string{}
+		for valAddr, _ := range vals {
+			unique_addrs = append(unique_addrs, valAddr)
+		}
+		sort.Strings(unique_addrs)
+
+		ctx.KVStore(app.GetKey(stakingtypes.StoreKey)).Set(valIter.Key(), app.appCodec.MustMarshal(&stakingtypes.ValAddresses{Addresses: unique_addrs}))
+	}
 }
 
 func removeDuplicateValueUnbondingQueueKey(app *RealioNetwork, ctx sdk.Context) {
