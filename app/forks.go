@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"sort"
 	"time"
 
@@ -153,7 +152,6 @@ func removeDuplicatesDVPairs(dvPairs []stakingtypes.DVPair) []stakingtypes.DVPai
 			list = append(list, item)
 		}
 	}
-	fmt.Println(list, "remove dv dup")
 	return list
 }
 

@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -97,7 +96,6 @@ func checkDuplicateUBD(eles []stakingtypes.DVPair) bool {
 	for _, ele := range eles {
 		unique_eles[ele.String()] = true
 	}
-	fmt.Println(eles, "eles")
 
 	return len(unique_eles) != len(eles)
 }
