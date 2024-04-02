@@ -8,8 +8,10 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-var ForkHeight = int64(5989487)
-var oneEnternityLater = time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC)
+var (
+	ForkHeight        = int64(5989487)
+	oneEnternityLater = time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC)
+)
 
 // ScheduleForkUpgrade executes any necessary fork logic for based upon the current
 // block height and chain ID (mainnet or testnet). It sets an upgrade plan once
