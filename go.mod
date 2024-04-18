@@ -5,7 +5,7 @@ go 1.20
 require (
 	cosmossdk.io/errors v1.0.0-beta.7
 	cosmossdk.io/math v1.0.1
-	github.com/cosmos/cosmos-proto v1.0.0-beta.1
+	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/cosmos-sdk v0.46.12
 	github.com/cosmos/gogoproto v1.4.11
 	github.com/cosmos/ibc-go/v6 v6.1.1
@@ -20,12 +20,12 @@ require (
 	github.com/spf13/cast v1.5.1
 	github.com/spf13/cobra v1.7.0
 	github.com/spf13/pflag v1.0.5
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	github.com/tendermint/tendermint v0.34.27
 	github.com/tendermint/tm-db v0.6.7
 	google.golang.org/genproto/googleapis/api v0.0.0-20230726155614-23370e0ffb3e
 	google.golang.org/grpc v1.57.0
-	google.golang.org/protobuf v1.31.0
+	google.golang.org/protobuf v1.33.0
 	gopkg.in/yaml.v2 v2.4.0
 	sigs.k8s.io/yaml v1.3.0
 )
@@ -94,7 +94,7 @@ require (
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/snappy v0.0.4 // indirect
 	github.com/google/btree v1.1.2 // indirect
-	github.com/google/go-cmp v0.5.9 // indirect
+	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/orderedcode v0.0.1 // indirect
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/google/uuid v1.3.0 // indirect
