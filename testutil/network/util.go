@@ -31,8 +31,8 @@ import (
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/evmos/ethermint/server"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	"github.com/evmos/evmos/v18/server"
+	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
 
 	assettypes "github.com/realiotech/realio-network/x/asset/types"
 )

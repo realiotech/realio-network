@@ -1,9 +1,9 @@
 package ante_test
 
 import (
-	evmante "github.com/evmos/ethermint/app/ante"
-	"github.com/evmos/ethermint/encoding"
-	"github.com/evmos/ethermint/types"
+	evmante "github.com/evmos/evmos/v18/app/ante"
+	"github.com/evmos/evmos/v18/encoding"
+	"github.com/evmos/evmos/v18/types"
 	"github.com/realiotech/realio-network/app"
 	"github.com/realiotech/realio-network/app/ante"
 )

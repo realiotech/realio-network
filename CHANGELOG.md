@@ -101,7 +101,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### State Machine Breaking
 
 - (deps) [6bbb25](https://github.com/realiotech/realio-network/commit/6bbb2584e1d855dba77cde49a415fd4dba282cb5) Bump `cosmos sdk` to [`v0.46.7`](https://github.com/realiotech/cosmos-sdk/releases/tag/v0.46.x-realio-alpha-0.6)
-- (deps) [6bbb25](https://github.com/realiotech/realio-network/commit/6bbb2584e1d855dba77cde49a415fd4dba282cb5) Bump `ethermint` to [`v0.21.0-rc2`](https://github.com/evmos/ethermint/releases/tag/v0.21.0-rc1)
+- (deps) [6bbb25](https://github.com/realiotech/realio-network/commit/6bbb2584e1d855dba77cde49a415fd4dba282cb5) Bump `ethermint` to [`v0.21.0-rc2`](https://github.com/evmos/evmos/v18/releases/tag/v0.21.0-rc1)
 - (deps) [6bbb25](https://github.com/realiotech/realio-network/commit/6bbb2584e1d855dba77cde49a415fd4dba282cb5) Bump `ibc-go` to [`v6.1.0`](https://github.com/cosmos/ibc-go/releases/tag/v6.1.0)
 
 ### Bug Fixes

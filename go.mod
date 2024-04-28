@@ -3,14 +3,17 @@ module github.com/realiotech/realio-network
 go 1.20
 
 require (
-	cosmossdk.io/errors v1.0.0-beta.7
-	cosmossdk.io/math v1.0.1
+	cosmossdk.io/api v0.3.1
+	cosmossdk.io/errors v1.0.1
+	cosmossdk.io/math v1.3.0
+	cosmossdk.io/simapp v0.0.0-20230608160436-666c345ad23d
+	cosmossdk.io/tools/rosetta v0.2.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.1
-	github.com/cosmos/cosmos-sdk v0.46.12
+	github.com/cosmos/cosmos-sdk v0.47.8
 	github.com/cosmos/gogoproto v1.4.11
-	github.com/cosmos/ibc-go/v6 v6.1.1
-	github.com/ethereum/go-ethereum v1.10.26
-	github.com/evmos/ethermint v0.21.0
+	github.com/cosmos/ibc-go/v7 v7.4.0
+	github.com/ethereum/go-ethereum v1.11.5
+	github.com/evmos/evmos/v18 v18.0.0
 	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.3
 	github.com/gorilla/mux v1.8.0
@@ -197,11 +200,15 @@ replace (
 	// use Realio sdk v0.46.11-realio-4
 	// github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.11-realio-4
 
-	github.com/cosmos/cosmos-sdk => github.com/decentrio/cosmos-sdk v0.46.12-0.20240103120710-e7af80d04f39
+	// github.com/cosmos/cosmos-sdk => github.com/decentrio/cosmos-sdk v0.46.12-0.20240103120710-e7af80d04f39
 	// github.com/cosmos/cosmos-sdk => ./cosmos-sdk
 
 	// temporary fork of ethermint while evmos upgrades
-	github.com/evmos/ethermint => github.com/realiotech/ethermint v0.21.0-realio-1
+	// github.com/evmos/evmos/v18 => github.com/realiotech/ethermint v0.21.0-realio-1
+
+	// use Evmos geth fork
+	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc2
+
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
