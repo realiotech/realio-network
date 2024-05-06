@@ -25,15 +25,15 @@ func CreateUpgradeHandler(
 func fixMinCommisionRate(ctx sdk.Context, staking stakingkeeper.Keeper) {
 	// Upgrade every validators min-commission rate
 	validators := staking.GetAllValidators(ctx)
-	newComm := sdk.MustNewDecFromStr(NewMinCommisionRate)
+	minComm := sdk.MustNewDecFromStr(NewMinCommisionRate)
 	params := staking.GetParams(ctx)
-	params.MinCommissionRate = newComm
+	params.MinCommissionRate = minComm
 	staking.SetParams(ctx, params)
 	for _, v := range validators {
 		//nolint
-		if v.Commission.Rate.LT(newComm) {
+		if v.Commission.Rate.LT(minComm) {
 			// We need to remove
-			comm, err := updateValidatorCommission(ctx, staking, v, newComm)
+			comm, err := updateValidatorCommission(ctx, staking, v, minComm)
 			if err != nil {
 				panic(err)
 			}
