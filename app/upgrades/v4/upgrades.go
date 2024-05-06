@@ -1,9 +1,12 @@
 package v4
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
@@ -29,7 +32,8 @@ func fixMinCommisionRate(ctx sdk.Context, staking stakingkeeper.Keeper) {
 	for _, v := range validators {
 		//nolint
 		if v.Commission.Rate.LT(newComm) {
-			comm, err := staking.UpdateValidatorCommission(ctx, v, newComm)
+			// We need to remove
+			comm, err := updateValidatorCommission(ctx, staking, v, newComm)
 			if err != nil {
 				panic(err)
 			}
@@ -41,4 +45,24 @@ func fixMinCommisionRate(ctx sdk.Context, staking stakingkeeper.Keeper) {
 			staking.SetValidator(ctx, v)
 		}
 	}
+}
+
+func updateValidatorCommission(ctx sdk.Context, staking stakingkeeper.Keeper,
+	validator stakingtypes.Validator, newRate sdk.Dec,
+) (stakingtypes.Commission, error) {
+	commission := validator.Commission
+	blockTime := ctx.BlockHeader().Time
+
+	if newRate.LT(staking.MinCommissionRate(ctx)) {
+		return commission, fmt.Errorf("cannot set validator commission to less than minimum rate of %s", staking.MinCommissionRate(ctx))
+	}
+
+	commission.Rate = newRate
+	if commission.MaxRate.LT(newRate) {
+		commission.MaxRate = newRate
+	}
+
+	commission.UpdateTime = blockTime
+
+	return commission, nil
 }

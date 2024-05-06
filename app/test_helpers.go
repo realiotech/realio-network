@@ -81,14 +81,11 @@ func init() {
 func Setup(
 	isCheckTx bool,
 	feemarketGenesis *feemarkettypes.GenesisState,
+	numberVals int,
 ) *RealioNetwork {
-	privVal := mock.NewPV()
-	pubKey, _ := privVal.GetPubKey()
 	encCdc := MakeEncodingConfig()
 
-	// create validator set with single validator
-	validator := tmtypes.NewValidator(pubKey, 1)
-	valSet := tmtypes.NewValidatorSet([]*tmtypes.Validator{validator})
+	valSet := GenValSet(numberVals)
 
 	// generate genesis account
 	senderPrivKey := secp256k1.GenPrivKey()
@@ -241,4 +238,17 @@ func SetupTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	cfg := encoding.MakeConfig(ModuleBasics)
 	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, cfg, simapp.EmptyAppOptions{})
 	return app, simapp.NewDefaultGenesisState(cfg.Codec)
+}
+
+func GenValSet(nums int) *tmtypes.ValidatorSet {
+	vals := []*tmtypes.Validator{}
+
+	for i := 0 ; i < nums; i ++ {
+		privVal :=  mock.NewPV()
+		pubKey, _ := privVal.GetPubKey()
+		vals = append(vals, tmtypes.NewValidator(pubKey, 1))
+	}
+	valSet := tmtypes.NewValidatorSet(vals)
+
+	return valSet
 }
