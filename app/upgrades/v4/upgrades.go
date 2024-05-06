@@ -3,8 +3,8 @@ package v4
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
 func CreateUpgradeHandler(
@@ -27,7 +27,7 @@ func fixMinCommisionRate(ctx sdk.Context, staking stakingkeeper.Keeper) {
 	params.MinCommissionRate = newComm
 	staking.SetParams(ctx, params)
 	for _, v := range validators {
-		// nolint
+		//nolint
 		if v.Commission.Rate.LT(newComm) {
 			comm, err := staking.UpdateValidatorCommission(ctx, v, newComm)
 			if err != nil {
