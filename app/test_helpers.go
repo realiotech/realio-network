@@ -243,8 +243,8 @@ func SetupTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
 func GenValSet(nums int) *tmtypes.ValidatorSet {
 	vals := []*tmtypes.Validator{}
 
-	for i := 0 ; i < nums; i ++ {
-		privVal :=  mock.NewPV()
+	for i := 0; i < nums; i++ {
+		privVal := mock.NewPV()
 		pubKey, _ := privVal.GetPubKey()
 		vals = append(vals, tmtypes.NewValidator(pubKey, 1))
 	}
