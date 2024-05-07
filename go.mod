@@ -212,7 +212,7 @@ replace (
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-	github.com/realio-tech/multi-staking-module => github.com/realiotech/multi-staking v1.0.0-rc7
+	github.com/realio-tech/multi-staking-module => github.com/realiotech/multi-staking v1.0.0-rc7.0.20240506085658-3b66b35ddd2c
 
 	// github.com/realio-tech/multi-staking-module => github.com/GNaD13/multi-staking v0.0.0-20240103093120-70811831ca3b
 	// Informal Tendermint fork
