@@ -532,8 +532,6 @@ github.com/envoyproxy/go-control-plane v0.10.2-0.20220325020618-49ff273808a1/go.
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/envoyproxy/protoc-gen-validate v1.0.4 h1:gVPz/FMfvh57HdSJQyvBtF00j8JU4zdyUgIUNhlgg0A=
 github.com/envoyproxy/protoc-gen-validate v1.0.4/go.mod h1:qys6tmnRsYrQqIhm2bvKZH4Blx/1gTIZ2UKVY1M+Yew=
-github.com/evmos/ethermint v0.22.0 h1:ebJbC3Il+IbEbiGSBKUOv5lshJOibgTTgV2tNkJeo20=
-github.com/evmos/ethermint v0.22.0/go.mod h1:6ne20tWhba7JnkdOUZZSCSL8wbb3KSaSP+YHFOPvllI=
 github.com/evmos/evmos/v18 v18.0.0 h1:MaLEokmODdKTvQ/cRb6CD/oEnQHHFmM8W/angFncvI0=
 github.com/evmos/evmos/v18 v18.0.0/go.mod h1:GfZd17bX4cerdRd0/LK6134akWx+Ef+MEvyaFtUrbYY=
 github.com/evmos/go-ethereum v1.10.26-evmos-rc2 h1:tYghk1ZZ8X4/OQ4YI9hvtm8aSN8OSqO0g9vo/sCMdBo=

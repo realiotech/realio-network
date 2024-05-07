@@ -22,7 +22,6 @@ import (
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 
-	"github.com/evmos/ethermint/x/evm/vm/geth"
 	evmante "github.com/evmos/evmos/v18/app/ante"
 	"github.com/evmos/evmos/v18/encoding"
 	srvflags "github.com/evmos/evmos/v18/server/flags"
@@ -383,7 +382,7 @@ func New(
 
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey], authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, &stakingKeeper, app.FeeMarketKeeper, nil, geth.NewEVM,
+		app.AccountKeeper, app.BankKeeper, &stakingKeeper, app.FeeMarketKeeper, nil,
 		tracer, app.GetSubspace(evmtypes.ModuleName),
 	)
 
