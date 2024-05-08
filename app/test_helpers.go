@@ -5,18 +5,19 @@ import (
 	"time"
 
 	"cosmossdk.io/simapp"
+	dbm "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/log"
+	cmtypes "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmtypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	"github.com/cosmos/ibc-go/v7/testing/mock"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmtypes "github.com/tendermint/tendermint/types"
-	dbm "github.com/tendermint/tm-db"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -42,17 +43,17 @@ var DefaultTestingAppInit func() (ibctesting.TestingApp, map[string]json.RawMess
 // DefaultConsensusParams defines the default Tendermint consensus params used in
 // Evmos testing.
 var (
-	DefaultConsensusParams = &abci.ConsensusParams{
-		Block: &abci.BlockParams{
+	DefaultConsensusParams = &cmtypes.ConsensusParams{
+		Block: &cmtypes.BlockParams{
 			MaxBytes: 200000,
 			MaxGas:   -1, // no limit
 		},
-		Evidence: &tmproto.EvidenceParams{
+		Evidence: &cmtypes.EvidenceParams{
 			MaxAgeNumBlocks: 302400,
 			MaxAgeDuration:  504 * time.Hour, // 3 weeks is the max duration
 			MaxBytes:        10000,
 		},
-		Validator: &tmproto.ValidatorParams{
+		Validator: &cmtypes.ValidatorParams{
 			PubKeyTypes: []string{
 				tmtypes.ABCIPubKeyTypeEd25519,
 			},
@@ -84,7 +85,6 @@ func Setup(
 ) *RealioNetwork {
 	privVal := mock.NewPV()
 	pubKey, _ := privVal.GetPubKey()
-	encCdc := MakeEncodingConfig()
 
 	// create validator set with single validator
 	validator := tmtypes.NewValidator(pubKey, 1)
@@ -99,10 +99,10 @@ func Setup(
 	}
 
 	db := dbm.NewMemDB()
-	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, encoding.MakeConfig(ModuleBasics), simapp.EmptyAppOptions{})
+	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, encoding.MakeConfig(ModuleBasics), simtestutil.NewAppOptionsWithFlagHome(DefaultNodeHome))
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
-		genesisState := simapp.NewDefaultGenesisState(encCdc.Codec)
+		genesisState := app.DefaultGenesis()
 
 		genesisState = GenesisStateWithValSet(app, genesisState, valSet, []authtypes.GenesisAccount{acc}, balance)
 
@@ -229,7 +229,7 @@ func GenesisStateWithValSet(app *RealioNetwork, genesisState simapp.GenesisState
 	}
 
 	// update total supply
-	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{})
+	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{}, []banktypes.SendEnabled{})
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
 
 	return genesisState
@@ -239,6 +239,6 @@ func GenesisStateWithValSet(app *RealioNetwork, genesisState simapp.GenesisState
 func SetupTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	db := dbm.NewMemDB()
 	cfg := encoding.MakeConfig(ModuleBasics)
-	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, cfg, simapp.EmptyAppOptions{})
-	return app, simapp.NewDefaultGenesisState(cfg.Codec)
+	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, cfg, simtestutil.NewAppOptionsWithFlagHome(DefaultNodeHome))
+	return app, app.DefaultGenesis()
 }

@@ -1,6 +1,7 @@
 package app
 
 import (
+	"encoding/json"
 	"io"
 	"net/http"
 	"os"
@@ -835,6 +836,11 @@ func (app *RealioNetwork) AppCodec() codec.Codec {
 // InterfaceRegistry returns an InterfaceRegistry
 func (app *RealioNetwork) InterfaceRegistry() types.InterfaceRegistry {
 	return app.interfaceRegistry
+}
+
+// DefaultGenesis returns a default genesis from the registered AppModuleBasic's.
+func (a *RealioNetwork) DefaultGenesis() map[string]json.RawMessage {
+	return ModuleBasics.DefaultGenesis(a.appCodec)
 }
 
 // GetKey returns the KVStoreKey for the provided store key.

@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -24,7 +24,7 @@ func TestFork(t *testing.T) {
 		DelegatorAddress: "test_del_1",
 		ValidatorAddress: "test_val_1",
 		Entries: []stakingtypes.UnbondingDelegationEntry{
-			stakingtypes.NewUnbondingDelegationEntry(ForkHeight, timeKey, math.OneInt()),
+			stakingtypes.NewUnbondingDelegationEntry(ForkHeight, timeKey, math.OneInt(), 1),
 		},
 	}
 
@@ -36,7 +36,7 @@ func TestFork(t *testing.T) {
 		ValidatorSrcAddress: "test_val_1",
 		ValidatorDstAddress: "test_val_2",
 		Entries: []stakingtypes.RedelegationEntry{
-			stakingtypes.NewRedelegationEntry(ForkHeight, timeKey, math.OneInt(), sdk.OneDec()),
+			stakingtypes.NewRedelegationEntry(ForkHeight, timeKey, math.OneInt(), sdk.OneDec(), 1),
 		},
 	}
 	stakingKeeper.InsertRedelegationQueue(ctx, duplicativeRedelegation, timeKey)
