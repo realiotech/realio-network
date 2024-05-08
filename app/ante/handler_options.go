@@ -12,7 +12,6 @@ import (
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
-	ethante "github.com/evmos/evmos/v18/app/ante"
 	cosmosante "github.com/evmos/evmos/v18/app/ante/cosmos"
 	evmante "github.com/evmos/evmos/v18/app/ante/evm"
 	anteutils "github.com/evmos/evmos/v18/app/ante/utils"
@@ -70,17 +69,17 @@ func (options HandlerOptions) Validate() error {
 // newEthAnteHandler creates the default ante handler for Ethereum transactions
 func newEthAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
-		ethante.NewEthSetUpContextDecorator(options.EvmKeeper),                         // outermost AnteDecorator. SetUpContext must be called first
-		ethante.NewEthMempoolFeeDecorator(options.EvmKeeper),                           // Check eth effective gas price against the node's minimal-gas-prices config
-		ethante.NewEthMinGasPriceDecorator(options.FeeMarketKeeper, options.EvmKeeper), // Check eth effective gas price against the global MinGasPrice
-		ethante.NewEthValidateBasicDecorator(options.EvmKeeper),
-		ethante.NewEthSigVerificationDecorator(options.EvmKeeper),
-		ethante.NewEthAccountVerificationDecorator(options.AccountKeeper, options.EvmKeeper),
-		ethante.NewCanTransferDecorator(options.EvmKeeper),
-		ethante.NewEthGasConsumeDecorator(options.EvmKeeper, options.MaxTxGasWanted),
-		ethante.NewEthIncrementSenderSequenceDecorator(options.AccountKeeper),
-		ethante.NewGasWantedDecorator(options.EvmKeeper, options.FeeMarketKeeper),
-		ethante.NewEthEmitEventDecorator(options.EvmKeeper), // emit eth tx hash and index at the very last ante handler.
+		evmante.NewEthSetUpContextDecorator(options.EvmKeeper),                         // outermost AnteDecorator. SetUpContext must be called first
+		evmante.NewEthMempoolFeeDecorator(options.EvmKeeper),                           // Check eth effective gas price against the node's minimal-gas-prices config
+		evmante.NewEthMinGasPriceDecorator(options.FeeMarketKeeper, options.EvmKeeper), // Check eth effective gas price against the global MinGasPrice
+		evmante.NewEthValidateBasicDecorator(options.EvmKeeper),
+		evmante.NewEthSigVerificationDecorator(options.EvmKeeper),
+		evmante.NewEthAccountVerificationDecorator(options.AccountKeeper, options.EvmKeeper),
+		evmante.NewCanTransferDecorator(options.EvmKeeper),
+		evmante.NewEthGasConsumeDecorator(options.BankKeeper, options.DistributionKeeper, options.EvmKeeper, options.StakingKeeper, options.MaxTxGasWanted),
+		evmante.NewEthIncrementSenderSequenceDecorator(options.AccountKeeper),
+		evmante.NewGasWantedDecorator(options.EvmKeeper, options.FeeMarketKeeper),
+		evmante.NewEthEmitEventDecorator(options.EvmKeeper), // emit eth tx hash and index at the very last ante handler.
 	)
 }
 
