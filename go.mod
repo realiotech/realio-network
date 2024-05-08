@@ -11,7 +11,7 @@ require (
 	github.com/cometbft/cometbft-db v0.12.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/cosmos-sdk v0.47.11
-	github.com/cosmos/gogoproto v1.4.11
+	github.com/cosmos/gogoproto v1.4.10
 	github.com/cosmos/ibc-go/v7 v7.4.0
 	github.com/ethereum/go-ethereum v1.11.5
 	github.com/evmos/evmos/v18 v18.0.0
@@ -248,4 +248,7 @@ replace (
 	// github.com/realio-tech/multi-staking-module => github.com/GNaD13/multi-staking v0.0.0-20240103093120-70811831ca3b
 	// Informal Tendermint fork
 	github.com/tendermint/tendermint => github.com/cometbft/cometbft v0.34.27
+
+	// stick with compatible version or x/exp in v0.47.x line
+	golang.org/x/exp => golang.org/x/exp v0.0.0-20230711153332-06a737ee72cb
 )
