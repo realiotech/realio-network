@@ -6,6 +6,8 @@ require (
 	cosmossdk.io/errors v1.0.1
 	cosmossdk.io/math v1.3.0
 	cosmossdk.io/simapp v0.0.0-20230608160436-666c345ad23d
+	github.com/cometbft/cometbft v0.37.5
+	github.com/cometbft/cometbft-db v0.12.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/cosmos-sdk v0.47.11
 	github.com/cosmos/gogoproto v1.4.11
@@ -73,8 +75,6 @@ require (
 	github.com/cockroachdb/redact v1.1.5 // indirect
 	github.com/cockroachdb/tokenbucket v0.0.0-20230807174530-cc333fc44b06 // indirect
 	github.com/coinbase/rosetta-sdk-go v0.7.9 // indirect
-	github.com/cometbft/cometbft v0.37.5 // indirect
-	github.com/cometbft/cometbft-db v0.12.0 // indirect
 	github.com/confio/ics23/go v0.9.0 // indirect
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
@@ -241,13 +241,7 @@ require (
 
 replace (
 	// use Realio sdk v0.46.11-realio-4
-	// github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.11-realio-4
-
-	// github.com/cosmos/cosmos-sdk => github.com/decentrio/cosmos-sdk v0.46.12-0.20240103120710-e7af80d04f39
-	// github.com/cosmos/cosmos-sdk => ./cosmos-sdk
-
-	// temporary fork of ethermint while evmos upgrades
-	// github.com/evmos/evmos/v18 => github.com/realiotech/ethermint v0.21.0-realio-1
+	github.com/cosmos/cosmos-sdk => github.com/decentrio/cosmos-sdk v0.47.7-0.20240508051552-1b56300739e1
 
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc2
