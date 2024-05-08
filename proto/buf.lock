@@ -17,6 +17,11 @@ deps:
     commit: 88ef6483f90f478fb938c37dde52ece3
     digest: shake256:89c45df2aa11e0cff97b0d695436713db3d993d76792e9f8dc1ae90e6ab9a9bec55503d48ceedd6b86069ab07d3041b32001b2bfe0227fa725dd515ff381e5ba
   - remote: buf.build
+    owner: evmos
+    repository: evmos
+    commit: 01e2a00b63f444b3ab2c2f4f2109d587
+    digest: shake256:897e2fee4247d053b39baaa83f3299683ded7c72f34e311791851454d24551b10ec4935ca1a739c24f1bd32b1168a0e36cc01b59a2294fea8185f98bb70f4a06
+  - remote: buf.build
     owner: googleapis
     repository: googleapis
     commit: 1f6ed065c9f04b5cb843d6e7603d6454
