@@ -736,10 +736,12 @@ func New(
 	options := ante.HandlerOptions{
 		AccountKeeper:          app.AccountKeeper,
 		BankKeeper:             app.BankKeeper,
+		DistributionKeeper:     app.DistrKeeper,
 		SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
 		FeegrantKeeper:         app.FeeGrantKeeper,
 		SigGasConsumer:         evmante.SigVerificationGasConsumer,
 		IBCKeeper:              app.IBCKeeper,
+		StakingKeeper:          app.StakingKeeper,
 		EvmKeeper:              app.EvmKeeper,
 		FeeMarketKeeper:        app.FeeMarketKeeper,
 		MaxTxGasWanted:         maxGasWanted,
