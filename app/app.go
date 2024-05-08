@@ -23,6 +23,7 @@ import (
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 
 	evmante "github.com/evmos/evmos/v18/app/ante"
+	ethante "github.com/evmos/evmos/v18/app/ante/evm"
 	"github.com/evmos/evmos/v18/encoding"
 	srvflags "github.com/evmos/evmos/v18/server/flags"
 	ethermint "github.com/evmos/evmos/v18/types"
@@ -110,7 +111,6 @@ import (
 	ibcclientclient "github.com/cosmos/ibc-go/v7/modules/core/02-client/client"
 	ibcclienttypes "github.com/cosmos/ibc-go/v7/modules/core/02-client/types"
 	porttypes "github.com/cosmos/ibc-go/v7/modules/core/05-port/types"
-	ibchost "github.com/cosmos/ibc-go/v7/modules/core/24-host"
 	ibcexported "github.com/cosmos/ibc-go/v7/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
@@ -245,7 +245,7 @@ type RealioNetwork struct {
 	SlashingKeeper        slashingkeeper.Keeper
 	MintKeeper            mintkeeper.Keeper
 	DistrKeeper           distrkeeper.Keeper
-	GovKeeper             govkeeper.Keeper
+	GovKeeper             *govkeeper.Keeper
 	CrisisKeeper          crisiskeeper.Keeper
 	UpgradeKeeper         upgradekeeper.Keeper
 	ParamsKeeper          paramskeeper.Keeper
@@ -310,7 +310,7 @@ func New(
 		authtypes.StoreKey, banktypes.StoreKey, stakingtypes.StoreKey,
 		minttypes.StoreKey, distrtypes.StoreKey, slashingtypes.StoreKey,
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
-		evidencetypes.StoreKey, capabilitytypes.StoreKey, authzkeeper.StoreKey, consensusparamtypes.StoreKey,
+		evidencetypes.StoreKey, capabilitytypes.StoreKey, authzkeeper.StoreKey, consensusparamtypes.StoreKey, crisistypes.StoreKey,
 		// ibc keys
 		ibcexported.StoreKey, ibctransfertypes.StoreKey,
 		// realio network keys
@@ -531,9 +531,17 @@ func New(
 		govConfig.MaxMetadataLen = 10000
 	*/
 	app.GovKeeper = govkeeper.NewKeeper(
-		appCodec, keys[govtypes.StoreKey], app.GetSubspace(govtypes.ModuleName), app.AccountKeeper, app.BankKeeper,
-		&stakingKeeper, govRouter, app.MsgServiceRouter(), govConfig,
+		appCodec,
+		keys[govtypes.StoreKey],
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.StakingKeeper,
+		app.MsgServiceRouter(),
+		govConfig,
+		authAddr,
 	)
+	// Set legacy router for backwards compatibility with gov v1beta1
+	app.GovKeeper.SetLegacyRouter(govRouter)
 
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
@@ -567,16 +575,15 @@ func New(
 			app.AccountKeeper, app.StakingKeeper, app.BaseApp.DeliverTx,
 			encodingConfig.TxConfig,
 		),
-		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
-		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
-		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
-		crisis.NewAppModule(&app.CrisisKeeper, skipGenesisInvariants),
-		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
+		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
+		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
+		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
+		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
-		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
-		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
-		multistaking.NewAppModule(appCodec, app.MultiStakingKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
-		upgrade.NewAppModule(app.UpgradeKeeper),
+		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(slashingtypes.ModuleName)),
+		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
+		multistaking.NewAppModule(appCodec, app.MultiStakingKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
+		upgrade.NewAppModule(&app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
@@ -593,6 +600,8 @@ func New(
 
 		// realio network
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper),
+		// crisis
+		crisis.NewAppModule(&app.CrisisKeeper, skipGenesisInvariants, app.GetSubspace(crisistypes.ModuleName)), // always be last to make sure that it checks for all invariants and not only part of them
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -610,7 +619,7 @@ func New(
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName,
 		multistakingtypes.ModuleName,
-		ibchost.ModuleName,
+		ibcexported.ModuleName,
 		// no-op modules
 		ibctransfertypes.ModuleName,
 		authtypes.ModuleName,
@@ -635,7 +644,7 @@ func New(
 		evmtypes.ModuleName,
 		feemarkettypes.ModuleName,
 		// no-op modules
-		ibchost.ModuleName,
+		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
 		capabilitytypes.ModuleName,
 		authtypes.ModuleName,
@@ -670,7 +679,7 @@ func New(
 		slashingtypes.ModuleName,
 		govtypes.ModuleName,
 		minttypes.ModuleName,
-		ibchost.ModuleName,
+		ibcexported.ModuleName,
 		// ethermint
 		// evm module denomination is used by the feemarket module, in AnteHandle
 		evmtypes.ModuleName,
@@ -691,22 +700,21 @@ func New(
 	)
 
 	app.mm.RegisterInvariants(&app.CrisisKeeper)
-	app.mm.RegisterRoutes(app.Router(), app.QueryRouter(), encodingConfig.Amino)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	app.mm.RegisterServices(app.configurator)
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	// NOTE: this is not required apps that don't use the simulator for fuzz testing transactions
 	app.sm = module.NewSimulationManager(
-		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts),
-		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper),
-		capability.NewAppModule(appCodec, *app.CapabilityKeeper),
+		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, app.GetSubspace(authtypes.ModuleName)),
+		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, app.GetSubspace(banktypes.ModuleName)),
+		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
-		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
+		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(govtypes.ModuleName)),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
-		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
-		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
-		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
+		staking.NewAppModule(appCodec, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(authtypes.ModuleName)),
+		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(distrtypes.ModuleName)),
+		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.GetSubspace(slashingtypes.ModuleName)),
 		params.NewAppModule(app.ParamsKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
@@ -724,30 +732,29 @@ func New(
 	app.MountTransientStores(tkeys)
 	app.MountMemoryStores(memKeys)
 
-	// initialize BaseApp
-	app.SetInitChainer(app.InitChainer)
-	app.SetBeginBlocker(app.BeginBlocker)
-	app.SetEndBlocker(app.EndBlocker)
-
 	maxGasWanted := cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted))
 	options := ante.HandlerOptions{
 		AccountKeeper:          app.AccountKeeper,
 		BankKeeper:             app.BankKeeper,
 		SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
 		FeegrantKeeper:         app.FeeGrantKeeper,
-		SigGasConsumer:         evmante.DefaultSigVerificationGasConsumer,
+		SigGasConsumer:         evmante.SigVerificationGasConsumer,
 		IBCKeeper:              app.IBCKeeper,
 		EvmKeeper:              app.EvmKeeper,
 		FeeMarketKeeper:        app.FeeMarketKeeper,
 		MaxTxGasWanted:         maxGasWanted,
 		ExtensionOptionChecker: ethermint.HasDynamicFeeExtensionOption,
-		TxFeeChecker:           evmante.NewDynamicFeeChecker(app.EvmKeeper),
+		TxFeeChecker:           ethante.NewDynamicFeeChecker(app.EvmKeeper),
 	}
 
 	if err := options.Validate(); err != nil {
 		panic(err)
 	}
 
+	// initialize BaseApp
+	app.SetInitChainer(app.InitChainer)
+	app.SetBeginBlocker(app.BeginBlocker)
+	app.SetEndBlocker(app.EndBlocker)
 	app.SetAnteHandler(ante.NewAnteHandler(options))
 
 	app.setupUpgradeHandlers(appOpts)
@@ -904,7 +911,7 @@ func (app *RealioNetwork) GetStakingKeeper() ibctestingtypes.StakingKeeper {
 }
 
 // GetStakingKeeper implements the TestingApp interface.
-func (app *RealioNetwork) GetStakingKeeperSDK() stakingkeeper.Keeper {
+func (app *RealioNetwork) GetStakingKeeperSDK() *stakingkeeper.Keeper {
 	return app.StakingKeeper
 }
 
@@ -962,7 +969,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govv1.ParamKeyTable())
 	paramsKeeper.Subspace(crisistypes.ModuleName)
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName)
-	paramsKeeper.Subspace(ibchost.ModuleName)
+	paramsKeeper.Subspace(ibcexported.ModuleName)
 	// realio network subspaces
 	paramsKeeper.Subspace(assetmoduletypes.ModuleName)
 	// ethermint subspaces

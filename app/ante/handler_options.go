@@ -13,6 +13,8 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 
 	ethante "github.com/evmos/evmos/v18/app/ante"
+	evmante "github.com/evmos/evmos/v18/app/ante/evm"
+	anteutils "github.com/evmos/evmos/v18/app/ante/utils"
 	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
 )
 
@@ -24,13 +26,13 @@ type HandlerOptions struct {
 	BankKeeper             evmtypes.BankKeeper
 	ExtensionOptionChecker ante.ExtensionOptionChecker
 	IBCKeeper              *ibckeeper.Keeper
-	FeeMarketKeeper        ethante.FeeMarketKeeper
-	EvmKeeper              ethante.EVMKeeper
+	FeeMarketKeeper        evmante.FeeMarketKeeper
+	EvmKeeper              evmante.EVMKeeper
 	FeegrantKeeper         ante.FeegrantKeeper
 	SignModeHandler        authsigning.SignModeHandler
 	SigGasConsumer         func(meter sdk.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
 	MaxTxGasWanted         uint64
-	TxFeeChecker           ante.TxFeeChecker
+	TxFeeChecker           anteutils.TxFeeChecker
 }
 
 // Validate checks if the keepers are defined

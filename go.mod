@@ -241,7 +241,7 @@ require (
 
 replace (
 	// use Realio sdk v0.46.11-realio-4
-	github.com/cosmos/cosmos-sdk => github.com/decentrio/cosmos-sdk v0.47.7-0.20240508051552-1b56300739e1
+	github.com/cosmos/cosmos-sdk => github.com/decentrio/cosmos-sdk v0.47.7-0.20240508081542-878a24c04540
 
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc2
