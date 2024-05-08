@@ -240,6 +240,9 @@ replace (
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc2
 
+	// fork evmos
+	github.com/evmos/evmos/v18 => github.com/decentrio/evmos/v18 v18.0.0-20240508105857-26c964ae2a13
+
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 

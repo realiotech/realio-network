@@ -459,6 +459,8 @@ github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/decentrio/cosmos-sdk v0.47.7-0.20240508103354-487f6dc2ee5b h1:AVU7+65sl84eSOj7bqeFiyqLMPWP/vJmeNianEn3OjU=
 github.com/decentrio/cosmos-sdk v0.47.7-0.20240508103354-487f6dc2ee5b/go.mod h1:ADjORYzUQqQv/FxDi0H0K5gW/rAk1CiDR3ZKsExfJV0=
+github.com/decentrio/evmos/v18 v18.0.0-20240508105857-26c964ae2a13 h1:8wXHGCppeEOLjyh4Ix9LZmkLApbR+sZgz96txlMn0y4=
+github.com/decentrio/evmos/v18 v18.0.0-20240508105857-26c964ae2a13/go.mod h1:GfZd17bX4cerdRd0/LK6134akWx+Ef+MEvyaFtUrbYY=
 github.com/deckarep/golang-set v1.8.0 h1:sk9/l/KqpunDwP7pSjUg0keiOOLEnOBHzykLrsPppp4=
 github.com/deckarep/golang-set v1.8.0/go.mod h1:5nI87KwE7wgsBU1F4GKAw2Qod7p5kyS383rP6+o6qqo=
 github.com/decred/dcrd/crypto/blake256 v1.0.0/go.mod h1:sQl2p6Y26YV+ZOcSTP6thNdn47hh8kt6rqSlvmrXFAc=
@@ -523,8 +525,6 @@ github.com/envoyproxy/go-control-plane v0.10.2-0.20220325020618-49ff273808a1/go.
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
 github.com/envoyproxy/protoc-gen-validate v1.0.4 h1:gVPz/FMfvh57HdSJQyvBtF00j8JU4zdyUgIUNhlgg0A=
 github.com/envoyproxy/protoc-gen-validate v1.0.4/go.mod h1:qys6tmnRsYrQqIhm2bvKZH4Blx/1gTIZ2UKVY1M+Yew=
-github.com/evmos/evmos/v18 v18.0.0 h1:MaLEokmODdKTvQ/cRb6CD/oEnQHHFmM8W/angFncvI0=
-github.com/evmos/evmos/v18 v18.0.0/go.mod h1:GfZd17bX4cerdRd0/LK6134akWx+Ef+MEvyaFtUrbYY=
 github.com/evmos/go-ethereum v1.10.26-evmos-rc2 h1:tYghk1ZZ8X4/OQ4YI9hvtm8aSN8OSqO0g9vo/sCMdBo=
 github.com/evmos/go-ethereum v1.10.26-evmos-rc2/go.mod h1:/6CsT5Ceen2WPLI/oCA3xMcZ5sWMF/D46SjM/ayY0Oo=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
