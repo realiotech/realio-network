@@ -6,6 +6,7 @@ require (
 	cosmossdk.io/errors v1.0.1
 	cosmossdk.io/math v1.3.0
 	cosmossdk.io/simapp v0.0.0-20230608160436-666c345ad23d
+	cosmossdk.io/tools/rosetta v0.2.1
 	github.com/cometbft/cometbft v0.37.5
 	github.com/cometbft/cometbft-db v0.12.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.5
@@ -14,7 +15,6 @@ require (
 	github.com/cosmos/ibc-go/v7 v7.4.0
 	github.com/ethereum/go-ethereum v1.11.5
 	github.com/evmos/evmos/v18 v18.0.0
-	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/mux v1.8.1
 	github.com/gorilla/websocket v1.5.1
@@ -27,7 +27,6 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/stretchr/testify v1.9.0
 	github.com/tendermint/tendermint v0.34.27
-	github.com/tendermint/tm-db v0.6.7
 	google.golang.org/genproto/googleapis/api v0.0.0-20240123012728-ef4313101c80
 	google.golang.org/grpc v1.62.1
 	google.golang.org/protobuf v1.33.0
@@ -45,7 +44,6 @@ require (
 	cosmossdk.io/core v0.6.1 // indirect
 	cosmossdk.io/depinject v1.0.0-alpha.4 // indirect
 	cosmossdk.io/log v1.3.1 // indirect
-	cosmossdk.io/tools/rosetta v0.2.1 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
@@ -53,7 +51,6 @@ require (
 	github.com/DataDog/zstd v1.5.2 // indirect
 	github.com/StackExchange/wmi v1.2.1 // indirect
 	github.com/VictoriaMetrics/fastcache v1.6.0 // indirect
-	github.com/Workiva/go-datastructures v1.0.53 // indirect
 	github.com/alitto/pond v1.8.3 // indirect
 	github.com/armon/go-metrics v0.4.1 // indirect
 	github.com/aws/aws-sdk-go v1.44.224 // indirect
@@ -65,7 +62,6 @@ require (
 	github.com/btcsuite/btcd/btcutil v1.1.3 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.1 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.3 // indirect
-	github.com/cespare/xxhash v1.1.0 // indirect
 	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/chzyer/readline v1.5.1 // indirect
 	github.com/cockroachdb/apd/v2 v2.0.2 // indirect
@@ -79,7 +75,6 @@ require (
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
-	github.com/cosmos/gorocksdb v1.2.0 // indirect
 	github.com/cosmos/iavl v0.21.0-alpha.1.0.20230904092046-df3db2d96583 // indirect
 	github.com/cosmos/ics23/go v0.10.0 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.4 // indirect
@@ -93,10 +88,8 @@ require (
 	github.com/deckarep/golang-set v1.8.0 // indirect
 	github.com/decred/dcrd/dcrec/secp256k1/v4 v4.2.0 // indirect
 	github.com/desertbit/timer v0.0.0-20180107155436-c41aec40b27f // indirect
-	github.com/dgraph-io/badger/v2 v2.2007.4 // indirect
 	github.com/dgraph-io/badger/v4 v4.2.0 // indirect
 	github.com/dgraph-io/ristretto v0.1.1 // indirect
-	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/dlclark/regexp2 v1.4.1-0.20201116162257-a2a8dda75c91 // indirect
 	github.com/dop251/goja v0.0.0-20220405120441-9037c2b61cbf // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
@@ -116,6 +109,7 @@ require (
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
+	github.com/gogo/protobuf v1.3.3 // indirect
 	github.com/golang/glog v1.2.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
