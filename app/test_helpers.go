@@ -26,6 +26,7 @@ import (
 	"github.com/evmos/evmos/v18/encoding"
 	feemarkettypes "github.com/evmos/evmos/v18/x/feemarket/types"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/realiotech/realio-network/cmd/config"
 	"github.com/realiotech/realio-network/types"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
@@ -99,7 +100,7 @@ func Setup(
 	}
 
 	db := dbm.NewMemDB()
-	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, encoding.MakeConfig(ModuleBasics), simtestutil.NewAppOptionsWithFlagHome(DefaultNodeHome))
+	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, encoding.MakeConfig(ModuleBasics), simtestutil.NewAppOptionsWithFlagHome(DefaultNodeHome), baseapp.SetChainID(types.MainnetChainID+"-1"))
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
 		genesisState := app.DefaultGenesis()
