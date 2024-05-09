@@ -4,24 +4,24 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/crypto/tmhash"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
+	"github.com/cometbft/cometbft/version"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/evmos/evmos/v18/crypto/ethsecp256k1"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/cometbft/cometbft/crypto/tmhash"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
-	"github.com/cometbft/cometbft/version"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"cosmossdk.io/math"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/realiotech/realio-network/app"
 	realiotypes "github.com/realiotech/realio-network/types"
 	"github.com/realiotech/realio-network/x/mint/types"
-	abci "github.com/cometbft/cometbft/abci/types"
 )
 
 type KeeperTestSuite struct {
@@ -58,7 +58,7 @@ func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 	// Set Context
 	suite.ctx = suite.app.BaseApp.NewContext(checkTx, tmproto.Header{
 		Height:          1,
-		ChainID:         realiotypes.MainnetChainID,
+		ChainID:         realiotypes.MainnetChainID + "-1",
 		Time:            time.Now().UTC(),
 		ProposerAddress: consAddress.Bytes(),
 
@@ -107,7 +107,10 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	currentHeight := suite.app.LastBlockHeight()
 
 	// block 2
-	header := tmproto.Header{Height: currentHeight + 1}
+	header := tmproto.Header{
+		Height:  currentHeight + 1,
+		ChainID: realiotypes.MainnetChainID + "-1",
+	}
 	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
 
 	newSupply := suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
@@ -122,7 +125,10 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	currentHeight = suite.app.LastBlockHeight()
 
 	// block 3
-	header = tmproto.Header{Height: currentHeight + 1}
+	header = tmproto.Header{
+		Height:  currentHeight + 1,
+		ChainID: realiotypes.MainnetChainID + "-1",
+	}
 	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
@@ -137,7 +143,10 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	currentHeight = suite.app.LastBlockHeight()
 
 	// block 4
-	header = tmproto.Header{Height: currentHeight + 1}
+	header = tmproto.Header{
+		Height:  currentHeight + 1,
+		ChainID: realiotypes.MainnetChainID + "-1",
+	}
 	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
@@ -152,7 +161,10 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	currentHeight = suite.app.LastBlockHeight()
 
 	// block 5
-	header = tmproto.Header{Height: currentHeight + 1}
+	header = tmproto.Header{
+		Height:  currentHeight + 1,
+		ChainID: realiotypes.MainnetChainID + "-1",
+	}
 	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
@@ -167,7 +179,10 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	currentHeight = suite.app.LastBlockHeight()
 
 	// block 6
-	header = tmproto.Header{Height: currentHeight + 1}
+	header = tmproto.Header{
+		Height:  currentHeight + 1,
+		ChainID: realiotypes.MainnetChainID + "-1",
+	}
 	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
