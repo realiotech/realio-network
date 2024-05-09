@@ -17,6 +17,7 @@ import (
 	"github.com/evmos/evmos/v18/crypto/ethsecp256k1"
 	"github.com/realiotech/realio-network/app"
 	realiotypes "github.com/realiotech/realio-network/types"
+	"github.com/realiotech/realio-network/x/mint/keeper"
 	"github.com/realiotech/realio-network/x/mint/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -25,11 +26,11 @@ import (
 type KeeperTestSuite struct {
 	suite.Suite
 
-	app         *app.RealioNetwork
-	ctx         sdk.Context
-	queryClient types.QueryClient
-	address     common.Address
-
+	app              *app.RealioNetwork
+	ctx              sdk.Context
+	queryClient      types.QueryClient
+	address          common.Address
+	msgServer        types.MsgServer
 	legacyQuerierCdc *codec.AminoCodec
 }
 
@@ -83,7 +84,7 @@ func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 	queryHelper := baseapp.NewQueryServerTestHelper(suite.ctx, suite.app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, suite.app.MintKeeper)
 	suite.queryClient = types.NewQueryClient(queryHelper)
-
+	suite.msgServer = keeper.NewMsgServerImpl(suite.app.MintKeeper)
 	suite.legacyQuerierCdc = codec.NewAminoCodec(suite.app.LegacyAmino())
 }
 
@@ -188,4 +189,50 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	expectedMintedAmount = newSupply.Sub(currentSupply).String()
 	calculatedMintedAmount = blockProvision.String()
 	suite.Require().Equal(expectedMintedAmount, calculatedMintedAmount)
+}
+
+func (s *KeeperTestSuite) TestParams() {
+	testCases := []struct {
+		name      string
+		input     types.Params
+		expectErr bool
+	}{
+		{
+			name: "set invalid params",
+			input: types.Params{
+				MintDenom:     sdk.DefaultBondDenom,
+				InflationRate: sdk.NewDecWithPrec(-13, 2),
+				BlocksPerYear: uint64(60 * 60 * 8766 / 5),
+			},
+			expectErr: true,
+		},
+		{
+			name: "set full valid params",
+			input: types.Params{
+				MintDenom:     sdk.DefaultBondDenom,
+				InflationRate: sdk.NewDecWithPrec(12, 2),
+				BlocksPerYear: uint64(60 * 60 * 8766 / 5),
+			},
+			expectErr: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		s.Run(tc.name, func() {
+			s.DoSetupTest(s.T())
+			expected := s.app.MintKeeper.GetParams(s.ctx)
+			err := s.app.MintKeeper.SetParams(s.ctx, tc.input)
+			if tc.expectErr {
+				s.Require().Error(err)
+			} else {
+				expected = tc.input
+				s.Require().NoError(err)
+			}
+
+			p := s.app.MintKeeper.GetParams(s.ctx)
+			s.Require().Equal(expected, p)
+		})
+	}
 }
