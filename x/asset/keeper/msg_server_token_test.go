@@ -5,11 +5,9 @@ import (
 	"strings"
 
 	"cosmossdk.io/math"
-	realionetworktypes "github.com/realiotech/realio-network/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
+	realionetworktypes "github.com/realiotech/realio-network/types"
 	"github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/asset/types"
 )

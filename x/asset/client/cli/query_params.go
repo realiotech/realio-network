@@ -5,9 +5,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/spf13/cobra"
-
 	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/spf13/cobra"
 )
 
 func CmdQueryParams() *cobra.Command {

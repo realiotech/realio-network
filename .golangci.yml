@@ -6,10 +6,10 @@ run:
 linters:
   disable-all: true
   enable:
-    - depguard
     - dogsled
     - errcheck
     - exportloopref
+    - gci
     - goconst
     - gocritic
     - gofumpt
@@ -24,6 +24,7 @@ linters:
     - staticcheck
     - stylecheck
     - typecheck
+    - thelper
     - unconvert
     - unparam
     - unused

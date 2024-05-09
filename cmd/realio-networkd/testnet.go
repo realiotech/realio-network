@@ -8,16 +8,10 @@ import (
 	"os"
 	"path/filepath"
 
-	minttypes "github.com/realiotech/realio-network/x/mint/types"
-
-	"github.com/ethereum/go-ethereum/common"
-
 	tmconfig "github.com/cometbft/cometbft/config"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cometbft/cometbft/types"
 	tmtime "github.com/cometbft/cometbft/types/time"
-	"github.com/spf13/cobra"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -36,16 +30,16 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/evmos/evmos/v18/crypto/hd"
 	"github.com/evmos/evmos/v18/server/config"
 	srvflags "github.com/evmos/evmos/v18/server/flags"
-
 	ethermint "github.com/evmos/evmos/v18/types"
 	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
-
 	cmdcfg "github.com/realiotech/realio-network/cmd/config"
 	"github.com/realiotech/realio-network/testutil/network"
+	minttypes "github.com/realiotech/realio-network/x/mint/types"
+	"github.com/spf13/cobra"
 )
 
 var (

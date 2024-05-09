@@ -11,7 +11,6 @@ import (
 	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	ibcante "github.com/cosmos/ibc-go/v7/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
-
 	cosmosante "github.com/evmos/evmos/v18/app/ante/cosmos"
 	evmante "github.com/evmos/evmos/v18/app/ante/evm"
 	anteutils "github.com/evmos/evmos/v18/app/ante/utils"

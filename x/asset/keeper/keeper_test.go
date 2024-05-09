@@ -11,14 +11,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/evmos/evmos/v18/crypto/ethsecp256k1"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-
 	"github.com/realiotech/realio-network/app"
+	"github.com/realiotech/realio-network/testutil"
 	realiotypes "github.com/realiotech/realio-network/types"
 	"github.com/realiotech/realio-network/x/asset/types"
-
-	"github.com/realiotech/realio-network/testutil"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 type KeeperTestSuite struct {

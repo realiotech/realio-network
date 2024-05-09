@@ -6,9 +6,6 @@ import (
 	"path/filepath"
 	"time"
 
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	minttypes "github.com/realiotech/realio-network/x/mint/types"
-
 	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cometbft/cometbft/node"
 	"github.com/cometbft/cometbft/p2p"
@@ -17,8 +14,6 @@ import (
 	"github.com/cometbft/cometbft/rpc/client/local"
 	"github.com/cometbft/cometbft/types"
 	tmtime "github.com/cometbft/cometbft/types/time"
-	"github.com/ethereum/go-ethereum/ethclient"
-
 	"github.com/cosmos/cosmos-sdk/server/api"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
 	srvtypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -29,12 +24,13 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/evmos/evmos/v18/server"
 	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
-
 	assettypes "github.com/realiotech/realio-network/x/asset/types"
+	minttypes "github.com/realiotech/realio-network/x/mint/types"
 )
 
 func startInProcess(cfg Config, val *Validator) error {

@@ -4,13 +4,11 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/realiotech/realio-network/x/asset/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 var _ types.QueryServer = Keeper{}

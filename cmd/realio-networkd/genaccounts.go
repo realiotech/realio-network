@@ -6,11 +6,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/spf13/cobra"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -18,11 +16,11 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/evmos/evmos/v18/crypto/hd"
 	ethermint "github.com/evmos/evmos/v18/types"
 	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
+	"github.com/spf13/cobra"
 )
 
 const (

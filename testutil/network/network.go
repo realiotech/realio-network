@@ -15,9 +15,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/realiotech/realio-network/types"
-
 	"cosmossdk.io/math"
+	"cosmossdk.io/simapp"
+	"cosmossdk.io/simapp/params"
 	dbm "github.com/cometbft/cometbft-db"
 	tmcfg "github.com/cometbft/cometbft/config"
 	tmflags "github.com/cometbft/cometbft/libs/cli/flags"
@@ -25,13 +25,6 @@ import (
 	tmrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cometbft/cometbft/node"
 	tmclient "github.com/cometbft/cometbft/rpc/client"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/ethclient"
-	"github.com/spf13/cobra"
-	"google.golang.org/grpc"
-
-	"cosmossdk.io/simapp"
-	"cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -51,13 +44,17 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/evmos/evmos/v18/crypto/hd"
-	"github.com/realiotech/realio-network/app"
-
 	"github.com/evmos/evmos/v18/encoding"
 	"github.com/evmos/evmos/v18/server/config"
 	ethermint "github.com/evmos/evmos/v18/types"
 	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
+	"github.com/realiotech/realio-network/app"
+	"github.com/realiotech/realio-network/types"
+	"github.com/spf13/cobra"
+	"google.golang.org/grpc"
 )
 
 // package-wide network lock to only allow one test network at a time

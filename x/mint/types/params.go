@@ -5,10 +5,9 @@ import (
 	"fmt"
 	"strings"
 
-	"sigs.k8s.io/yaml"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	"sigs.k8s.io/yaml"
 )
 
 // Parameter store keys

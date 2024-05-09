@@ -5,7 +5,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/realiotech/realio-network/x/mint/keeper"
 	"github.com/realiotech/realio-network/x/mint/types"
 )

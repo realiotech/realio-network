@@ -7,38 +7,13 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/realiotech/realio-network/app/ante"
-
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
-	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"github.com/cosmos/cosmos-sdk/x/staking"
-
-	// staking
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
-	// multi-staking
-	multistaking "github.com/realio-tech/multi-staking-module/x/multi-staking"
-	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
-	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
-
-	evmante "github.com/evmos/evmos/v18/app/ante"
-	ethante "github.com/evmos/evmos/v18/app/ante/evm"
-	"github.com/evmos/evmos/v18/encoding"
-	srvflags "github.com/evmos/evmos/v18/server/flags"
-	ethermint "github.com/evmos/evmos/v18/types"
-	"github.com/evmos/evmos/v18/x/evm"
-	evmkeeper "github.com/evmos/evmos/v18/x/evm/keeper"
-	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
-	"github.com/evmos/evmos/v18/x/feemarket"
-	feemarketkeeper "github.com/evmos/evmos/v18/x/feemarket/keeper"
-	feemarkettypes "github.com/evmos/evmos/v18/x/feemarket/types"
-	"github.com/gorilla/mux"
-	"github.com/rakyll/statik/fs"
-
 	"cosmossdk.io/simapp"
 	simappparams "cosmossdk.io/simapp/params"
+	dbm "github.com/cometbft/cometbft-db"
+	abci "github.com/cometbft/cometbft/abci/types"
+	tmjson "github.com/cometbft/cometbft/libs/json"
+	"github.com/cometbft/cometbft/libs/log"
+	tmos "github.com/cometbft/cometbft/libs/os"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/node"
@@ -49,11 +24,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
@@ -67,10 +44,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/capability"
 	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
 	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
-
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
-
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
@@ -89,6 +64,7 @@ import (
 	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
@@ -98,12 +74,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-
+	"github.com/cosmos/cosmos-sdk/x/staking"
+	// staking
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
 	"github.com/cosmos/ibc-go/v7/modules/apps/transfer"
 	ibctransferkeeper "github.com/cosmos/ibc-go/v7/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
@@ -116,27 +94,34 @@ import (
 	ibckeeper "github.com/cosmos/ibc-go/v7/modules/core/keeper"
 	ibctesting "github.com/cosmos/ibc-go/v7/testing"
 	ibctestingtypes "github.com/cosmos/ibc-go/v7/testing/types"
-
-	dbm "github.com/cometbft/cometbft-db"
-	abci "github.com/cometbft/cometbft/abci/types"
-	tmjson "github.com/cometbft/cometbft/libs/json"
-	"github.com/cometbft/cometbft/libs/log"
-	tmos "github.com/cometbft/cometbft/libs/os"
-	"github.com/spf13/cast"
-
-	"github.com/realiotech/realio-network/x/mint"
-	mintkeeper "github.com/realiotech/realio-network/x/mint/keeper"
-	minttypes "github.com/realiotech/realio-network/x/mint/types"
-
+	evmante "github.com/evmos/evmos/v18/app/ante"
+	ethante "github.com/evmos/evmos/v18/app/ante/evm"
+	"github.com/evmos/evmos/v18/encoding"
+	srvflags "github.com/evmos/evmos/v18/server/flags"
+	ethermint "github.com/evmos/evmos/v18/types"
+	"github.com/evmos/evmos/v18/x/evm"
+	evmkeeper "github.com/evmos/evmos/v18/x/evm/keeper"
+	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
+	"github.com/evmos/evmos/v18/x/feemarket"
+	feemarketkeeper "github.com/evmos/evmos/v18/x/feemarket/keeper"
+	feemarkettypes "github.com/evmos/evmos/v18/x/feemarket/types"
+	"github.com/gorilla/mux"
+	"github.com/rakyll/statik/fs"
+	// multi-staking
+	multistaking "github.com/realio-tech/multi-staking-module/x/multi-staking"
+	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
+	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
+	"github.com/realiotech/realio-network/app/ante"
+	// unnamed import of statik for swagger UI support
+	_ "github.com/realiotech/realio-network/client/docs/statik"
+	realionetworktypes "github.com/realiotech/realio-network/types"
 	assetmodule "github.com/realiotech/realio-network/x/asset"
 	assetmodulekeeper "github.com/realiotech/realio-network/x/asset/keeper"
 	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
-
-	realionetworktypes "github.com/realiotech/realio-network/types"
-
-	// unnamed import of statik for swagger UI support
-	_ "github.com/realiotech/realio-network/client/docs/statik"
-	// this line is used by starport scaffolding # stargate/app/moduleImport
+	"github.com/realiotech/realio-network/x/mint"
+	mintkeeper "github.com/realiotech/realio-network/x/mint/keeper"
+	minttypes "github.com/realiotech/realio-network/x/mint/types"
+	"github.com/spf13/cast"
 )
 
 const (
