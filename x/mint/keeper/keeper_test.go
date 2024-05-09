@@ -191,7 +191,7 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	suite.Require().Equal(expectedMintedAmount, calculatedMintedAmount)
 }
 
-func (s *KeeperTestSuite) TestParams() {
+func (suite *KeeperTestSuite) TestParam() {
 	testCases := []struct {
 		name      string
 		input     types.Params
@@ -220,19 +220,19 @@ func (s *KeeperTestSuite) TestParams() {
 	for _, tc := range testCases {
 		tc := tc
 
-		s.Run(tc.name, func() {
-			s.DoSetupTest(s.T())
-			expected := s.app.MintKeeper.GetParams(s.ctx)
-			err := s.app.MintKeeper.SetParams(s.ctx, tc.input)
+		suite.Run(tc.name, func() {
+			suite.DoSetupTest(suite.T())
+			expected := suite.app.MintKeeper.GetParams(suite.ctx)
+			err := suite.app.MintKeeper.SetParams(suite.ctx, tc.input)
 			if tc.expectErr {
-				s.Require().Error(err)
+				suite.Require().Error(err)
 			} else {
 				expected = tc.input
-				s.Require().NoError(err)
+				suite.Require().NoError(err)
 			}
 
-			p := s.app.MintKeeper.GetParams(s.ctx)
-			s.Require().Equal(expected, p)
+			p := suite.app.MintKeeper.GetParams(suite.ctx)
+			suite.Require().Equal(expected, p)
 		})
 	}
 }

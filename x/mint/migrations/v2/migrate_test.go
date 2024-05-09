@@ -3,8 +3,6 @@ package v2_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
@@ -12,6 +10,7 @@ import (
 	"github.com/realiotech/realio-network/x/mint/exported"
 	v2 "github.com/realiotech/realio-network/x/mint/migrations/v2"
 	"github.com/realiotech/realio-network/x/mint/types"
+	"github.com/stretchr/testify/require"
 )
 
 type mockSubspace struct {
@@ -22,7 +21,7 @@ func newMockSubspace(ps types.Params) mockSubspace {
 	return mockSubspace{ps: ps}
 }
 
-func (ms mockSubspace) GetParamSet(ctx sdk.Context, ps exported.ParamSet) {
+func (ms mockSubspace) GetParamSet(_ sdk.Context, ps exported.ParamSet) {
 	*ps.(*types.Params) = ms.ps
 }
 

@@ -9,7 +9,6 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-
 func NewParams(
 	mintDenom string, inflationRate sdk.Dec, blocksPerYear uint64,
 ) Params {

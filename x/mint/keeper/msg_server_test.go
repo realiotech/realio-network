@@ -5,7 +5,7 @@ import (
 	"github.com/realiotech/realio-network/x/mint/types"
 )
 
-func (s *KeeperTestSuite) TestUpdateParams() {
+func (suite *KeeperTestSuite) TestUpdateParams() {
 	testCases := []struct {
 		name      string
 		request   *types.MsgUpdateParams
@@ -21,7 +21,7 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 		{
 			name: "set invalid params",
 			request: &types.MsgUpdateParams{
-				Authority: s.app.MintKeeper.GetAuthority(),
+				Authority: suite.app.MintKeeper.GetAuthority(),
 				Params: types.Params{
 					MintDenom:     sdk.DefaultBondDenom,
 					InflationRate: sdk.NewDecWithPrec(-13, 2),
@@ -33,7 +33,7 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 		{
 			name: "set full valid params",
 			request: &types.MsgUpdateParams{
-				Authority: s.app.MintKeeper.GetAuthority(),
+				Authority: suite.app.MintKeeper.GetAuthority(),
 				Params: types.Params{
 					MintDenom:     sdk.DefaultBondDenom,
 					InflationRate: sdk.NewDecWithPrec(8, 2),
@@ -46,14 +46,14 @@ func (s *KeeperTestSuite) TestUpdateParams() {
 
 	for _, tc := range testCases {
 		tc := tc
-		s.Run(tc.name, func() {
-			s.DoSetupTest(s.T())
+		suite.Run(tc.name, func() {
+			suite.DoSetupTest(suite.T())
 
-			_, err := s.msgServer.UpdateParams(s.ctx, tc.request)
+			_, err := suite.msgServer.UpdateParams(suite.ctx, tc.request)
 			if tc.expectErr {
-				s.Require().Error(err)
+				suite.Require().Error(err)
 			} else {
-				s.Require().NoError(err)
+				suite.Require().NoError(err)
 			}
 		})
 	}
