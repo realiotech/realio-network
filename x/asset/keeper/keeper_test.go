@@ -37,6 +37,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 }
 
 func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
+	t.Helper()
 	checkTx := false
 
 	// user 1 key

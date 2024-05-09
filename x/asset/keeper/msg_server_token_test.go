@@ -18,13 +18,13 @@ var _ = strconv.IntSize
 func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 	testCases := []struct {
 		name      string
-		msg       types.MsgCreateToken
+		msg       *types.MsgCreateToken
 		expectErr bool
 		errString string
 	}{
 		{
 			name: "valid MsgCreateToken",
-			msg: types.MsgCreateToken{
+			msg: &types.MsgCreateToken{
 				Manager: suite.testUser1Address,
 				Symbol:  "FOO", Total: "1000",
 			},
@@ -32,7 +32,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 		},
 		{
 			name: "invalid MsgCreateToken; duplicated denom ario",
-			msg: types.MsgCreateToken{
+			msg: &types.MsgCreateToken{
 				Manager: suite.testUser1Address,
 				Symbol:  "RIO", Total: "100",
 			},
@@ -41,7 +41,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 		},
 		{
 			name: "invalid MsgCreateToken; duplicated denom abar",
-			msg: types.MsgCreateToken{
+			msg: &types.MsgCreateToken{
 				Manager: suite.testUser1Address,
 				Symbol:  "BAR", Total: "100",
 			},
@@ -50,7 +50,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 		},
 		{
 			name: "invalid MsgCreateToken; invalid manager address",
-			msg: types.MsgCreateToken{
+			msg: &types.MsgCreateToken{
 				Manager: "invalid address",
 				Symbol:  "FOO", Total: "100",
 			},
@@ -74,7 +74,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 			})
 			suite.Require().NoError(err)
 
-			_, err = srv.CreateToken(wctx, &tc.msg)
+			_, err = srv.CreateToken(wctx, tc.msg)
 			if tc.expectErr {
 				suite.Require().EqualError(err, tc.errString)
 			} else {
