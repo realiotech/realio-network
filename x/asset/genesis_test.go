@@ -4,13 +4,13 @@ import (
 	"testing"
 	"time"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	feemarkettypes "github.com/evmos/evmos/v18/x/feemarket/types"
-	"github.com/stretchr/testify/suite"
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
 	"github.com/cometbft/cometbft/version"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	feemarkettypes "github.com/evmos/evmos/v18/x/feemarket/types"
+	"github.com/stretchr/testify/suite"
 
 	"github.com/realiotech/realio-network/app"
 	"github.com/realiotech/realio-network/testutil"
