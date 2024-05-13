@@ -4,14 +4,12 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/require"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-
 	v4 "github.com/realiotech/realio-network/app/upgrades/v4"
+	"github.com/stretchr/testify/require"
 )
 
 func TestV4Upgrade(t *testing.T) {

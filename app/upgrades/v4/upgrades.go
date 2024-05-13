@@ -15,7 +15,7 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	sk *stakingkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
-	return func(ctx sdk.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
+	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade for multi staking...")
 		fixMinCommisionRate(ctx, sk)
 		return mm.RunMigrations(ctx, configurator, vm)
@@ -28,11 +28,15 @@ func fixMinCommisionRate(ctx sdk.Context, staking *stakingkeeper.Keeper) {
 	minComm := sdk.MustNewDecFromStr(NewMinCommisionRate)
 	params := staking.GetParams(ctx)
 	params.MinCommissionRate = minComm
-	staking.SetParams(ctx, params)
+
+	err := staking.SetParams(ctx, params)
+	if err != nil {
+		panic(err)
+	}
+
 	for _, v := range validators {
 		//nolint
 		if v.Commission.Rate.LT(minComm) {
-			// We need to remove
 			comm, err := updateValidatorCommission(ctx, staking, v, minComm)
 			if err != nil {
 				panic(err)
