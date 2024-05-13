@@ -13,7 +13,7 @@ import (
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
-	sk stakingkeeper.Keeper,
+	sk *stakingkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, plan upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade for multi staking...")
@@ -22,7 +22,7 @@ func CreateUpgradeHandler(
 	}
 }
 
-func fixMinCommisionRate(ctx sdk.Context, staking stakingkeeper.Keeper) {
+func fixMinCommisionRate(ctx sdk.Context, staking *stakingkeeper.Keeper) {
 	// Upgrade every validators min-commission rate
 	validators := staking.GetAllValidators(ctx)
 	minComm := sdk.MustNewDecFromStr(NewMinCommisionRate)
@@ -41,13 +41,13 @@ func fixMinCommisionRate(ctx sdk.Context, staking stakingkeeper.Keeper) {
 			v.Commission = comm
 
 			// call the before-modification hook since we're about to update the commission
-			staking.BeforeValidatorModified(ctx, v.GetOperator())
+			staking.Hooks().BeforeValidatorModified(ctx, v.GetOperator())
 			staking.SetValidator(ctx, v)
 		}
 	}
 }
 
-func updateValidatorCommission(ctx sdk.Context, staking stakingkeeper.Keeper,
+func updateValidatorCommission(ctx sdk.Context, staking *stakingkeeper.Keeper,
 	validator stakingtypes.Validator, newRate sdk.Dec,
 ) (stakingtypes.Commission, error) {
 	commission := validator.Commission
