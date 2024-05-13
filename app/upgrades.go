@@ -5,11 +5,10 @@ import (
 
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	multistaking "github.com/realiotech/realio-network/app/upgrades/multi-staking"
 	v4 "github.com/realiotech/realio-network/app/upgrades/v4"
-
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
 func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {

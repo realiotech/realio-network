@@ -6,14 +6,11 @@ import (
 	"strings"
 
 	errorsmod "cosmossdk.io/errors"
-	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
-
-	realionetworktypes "github.com/realiotech/realio-network/types"
-
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
-	"cosmossdk.io/math"
+	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
+	realionetworktypes "github.com/realiotech/realio-network/types"
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 

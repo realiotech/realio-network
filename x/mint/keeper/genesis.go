@@ -2,14 +2,16 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/realiotech/realio-network/x/mint/types"
 )
 
 // InitGenesis new mint genesis
 func (k Keeper) InitGenesis(ctx sdk.Context, ak types.AccountKeeper, data *types.GenesisState) {
 	k.SetMinter(ctx, data.Minter)
-	k.SetParams(ctx, data.Params)
+	err := k.SetParams(ctx, data.Params)
+	if err != nil {
+		panic(err)
+	}
 	ak.GetModuleAccount(ctx, types.ModuleName)
 }
 

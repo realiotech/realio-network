@@ -4,34 +4,33 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/evmos/ethermint/crypto/ethsecp256k1"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-	"github.com/tendermint/tendermint/crypto/tmhash"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
-	"github.com/tendermint/tendermint/version"
-
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"cosmossdk.io/math"
+	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/crypto/tmhash"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
+	"github.com/cometbft/cometbft/version"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/evmos/evmos/v18/crypto/ethsecp256k1"
 	"github.com/realiotech/realio-network/app"
 	realiotypes "github.com/realiotech/realio-network/types"
+	"github.com/realiotech/realio-network/x/mint/keeper"
 	"github.com/realiotech/realio-network/x/mint/types"
-	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 type KeeperTestSuite struct {
 	suite.Suite
 
-	app         *app.RealioNetwork
-	ctx         sdk.Context
-	queryClient types.QueryClient
-	address     common.Address
-
+	app              *app.RealioNetwork
+	ctx              sdk.Context
+	queryClient      types.QueryClient
+	address          common.Address
+	msgServer        types.MsgServer
 	legacyQuerierCdc *codec.AminoCodec
 }
 
@@ -40,6 +39,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 }
 
 func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
+	t.Helper()
 	checkTx := false
 
 	// account key
@@ -58,7 +58,7 @@ func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 	// Set Context
 	suite.ctx = suite.app.BaseApp.NewContext(checkTx, tmproto.Header{
 		Height:          1,
-		ChainID:         realiotypes.MainnetChainID,
+		ChainID:         realiotypes.MainnetChainID + "-1",
 		Time:            time.Now().UTC(),
 		ProposerAddress: consAddress.Bytes(),
 
@@ -84,7 +84,7 @@ func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 	queryHelper := baseapp.NewQueryServerTestHelper(suite.ctx, suite.app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, suite.app.MintKeeper)
 	suite.queryClient = types.NewQueryClient(queryHelper)
-
+	suite.msgServer = keeper.NewMsgServerImpl(suite.app.MintKeeper)
 	suite.legacyQuerierCdc = codec.NewAminoCodec(suite.app.LegacyAmino())
 }
 
@@ -107,7 +107,10 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	currentHeight := suite.app.LastBlockHeight()
 
 	// block 2
-	header := tmproto.Header{Height: currentHeight + 1}
+	header := tmproto.Header{
+		Height:  currentHeight + 1,
+		ChainID: realiotypes.MainnetChainID + "-1",
+	}
 	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
 
 	newSupply := suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
@@ -122,7 +125,10 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	currentHeight = suite.app.LastBlockHeight()
 
 	// block 3
-	header = tmproto.Header{Height: currentHeight + 1}
+	header = tmproto.Header{
+		Height:  currentHeight + 1,
+		ChainID: realiotypes.MainnetChainID + "-1",
+	}
 	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
@@ -137,7 +143,10 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	currentHeight = suite.app.LastBlockHeight()
 
 	// block 4
-	header = tmproto.Header{Height: currentHeight + 1}
+	header = tmproto.Header{
+		Height:  currentHeight + 1,
+		ChainID: realiotypes.MainnetChainID + "-1",
+	}
 	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
@@ -152,7 +161,10 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	currentHeight = suite.app.LastBlockHeight()
 
 	// block 5
-	header = tmproto.Header{Height: currentHeight + 1}
+	header = tmproto.Header{
+		Height:  currentHeight + 1,
+		ChainID: realiotypes.MainnetChainID + "-1",
+	}
 	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
@@ -167,11 +179,60 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	currentHeight = suite.app.LastBlockHeight()
 
 	// block 6
-	header = tmproto.Header{Height: currentHeight + 1}
+	header = tmproto.Header{
+		Height:  currentHeight + 1,
+		ChainID: realiotypes.MainnetChainID + "-1",
+	}
 	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
 	expectedMintedAmount = newSupply.Sub(currentSupply).String()
 	calculatedMintedAmount = blockProvision.String()
 	suite.Require().Equal(expectedMintedAmount, calculatedMintedAmount)
+}
+
+func (suite *KeeperTestSuite) TestParam() {
+	testCases := []struct {
+		name      string
+		input     types.Params
+		expectErr bool
+	}{
+		{
+			name: "set invalid params",
+			input: types.Params{
+				MintDenom:     sdk.DefaultBondDenom,
+				InflationRate: sdk.NewDecWithPrec(-13, 2),
+				BlocksPerYear: uint64(60 * 60 * 8766 / 5),
+			},
+			expectErr: true,
+		},
+		{
+			name: "set full valid params",
+			input: types.Params{
+				MintDenom:     sdk.DefaultBondDenom,
+				InflationRate: sdk.NewDecWithPrec(12, 2),
+				BlocksPerYear: uint64(60 * 60 * 8766 / 5),
+			},
+			expectErr: false,
+		},
+	}
+
+	for _, tc := range testCases {
+		tc := tc
+
+		suite.Run(tc.name, func() {
+			suite.DoSetupTest(suite.T())
+			expected := suite.app.MintKeeper.GetParams(suite.ctx)
+			err := suite.app.MintKeeper.SetParams(suite.ctx, tc.input)
+			if tc.expectErr {
+				suite.Require().Error(err)
+			} else {
+				expected = tc.input
+				suite.Require().NoError(err)
+			}
+
+			p := suite.app.MintKeeper.GetParams(suite.ctx)
+			suite.Require().Equal(expected, p)
+		})
+	}
 }

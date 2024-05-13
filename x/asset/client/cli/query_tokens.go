@@ -5,9 +5,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/spf13/cobra"
-
 	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/spf13/cobra"
 )
 
 func CmdQueryTokens() *cobra.Command {
@@ -15,7 +14,7 @@ func CmdQueryTokens() *cobra.Command {
 		Use:   "tokens",
 		Short: "shows the tokens of the module",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			queryClient := types.NewQueryClient(clientCtx)

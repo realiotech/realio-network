@@ -4,19 +4,18 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/crypto/tmhash"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
+	"github.com/cometbft/cometbft/version"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
-	"github.com/stretchr/testify/suite"
-	"github.com/tendermint/tendermint/crypto/tmhash"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
-	"github.com/tendermint/tendermint/version"
-
+	feemarkettypes "github.com/evmos/evmos/v18/x/feemarket/types"
 	"github.com/realiotech/realio-network/app"
 	"github.com/realiotech/realio-network/testutil"
 	realiotypes "github.com/realiotech/realio-network/types"
 	"github.com/realiotech/realio-network/x/asset"
 	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/stretchr/testify/suite"
 )
 
 type GenesisTestSuite struct {

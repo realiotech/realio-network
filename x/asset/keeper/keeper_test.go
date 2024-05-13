@@ -4,21 +4,19 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/crypto/tmhash"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
+	"github.com/cometbft/cometbft/version"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/evmos/ethermint/crypto/ethsecp256k1"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-	"github.com/tendermint/tendermint/crypto/tmhash"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
-	"github.com/tendermint/tendermint/version"
-
+	"github.com/evmos/evmos/v18/crypto/ethsecp256k1"
 	"github.com/realiotech/realio-network/app"
+	"github.com/realiotech/realio-network/testutil"
 	realiotypes "github.com/realiotech/realio-network/types"
 	"github.com/realiotech/realio-network/x/asset/types"
-
-	"github.com/realiotech/realio-network/testutil"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
 type KeeperTestSuite struct {
@@ -39,6 +37,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 }
 
 func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
+	t.Helper()
 	checkTx := false
 
 	// user 1 key

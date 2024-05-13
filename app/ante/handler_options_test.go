@@ -1,9 +1,10 @@
 package ante_test
 
 import (
-	evmante "github.com/evmos/ethermint/app/ante"
-	"github.com/evmos/ethermint/encoding"
-	"github.com/evmos/ethermint/types"
+	evmante "github.com/evmos/evmos/v18/app/ante"
+	ethante "github.com/evmos/evmos/v18/app/ante/evm"
+	"github.com/evmos/evmos/v18/encoding"
+	"github.com/evmos/evmos/v18/types"
 	"github.com/realiotech/realio-network/app"
 	"github.com/realiotech/realio-network/app/ante"
 )
@@ -106,7 +107,7 @@ func (suite *AnteTestSuite) TestValidateHandlerOptions() {
 				IBCKeeper:       suite.app.IBCKeeper,
 				FeeMarketKeeper: suite.app.FeeMarketKeeper,
 				EvmKeeper:       suite.app.EvmKeeper,
-				SigGasConsumer:  evmante.DefaultSigVerificationGasConsumer,
+				SigGasConsumer:  evmante.SigVerificationGasConsumer,
 				SignModeHandler: nil,
 			},
 			false,
@@ -119,7 +120,7 @@ func (suite *AnteTestSuite) TestValidateHandlerOptions() {
 				IBCKeeper:       suite.app.IBCKeeper,
 				FeeMarketKeeper: suite.app.FeeMarketKeeper,
 				EvmKeeper:       suite.app.EvmKeeper,
-				SigGasConsumer:  evmante.DefaultSigVerificationGasConsumer,
+				SigGasConsumer:  evmante.SigVerificationGasConsumer,
 				SignModeHandler: suite.app.GetTxConfig().SignModeHandler(),
 				TxFeeChecker:    nil,
 			},
@@ -136,9 +137,9 @@ func (suite *AnteTestSuite) TestValidateHandlerOptions() {
 				IBCKeeper:              suite.app.IBCKeeper,
 				FeeMarketKeeper:        suite.app.FeeMarketKeeper,
 				SignModeHandler:        encoding.MakeConfig(app.ModuleBasics).TxConfig.SignModeHandler(),
-				SigGasConsumer:         evmante.DefaultSigVerificationGasConsumer,
+				SigGasConsumer:         evmante.SigVerificationGasConsumer,
 				MaxTxGasWanted:         40000000,
-				TxFeeChecker:           evmante.NewDynamicFeeChecker(suite.app.EvmKeeper),
+				TxFeeChecker:           ethante.NewDynamicFeeChecker(suite.app.EvmKeeper),
 			},
 			true,
 		},
