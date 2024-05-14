@@ -1,72 +1,34 @@
 package v4
 
 import (
-	"fmt"
-
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	consensuskeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
+	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 )
 
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
-	sk *stakingkeeper.Keeper,
+	ck consensuskeeper.Keeper,
+	clientKeeper ibctmmigrations.ClientKeeper,
+	pk paramskeeper.Keeper,
+	sk stakingkeeper.Keeper,
+	cdc codec.BinaryCodec,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade for multi staking...")
-		fixMinCommisionRate(ctx, sk)
+
+		migrateParamSubspace(ctx, ck, pk)
+		fixMinCommisionRate(ctx, &sk)
+
+		if _, err := ibctmmigrations.PruneExpiredConsensusStates(ctx, cdc, clientKeeper); err != nil {
+			return nil, err
+		}
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
-}
-
-func fixMinCommisionRate(ctx sdk.Context, staking *stakingkeeper.Keeper) {
-	// Upgrade every validators min-commission rate
-	validators := staking.GetAllValidators(ctx)
-	minComm := sdk.MustNewDecFromStr(NewMinCommisionRate)
-	params := staking.GetParams(ctx)
-	params.MinCommissionRate = minComm
-
-	err := staking.SetParams(ctx, params)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, v := range validators {
-		//nolint
-		if v.Commission.Rate.LT(minComm) {
-			comm, err := updateValidatorCommission(ctx, staking, v, minComm)
-			if err != nil {
-				panic(err)
-			}
-
-			v.Commission = comm
-
-			// call the before-modification hook since we're about to update the commission
-			staking.Hooks().BeforeValidatorModified(ctx, v.GetOperator())
-			staking.SetValidator(ctx, v)
-		}
-	}
-}
-
-func updateValidatorCommission(ctx sdk.Context, staking *stakingkeeper.Keeper,
-	validator stakingtypes.Validator, newRate sdk.Dec,
-) (stakingtypes.Commission, error) {
-	commission := validator.Commission
-	blockTime := ctx.BlockHeader().Time
-
-	if newRate.LT(staking.MinCommissionRate(ctx)) {
-		return commission, fmt.Errorf("cannot set validator commission to less than minimum rate of %s", staking.MinCommissionRate(ctx))
-	}
-
-	commission.Rate = newRate
-	if commission.MaxRate.LT(newRate) {
-		commission.MaxRate = newRate
-	}
-
-	commission.UpdateTime = blockTime
-
-	return commission, nil
 }
