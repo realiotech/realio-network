@@ -53,7 +53,7 @@ func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 	consAddress := sdk.ConsAddress(priv.PubKey().Address())
 
 	// init app
-	suite.app = app.Setup(checkTx, nil)
+	suite.app = app.Setup(checkTx, nil, 1)
 
 	// Set Context
 	suite.ctx = suite.app.BaseApp.NewContext(checkTx, tmproto.Header{

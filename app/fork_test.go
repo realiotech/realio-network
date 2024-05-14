@@ -12,7 +12,7 @@ import (
 )
 
 func TestFork(t *testing.T) {
-	realio := Setup(false, nil)
+	realio := Setup(false, nil, 1)
 
 	ctx := realio.BaseApp.NewContext(false, tmproto.Header{Height: ForkHeight})
 	stakingKeeper := realio.StakingKeeper
