@@ -107,7 +107,7 @@ require (
 	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/godbus/dbus v0.0.0-20190726142602-4481cbc300e2 // indirect
 	github.com/gogo/googleapis v1.4.1 // indirect
-	github.com/gogo/protobuf v1.3.3 // indirect
+	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/glog v1.2.0 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/mock v1.6.0 // indirect
@@ -243,10 +243,10 @@ replace (
 	// fork evmos
 	github.com/evmos/evmos/v18 => github.com/decentrio/evmos/v18 v18.0.0-20240509044329-a7bc52adb7bd
 
-	// use cosmos flavored protobufs
-	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-
 	github.com/realio-tech/multi-staking-module => github.com/realiotech/multi-staking v1.0.0-rc7.0.20240506085658-3b66b35ddd2c
+
+	// https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/UPGRADING.md#replaces
+	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 
 	// github.com/realio-tech/multi-staking-module => github.com/GNaD13/multi-staking v0.0.0-20240103093120-70811831ca3b
 	// Informal Tendermint fork
