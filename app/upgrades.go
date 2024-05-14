@@ -27,9 +27,12 @@ func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	app.UpgradeKeeper.SetUpgradeHandler(
 		v4.UpgradeName,
 		v4.CreateUpgradeHandler(
-			app.mm,
-			app.configurator,
-			app.StakingKeeper,
+			app.mm, app.configurator,
+			app.ConsensusParamsKeeper,
+			app.IBCKeeper.ClientKeeper,
+			app.ParamsKeeper,
+			*app.StakingKeeper,
+			app.appCodec,
 		),
 	)
 
