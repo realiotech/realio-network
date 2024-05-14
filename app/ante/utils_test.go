@@ -72,7 +72,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	consAddress := sdk.ConsAddress(privCons.PubKey().Address())
 
 	isCheckTx := false
-	suite.app = app.Setup(isCheckTx, feemarkettypes.DefaultGenesisState())
+	suite.app = app.Setup(isCheckTx, feemarkettypes.DefaultGenesisState(), 1)
 	suite.Require().NotNil(suite.app.AppCodec())
 
 	suite.ctx = suite.app.BaseApp.NewContext(isCheckTx, tmproto.Header{
