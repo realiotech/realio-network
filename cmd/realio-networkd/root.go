@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -39,6 +40,7 @@ import (
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
+	"github.com/spf13/viper"
 )
 
 const EnvPrefix = "REALIO"
@@ -130,6 +132,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		txCommand(),
 		ethermintclient.KeyCommands(app.DefaultNodeHome),
 	)
+	flags.AddTxFlagsToCmd(rootCmd)
 
 	// add rosetta
 	rootCmd.AddCommand(rosettacmd.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Codec))
@@ -219,7 +222,8 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		panic(err)
 	}
 
-	snapshotDir := filepath.Join(cast.ToString(appOpts.Get(flags.FlagHome)), "data", "snapshots")
+	home := cast.ToString(appOpts.Get(flags.FlagHome))
+	snapshotDir := filepath.Join(home, "data", "snapshots")
 	err = os.MkdirAll(snapshotDir, os.ModePerm)
 	if err != nil {
 		panic(err)
@@ -238,6 +242,24 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		cast.ToUint64(appOpts.Get(server.FlagStateSyncSnapshotInterval)),
 		cast.ToUint32(appOpts.Get(server.FlagStateSyncSnapshotKeepRecent)),
 	)
+
+	// Setup chainId
+	chainID := cast.ToString(appOpts.Get(flags.FlagChainID))
+	if len(chainID) == 0 {
+		fmt.Println("Chain ID")
+		v := viper.New()
+		v.AddConfigPath(filepath.Join(home, "config"))
+		v.SetConfigName("client")
+		v.SetConfigType("toml")
+		if err := v.ReadInConfig(); err != nil {
+			panic(err)
+		}
+		conf := new(config.ClientConfig)
+		if err := v.Unmarshal(conf); err != nil {
+			panic(err)
+		}
+		chainID = conf.ChainID
+	}
 
 	// this line is used by starport scaffolding # stargate/root/appBeforeInit
 
