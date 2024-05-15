@@ -25,7 +25,7 @@ func CreateUpgradeHandler(
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		ctx.Logger().Info("Starting upgrade for multi staking...")
 
-		fixMinCommisionRate(ctx, &sk, stakingLegacySubspace)
+		fixMinCommisionRate(ctx, sk, stakingLegacySubspace)
 		migrateParamSubspace(ctx, ck, pk)
 		// fixMinCommisionRate(ctx, sk)
 

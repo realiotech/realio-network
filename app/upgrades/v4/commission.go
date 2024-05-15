@@ -21,12 +21,7 @@ func fixMinCommisionRate(ctx sdk.Context, staking *stakingkeeper.Keeper, staking
 	for _, v := range validators {
 		//nolint
 		if v.Commission.Rate.LT(minComm) {
-			comm, err := updateValidatorCommission(ctx, v, minComm)
-			if err != nil {
-				panic(err)
-			}
-
-			v.Commission = comm
+			v.Commission = updateValidatorCommission(ctx, v, minComm)
 
 			// call the before-modification hook since we're about to update the commission
 			staking.Hooks().BeforeValidatorModified(ctx, v.GetOperator())
@@ -37,7 +32,7 @@ func fixMinCommisionRate(ctx sdk.Context, staking *stakingkeeper.Keeper, staking
 
 func updateValidatorCommission(ctx sdk.Context,
 	validator stakingtypes.Validator, newRate sdk.Dec,
-) (stakingtypes.Commission, error) {
+) stakingtypes.Commission {
 	commission := validator.Commission
 	blockTime := ctx.BlockHeader().Time
 
@@ -48,5 +43,5 @@ func updateValidatorCommission(ctx sdk.Context,
 
 	commission.UpdateTime = blockTime
 
-	return commission, nil
+	return commission
 }
