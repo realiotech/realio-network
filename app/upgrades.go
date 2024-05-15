@@ -33,7 +33,7 @@ func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.ConsensusParamsKeeper,
 			app.IBCKeeper.ClientKeeper,
 			app.ParamsKeeper,
-			*app.StakingKeeper,
+			app.StakingKeeper,
 			app.appCodec,
 		),
 	)
