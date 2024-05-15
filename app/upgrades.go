@@ -5,6 +5,7 @@ import (
 
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	multistaking "github.com/realiotech/realio-network/app/upgrades/multi-staking"
@@ -32,6 +33,7 @@ func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.IBCKeeper.ClientKeeper,
 			app.ParamsKeeper,
 			*app.StakingKeeper,
+			app.GetSubspace(stakingtypes.ModuleName),
 			app.appCodec,
 		),
 	)
