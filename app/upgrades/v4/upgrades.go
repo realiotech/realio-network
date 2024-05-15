@@ -18,7 +18,7 @@ func CreateUpgradeHandler(
 	ck consensuskeeper.Keeper,
 	clientKeeper ibctmmigrations.ClientKeeper,
 	pk paramskeeper.Keeper,
-	sk stakingkeeper.Keeper,
+	sk *stakingkeeper.Keeper,
 	stakingLegacySubspace paramstypes.Subspace,
 	cdc codec.BinaryCodec,
 ) upgradetypes.UpgradeHandler {
@@ -27,6 +27,8 @@ func CreateUpgradeHandler(
 
 		fixMinCommisionRate(ctx, &sk, stakingLegacySubspace)
 		migrateParamSubspace(ctx, ck, pk)
+		// fixMinCommisionRate(ctx, sk)
+
 		if _, err := ibctmmigrations.PruneExpiredConsensusStates(ctx, cdc, clientKeeper); err != nil {
 			return nil, err
 		}

@@ -23,6 +23,7 @@ require (
 	github.com/spf13/cast v1.6.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
+	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.9.0
 	github.com/tendermint/tendermint v0.34.27
 	google.golang.org/genproto/googleapis/api v0.0.0-20240123012728-ef4313101c80
@@ -184,7 +185,6 @@ require (
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
-	github.com/spf13/viper v1.18.2 // indirect
 	github.com/status-im/keycard-go v0.2.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
@@ -243,7 +243,7 @@ replace (
 	// fork evmos
 	github.com/evmos/evmos/v18 => github.com/decentrio/evmos/v18 v18.0.0-20240509044329-a7bc52adb7bd
 
-	github.com/realio-tech/multi-staking-module => github.com/realiotech/multi-staking v1.0.0-rc7.0.20240506085658-3b66b35ddd2c
+	github.com/realio-tech/multi-staking-module => github.com/realiotech/multi-staking v1.0.0-rc7.0.20240515061919-79c051d2c87b
 
 	// https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/UPGRADING.md#replaces
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
