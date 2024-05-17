@@ -30,11 +30,11 @@ import (
 	"github.com/evmos/evmos/v18/crypto/ethsecp256k1"
 	"github.com/evmos/evmos/v18/encoding"
 	"github.com/evmos/evmos/v18/ethereum/eip712"
+	testutiltx "github.com/evmos/evmos/v18/testutil/tx"
 	"github.com/evmos/evmos/v18/types"
 	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
 	feemarkettypes "github.com/evmos/evmos/v18/x/feemarket/types"
 	"github.com/realiotech/realio-network/app"
-	"github.com/realiotech/realio-network/tests"
 	realionetworktypes "github.com/realiotech/realio-network/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -334,7 +334,7 @@ func createEIP712CosmosTx(
 	}
 
 	// Sign typedData
-	keyringSigner := tests.NewSigner(priv)
+	keyringSigner := testutiltx.NewSigner(priv)
 	signature, pubKey, err := keyringSigner.SignByAddress(from, sigHash)
 	if err != nil {
 		return nil, err
