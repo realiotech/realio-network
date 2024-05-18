@@ -132,7 +132,7 @@
       }
     },
     {
-      "url": "./tmp-swagger-gen/realiotech/multistaking/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/multistaking/v1/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "MultiStakingParams"
