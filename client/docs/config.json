@@ -135,7 +135,9 @@
       "url": "./tmp-swagger-gen/multistaking/v1/query.swagger.json",
       "operationIds": {
         "rename": {
-          "Params": "MultiStakingParams"
+          "Params": "MultiStakingParams",
+          "Validators": "MultiStakingValidators",
+          "Validator": "MultiStakingValidator"
         }
       }
     }
