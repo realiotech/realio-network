@@ -281,7 +281,8 @@ proto-swagger-gen:
 	@echo "Downloading Protobuf dependencies"
 #	@make proto-download-deps
 	@echo "Generating Protobuf Swagger"
-	$(protoCosmosImage) sh ./scripts/protoc-swagger-gen.sh
+	./scripts/protoc-third-party.sh
+	$(protoImage) sh ./scripts/protoc-swagger-gen.sh
 
 proto-format:
 	@echo "Formatting Protobuf files"

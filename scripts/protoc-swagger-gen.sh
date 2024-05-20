@@ -15,12 +15,13 @@ for dir in $proto_dirs; do
     buf generate --template buf.gen.swagger.yaml "$query_file"
   fi
 done
+rm -rf github.com
 
 cd ../third_party/proto
-
+buf mod update
 echo "Generate third_party swagger files"
 
-proto_dirs=$(find ./cosmos ./ethermint ./ibc -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | sort | uniq)
+proto_dirs=$(find ./cosmos ./ethermint ./ibc ./multistaking ./evmos -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | sort | uniq)
 for dir in $proto_dirs; do
   # generate swagger files (filter query files)
   query_file=$(find "${dir}" -maxdepth 1 \( -name 'query.proto' -o -name 'service.proto' \))
@@ -32,6 +33,7 @@ done
 
 cd ../..
 
+mv third_party/tmp-swagger-gen/* tmp-swagger-gen
 echo "Combine swagger files"
 # combine swagger files
 # uses nodejs package `swagger-combine`.
@@ -40,6 +42,7 @@ swagger-combine ./client/docs/config.json -o ./client/docs/swagger-ui/swagger.ya
 
 # clean swagger files
 rm -rf ./tmp-swagger-gen
+rm -rf ./third_party
 
 echo "Update statik data"
 install_statik() {
