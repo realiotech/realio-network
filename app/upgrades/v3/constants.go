@@ -1,7 +1,7 @@
-package v4
+package v3
 
 const (
 	// UpgradeName defines the on-chain upgrade name.
-	UpgradeName         = "v4"
+	UpgradeName         = "v3"
 	NewMinCommisionRate = "0.05"
 )

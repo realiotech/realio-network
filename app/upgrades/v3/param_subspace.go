@@ -1,4 +1,4 @@
-package v4
+package v3
 
 import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
