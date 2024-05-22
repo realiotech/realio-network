@@ -1,4 +1,4 @@
-package v4
+package v3
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -23,7 +23,7 @@ func CreateUpgradeHandler(
 	cdc codec.BinaryCodec,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-		ctx.Logger().Info("Starting upgrade for v4")
+		ctx.Logger().Info("Starting upgrade for v3")
 
 		fixMinCommisionRate(ctx, sk, stakingLegacySubspace)
 		migrateParamSubspace(ctx, ck, pk)

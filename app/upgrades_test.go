@@ -8,11 +8,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	v4 "github.com/realiotech/realio-network/app/upgrades/v4"
+	v3 "github.com/realiotech/realio-network/app/upgrades/v3"
 	"github.com/stretchr/testify/require"
 )
 
-func TestV4Upgrade(t *testing.T) {
+func TestV3Upgrade(t *testing.T) {
 	app := Setup(false, nil, 4)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{Height: app.LastBlockHeight() + 1})
 	validators := app.StakingKeeper.GetAllValidators(ctx)
@@ -49,7 +49,7 @@ func TestV4Upgrade(t *testing.T) {
 	app.StakingKeeper.SetValidator(ctx, validators[3])
 
 	upgradePlan := upgradetypes.Plan{
-		Name:   v4.UpgradeName,
+		Name:   v3.UpgradeName,
 		Height: ctx.BlockHeight(),
 	}
 	err := app.UpgradeKeeper.ScheduleUpgrade(ctx, upgradePlan)
@@ -60,7 +60,7 @@ func TestV4Upgrade(t *testing.T) {
 
 	validatorsAfter := app.StakingKeeper.GetAllValidators(ctx)
 
-	upgradeMinCommRate := sdk.MustNewDecFromStr(v4.NewMinCommisionRate)
+	upgradeMinCommRate := sdk.MustNewDecFromStr(v3.NewMinCommisionRate)
 	require.Equal(t, validatorsAfter[0].Commission.CommissionRates.Rate, upgradeMinCommRate)
 	require.Equal(t, validatorsAfter[1].Commission.CommissionRates.Rate, upgradeMinCommRate)
 	require.Equal(t, validatorsAfter[0].Commission.CommissionRates.MaxRate, upgradeMinCommRate)
