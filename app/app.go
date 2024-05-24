@@ -110,7 +110,6 @@ import (
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	"github.com/realiotech/realio-network/v2/app/ante"
-	_ "github.com/realiotech/realio-network/v2/client/docs/statik"
 	realionetworktypes "github.com/realiotech/realio-network/v2/types"
 	assetmodule "github.com/realiotech/realio-network/v2/x/asset"
 	assetmodulekeeper "github.com/realiotech/realio-network/v2/x/asset/keeper"
