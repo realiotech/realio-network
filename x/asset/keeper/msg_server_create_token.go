@@ -10,8 +10,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
-	realionetworktypes "github.com/realiotech/realio-network/types"
-	"github.com/realiotech/realio-network/x/asset/types"
+	realionetworktypes "github.com/realiotech/realio-network/v2/types"
+	"github.com/realiotech/realio-network/v2/x/asset/types"
 )
 
 func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken) (*types.MsgCreateTokenResponse, error) {

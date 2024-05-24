@@ -19,8 +19,8 @@ import (
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	multistaking "github.com/realio-tech/multi-staking-module/x/multi-staking"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
-	"github.com/realiotech/realio-network/app/upgrades/multi-staking/legacy"
-	minttypes "github.com/realiotech/realio-network/x/mint/types"
+	"github.com/realiotech/realio-network/v2/app/upgrades/multi-staking/legacy"
+	minttypes "github.com/realiotech/realio-network/v2/x/mint/types"
 	"github.com/spf13/cast"
 )
 

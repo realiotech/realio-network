@@ -51,8 +51,8 @@ import (
 	"github.com/evmos/evmos/v18/server/config"
 	ethermint "github.com/evmos/evmos/v18/types"
 	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
-	"github.com/realiotech/realio-network/app"
-	"github.com/realiotech/realio-network/types"
+	"github.com/realiotech/realio-network/v2/app"
+	"github.com/realiotech/realio-network/v2/types"
 	"github.com/spf13/cobra"
 	"google.golang.org/grpc"
 )

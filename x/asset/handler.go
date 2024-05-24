@@ -6,8 +6,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/realiotech/realio-network/x/asset/keeper"
-	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/realiotech/realio-network/v2/x/asset/keeper"
+	"github.com/realiotech/realio-network/v2/x/asset/types"
 )
 
 // NewHandler ...

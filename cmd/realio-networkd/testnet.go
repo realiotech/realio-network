@@ -36,9 +36,9 @@ import (
 	srvflags "github.com/evmos/evmos/v18/server/flags"
 	ethermint "github.com/evmos/evmos/v18/types"
 	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
-	cmdcfg "github.com/realiotech/realio-network/cmd/config"
-	"github.com/realiotech/realio-network/testutil/network"
-	minttypes "github.com/realiotech/realio-network/x/mint/types"
+	cmdcfg "github.com/realiotech/realio-network/v2/cmd/config"
+	"github.com/realiotech/realio-network/v2/testutil/network"
+	minttypes "github.com/realiotech/realio-network/v2/x/mint/types"
 	"github.com/spf13/cobra"
 )
 

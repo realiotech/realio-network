@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/realiotech/realio-network/x/asset/keeper"
-	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/realiotech/realio-network/v2/x/asset/keeper"
+	"github.com/realiotech/realio-network/v2/x/asset/types"
 )
 
 // Prevent strconv unused error

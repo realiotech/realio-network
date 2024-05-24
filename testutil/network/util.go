@@ -29,8 +29,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/evmos/evmos/v18/server"
 	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
-	assettypes "github.com/realiotech/realio-network/x/asset/types"
-	minttypes "github.com/realiotech/realio-network/x/mint/types"
+	assettypes "github.com/realiotech/realio-network/v2/x/asset/types"
+	minttypes "github.com/realiotech/realio-network/v2/x/mint/types"
 )
 
 func startInProcess(cfg Config, val *Validator) error {

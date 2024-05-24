@@ -74,6 +74,7 @@ import (
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+
 	// staking
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -107,20 +108,22 @@ import (
 	feemarkettypes "github.com/evmos/evmos/v18/x/feemarket/types"
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
+
 	// multi-staking
 	multistaking "github.com/realio-tech/multi-staking-module/x/multi-staking"
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
-	"github.com/realiotech/realio-network/app/ante"
+	"github.com/realiotech/realio-network/v2/app/ante"
+
 	// unnamed import of statik for swagger UI support
-	_ "github.com/realiotech/realio-network/client/docs/statik"
-	realionetworktypes "github.com/realiotech/realio-network/types"
-	assetmodule "github.com/realiotech/realio-network/x/asset"
-	assetmodulekeeper "github.com/realiotech/realio-network/x/asset/keeper"
-	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
-	"github.com/realiotech/realio-network/x/mint"
-	mintkeeper "github.com/realiotech/realio-network/x/mint/keeper"
-	minttypes "github.com/realiotech/realio-network/x/mint/types"
+	_ "github.com/realiotech/realio-network/v2/client/docs/statik"
+	realionetworktypes "github.com/realiotech/realio-network/v2/types"
+	assetmodule "github.com/realiotech/realio-network/v2/x/asset"
+	assetmodulekeeper "github.com/realiotech/realio-network/v2/x/asset/keeper"
+	assetmoduletypes "github.com/realiotech/realio-network/v2/x/asset/types"
+	"github.com/realiotech/realio-network/v2/x/mint"
+	mintkeeper "github.com/realiotech/realio-network/v2/x/mint/keeper"
+	minttypes "github.com/realiotech/realio-network/v2/x/mint/types"
 	"github.com/spf13/cast"
 )
 

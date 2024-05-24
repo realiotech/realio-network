@@ -5,8 +5,8 @@ import (
 	ethante "github.com/evmos/evmos/v18/app/ante/evm"
 	"github.com/evmos/evmos/v18/encoding"
 	"github.com/evmos/evmos/v18/types"
-	"github.com/realiotech/realio-network/app"
-	"github.com/realiotech/realio-network/app/ante"
+	"github.com/realiotech/realio-network/v2/app"
+	"github.com/realiotech/realio-network/v2/app/ante"
 )
 
 func (suite *AnteTestSuite) TestValidateHandlerOptions() {

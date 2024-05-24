@@ -5,8 +5,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/realiotech/realio-network/x/mint/keeper"
-	"github.com/realiotech/realio-network/x/mint/types"
+	"github.com/realiotech/realio-network/v2/x/mint/keeper"
+	"github.com/realiotech/realio-network/v2/x/mint/types"
 )
 
 // BeginBlocker mints new tokens for the previous block.

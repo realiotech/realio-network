@@ -3,8 +3,8 @@ package v2
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/realiotech/realio-network/x/mint/exported"
-	"github.com/realiotech/realio-network/x/mint/types"
+	"github.com/realiotech/realio-network/v2/x/mint/exported"
+	"github.com/realiotech/realio-network/v2/x/mint/types"
 )
 
 const (

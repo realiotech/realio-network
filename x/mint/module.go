@@ -13,10 +13,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/realiotech/realio-network/x/mint/client/cli"
-	"github.com/realiotech/realio-network/x/mint/exported"
-	"github.com/realiotech/realio-network/x/mint/keeper"
-	"github.com/realiotech/realio-network/x/mint/types"
+	"github.com/realiotech/realio-network/v2/x/mint/client/cli"
+	"github.com/realiotech/realio-network/v2/x/mint/exported"
+	"github.com/realiotech/realio-network/v2/x/mint/keeper"
+	"github.com/realiotech/realio-network/v2/x/mint/types"
 	"github.com/spf13/cobra"
 )
 

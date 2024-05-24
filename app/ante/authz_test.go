@@ -11,7 +11,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
-	"github.com/realiotech/realio-network/app/ante"
+	"github.com/realiotech/realio-network/v2/app/ante"
 	"github.com/stretchr/testify/require"
 )
 

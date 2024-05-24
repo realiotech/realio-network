@@ -1,4 +1,4 @@
-package v3
+package v2
 
 import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -17,7 +17,7 @@ import (
 	ibctransfertypes "github.com/cosmos/ibc-go/v7/modules/apps/transfer/types"
 	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
 	feemarkettypes "github.com/evmos/evmos/v18/x/feemarket/types"
-	minttypes "github.com/realiotech/realio-network/x/mint/types"
+	minttypes "github.com/realiotech/realio-network/v2/x/mint/types"
 )
 
 func migrateParamSubspace(ctx sdk.Context, ck consensuskeeper.Keeper, pk paramskeeper.Keeper) {

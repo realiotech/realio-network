@@ -34,8 +34,8 @@ import (
 	"github.com/evmos/evmos/v18/types"
 	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
 	feemarkettypes "github.com/evmos/evmos/v18/x/feemarket/types"
-	"github.com/realiotech/realio-network/app"
-	realionetworktypes "github.com/realiotech/realio-network/types"
+	"github.com/realiotech/realio-network/v2/app"
+	realionetworktypes "github.com/realiotech/realio-network/v2/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )

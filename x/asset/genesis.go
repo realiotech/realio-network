@@ -2,8 +2,8 @@ package asset
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/realiotech/realio-network/x/asset/keeper"
-	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/realiotech/realio-network/v2/x/asset/keeper"
+	"github.com/realiotech/realio-network/v2/x/asset/types"
 )
 
 // InitGenesis initializes the assets module's state from a provided genesis

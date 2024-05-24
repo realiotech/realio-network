@@ -7,9 +7,9 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	realionetworktypes "github.com/realiotech/realio-network/types"
-	"github.com/realiotech/realio-network/x/asset/keeper"
-	"github.com/realiotech/realio-network/x/asset/types"
+	realionetworktypes "github.com/realiotech/realio-network/v2/types"
+	"github.com/realiotech/realio-network/v2/x/asset/keeper"
+	"github.com/realiotech/realio-network/v2/x/asset/types"
 )
 
 // Prevent strconv unused error

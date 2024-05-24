@@ -13,9 +13,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	"github.com/realiotech/realio-network/x/asset/client/cli"
-	"github.com/realiotech/realio-network/x/asset/keeper"
-	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/realiotech/realio-network/v2/x/asset/client/cli"
+	"github.com/realiotech/realio-network/v2/x/asset/keeper"
+	"github.com/realiotech/realio-network/v2/x/asset/types"
 	"github.com/spf13/cobra"
 )
 

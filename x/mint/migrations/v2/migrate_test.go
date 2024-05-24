@@ -6,10 +6,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	"github.com/realiotech/realio-network/x/mint"
-	"github.com/realiotech/realio-network/x/mint/exported"
-	v2 "github.com/realiotech/realio-network/x/mint/migrations/v2"
-	"github.com/realiotech/realio-network/x/mint/types"
+	"github.com/realiotech/realio-network/v2/x/mint"
+	"github.com/realiotech/realio-network/v2/x/mint/exported"
+	v2 "github.com/realiotech/realio-network/v2/x/mint/migrations/v2"
+	"github.com/realiotech/realio-network/v2/x/mint/types"
 	"github.com/stretchr/testify/require"
 )
 
