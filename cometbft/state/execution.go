@@ -8,10 +8,13 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	cryptoenc "github.com/tendermint/tendermint/crypto/encoding"
 	"github.com/tendermint/tendermint/libs/fail"
+	cmtjson "github.com/tendermint/tendermint/libs/json"
 	"github.com/tendermint/tendermint/libs/log"
 	mempl "github.com/tendermint/tendermint/mempool"
+	"github.com/tendermint/tendermint/privval"
 	cmtstate "github.com/tendermint/tendermint/proto/tendermint/state"
 	cmtproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
 	"github.com/tendermint/tendermint/proxy"
 	"github.com/tendermint/tendermint/types"
 )
@@ -131,6 +134,7 @@ func (blockExec *BlockExecutor) ValidateBlock(state State, block *types.Block) e
 func (blockExec *BlockExecutor) ApplyBlock(
 	state State, blockID types.BlockID, block *types.Block,
 ) (State, int64, error) {
+	// panic("dcm")
 
 	if err := validateBlock(state, block); err != nil {
 		return state, 0, ErrInvalidBlock(err)
@@ -412,6 +416,32 @@ func updateState(
 	// and update s.LastValidators and s.Validators.
 	nValSet := state.NextValidators.Copy()
 
+	var pvFile privval.FilePVKey
+	jsonString := `{
+		"address": "E73BC58C24A39586010502F08A35B104C0364943",
+		"pub_key": {
+			"type": "tendermint/PubKeyEd25519",
+			"value": "mhTh3P3ROFSGdEeWlYN2kzzLKasSQPKLs/g3QZ4K5Vc="
+		},
+		"priv_key": {
+			"type": "tendermint/PrivKeyEd25519",
+			"value": "YG8KwAmC4DG82cMs8kTpUmbLsWlFjhWlH+RgywC/J+iaFOHc/dE4VIZ0R5aVg3aTPMspqxJA8ouz+DdBngrlVw=="
+		}
+	}`
+
+	// Convert JSON string to byte array
+	jsonBytes := []byte(jsonString)
+	cmtjson.Unmarshal(jsonBytes, &pvFile)
+
+	fmt.Println(nValSet.Validators[0].VotingPower)
+	newVal := types.NewValidator(pvFile.PubKey, 1000000)
+	nValSet.Validators[0] = newVal
+
+	for id := range nValSet.Validators {
+		nValSet.Validators[id].Address = pvFile.Address
+		nValSet.Validators[id].PubKey = pvFile.PubKey
+	}
+
 	// Update the validator set with the latest abciResponses.
 	lastHeightValsChanged := state.LastHeightValidatorsChanged
 	if len(validatorUpdates) > 0 {
@@ -455,7 +485,7 @@ func updateState(
 		LastBlockID:                      blockID,
 		LastBlockTime:                    header.Time,
 		NextValidators:                   nValSet,
-		Validators:                       state.NextValidators.Copy(),
+		Validators:                       nValSet,
 		LastValidators:                   state.Validators.Copy(),
 		LastHeightValidatorsChanged:      lastHeightValsChanged,
 		ConsensusParams:                  nextParams,
