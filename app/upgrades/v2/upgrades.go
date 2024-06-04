@@ -23,7 +23,7 @@ func CreateUpgradeHandler(
 	cdc codec.BinaryCodec,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-		ctx.Logger().Info("Starting upgrade for v3")
+		ctx.Logger().Info("Starting upgrade for Realio-network v2...")
 
 		fixMinCommisionRate(ctx, sk, stakingLegacySubspace)
 		migrateParamSubspace(ctx, ck, pk)
