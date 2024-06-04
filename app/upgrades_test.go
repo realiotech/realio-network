@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestV3Upgrade(t *testing.T) {
+func TestV2Upgrade(t *testing.T) {
 	app := Setup(false, nil, 4)
 	ctx := app.BaseApp.NewContext(false, tmproto.Header{Height: app.LastBlockHeight() + 1})
 	validators := app.StakingKeeper.GetAllValidators(ctx)

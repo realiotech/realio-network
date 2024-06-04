@@ -14,7 +14,7 @@ require (
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/cosmos/ibc-go/v7 v7.4.0
 	github.com/ethereum/go-ethereum v1.11.5
-	github.com/evmos/evmos/v18 v18.0.0
+	github.com/evmos/evmos/v18 v18.1.0
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -239,9 +239,6 @@ replace (
 
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc2
-
-	// fork evmos
-	github.com/evmos/evmos/v18 => github.com/decentrio/evmos/v18 v18.0.0-20240509044329-a7bc52adb7bd
 
 	github.com/realio-tech/multi-staking-module => github.com/realiotech/multi-staking v1.0.0-rc7.0.20240515061919-79c051d2c87b
 
