@@ -32,7 +32,7 @@ func (suite *GenesisTestSuite) SetupTest() {
 	// consensus key
 	consAddress := sdk.ConsAddress(testutil.GenAddress().Bytes())
 
-	suite.app = app.Setup(false, feemarkettypes.DefaultGenesisState())
+	suite.app = app.Setup(false, feemarkettypes.DefaultGenesisState(), 1)
 	suite.ctx = suite.app.BaseApp.NewContext(false, tmproto.Header{
 		Height:          1,
 		ChainID:         realiotypes.MainnetChainID,

@@ -12,7 +12,7 @@ import (
 )
 
 func TestItCreatesModuleAccountOnInitBlock(t *testing.T) {
-	realio := app.Setup(false, nil)
+	realio := app.Setup(false, nil, 1)
 	ctx := realio.BaseApp.NewContext(false, tmproto.Header{})
 	acc := realio.AccountKeeper.GetAccount(ctx, authtypes.NewModuleAddress(types.ModuleName))
 	require.NotNil(t, acc)
