@@ -14,7 +14,7 @@ require (
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/cosmos/ibc-go/v7 v7.5.2-0.20240607065443-0f1cf8bf766b
 	github.com/ethereum/go-ethereum v1.11.5
-	github.com/evmos/evmos/v18 v18.1.0
+	github.com/evmos/evmos/v18 v18.1.1-0.20240617191931-222b79531859
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -240,10 +240,7 @@ replace (
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc2
 
-	// Evmos
-	github.com/evmos/evmos/v18 => github.com/decentrio/evmos/v18 v18.0.0-20240617033005-2c6b6fb1c814
-
-	github.com/realio-tech/multi-staking-module => github.com/realiotech/multi-staking v1.0.0-rc7.0.20240515061919-79c051d2c87b
+	github.com/realio-tech/multi-staking-module => github.com/realiotech/multi-staking v1.0.0-rc7.0.20240618042340-84264f2d4b43
 
 	// https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/UPGRADING.md#replaces
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7

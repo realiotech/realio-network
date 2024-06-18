@@ -464,6 +464,7 @@ func New(
 		app.StakingKeeper,
 		app.BankKeeper,
 		keys[multistakingtypes.StoreKey],
+		authAddr,
 	)
 
 	// realio keeper

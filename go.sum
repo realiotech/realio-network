@@ -458,8 +458,6 @@ github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/decentrio/cosmos-sdk v0.47.7-0.20240508103354-487f6dc2ee5b h1:AVU7+65sl84eSOj7bqeFiyqLMPWP/vJmeNianEn3OjU=
 github.com/decentrio/cosmos-sdk v0.47.7-0.20240508103354-487f6dc2ee5b/go.mod h1:ADjORYzUQqQv/FxDi0H0K5gW/rAk1CiDR3ZKsExfJV0=
-github.com/decentrio/evmos/v18 v18.0.0-20240617033005-2c6b6fb1c814 h1:dFw+UOk0SnEfkHM8I9X4EuyBpANUkTezmp1po69IUr8=
-github.com/decentrio/evmos/v18 v18.0.0-20240617033005-2c6b6fb1c814/go.mod h1:GfZd17bX4cerdRd0/LK6134akWx+Ef+MEvyaFtUrbYY=
 github.com/deckarep/golang-set v1.8.0 h1:sk9/l/KqpunDwP7pSjUg0keiOOLEnOBHzykLrsPppp4=
 github.com/deckarep/golang-set v1.8.0/go.mod h1:5nI87KwE7wgsBU1F4GKAw2Qod7p5kyS383rP6+o6qqo=
 github.com/decred/dcrd/crypto/blake256 v1.0.0/go.mod h1:sQl2p6Y26YV+ZOcSTP6thNdn47hh8kt6rqSlvmrXFAc=
@@ -522,6 +520,8 @@ github.com/envoyproxy/go-control-plane v0.9.9-0.20210512163311-63b5d3c536b0/go.m
 github.com/envoyproxy/go-control-plane v0.9.10-0.20210907150352-cf90f659a021/go.mod h1:AFq3mo9L8Lqqiid3OhADV3RfLJnjiw63cSpi+fDTRC0=
 github.com/envoyproxy/go-control-plane v0.10.2-0.20220325020618-49ff273808a1/go.mod h1:KJwIaB5Mv44NWtYuAOFCVOjcI94vtpEz2JU/D2v6IjE=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
+github.com/evmos/evmos/v18 v18.1.1-0.20240617191931-222b79531859 h1:RplVhXcjH9LUwOUhuIUIQ98SLaPctpj1yRfvG79T+2k=
+github.com/evmos/evmos/v18 v18.1.1-0.20240617191931-222b79531859/go.mod h1:GfZd17bX4cerdRd0/LK6134akWx+Ef+MEvyaFtUrbYY=
 github.com/evmos/go-ethereum v1.10.26-evmos-rc2 h1:tYghk1ZZ8X4/OQ4YI9hvtm8aSN8OSqO0g9vo/sCMdBo=
 github.com/evmos/go-ethereum v1.10.26-evmos-rc2/go.mod h1:/6CsT5Ceen2WPLI/oCA3xMcZ5sWMF/D46SjM/ayY0Oo=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
@@ -1142,8 +1142,8 @@ github.com/rakyll/statik v0.1.7/go.mod h1:AlZONWzMtEnMs7W4e/1LURLiI49pIMmp6V9Ung
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:N/ElC8H3+5XpJzTSTfLsJV/mx9Q9g7kxmchpfZyxgzM=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
-github.com/realiotech/multi-staking v1.0.0-rc7.0.20240515061919-79c051d2c87b h1:2rWrmCSjogwVikAGLsXNzT5rChQL0mizceavkKWNQGs=
-github.com/realiotech/multi-staking v1.0.0-rc7.0.20240515061919-79c051d2c87b/go.mod h1:v1XZNU3TgiEhhybSHN9JgPck+AeEfvq5Tvo2WZncoiQ=
+github.com/realiotech/multi-staking v1.0.0-rc7.0.20240618042340-84264f2d4b43 h1:TjVTnsUP2myH9mVFndjJFnQelYmvCiTmW7HK/QysdQc=
+github.com/realiotech/multi-staking v1.0.0-rc7.0.20240618042340-84264f2d4b43/go.mod h1:v1XZNU3TgiEhhybSHN9JgPck+AeEfvq5Tvo2WZncoiQ=
 github.com/retailnext/hllpp v1.0.1-0.20180308014038-101a6d2f8b52/go.mod h1:RDpi1RftBQPUCDRw6SmxeaREsAaRKnOclghuzp/WRzc=
 github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.2.0 h1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=
