@@ -2,15 +2,17 @@ package ante_test
 
 import (
 	"fmt"
+	"math/big"
 	"time"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
-	abci "github.com/tendermint/tendermint/abci/types"
+	utiltx "github.com/evmos/evmos/v18/testutil/tx"
+	evmtypes "github.com/evmos/evmos/v18/x/evm/types"
 )
 
 func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
@@ -30,6 +32,18 @@ func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
 			panic(err)
 		}
 		return msg
+	}
+
+	to := utiltx.GenerateAddress()
+
+	ethTxParams := &evmtypes.EvmTxArgs{
+		ChainID:   suite.app.EvmKeeper.ChainID(),
+		To:        &to,
+		Nonce:     1,
+		Amount:    big.NewInt(10),
+		GasLimit:  100000,
+		GasPrice:  big.NewInt(150),
+		GasFeeCap: big.NewInt(200),
 	}
 
 	testcases := []struct {
@@ -65,7 +79,7 @@ func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
 							testAddresses[3],
 							sdk.NewCoins(sdk.NewInt64Coin(evmtypes.DefaultEVMDenom, 100e6)),
 						),
-						&evmtypes.MsgEthereumTx{},
+						evmtypes.NewTx(ethTxParams),
 					},
 				),
 			},
@@ -78,7 +92,7 @@ func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
 					testAddresses[1],
 					2,
 					[]sdk.Msg{
-						&evmtypes.MsgEthereumTx{},
+						evmtypes.NewTx(ethTxParams),
 					},
 				),
 			},
@@ -156,14 +170,14 @@ func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
 					Type: abci.CheckTxType_New,
 				},
 			)
-			suite.Require().Equal(resCheckTx.Code, tc.expectedCode, resCheckTx.Log)
+			suite.Require().Equal(tc.expectedCode, resCheckTx.Code, resCheckTx.Log)
 
 			resDeliverTx := suite.app.DeliverTx(
 				abci.RequestDeliverTx{
 					Tx: bz,
 				},
 			)
-			suite.Require().Equal(resDeliverTx.Code, tc.expectedCode, resDeliverTx.Log)
+			suite.Require().Equal(tc.expectedCode, resDeliverTx.Code, resDeliverTx.Log)
 		})
 	}
 }

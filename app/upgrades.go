@@ -5,10 +5,13 @@ import (
 
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
-	multistaking "github.com/realiotech/realio-network/app/upgrades/multi-staking"
-
+	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
+	multistaking "github.com/realiotech/realio-network/v2/app/upgrades/multi-staking"
+	v2 "github.com/realiotech/realio-network/v2/app/upgrades/v2"
 )
 
 func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
@@ -21,6 +24,20 @@ func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.AppCodec(),
 			app.BankKeeper,
 			app.AccountKeeper,
+		),
+	)
+
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v2.UpgradeName,
+		v2.CreateUpgradeHandler(
+			app.mm, app.configurator,
+			app.ConsensusParamsKeeper,
+			app.IBCKeeper.ClientKeeper,
+			app.ParamsKeeper,
+			app.StakingKeeper,
+			app.MultiStakingKeeper,
+			app.GetSubspace(stakingtypes.ModuleName),
+			app.appCodec,
 		),
 	)
 
@@ -38,6 +55,10 @@ func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	if upgradeInfo.Name == multistaking.UpgradeName {
 		storeUpgrades = &storetypes.StoreUpgrades{
 			Added: []string{multistakingtypes.ModuleName},
+		}
+	} else if upgradeInfo.Name == v2.UpgradeName {
+		storeUpgrades = &storetypes.StoreUpgrades{
+			Added: []string{crisistypes.ModuleName, consensusparamtypes.ModuleName},
 		}
 	}
 

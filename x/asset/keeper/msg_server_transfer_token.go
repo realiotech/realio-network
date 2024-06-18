@@ -7,12 +7,9 @@ import (
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
-
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/realiotech/realio-network/x/asset/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/realiotech/realio-network/v2/x/asset/types"
 )
 
 func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferToken) (*types.MsgTransferTokenResponse, error) {

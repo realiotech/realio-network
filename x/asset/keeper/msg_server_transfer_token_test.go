@@ -5,8 +5,8 @@ import (
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/realiotech/realio-network/x/asset/keeper"
-	"github.com/realiotech/realio-network/x/asset/types"
+	"github.com/realiotech/realio-network/v2/x/asset/keeper"
+	"github.com/realiotech/realio-network/v2/x/asset/types"
 )
 
 // Prevent strconv unused error
@@ -132,5 +132,5 @@ func (suite *KeeperTestSuite) TestTransferTokenSenderBalanceToSmall() {
 
 	_, err = srv.TransferToken(wctx, expected)
 	suite.Require().Error(err)
-	suite.Require().Equal(err.Error(), "1000000000000000000000arst is smaller than 1001000000000000000000arst: insufficient funds")
+	suite.Require().Equal("spendable balance 1000000000000000000000arst is smaller than 1001000000000000000000arst: insufficient funds", err.Error())
 }
