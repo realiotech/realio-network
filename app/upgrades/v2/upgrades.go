@@ -35,7 +35,10 @@ func CreateUpgradeHandler(
 		params := multistakingtypes.Params{
 			MainBondDenom: mainBondDenom,
 		}
-		mk.SetParams(ctx, params)
+		err := mk.SetParams(ctx, params)
+		if err != nil {
+			panic(err)
+		}
 
 		fixMinCommisionRate(ctx, sk, stakingLegacySubspace)
 		migrateParamSubspace(ctx, ck, pk)
