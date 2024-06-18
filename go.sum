@@ -1142,8 +1142,8 @@ github.com/rakyll/statik v0.1.7/go.mod h1:AlZONWzMtEnMs7W4e/1LURLiI49pIMmp6V9Ung
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:N/ElC8H3+5XpJzTSTfLsJV/mx9Q9g7kxmchpfZyxgzM=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
-github.com/realiotech/multi-staking v1.0.0-rc7.0.20240618042340-84264f2d4b43 h1:TjVTnsUP2myH9mVFndjJFnQelYmvCiTmW7HK/QysdQc=
-github.com/realiotech/multi-staking v1.0.0-rc7.0.20240618042340-84264f2d4b43/go.mod h1:v1XZNU3TgiEhhybSHN9JgPck+AeEfvq5Tvo2WZncoiQ=
+github.com/realiotech/multi-staking v1.0.0-rc7.0.20240618044500-0fd6603499a7 h1:mc6t6Z2RKU7meh1iuq76fP7WGA19KMEACTwLqbEqiSc=
+github.com/realiotech/multi-staking v1.0.0-rc7.0.20240618044500-0fd6603499a7/go.mod h1:v1XZNU3TgiEhhybSHN9JgPck+AeEfvq5Tvo2WZncoiQ=
 github.com/retailnext/hllpp v1.0.1-0.20180308014038-101a6d2f8b52/go.mod h1:RDpi1RftBQPUCDRw6SmxeaREsAaRKnOclghuzp/WRzc=
 github.com/rivo/uniseg v0.1.0/go.mod h1:J6wj4VEh+S6ZtnVlnTBMWIodfgj8LQOQFoIToxlJtxc=
 github.com/rivo/uniseg v0.2.0 h1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=
