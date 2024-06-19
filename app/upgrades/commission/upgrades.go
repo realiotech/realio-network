@@ -53,10 +53,7 @@ func updateValidatorCommission(ctx sdk.Context, staking *stakingkeeper.Keeper,
 		return commission, fmt.Errorf("cannot set validator commission to less than minimum rate of %s", staking.MinCommissionRate(ctx))
 	}
 
-	if commission.Rate.LT(newRate) {
-		commission.Rate = newRate
-	}
-
+	commission.Rate = newRate
 	if commission.MaxRate.LT(newRate) {
 		commission.MaxRate = newRate
 	}
