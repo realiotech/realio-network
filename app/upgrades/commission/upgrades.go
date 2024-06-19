@@ -26,10 +26,6 @@ func fixMinCommisionRate(ctx sdk.Context, staking *stakingkeeper.Keeper) {
 	// Upgrade every validators min-commission rate
 	validators := staking.GetAllValidators(ctx)
 	minComm := sdk.MustNewDecFromStr(NewMinCommisionRate)
-	params := staking.GetParams(ctx)
-	params.MinCommissionRate = minComm
-
-	staking.SetParams(ctx, params)
 
 	for _, v := range validators {
 		//nolint
@@ -39,10 +35,9 @@ func fixMinCommisionRate(ctx sdk.Context, staking *stakingkeeper.Keeper) {
 				panic(err)
 			}
 
-			v.Commission = comm
-
 			// call the before-modification hook since we're about to update the commission
 			staking.BeforeValidatorModified(ctx, v.GetOperator())
+			v.Commission = comm
 			staking.SetValidator(ctx, v)
 		}
 	}
@@ -58,7 +53,10 @@ func updateValidatorCommission(ctx sdk.Context, staking *stakingkeeper.Keeper,
 		return commission, fmt.Errorf("cannot set validator commission to less than minimum rate of %s", staking.MinCommissionRate(ctx))
 	}
 
-	commission.Rate = newRate
+	if commission.Rate.LT(newRate) {
+		commission.Rate = newRate
+	}
+
 	if commission.MaxRate.LT(newRate) {
 		commission.MaxRate = newRate
 	}

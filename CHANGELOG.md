@@ -37,6 +37,11 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
+## [v0.9.1] - 2024-06-19
+
+### Improvements
+
+- (chore) [#157](https://github.com/realiotech/realio-network/pull/157): update the validators' commissions if their commissions are less than 5%
 
 ## [v0.9.0] - 2024-03-27
 
