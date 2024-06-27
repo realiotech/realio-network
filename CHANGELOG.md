@@ -37,11 +37,24 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
-## [Unreleased]
+## [v0.9.3](https://github.com/realiotech/realio-network/releases/tag/v0.9.3) - 2024-6-26
 
 ### Improvements
 
 - (chore) [#157](https://github.com/realiotech/realio-network/pull/157): update the validators' commissions if their commissions are less than 5%
+
+## [v0.9.2](https://github.com/realiotech/realio-network/releases/tag/v0.9.1) - 2024-4-02
+
+### Bug Fixes
+
+- (app) [#133](https://github.com/realiotech/realio-network/pull/133) Update fork for multistaking upgrade
+
+## [v0.9.1](https://github.com/realiotech/realio-network/releases/tag/v0.9.1) - 2024-4-01
+
+### Bug Fixes
+
+- (asset) [#131](https://github.com/realiotech/realio-network/pull/131) Fix send restriction 
+
 
 ## [v0.9.0] - 2024-03-27
 
