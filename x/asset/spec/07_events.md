@@ -18,20 +18,3 @@ The `x/asset` module emits the following events:
 | Type            | Attribute Key | Attribute Value |
 | --------------- |---------------|-----------------|
 | `update_token` | `"symbol"`    | `{symbol}`      |
-
-
-## Authorize address
-
-| Type            | Attribute Key | Attribute Value  |
-| --------------- |--------------|------------------|
-| `authorize_token` | `"symbol"`   | `{symbol}`       |
-| `authorize_token` | `"address"`  | `{sdk_address}`  |
-
-
-## Un Authorize address
-
-| Type            | Attribute Key | Attribute Value |
-| --------------- |---------------|-----------------|
-| `unauthorize_token` | `"symbol"`    | `{symbol}`      |
-| `unauthorize_token` | `"address"`   | `{sdk_address}` |
-
