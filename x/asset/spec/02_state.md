@@ -6,7 +6,7 @@ order: 2
 
 ## Store
 
-### Token Management
+### Token Store
 
 Map: `0x00 | {Token ID} -> Token`
 
@@ -19,7 +19,11 @@ type Token struct {
 }
 ```
 
-Map: `0x01 | {Token ID} | TokenManagement -> TokenManagement`
+Note that these infos are also stored in the `metadata` store of bank module.
+
+### Token Management
+
+Map: `0x01 | {Token ID} -> TokenManagement`
 
 Token management holds these information about the token:
 
