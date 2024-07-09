@@ -51,7 +51,7 @@ type MsgAssignPrivilege struct {
 ## MessageUnassignPrivilege
 
 ```go
-type MsgAssignPrivilege struct {
+type MsgUnassignPrivilege struct {
     Manager string
     TokenID string
     UnassignedFrom []string
@@ -77,10 +77,10 @@ type MsgDisablePrivilege struct {
 
 ```go
 type PrivilegeMsg interface {
-    Privilege()    string
+    NeedPrivilege()    string
 }
 
-type MsgExecute struct {
+type MsgExecutePrivilege struct {
     Address string
     TokenID string
     PrivilegeMsg  PrivilegeMsg

@@ -8,6 +8,17 @@ order: 2
 
 ### Token Management
 
+Map: `0x00 | {Token ID} -> Token`
+
+```go
+type Token struct {
+    Name string
+    Symbol string
+    Decimal string
+    Description string
+}
+```
+
 Map: `0x01 | {Token ID} | TokenManagement -> TokenManagement`
 
 Token management holds these information about the token:
@@ -17,7 +28,7 @@ Token management holds these information about the token:
 * if we can add newly introduced privilege to the token later on
 
 ```go
-type TokenManagement struct {                       
+type TokenManagement struct {
     Manager               string                         
     AddNewPrivilege       bool
     ExcludedPrivileges    []string
@@ -33,8 +44,6 @@ Map: `0x02 | {Token ID} | {Privilege Name} -> Addresses`
 Sub stores: `0x03 | {Token ID} | {Privilege Name}`
 
 Since each type of privilege has its own logic, we need to leave a seprate space for each of them to store their data. A privilege should manage its own store provided by the asset module, prefixed with `0x03 | {Token ID} | {Privilege Name}`
-
-**Note:** We don't want to store the basic info of a token (name, symbol, decimal and description) as we want to utilize bank metadata for storing it instead.
 
 ## Genesis State
 
