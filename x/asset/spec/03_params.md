@@ -6,8 +6,10 @@ order: 3
 
 The asset module contains the following parameters:
 
-| Key           | Type            | Example                |
-|---------------|-----------------|------------------------|
-| port          | string          | "ario"                 |
-| InflationRate | string (dec)    | "0.130000000000000000" |
-| BlocksPerYear | string (uint64) | "6311520"              |
+| Key        | Type     | Example         |
+|------------|----------|-----------------|
+| Privileges | []string | "freeze","mint" |
+
+## Details
+
+- Privileges: refers to the privileges that is enabled for our privilege system. Everytime a new type of privilege is introduced, we will update this param to include it.
