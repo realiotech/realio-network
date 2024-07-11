@@ -26,22 +26,13 @@ const (
 	TokenKeyPrefix = "Token/value/"
 )
 
-// PortKey defines the key to store the port ID in store
-var PortKey = KeyPrefix("asset-port-")
-
-func KeyPrefix(p string) []byte {
-	return []byte(p)
-}
-
-// TokenKey returns the store key to retrieve a Token from the index fields
-func TokenKey(
-	index string,
-) []byte {
-	var key []byte
-
-	indexBytes := []byte(index)
-	key = append(key, indexBytes...)
-	key = append(key, []byte("/")...)
-
-	return key
-}
+var (
+	// TokenKey is the key use for keeper to store token
+	TokenKey = []byte{0x00}
+	// TokenManagementKey is the key use for keeper to store the management information of token
+	TokenManagementKey = []byte{0x01}
+	// PrivilegedAccountsKey is the key to store all privileged account
+	PrivilegedAccountsKey = []byte{0x02}
+	// PrivilegeStoreKey
+	PrivilegeStoreKey = []byte{0x03}
+)
