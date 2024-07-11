@@ -55,3 +55,30 @@ func (k Keeper) GetTokenManagement(ctx sdk.Context, tokenId string) (types.Token
 
 	return token, true
 }
+
+func (k Keeper) SetTokenPrivilegedAccount(
+	ctx sdk.Context,
+	tokenId string,
+	privilege string,
+	address sdk.AccAddress,
+) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PrivilegedAccountsKey)
+	key := append([]byte(tokenId), []byte(privilege)...)
+	store.Set(key, address)
+}
+
+func (k Keeper) GetTokenPrivilegedAccount(
+	ctx sdk.Context,
+	tokenId string,
+	privilege string,
+) (sdk.AccAddress, bool) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PrivilegedAccountsKey)
+	key := append([]byte(tokenId), []byte(privilege)...)
+
+	bz := store.Get(key)
+	if bz == nil {
+		return sdk.AccAddress{}, false
+	}
+
+	return sdk.AccAddress(bz), true
+}
