@@ -7,12 +7,10 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	"github.com/realiotech/realio-network/v2/app/upgrades/commission"
 	multistaking "github.com/realiotech/realio-network/v2/app/upgrades/multi-staking"
-
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	v2 "github.com/realiotech/realio-network/v2/app/upgrades/v2"
 )
 
@@ -36,9 +34,7 @@ func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.ConsensusParamsKeeper,
 			app.IBCKeeper.ClientKeeper,
 			app.ParamsKeeper,
-			app.StakingKeeper,
 			app.MultiStakingKeeper,
-			app.GetSubspace(stakingtypes.ModuleName),
 			app.appCodec,
 		),
 	)

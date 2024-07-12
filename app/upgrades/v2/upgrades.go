@@ -6,8 +6,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	consensuskeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	ibctmmigrations "github.com/cosmos/ibc-go/v7/modules/light-clients/07-tendermint/migrations"
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
@@ -24,9 +22,7 @@ func CreateUpgradeHandler(
 	ck consensuskeeper.Keeper,
 	clientKeeper ibctmmigrations.ClientKeeper,
 	pk paramskeeper.Keeper,
-	sk *stakingkeeper.Keeper,
 	mk multistakingkeeper.Keeper,
-	stakingLegacySubspace paramstypes.Subspace,
 	cdc codec.BinaryCodec,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx sdk.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
