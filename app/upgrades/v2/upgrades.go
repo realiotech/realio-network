@@ -40,7 +40,6 @@ func CreateUpgradeHandler(
 			panic(err)
 		}
 
-		fixMinCommisionRate(ctx, sk, stakingLegacySubspace)
 		migrateParamSubspace(ctx, ck, pk)
 
 		if _, err := ibctmmigrations.PruneExpiredConsensusStates(ctx, cdc, clientKeeper); err != nil {
