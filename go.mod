@@ -240,7 +240,7 @@ replace (
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc2
 
-	github.com/realio-tech/multi-staking-module => github.com/realiotech/multi-staking v1.0.0-rc7.0.20240618044500-0fd6603499a7
+	github.com/realio-tech/multi-staking-module => github.com/realiotech/multi-staking v1.0.0-rc7.0.20240716111405-93b62cdc78a9
 
 	// https://github.com/cosmos/cosmos-sdk/blob/release/v0.47.x/UPGRADING.md#replaces
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
