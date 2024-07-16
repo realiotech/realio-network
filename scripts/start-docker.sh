@@ -3,7 +3,7 @@
 KEY="dev0"
 CHAINID="realionetworklocal_7777-1"
 MONIKER="mymoniker"
-DATA_DIR=$(mktemp -d -t realionetwork-datadir.XXXXX)
+DATA_DIR=$(mkdir -d -t realionetwork-datadir.XXXXX)
 GENESIS=$DATA_DIR/config/genesis.json
 TMP_GENESIS=$DATA_DIR/config/tmp_genesis.json
 
