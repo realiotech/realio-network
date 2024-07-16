@@ -17,8 +17,6 @@ echo "prepare genesis: Allocate genesis accounts"
 --home $DATA_DIR --keyring-backend test
 echo "prepare genesis: Sign genesis transaction"
 ./realio-networkd gentx $KEY 1000000000000000000ario--keyring-backend test --home $DATA_DIR --keyring-backend test --chain-id $CHAINID
-echo "add multi-staking coin info"
-jq '.app_state["multistaking"]["multi_staking_coin_info"]=[{"denom": "ario", "bond_weight": "1.000000000000000000"}, {"denom": "arst", "bond_weight": "1.000000000000000000"}]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 echo "prepare genesis: Collect genesis tx"
 ./realio-networkd collect-gentxs --home $DATA_DIR
 echo "prepare genesis: Run validate-genesis to ensure everything worked and that the genesis file is setup correctly"
