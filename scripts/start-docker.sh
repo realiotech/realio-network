@@ -4,6 +4,8 @@ KEY="dev0"
 CHAINID="realionetworklocal_7777-1"
 MONIKER="mymoniker"
 DATA_DIR=$(mktemp -d -t realionetwork-datadir.XXXXX)
+GENESIS=$DATA_DIR/config/genesis.json
+TMP_GENESIS=$DATA_DIR/config/tmp_genesis.json
 
 echo "create and add new keys"
 ./realio-networkd keys add $KEY --home $DATA_DIR --no-backup --chain-id $CHAINID --algo "eth_secp256k1" --keyring-backend test
@@ -15,6 +17,8 @@ echo "prepare genesis: Allocate genesis accounts"
 --home $DATA_DIR --keyring-backend test
 echo "prepare genesis: Sign genesis transaction"
 ./realio-networkd gentx $KEY 1000000000000000000ario--keyring-backend test --home $DATA_DIR --keyring-backend test --chain-id $CHAINID
+echo "add multi-staking coin info"
+jq '.app_state["multistaking"]["multi_staking_coin_info"]=[{"denom": "ario", "bond_weight": "1.000000000000000000"}, {"denom": "arst", "bond_weight": "1.000000000000000000"}]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 echo "prepare genesis: Collect genesis tx"
 ./realio-networkd collect-gentxs --home $DATA_DIR
 echo "prepare genesis: Run validate-genesis to ensure everything worked and that the genesis file is setup correctly"
