@@ -46,6 +46,8 @@ import (
 
 	cmdcfg "github.com/realiotech/realio-network/cmd/config"
 	"github.com/realiotech/realio-network/testutil/network"
+
+	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 )
 
 var (
@@ -400,11 +402,16 @@ func initGenFiles(
 	bankGenState.Balances = genBalances
 	appGenState[banktypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&bankGenState)
 
-	var stakingGenState stakingtypes.GenesisState
-	clientCtx.Codec.MustUnmarshalJSON(appGenState[stakingtypes.ModuleName], &stakingGenState)
+	var multiStakingGenState multistakingtypes.GenesisState
+	clientCtx.Codec.MustUnmarshalJSON(appGenState[multistakingtypes.ModuleName], &multiStakingGenState)
 
-	stakingGenState.Params.BondDenom = coinDenom
-	appGenState[stakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&stakingGenState)
+	multiStakingGenState.MultiStakingCoinInfo = []multistakingtypes.MultiStakingCoinInfo{
+		{
+			Denom:      "ario",
+			BondWeight: sdk.OneDec(),
+		},
+	}
+	appGenState[multistakingtypes.ModuleName] = clientCtx.Codec.MustMarshalJSON(&multiStakingGenState)
 
 	mintGenState := *minttypes.DefaultGenesisState()
 	clientCtx.Codec.MustUnmarshalJSON(appGenState[minttypes.ModuleName], &mintGenState)
