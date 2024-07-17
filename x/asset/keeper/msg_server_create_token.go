@@ -37,13 +37,6 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 
 	token := types.NewToken(lowerCaseName, lowerCaseSymbol, msg.Total, msg.Manager, msg.AuthorizationRequired)
 
-	if msg.AuthorizationRequired {
-		// create authorization for module account and manager
-		assetModuleAddress := k.ak.GetModuleAddress(types.ModuleName)
-		moduleAuthorization := types.NewAuthorization(assetModuleAddress)
-		newAuthorizationManager := types.NewAuthorization(managerAccAddress)
-		token.Authorized = append(token.Authorized, moduleAuthorization, newAuthorizationManager)
-	}
 
 	k.SetToken(ctx, token)
 

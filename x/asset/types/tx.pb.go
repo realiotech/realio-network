@@ -7,6 +7,7 @@ import (
 	context "context"
 	fmt "fmt"
 	_ "github.com/cosmos/cosmos-proto"
+	types1 "github.com/cosmos/cosmos-sdk/codec/types"
 	types "github.com/cosmos/cosmos-sdk/x/bank/types"
 	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/gogo/protobuf/grpc"
@@ -14,7 +15,6 @@ import (
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
 	status "google.golang.org/grpc/status"
-	protobuf "google/protobuf"
 	io "io"
 	math "math"
 	math_bits "math/bits"
@@ -163,7 +163,7 @@ type MsgAllocateToken struct {
 	Manager        string          `protobuf:"bytes,1,opt,name=manager,proto3" json:"manager,omitempty"`
 	TokenId        string          `protobuf:"bytes,2,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"`
 	Balances       []types.Balance `protobuf:"bytes,3,rep,name=balances,proto3" json:"balances"`
-	VestingBalance []*protobuf.Any `protobuf:"bytes,4,rep,name=vesting_balance,json=vestingBalance,proto3" json:"vesting_balance,omitempty"`
+	VestingBalance []*types1.Any   `protobuf:"bytes,4,rep,name=vesting_balance,json=vestingBalance,proto3" json:"vesting_balance,omitempty"`
 }
 
 func (m *MsgAllocateToken) Reset()         { *m = MsgAllocateToken{} }
@@ -220,7 +220,7 @@ func (m *MsgAllocateToken) GetBalances() []types.Balance {
 	return nil
 }
 
-func (m *MsgAllocateToken) GetVestingBalance() []*protobuf.Any {
+func (m *MsgAllocateToken) GetVestingBalance() []*types1.Any {
 	if m != nil {
 		return m.VestingBalance
 	}
@@ -568,9 +568,9 @@ func (m *MsgDisablePrivilegeResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgDisablePrivilegeResponse proto.InternalMessageInfo
 
 type MsgExecutePrivilege struct {
-	Address      string        `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	TokenId      string        `protobuf:"bytes,2,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"`
-	PrivilegeMsg *protobuf.Any `protobuf:"bytes,3,opt,name=privilege_msg,json=privilegeMsg,proto3" json:"privilege_msg,omitempty"`
+	Address      string      `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+	TokenId      string      `protobuf:"bytes,2,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"`
+	PrivilegeMsg *types1.Any `protobuf:"bytes,3,opt,name=privilege_msg,json=privilegeMsg,proto3" json:"privilege_msg,omitempty"`
 }
 
 func (m *MsgExecutePrivilege) Reset()         { *m = MsgExecutePrivilege{} }
@@ -620,7 +620,7 @@ func (m *MsgExecutePrivilege) GetTokenId() string {
 	return ""
 }
 
-func (m *MsgExecutePrivilege) GetPrivilegeMsg() *protobuf.Any {
+func (m *MsgExecutePrivilege) GetPrivilegeMsg() *types1.Any {
 	if m != nil {
 		return m.PrivilegeMsg
 	}
@@ -2174,7 +2174,7 @@ func (m *MsgAllocateToken) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.VestingBalance = append(m.VestingBalance, &protobuf.Any{})
+			m.VestingBalance = append(m.VestingBalance, &types1.Any{})
 			if err := m.VestingBalance[len(m.VestingBalance)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
@@ -3025,7 +3025,7 @@ func (m *MsgExecutePrivilege) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.PrivilegeMsg == nil {
-				m.PrivilegeMsg = &protobuf.Any{}
+				m.PrivilegeMsg = &types1.Any{}
 			}
 			if err := m.PrivilegeMsg.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
