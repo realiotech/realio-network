@@ -3,12 +3,11 @@ package mint_test
 import (
 	"testing"
 
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/realiotech/realio-network/v2/app"
+	"github.com/realiotech/realio-network/v2/x/mint/types"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-
-	"github.com/realiotech/realio-network/app"
-	"github.com/realiotech/realio-network/x/mint/types"
 )
 
 func TestItCreatesModuleAccountOnInitBlock(t *testing.T) {
