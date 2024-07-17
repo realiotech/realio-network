@@ -3,7 +3,7 @@
 KEY="dev0"
 CHAINID="realionetworklocal_7777-1"
 MONIKER="mymoniker"
-DATA_DIR=$(mkdir -d -t realionetwork-datadir.XXXXX)
+DATA_DIR=$(mktemp -d -t realionetwork-datadir.XXXXX)
 
 echo "create and add new keys"
 ./realio-networkd keys add $KEY --home $DATA_DIR --no-backup --chain-id $CHAINID --algo "eth_secp256k1" --keyring-backend test
