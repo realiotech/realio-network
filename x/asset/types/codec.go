@@ -9,6 +9,12 @@ import (
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
 	cdc.RegisterConcrete(&MsgCreateToken{}, "asset/CreateToken", nil)
+	cdc.RegisterConcrete(&MsgUpdateToken{}, "asset/UpdateToken", nil)
+	cdc.RegisterConcrete(&MsgAllocateToken{}, "asset/AllocateToken", nil)
+	cdc.RegisterConcrete(&MsgAssignPrivilege{}, "asset/AssignPrivilege", nil)
+	cdc.RegisterConcrete(&MsgUnassignPrivilege{}, "asset/UnassignPrivilege", nil)
+	cdc.RegisterConcrete(&MsgDisablePrivilege{}, "asset/DisablePrivilege", nil)
+	cdc.RegisterConcrete(&MsgExecutePrivilege{}, "asset/ExecutePrivilege", nil)
 	// this line is used by starport scaffolding # 2
 }
 

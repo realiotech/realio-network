@@ -10,8 +10,8 @@ import "google/protobuf/any.proto";
 
 // Msg defines the Msg service.
 service Msg {
-
   rpc CreateToken(MsgCreateToken) returns (MsgCreateTokenResponse);
+  rpc UpdateToken(MsgUpdateToken) returns (MsgUpdateTokenResponse);
   rpc AllocateToken(MsgAllocateToken) returns (MsgAllocateTokenResponse);
   rpc AssignPrivilege(MsgAssignPrivilege) returns (MsgAssignPrivilegeResponse);
   rpc UnassignPrivilege(MsgUnassignPrivilege)
@@ -28,11 +28,24 @@ message MsgCreateToken {
   string name = 3;
   string symbol = 4;
   string decimal = 5;
-  repeated string excluded_privileges = 6;
-  bool add_new_privilege = 7;
+  string description = 6;
+  repeated string excluded_privileges = 7;
+  bool add_new_privilege = 8;
 }
 
 message MsgCreateTokenResponse {}
+
+message MsgUpdateToken {
+  string manager = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  string token_id = 2;
+  string name = 3;
+  string symbol = 4;
+  string decimal = 5;
+  string description = 6;
+  bool add_new_privilege = 7;
+}
+
+message MsgUpdateTokenResponse {}
 
 message MsgAllocateToken {
   string manager = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];

@@ -287,106 +287,6 @@ func (m *QueryTokenResponse) GetToken() Token {
 	return Token{}
 }
 
-// QueryParamsRequest is request type for the Query/Params RPC method.
-type QueryIsAuthorizedRequest struct {
-	// symbol is the token symbol to query for.
-	Symbol  string `protobuf:"bytes,1,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	Address string `protobuf:"bytes,2,opt,name=address,proto3" json:"address,omitempty"`
-}
-
-func (m *QueryIsAuthorizedRequest) Reset()         { *m = QueryIsAuthorizedRequest{} }
-func (m *QueryIsAuthorizedRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryIsAuthorizedRequest) ProtoMessage()    {}
-func (*QueryIsAuthorizedRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b6e3fc89e45a1671, []int{6}
-}
-func (m *QueryIsAuthorizedRequest) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryIsAuthorizedRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryIsAuthorizedRequest.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryIsAuthorizedRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryIsAuthorizedRequest.Merge(m, src)
-}
-func (m *QueryIsAuthorizedRequest) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryIsAuthorizedRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryIsAuthorizedRequest.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryIsAuthorizedRequest proto.InternalMessageInfo
-
-func (m *QueryIsAuthorizedRequest) GetSymbol() string {
-	if m != nil {
-		return m.Symbol
-	}
-	return ""
-}
-
-func (m *QueryIsAuthorizedRequest) GetAddress() string {
-	if m != nil {
-		return m.Address
-	}
-	return ""
-}
-
-// QueryParamsResponse is response type for the Query/Params RPC method.
-type QueryIsAuthorizedResponse struct {
-	// params holds all the parameters of this module.
-	IsAuthorized bool `protobuf:"varint,1,opt,name=isAuthorized,proto3" json:"isAuthorized,omitempty"`
-}
-
-func (m *QueryIsAuthorizedResponse) Reset()         { *m = QueryIsAuthorizedResponse{} }
-func (m *QueryIsAuthorizedResponse) String() string { return proto.CompactTextString(m) }
-func (*QueryIsAuthorizedResponse) ProtoMessage()    {}
-func (*QueryIsAuthorizedResponse) Descriptor() ([]byte, []int) {
-	return fileDescriptor_b6e3fc89e45a1671, []int{7}
-}
-func (m *QueryIsAuthorizedResponse) XXX_Unmarshal(b []byte) error {
-	return m.Unmarshal(b)
-}
-func (m *QueryIsAuthorizedResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	if deterministic {
-		return xxx_messageInfo_QueryIsAuthorizedResponse.Marshal(b, m, deterministic)
-	} else {
-		b = b[:cap(b)]
-		n, err := m.MarshalToSizedBuffer(b)
-		if err != nil {
-			return nil, err
-		}
-		return b[:n], nil
-	}
-}
-func (m *QueryIsAuthorizedResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryIsAuthorizedResponse.Merge(m, src)
-}
-func (m *QueryIsAuthorizedResponse) XXX_Size() int {
-	return m.Size()
-}
-func (m *QueryIsAuthorizedResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryIsAuthorizedResponse.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_QueryIsAuthorizedResponse proto.InternalMessageInfo
-
-func (m *QueryIsAuthorizedResponse) GetIsAuthorized() bool {
-	if m != nil {
-		return m.IsAuthorized
-	}
-	return false
-}
-
 func init() {
 	proto.RegisterType((*QueryParamsRequest)(nil), "realionetwork.asset.v1.QueryParamsRequest")
 	proto.RegisterType((*QueryParamsResponse)(nil), "realionetwork.asset.v1.QueryParamsResponse")
@@ -394,8 +294,6 @@ func init() {
 	proto.RegisterType((*QueryTokensResponse)(nil), "realionetwork.asset.v1.QueryTokensResponse")
 	proto.RegisterType((*QueryTokenRequest)(nil), "realionetwork.asset.v1.QueryTokenRequest")
 	proto.RegisterType((*QueryTokenResponse)(nil), "realionetwork.asset.v1.QueryTokenResponse")
-	proto.RegisterType((*QueryIsAuthorizedRequest)(nil), "realionetwork.asset.v1.QueryIsAuthorizedRequest")
-	proto.RegisterType((*QueryIsAuthorizedResponse)(nil), "realionetwork.asset.v1.QueryIsAuthorizedResponse")
 }
 
 func init() {
@@ -403,40 +301,34 @@ func init() {
 }
 
 var fileDescriptor_b6e3fc89e45a1671 = []byte{
-	// 513 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x94, 0xcf, 0x6f, 0xd3, 0x30,
-	0x14, 0xc7, 0x9b, 0xb1, 0x06, 0xf0, 0x76, 0xc1, 0x4c, 0x53, 0xa9, 0xc0, 0x4c, 0x46, 0x82, 0xfd,
-	0x10, 0x31, 0x2d, 0x07, 0x34, 0x81, 0x34, 0xb1, 0x1b, 0xd2, 0x24, 0x20, 0x70, 0xe2, 0xe6, 0xae,
-	0x56, 0x1a, 0xad, 0x8d, 0xb3, 0xd8, 0x1d, 0x94, 0x69, 0x17, 0x6e, 0x9c, 0x40, 0xe2, 0x5f, 0xe1,
-	0x8f, 0xd8, 0x71, 0x12, 0x17, 0x4e, 0x08, 0xb5, 0x1c, 0xf8, 0x33, 0x50, 0x9e, 0x9d, 0xd0, 0x88,
-	0xa6, 0x29, 0xb7, 0xe4, 0xe5, 0x7d, 0xdf, 0xe7, 0x63, 0xf9, 0x29, 0x88, 0x26, 0x82, 0xf7, 0x43,
-	0x19, 0x09, 0xfd, 0x56, 0x26, 0x47, 0x8c, 0x2b, 0x25, 0x34, 0x3b, 0x69, 0xb1, 0xe3, 0xa1, 0x48,
-	0x46, 0x5e, 0x9c, 0x48, 0x2d, 0xf1, 0x7a, 0xa1, 0xc7, 0x83, 0x1e, 0xef, 0xa4, 0xd5, 0x5c, 0x0b,
-	0x64, 0x20, 0xa1, 0x85, 0xa5, 0x4f, 0xa6, 0xbb, 0x79, 0x33, 0x90, 0x32, 0xe8, 0x0b, 0xc6, 0xe3,
-	0x90, 0xf1, 0x28, 0x92, 0x9a, 0xeb, 0x50, 0x46, 0xca, 0x7e, 0xbd, 0x53, 0xc2, 0x8b, 0x79, 0xc2,
-	0x07, 0x59, 0x53, 0x99, 0x94, 0x96, 0x47, 0x22, 0x32, 0x3d, 0x74, 0x0d, 0xe1, 0x97, 0xa9, 0xe3,
-	0x0b, 0x08, 0xfa, 0xe2, 0x78, 0x28, 0x94, 0xa6, 0xaf, 0xd0, 0xf5, 0x42, 0x55, 0xc5, 0x32, 0x52,
-	0x02, 0x3f, 0x41, 0xae, 0x01, 0x34, 0x9c, 0x0d, 0x67, 0x73, 0xa5, 0x4d, 0xbc, 0xd9, 0x47, 0xf2,
-	0x4c, 0x6e, 0x7f, 0xf9, 0xfc, 0xc7, 0xed, 0x9a, 0x6f, 0x33, 0x39, 0xea, 0x75, 0x8a, 0xcf, 0x51,
-	0xbe, 0x45, 0x65, 0x55, 0x8b, 0x7a, 0x8c, 0x5c, 0xd0, 0x4c, 0x51, 0x97, 0x36, 0x57, 0xda, 0xb7,
-	0xca, 0x50, 0x90, 0xcb, 0x48, 0x26, 0x42, 0x77, 0xd0, 0xb5, 0xbf, 0x33, 0x2d, 0x08, 0xaf, 0x23,
-	0x57, 0x8d, 0x06, 0x1d, 0xd9, 0x07, 0xf9, 0xab, 0xbe, 0x7d, 0xa3, 0xcf, 0xa7, 0xb5, 0x72, 0xfe,
-	0x2e, 0xaa, 0xc3, 0x30, 0x7b, 0xd2, 0x85, 0xf0, 0x26, 0x41, 0x0f, 0x50, 0x03, 0x06, 0x3e, 0x53,
-	0x4f, 0x87, 0xba, 0x27, 0x93, 0xf0, 0xbd, 0xe8, 0x56, 0x48, 0xe0, 0x06, 0xba, 0xcc, 0xbb, 0xdd,
-	0x44, 0x28, 0xd5, 0x58, 0x82, 0x0f, 0xd9, 0x2b, 0xdd, 0x43, 0x37, 0x66, 0x4c, 0xb3, 0x96, 0x14,
-	0xad, 0x86, 0x53, 0x75, 0x18, 0x7a, 0xc5, 0x2f, 0xd4, 0xda, 0xbf, 0x97, 0x51, 0x1d, 0x26, 0xe0,
-	0x8f, 0x0e, 0x72, 0xcd, 0xcd, 0xe0, 0xed, 0xb2, 0xf3, 0xfc, 0xbb, 0x0c, 0xcd, 0x9d, 0x85, 0x7a,
-	0x8d, 0x11, 0xbd, 0xfb, 0xe1, 0xdb, 0xaf, 0x2f, 0x4b, 0x1b, 0x98, 0xb0, 0xb9, 0x1b, 0x0a, 0x2e,
-	0xe6, 0xca, 0x2b, 0x5c, 0x0a, 0xdb, 0x52, 0xe1, 0x52, 0xdc, 0xa1, 0x6a, 0x17, 0xb3, 0x2e, 0xf8,
-	0x93, 0x83, 0xea, 0x10, 0xc5, 0x5b, 0xd5, 0xe3, 0x33, 0x93, 0xed, 0x45, 0x5a, 0xad, 0x08, 0x03,
-	0x91, 0x2d, 0x7c, 0x6f, 0xbe, 0x08, 0x3b, 0x35, 0xdb, 0x70, 0x86, 0xbf, 0x3a, 0x68, 0x75, 0xfa,
-	0xc2, 0xf1, 0x83, 0xb9, 0xb4, 0x19, 0x9b, 0xd6, 0x6c, 0xfd, 0x47, 0xc2, 0x6a, 0xee, 0x81, 0xe6,
-	0x2e, 0x7e, 0x54, 0xa6, 0x19, 0x2a, 0x9e, 0xa7, 0x72, 0x59, 0x76, 0x6a, 0x57, 0xf5, 0x6c, 0xff,
-	0xe0, 0x7c, 0x4c, 0x9c, 0x8b, 0x31, 0x71, 0x7e, 0x8e, 0x89, 0xf3, 0x79, 0x42, 0x6a, 0x17, 0x13,
-	0x52, 0xfb, 0x3e, 0x21, 0xb5, 0x37, 0xed, 0x20, 0xd4, 0xbd, 0x61, 0xc7, 0x3b, 0x94, 0x03, 0x3b,
-	0x5c, 0x8b, 0xc3, 0x9e, 0x7d, 0xbc, 0x9f, 0x81, 0xde, 0x59, 0x94, 0x1e, 0xc5, 0x42, 0x75, 0x5c,
-	0xf8, 0x43, 0x3d, 0xfc, 0x13, 0x00, 0x00, 0xff, 0xff, 0xe8, 0x45, 0x42, 0x94, 0x5c, 0x05, 0x00,
-	0x00,
+	// 421 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x93, 0xcf, 0x6e, 0xda, 0x30,
+	0x1c, 0xc7, 0x93, 0x31, 0x22, 0xcd, 0x9c, 0xe6, 0x21, 0x34, 0xa1, 0xcd, 0x43, 0x99, 0xb4, 0xf1,
+	0x47, 0x8b, 0x45, 0x76, 0x9a, 0xd6, 0x13, 0xe7, 0x4a, 0x6d, 0xd3, 0x9e, 0x7a, 0x0b, 0xc8, 0x0a,
+	0x11, 0x10, 0x87, 0xd8, 0xd0, 0xa2, 0xaa, 0x97, 0xde, 0x7a, 0x6a, 0xa5, 0x3e, 0x49, 0xdf, 0x82,
+	0x23, 0x52, 0x2f, 0x3d, 0x55, 0x15, 0xf4, 0x41, 0xaa, 0xd8, 0x0e, 0x6d, 0xd4, 0x86, 0x70, 0x33,
+	0xe6, 0xfb, 0xe7, 0x63, 0xff, 0x1c, 0x60, 0x46, 0xc4, 0x1d, 0xfa, 0x34, 0x20, 0xfc, 0x84, 0x46,
+	0x03, 0xec, 0x32, 0x46, 0x38, 0x9e, 0xb6, 0xf1, 0x78, 0x42, 0xa2, 0x99, 0x15, 0x46, 0x94, 0x53,
+	0x58, 0x49, 0x69, 0x2c, 0xa1, 0xb1, 0xa6, 0xed, 0x6a, 0xd9, 0xa3, 0x1e, 0x15, 0x12, 0x1c, 0xaf,
+	0xa4, 0xba, 0xfa, 0xcd, 0xa3, 0xd4, 0x1b, 0x12, 0xec, 0x86, 0x3e, 0x76, 0x83, 0x80, 0x72, 0x97,
+	0xfb, 0x34, 0x60, 0xea, 0xdf, 0x9f, 0x19, 0x7d, 0xa1, 0x1b, 0xb9, 0xa3, 0x44, 0x94, 0x05, 0xc5,
+	0xe9, 0x80, 0x04, 0x52, 0x63, 0x96, 0x01, 0x3c, 0x88, 0x19, 0xf7, 0x85, 0xd1, 0x21, 0xe3, 0x09,
+	0x61, 0xdc, 0x3c, 0x04, 0x5f, 0x52, 0xbb, 0x2c, 0xa4, 0x01, 0x23, 0x70, 0x07, 0x18, 0xb2, 0xe0,
+	0xab, 0x5e, 0xd3, 0xeb, 0x25, 0x1b, 0x59, 0xef, 0x1f, 0xc9, 0x92, 0xbe, 0xce, 0xc7, 0xf9, 0xc3,
+	0x0f, 0xcd, 0x51, 0x9e, 0x75, 0xd5, 0x51, 0x5c, 0xbf, 0xae, 0x72, 0x54, 0x55, 0xb2, 0xab, 0xaa,
+	0xfe, 0x03, 0x43, 0x60, 0xc6, 0x55, 0x85, 0x7a, 0xc9, 0xfe, 0x9e, 0x55, 0x25, 0x7c, 0x49, 0x93,
+	0xb4, 0x98, 0x2d, 0xf0, 0xf9, 0x25, 0x53, 0x15, 0xc1, 0x0a, 0x30, 0xd8, 0x6c, 0xd4, 0xa5, 0x43,
+	0x01, 0xff, 0xc9, 0x51, 0xbf, 0xcc, 0xbd, 0xd7, 0x58, 0xeb, 0xfe, 0x7f, 0xa0, 0x28, 0xc2, 0xd4,
+	0x49, 0xb7, 0xaa, 0x97, 0x0e, 0xfb, 0xb6, 0x00, 0x8a, 0x22, 0x11, 0x5e, 0xea, 0xc0, 0x90, 0x57,
+	0x01, 0x9b, 0x59, 0x01, 0x6f, 0x6f, 0xbf, 0xda, 0xda, 0x4a, 0x2b, 0x41, 0xcd, 0x5f, 0x17, 0x77,
+	0x4f, 0x37, 0x1f, 0x6a, 0x10, 0xe1, 0x8d, 0x4f, 0x42, 0xb0, 0xc8, 0x3b, 0xce, 0x61, 0x49, 0x8d,
+	0x27, 0x87, 0x25, 0x3d, 0xb4, 0x7c, 0x16, 0x39, 0x1f, 0x78, 0xa5, 0x83, 0xa2, 0xb0, 0xc2, 0x46,
+	0x7e, 0x7c, 0x42, 0xd2, 0xdc, 0x46, 0xaa, 0x40, 0xb0, 0x00, 0x69, 0xc0, 0xdf, 0x9b, 0x41, 0xf0,
+	0x99, 0x7c, 0x03, 0xe7, 0x9d, 0xdd, 0xf9, 0x12, 0xe9, 0x8b, 0x25, 0xd2, 0x1f, 0x97, 0x48, 0xbf,
+	0x5e, 0x21, 0x6d, 0xb1, 0x42, 0xda, 0xfd, 0x0a, 0x69, 0xc7, 0xb6, 0xe7, 0xf3, 0xfe, 0xa4, 0x6b,
+	0xf5, 0xe8, 0x48, 0x85, 0x71, 0xd2, 0xeb, 0xab, 0xe5, 0x9f, 0x24, 0xf8, 0x54, 0x45, 0xf3, 0x59,
+	0x48, 0x58, 0xd7, 0x10, 0xdf, 0xd6, 0xdf, 0xe7, 0x00, 0x00, 0x00, 0xff, 0xff, 0x6f, 0xf4, 0x3b,
+	0x34, 0x16, 0x04, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -457,8 +349,6 @@ type QueryClient interface {
 	Tokens(ctx context.Context, in *QueryTokensRequest, opts ...grpc.CallOption) (*QueryTokensResponse, error)
 	// Parameters queries the tokens of the module.
 	Token(ctx context.Context, in *QueryTokenRequest, opts ...grpc.CallOption) (*QueryTokenResponse, error)
-	// Parameters queries the tokens of the module.
-	IsAuthorized(ctx context.Context, in *QueryIsAuthorizedRequest, opts ...grpc.CallOption) (*QueryIsAuthorizedResponse, error)
 }
 
 type queryClient struct {
@@ -496,15 +386,6 @@ func (c *queryClient) Token(ctx context.Context, in *QueryTokenRequest, opts ...
 	return out, nil
 }
 
-func (c *queryClient) IsAuthorized(ctx context.Context, in *QueryIsAuthorizedRequest, opts ...grpc.CallOption) (*QueryIsAuthorizedResponse, error) {
-	out := new(QueryIsAuthorizedResponse)
-	err := c.cc.Invoke(ctx, "/realionetwork.asset.v1.Query/IsAuthorized", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
 // QueryServer is the server API for Query service.
 type QueryServer interface {
 	// Parameters queries the parameters of the module.
@@ -513,8 +394,6 @@ type QueryServer interface {
 	Tokens(context.Context, *QueryTokensRequest) (*QueryTokensResponse, error)
 	// Parameters queries the tokens of the module.
 	Token(context.Context, *QueryTokenRequest) (*QueryTokenResponse, error)
-	// Parameters queries the tokens of the module.
-	IsAuthorized(context.Context, *QueryIsAuthorizedRequest) (*QueryIsAuthorizedResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -529,9 +408,6 @@ func (*UnimplementedQueryServer) Tokens(ctx context.Context, req *QueryTokensReq
 }
 func (*UnimplementedQueryServer) Token(ctx context.Context, req *QueryTokenRequest) (*QueryTokenResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Token not implemented")
-}
-func (*UnimplementedQueryServer) IsAuthorized(ctx context.Context, req *QueryIsAuthorizedRequest) (*QueryIsAuthorizedResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method IsAuthorized not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -592,24 +468,6 @@ func _Query_Token_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Query_IsAuthorized_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(QueryIsAuthorizedRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(QueryServer).IsAuthorized(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/realionetwork.asset.v1.Query/IsAuthorized",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(QueryServer).IsAuthorized(ctx, req.(*QueryIsAuthorizedRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "realionetwork.asset.v1.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -625,10 +483,6 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Token",
 			Handler:    _Query_Token_Handler,
-		},
-		{
-			MethodName: "IsAuthorized",
-			Handler:    _Query_IsAuthorized_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -814,76 +668,6 @@ func (m *QueryTokenResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryIsAuthorizedRequest) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryIsAuthorizedRequest) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryIsAuthorizedRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if len(m.Address) > 0 {
-		i -= len(m.Address)
-		copy(dAtA[i:], m.Address)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.Address)))
-		i--
-		dAtA[i] = 0x12
-	}
-	if len(m.Symbol) > 0 {
-		i -= len(m.Symbol)
-		copy(dAtA[i:], m.Symbol)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.Symbol)))
-		i--
-		dAtA[i] = 0xa
-	}
-	return len(dAtA) - i, nil
-}
-
-func (m *QueryIsAuthorizedResponse) Marshal() (dAtA []byte, err error) {
-	size := m.Size()
-	dAtA = make([]byte, size)
-	n, err := m.MarshalToSizedBuffer(dAtA[:size])
-	if err != nil {
-		return nil, err
-	}
-	return dAtA[:n], nil
-}
-
-func (m *QueryIsAuthorizedResponse) MarshalTo(dAtA []byte) (int, error) {
-	size := m.Size()
-	return m.MarshalToSizedBuffer(dAtA[:size])
-}
-
-func (m *QueryIsAuthorizedResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
-	i := len(dAtA)
-	_ = i
-	var l int
-	_ = l
-	if m.IsAuthorized {
-		i--
-		if m.IsAuthorized {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x8
-	}
-	return len(dAtA) - i, nil
-}
-
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -960,35 +744,6 @@ func (m *QueryTokenResponse) Size() (n int) {
 	_ = l
 	l = m.Token.Size()
 	n += 1 + l + sovQuery(uint64(l))
-	return n
-}
-
-func (m *QueryIsAuthorizedRequest) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	l = len(m.Symbol)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	l = len(m.Address)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
-	return n
-}
-
-func (m *QueryIsAuthorizedResponse) Size() (n int) {
-	if m == nil {
-		return 0
-	}
-	var l int
-	_ = l
-	if m.IsAuthorized {
-		n += 2
-	}
 	return n
 }
 
@@ -1409,190 +1164,6 @@ func (m *QueryTokenResponse) Unmarshal(dAtA []byte) error {
 				return err
 			}
 			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryIsAuthorizedRequest) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryIsAuthorizedRequest: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryIsAuthorizedRequest: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Symbol", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Symbol = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Address = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
-		default:
-			iNdEx = preIndex
-			skippy, err := skipQuery(dAtA[iNdEx:])
-			if err != nil {
-				return err
-			}
-			if (skippy < 0) || (iNdEx+skippy) < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if (iNdEx + skippy) > l {
-				return io.ErrUnexpectedEOF
-			}
-			iNdEx += skippy
-		}
-	}
-
-	if iNdEx > l {
-		return io.ErrUnexpectedEOF
-	}
-	return nil
-}
-func (m *QueryIsAuthorizedResponse) Unmarshal(dAtA []byte) error {
-	l := len(dAtA)
-	iNdEx := 0
-	for iNdEx < l {
-		preIndex := iNdEx
-		var wire uint64
-		for shift := uint(0); ; shift += 7 {
-			if shift >= 64 {
-				return ErrIntOverflowQuery
-			}
-			if iNdEx >= l {
-				return io.ErrUnexpectedEOF
-			}
-			b := dAtA[iNdEx]
-			iNdEx++
-			wire |= uint64(b&0x7F) << shift
-			if b < 0x80 {
-				break
-			}
-		}
-		fieldNum := int32(wire >> 3)
-		wireType := int(wire & 0x7)
-		if wireType == 4 {
-			return fmt.Errorf("proto: QueryIsAuthorizedResponse: wiretype end group for non-group")
-		}
-		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryIsAuthorizedResponse: illegal tag %d (wire type %d)", fieldNum, wire)
-		}
-		switch fieldNum {
-		case 1:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field IsAuthorized", wireType)
-			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			m.IsAuthorized = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])

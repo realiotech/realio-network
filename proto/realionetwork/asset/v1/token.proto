@@ -10,10 +10,11 @@ option go_package = "github.com/realiotech/realio-network/x/asset/types";
 message Token {
   option (gogoproto.equal)                   = false;
 
-  string name = 1;
-  string symbol = 2;
-  string decimal = 3;
-  string description = 4;
+  string token_id = 1;
+  string name = 2;
+  string symbol = 3;
+  string decimal = 4;
+  string description = 5;
 }
 
 message TokenManagement {
