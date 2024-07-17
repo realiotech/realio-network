@@ -23,9 +23,9 @@ echo "prepare genesis: Run validate-genesis to ensure everything worked and that
 ./realio-networkd validate-genesis --home $DATA_DIR
 
 echo "starting RealioNetwork node $i in background ..."
-#./realio-networkd start --pruning=nothing --rpc.unsafe \
-#--keyring-backend test --home $DATA_DIR \
-#>$DATA_DIR/node.log 2>&1 & disown
+./realio-networkd start --pruning=nothing --rpc.unsafe \
+--keyring-backend test --home $DATA_DIR \
+>$DATA_DIR/node.log 2>&1 & disown
 
 echo "started RealioNetwork node"
 tail -f /dev/null
