@@ -13,7 +13,7 @@ message Token {
   string token_id = 1;
   string name = 2;
   string symbol = 3;
-  string decimal = 4;
+  uint32 decimal = 4;
   string description = 5;
 }
 
