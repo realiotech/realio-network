@@ -4,8 +4,6 @@ KEY="dev0"
 CHAINID="realionetworklocal_7777-1"
 MONIKER="mymoniker"
 DATA_DIR=$(mkdir -d -t realionetwork-datadir.XXXXX)
-GENESIS=$DATA_DIR/config/genesis.json
-TMP_GENESIS=$DATA_DIR/config/tmp_genesis.json
 
 echo "create and add new keys"
 ./realio-networkd keys add $KEY --home $DATA_DIR --no-backup --chain-id $CHAINID --algo "eth_secp256k1" --keyring-backend test
