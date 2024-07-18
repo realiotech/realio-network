@@ -144,7 +144,7 @@ func (k msgServer) AssignPrivilege(goCtx context.Context, msg *types.MsgAssignPr
 		if err != nil {
 			return nil, err
 		}
-		k.SetTokenPrivilegedAccount(ctx, msg.TokenId, msg.Privilege, userAcc)
+		k.SetTokenPrivilegeAccount(ctx, msg.TokenId, msg.Privilege, userAcc)
 	}
 
 	return &types.MsgAssignPrivilegeResponse{}, nil
@@ -169,7 +169,7 @@ func (k msgServer) UnassignPrivilege(goCtx context.Context, msg *types.MsgUnassi
 		if err != nil {
 			return nil, err
 		}
-		k.DeleteTokenPrivilegedAccount(ctx, msg.TokenId, msg.Privilege, userAcc)
+		k.DeleteTokenPrivilegeAccount(ctx, msg.TokenId, msg.Privilege, userAcc)
 	}
 
 	return &types.MsgUnassignPrivilegeResponse{}, nil
@@ -199,7 +199,8 @@ func (k msgServer) DisablePrivilege(goCtx context.Context, msg *types.MsgDisable
 
 func (k msgServer) ExecutePrivilege(goCtx context.Context, msg *types.MsgExecutePrivilege) (*types.MsgExecutePrivilegeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	if err := msg.ValidateBasic(); err != nil {
+	userAcc, err := sdk.AccAddressFromBech32(msg.Address)
+	if err != nil {
 		return nil, err
 	}
 
@@ -207,9 +208,18 @@ func (k msgServer) ExecutePrivilege(goCtx context.Context, msg *types.MsgExecute
 	if !found {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "token with denom %s is not exists", msg.TokenId)
 	}
-	// if slices.Contains tm.ExcludedPrivileges != msg.Manager {
-	// 	return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "sender is not token manager")
-	// }
+	msgPriv, isPrivilegeMsg := msg.PrivilegeMsg.GetCachedValue().(types.PrivilegeI)
+	if !isPrivilegeMsg {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "message is not privilege msg")
+	}
+	needPriv := msgPriv.NeedPrivilege()
+	if slices.Contains(tm.ExcludedPrivileges, needPriv) {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "privilege %s is excluded", needPriv)
+	}
+	if !slices.Contains(k.GetTokenAccountPrivileges(ctx, msg.TokenId, userAcc), needPriv) {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "user does not not have %s privilege", needPriv)
+	}
 
-	return nil, nil
+	// TODO: exec privilege msg
+	return &types.MsgExecutePrivilegeResponse{}, nil
 }

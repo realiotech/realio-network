@@ -1,6 +1,8 @@
 package keeper
 
 import (
+	"slices"
+
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/realiotech/realio-network/x/asset/types"
@@ -84,7 +86,7 @@ func (k Keeper) GetTokenManagement(ctx sdk.Context, tokenId string) (types.Token
 	return token, true
 }
 
-func (k Keeper) SetTokenPrivilegedAccount(
+func (k Keeper) SetTokenPrivilegeAccount(
 	ctx sdk.Context,
 	tokenId string,
 	privilege string,
@@ -93,36 +95,53 @@ func (k Keeper) SetTokenPrivilegedAccount(
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PrivilegedAccountsKey)
 	key := append([]byte(tokenId), address.Bytes()...)
 
-	var values []string
+	var privList types.PrivilegeList
 	bz := store.Get(key)
-	k.cdc.MustUnmarshal(bz, values)
+	k.cdc.MustUnmarshal(bz, &privList)
 
-	store.Set(key, address)
+	if !slices.Contains(privList.Privileges, privilege) {
+		privList.Privileges = append(privList.Privileges, privilege)
+		bz := k.cdc.MustMarshal(&privList)
+		store.Set(key, bz)
+	}
 } 
 
-func (k Keeper) DeleteTokenPrivilegedAccount(
+func (k Keeper) DeleteTokenPrivilegeAccount(
 	ctx sdk.Context,
 	tokenId string,
 	privilege string,
 	address sdk.AccAddress,
 ) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PrivilegedAccountsKey)
-	key := append([]byte(tokenId), []byte(privilege)...)
-	store.Delete(key)
-}
+	key := append([]byte(tokenId), address.Bytes()...)
 
-func (k Keeper) GetTokenPrivilegedAccount(
-	ctx sdk.Context,
-	tokenId string,
-	privilege string,
-) (sdk.AccAddress, bool) {
-	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PrivilegedAccountsKey)
-	key := append([]byte(tokenId), []byte(privilege)...)
-
+	var privList types.PrivilegeList
 	bz := store.Get(key)
-	if bz == nil {
-		return sdk.AccAddress{}, false
+	k.cdc.MustUnmarshal(bz, &privList)
+
+	privIndex := slices.Index(privList.Privileges, privilege)
+	if privIndex != -1 {
+		privList.Privileges = append(privList.Privileges[:privIndex], privList.Privileges[privIndex+1:]...)
+		bz := k.cdc.MustMarshal(&privList)
+		store.Set(key, bz)
 	}
 
-	return sdk.AccAddress(bz), true
+	if len(privList.Privileges) == 0 {
+		store.Delete(key)
+	}
+}
+
+func (k Keeper) GetTokenAccountPrivileges(
+	ctx sdk.Context,
+	tokenId string,
+	address sdk.AccAddress,
+) []string {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PrivilegedAccountsKey)
+	key := append([]byte(tokenId), address.Bytes()...)
+
+	var privList types.PrivilegeList
+	bz := store.Get(key)
+	k.cdc.MustUnmarshal(bz, &privList)
+
+	return privList.Privileges
 }

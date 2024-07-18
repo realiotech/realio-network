@@ -1,5 +1,5 @@
 package types
 
-type PrivilegeImplMsg interface {
+type PrivilegeI interface {
 	NeedPrivilege() string
 }

@@ -86,7 +86,7 @@ message MsgDisablePrivilegeResponse {}
 message MsgExecutePrivilege {
   string address = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string token_id = 2;
-  google.protobuf.Any privilege_msg = 3;
+  google.protobuf.Any privilege_msg = 3 [(cosmos_proto.accepts_interface) = "realionetwork.asset.v1.PrivilegeI"];;
 }
 
 message MsgExecutePrivilegeResponse {}
