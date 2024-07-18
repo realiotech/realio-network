@@ -4,7 +4,6 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 // asset message types
@@ -123,14 +122,12 @@ func (msg MsgUpdateToken) ValidateBasic() error {
 func NewMsgAllocateToken(
 	manager string,
 	tokenId string,
-	balances []banktypes.Balance,
-	vestingBalance []*codectypes.Any,
+	balances []Balance,
 ) *MsgAllocateToken {
 	return &MsgAllocateToken{
-		Manager:        manager,
-		TokenId:        tokenId,
-		Balances:       balances,
-		VestingBalance: vestingBalance,
+		Manager:  manager,
+		TokenId:  tokenId,
+		Balances: balances,
 	}
 }
 

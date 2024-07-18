@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"slices"
 
 	errorsmod "cosmossdk.io/errors"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -87,21 +88,128 @@ func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken)
 }
 
 func (k msgServer) AllocateToken(goCtx context.Context, msg *types.MsgAllocateToken) (*types.MsgAllocateTokenResponse, error) {
-	return nil, nil
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	isFound := k.bankKeeper.HasSupply(ctx, msg.TokenId)
+	if isFound {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "token with denom %s already allocate", msg.TokenId)
+	}
+
+	tm, found := k.GetTokenManagement(ctx, msg.TokenId)
+	if !found {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "token with denom %s is not exists", msg.TokenId)
+	}
+	if tm.Manager != msg.Manager {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "sender is not token manager")
+	}
+
+	for _, balance := range msg.Balances {
+		userAcc, err := sdk.AccAddressFromBech32(balance.Address)
+		if err != nil {
+			return nil, err
+		}
+
+		mintCoins := sdk.NewCoins(sdk.NewCoin(msg.TokenId, sdk.NewIntFromUint64(balance.Amount)))
+		err = k.bankKeeper.MintCoins(ctx, types.ModuleName, mintCoins)
+		if err != nil {
+			return nil, err
+		}
+
+		err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, userAcc, mintCoins)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &types.MsgAllocateTokenResponse{}, nil
 }
 
 func (k msgServer) AssignPrivilege(goCtx context.Context, msg *types.MsgAssignPrivilege) (*types.MsgAssignPrivilegeResponse, error) {
-	return nil, nil
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
+	tm, found := k.GetTokenManagement(ctx, msg.TokenId)
+	if !found {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "token with denom %s is not exists", msg.TokenId)
+	}
+	if tm.Manager != msg.Manager {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "sender is not token manager")
+	}
+	if slices.Contains(tm.ExcludedPrivileges, msg.Privilege) {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "privilege %s is excluded", msg.Privilege)
+	}
+
+	for _, user := range msg.AssignedTo {
+		userAcc, err := sdk.AccAddressFromBech32(user)
+		if err != nil {
+			return nil, err
+		}
+		k.SetTokenPrivilegedAccount(ctx, msg.TokenId, msg.Privilege, userAcc)
+	}
+
+	return &types.MsgAssignPrivilegeResponse{}, nil
 }
 
 func (k msgServer) UnassignPrivilege(goCtx context.Context, msg *types.MsgUnassignPrivilege) (*types.MsgUnassignPrivilegeResponse, error) {
-	return nil, nil
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
+	tm, found := k.GetTokenManagement(ctx, msg.TokenId)
+	if !found {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "token with denom %s is not exists", msg.TokenId)
+	}
+	if tm.Manager != msg.Manager {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "sender is not token manager")
+	}
+
+	for _, user := range msg.UnassignedFrom {
+		userAcc, err := sdk.AccAddressFromBech32(user)
+		if err != nil {
+			return nil, err
+		}
+		k.DeleteTokenPrivilegedAccount(ctx, msg.TokenId, msg.Privilege, userAcc)
+	}
+
+	return &types.MsgUnassignPrivilegeResponse{}, nil
 }
 
 func (k msgServer) DisablePrivilege(goCtx context.Context, msg *types.MsgDisablePrivilege) (*types.MsgDisablePrivilegeResponse, error) {
-	return nil, nil
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
+	tm, found := k.GetTokenManagement(ctx, msg.TokenId)
+	if !found {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "token with denom %s is not exists", msg.TokenId)
+	}
+	if tm.Manager != msg.Manager {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "sender is not token manager")
+	}
+	if slices.Contains(tm.ExcludedPrivileges, msg.DisabledPrivilege) {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "privilege %s is already excluded", msg.DisabledPrivilege)
+	}
+
+	tm.ExcludedPrivileges = append(tm.ExcludedPrivileges, msg.DisabledPrivilege)
+	k.SetTokenManagement(ctx, msg.TokenId, tm)
+	return &types.MsgDisablePrivilegeResponse{}, nil
 }
 
 func (k msgServer) ExecutePrivilege(goCtx context.Context, msg *types.MsgExecutePrivilege) (*types.MsgExecutePrivilegeResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	if err := msg.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
+	tm, found := k.GetTokenManagement(ctx, msg.TokenId)
+	if !found {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "token with denom %s is not exists", msg.TokenId)
+	}
+	// if slices.Contains tm.ExcludedPrivileges != msg.Manager {
+	// 	return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "sender is not token manager")
+	// }
+
 	return nil, nil
 }

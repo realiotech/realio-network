@@ -5,8 +5,8 @@ option go_package = "github.com/realiotech/realio-network/x/asset/types";
 
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
-import "cosmos/bank/v1beta1/genesis.proto";
 import "google/protobuf/any.proto";
+import "realionetwork/asset/v1/token.proto";
 
 // Msg defines the Msg service.
 service Msg {
@@ -49,9 +49,8 @@ message MsgUpdateTokenResponse {}
 message MsgAllocateToken {
   string manager = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   string token_id = 2;
-  repeated cosmos.bank.v1beta1.Balance balances = 3
+  repeated Balance balances = 3
       [ (gogoproto.nullable) = false ];
-  repeated google.protobuf.Any vesting_balance = 4;
 }
 
 message MsgAllocateTokenResponse {}

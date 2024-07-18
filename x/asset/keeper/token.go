@@ -91,8 +91,24 @@ func (k Keeper) SetTokenPrivilegedAccount(
 	address sdk.AccAddress,
 ) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PrivilegedAccountsKey)
-	key := append([]byte(tokenId), []byte(privilege)...)
+	key := append([]byte(tokenId), address.Bytes()...)
+
+	var values []string
+	bz := store.Get(key)
+	k.cdc.MustUnmarshal(bz, values)
+
 	store.Set(key, address)
+} 
+
+func (k Keeper) DeleteTokenPrivilegedAccount(
+	ctx sdk.Context,
+	tokenId string,
+	privilege string,
+	address sdk.AccAddress,
+) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.PrivilegedAccountsKey)
+	key := append([]byte(tokenId), []byte(privilege)...)
+	store.Delete(key)
 }
 
 func (k Keeper) GetTokenPrivilegedAccount(
