@@ -15,12 +15,13 @@ import (
 
 type (
 	Keeper struct {
-		cdc        codec.BinaryCodec
-		storeKey   storetypes.StoreKey
-		memKey     storetypes.StoreKey
-		paramstore paramtypes.Subspace
-		bankKeeper types.BankKeeper
-		ak         types.AccountKeeper
+		cdc           codec.BinaryCodec
+		storeKey      storetypes.StoreKey
+		memKey        storetypes.StoreKey
+		paramstore    paramtypes.Subspace
+		bankKeeper    types.BankKeeper
+		ak            types.AccountKeeper
+		PrivilegesMap map[string]types.PrivilegeI
 	}
 )
 
@@ -34,19 +35,32 @@ func NewKeeper(
 	ps paramtypes.Subspace,
 	bankKeeper types.BankKeeper,
 	ak types.AccountKeeper,
+	privileges ...types.PrivilegeI,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
 		ps = ps.WithKeyTable(types.ParamKeyTable())
 	}
 
+	privilegesMap := map[string]types.PrivilegeI{}
+	for _, priv := range privileges {
+		if _, ok := privilegesMap[priv.Name()]; ok {
+			continue
+		}
+
+		privilegesMap[priv.Name()] = priv
+		// regiester the privilege's interfaces
+		priv.RegisterInterfaces()
+	}
+
 	return &Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		memKey:     memKey,
-		paramstore: ps,
-		bankKeeper: bankKeeper,
-		ak:         ak,
+		cdc:           cdc,
+		storeKey:      storeKey,
+		memKey:        memKey,
+		paramstore:    ps,
+		bankKeeper:    bankKeeper,
+		ak:            ak,
+		PrivilegesMap: privilegesMap,
 	}
 }
 

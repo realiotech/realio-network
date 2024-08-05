@@ -3,8 +3,8 @@ package keeper
 import (
 	"context"
 	"fmt"
-	"strings"
 	"slices"
+	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -208,18 +208,33 @@ func (k msgServer) ExecutePrivilege(goCtx context.Context, msg *types.MsgExecute
 	if !found {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "token with denom %s is not exists", msg.TokenId)
 	}
-	msgPriv, isPrivilegeMsg := msg.PrivilegeMsg.GetCachedValue().(types.PrivilegeI)
+	msgPriv, isPrivilegeMsg := msg.PrivilegeMsg.GetCachedValue().(types.PrivilegeMsgI)
 	if !isPrivilegeMsg {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "message is not privilege msg")
 	}
-	needPriv := msgPriv.NeedPrivilege()
-	if slices.Contains(tm.ExcludedPrivileges, needPriv) {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "privilege %s is excluded", needPriv)
+	privName := msgPriv.NeedPrivilege()
+	if slices.Contains(tm.ExcludedPrivileges, privName) {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "privilege %s is excluded", privName)
 	}
-	if !slices.Contains(k.GetTokenAccountPrivileges(ctx, msg.TokenId, userAcc), needPriv) {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "user does not not have %s privilege", needPriv)
+	if !slices.Contains(k.GetTokenAccountPrivileges(ctx, msg.TokenId, userAcc), privName) {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "user does not not have %s privilege", privName)
 	}
 
-	// TODO: exec privilege msg
+	privImplementation, ok := k.PrivilegesMap[privName]
+	if !ok {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "privilege name %s is not registered yet", privName)
+	}
+
+	protoMsg, err := UnpackAnyMsg(msg.PrivilegeMsg)
+	if err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid privilege message")
+	}
+
+	msgHandler := privImplementation.MsgHandler()
+	_, err = msgHandler(ctx, protoMsg)
+	if err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "fail to execute privilege message")
+	}
+
 	return &types.MsgExecutePrivilegeResponse{}, nil
 }
