@@ -15,13 +15,13 @@ import (
 
 type (
 	Keeper struct {
-		cdc           codec.BinaryCodec
-		storeKey      storetypes.StoreKey
-		memKey        storetypes.StoreKey
-		paramstore    paramtypes.Subspace
-		bankKeeper    types.BankKeeper
-		ak            types.AccountKeeper
-		PrivilegesMap map[string]types.PrivilegeI
+		cdc              codec.BinaryCodec
+		storeKey         storetypes.StoreKey
+		memKey           storetypes.StoreKey
+		paramstore       paramtypes.Subspace
+		bankKeeper       types.BankKeeper
+		ak               types.AccountKeeper
+		PrivilegeManager map[string]types.PrivilegeI
 	}
 )
 
@@ -35,33 +35,32 @@ func NewKeeper(
 	ps paramtypes.Subspace,
 	bankKeeper types.BankKeeper,
 	ak types.AccountKeeper,
-	privileges ...types.PrivilegeI,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
 		ps = ps.WithKeyTable(types.ParamKeyTable())
 	}
 
-	privilegesMap := map[string]types.PrivilegeI{}
-	for _, priv := range privileges {
-		if _, ok := privilegesMap[priv.Name()]; ok {
-			continue
-		}
-
-		privilegesMap[priv.Name()] = priv
-		// regiester the privilege's interfaces
-		priv.RegisterInterfaces()
-	}
-
 	return &Keeper{
-		cdc:           cdc,
-		storeKey:      storeKey,
-		memKey:        memKey,
-		paramstore:    ps,
-		bankKeeper:    bankKeeper,
-		ak:            ak,
-		PrivilegesMap: privilegesMap,
+		cdc:              cdc,
+		storeKey:         storeKey,
+		memKey:           memKey,
+		paramstore:       ps,
+		bankKeeper:       bankKeeper,
+		ak:               ak,
+		PrivilegeManager: map[string]types.PrivilegeI{},
 	}
+}
+
+func (k Keeper) AddPrivilege(priv types.PrivilegeI) error {
+	if _, ok := k.PrivilegeManager[priv.Name()]; ok {
+		return fmt.Errorf("privilege %s already exists", priv.Name())
+	}
+
+	k.PrivilegeManager[priv.Name()] = priv
+	// regiester the privilege's interfaces
+	priv.RegisterInterfaces()
+	return nil
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

@@ -158,7 +158,7 @@ func (k msgServer) UnassignPrivilege(goCtx context.Context, msg *types.MsgUnassi
 
 	tm, found := k.GetTokenManagement(ctx, msg.TokenId)
 	if !found {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "token with denom %s is not exists", msg.TokenId)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "token with denom %s doesn't exists", msg.TokenId)
 	}
 	if tm.Manager != msg.Manager {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "sender is not token manager")
@@ -220,7 +220,7 @@ func (k msgServer) ExecutePrivilege(goCtx context.Context, msg *types.MsgExecute
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "user does not not have %s privilege", privName)
 	}
 
-	privImplementation, ok := k.PrivilegesMap[privName]
+	privImplementation, ok := k.PrivilegeManager[privName]
 	if !ok {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "privilege name %s is not registered yet", privName)
 	}
