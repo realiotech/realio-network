@@ -412,11 +412,7 @@ func New(
 		app.GetSubspace(assetmoduletypes.ModuleName),
 		app.BankKeeper,
 		app.AccountKeeper,
-		app.ModuleAccountAddrs(),
 	)
-
-	// Add transfer restriction
-	app.BankKeeper.AppendSendRestriction(app.AssetKeeper.AssetSendRestriction)
 
 	// IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(

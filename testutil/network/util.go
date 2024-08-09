@@ -246,12 +246,8 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[assettypes.ModuleName], &assetGenState)
 
 	assetGenState.Tokens = append(assetGenState.Tokens, assettypes.Token{
-		Manager:               genAccounts[0].GetAddress().String(),
-		Name:                  "Realio Security Token",
-		Symbol:                "RST",
-		Total:                 "50000000",
-		AuthorizationRequired: true,
-		Authorized:            []*assettypes.TokenAuthorization{{Address: genAccounts[0].GetAddress().String(), Authorized: true}},
+		Name:   "Realio Security Token",
+		Symbol: "RST",
 	})
 	cfg.GenesisState[assettypes.ModuleName] = cfg.Codec.MustMarshalJSON(&assetGenState)
 
