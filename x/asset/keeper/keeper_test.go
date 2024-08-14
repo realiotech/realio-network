@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	"github.com/realiotech/realio-network/app"
 	"github.com/realiotech/realio-network/x/asset/keeper"
@@ -21,6 +22,7 @@ type KeeperTestSuite struct {
 	assetKeeper *keeper.Keeper
 	govkeeper   govkeeper.Keeper
 	msgServer   types.MsgServer
+	bankKeeper  bankkeeper.Keeper
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
@@ -31,6 +33,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 	suite.assetKeeper = &app.AssetKeeper
 	suite.govkeeper = app.GovKeeper
 	suite.msgServer = keeper.NewMsgServerImpl(app.AssetKeeper)
+	suite.bankKeeper = app.BankKeeper
 }
 
 func TestKeeperTestSuite(t *testing.T) {
