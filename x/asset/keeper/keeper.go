@@ -50,7 +50,10 @@ func NewKeeper(
 
 		privilegesMap[priv.Name()] = priv
 		// regiester the privilege's interfaces
-		priv.RegisterInterfaces()
+		err := priv.RegisterInterfaces()
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	return &Keeper{

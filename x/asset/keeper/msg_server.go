@@ -230,8 +230,13 @@ func (k msgServer) ExecutePrivilege(goCtx context.Context, msg *types.MsgExecute
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "invalid privilege message")
 	}
 
+	sdkMsg, ok := protoMsg.(sdk.Msg)
+	if !ok {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "privilege sdk message")
+	}
+
 	msgHandler := privImplementation.MsgHandler()
-	_, err = msgHandler(ctx, protoMsg)
+	_, err = msgHandler(ctx, sdkMsg)
 	if err != nil {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "fail to execute privilege message")
 	}
