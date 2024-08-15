@@ -5,9 +5,11 @@ import (
 	"slices"
 	"strings"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/address"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
+	"github.com/gogo/protobuf/proto"
 	"github.com/tendermint/tendermint/libs/rand"
 
 	"github.com/realiotech/realio-network/x/asset/keeper"
@@ -426,48 +428,117 @@ func (s *KeeperTestSuite) TestDisablePrivilege() {
 	}
 }
 
-// func (s *KeeperTestSuite) TestExecutePrivilege() {
+func (s *KeeperTestSuite) TestExecutePrivilege() {
 
-// 	tests := []struct {
-// 		name       string
-// 		expectPass bool
-// 		setup      func(k keeper.Keeper, ctx sdk.Context) *types.MsgExecutePrivilege
-// 	}{
-// 		{
-// 			name:       "success",
-// 			expectPass: true,
-// 			setup: func(k keeper.Keeper, ctx sdk.Context) *types.MsgExecutePrivilege {
-// 				description := ""
+	tests := []struct {
+		name       string
+		expectPass bool
+		setup      func(k keeper.Keeper, ctx sdk.Context) *types.MsgExecutePrivilege
+	}{
+		{
+			name:       "success",
+			expectPass: true,
+			setup: func(k keeper.Keeper, ctx sdk.Context) *types.MsgExecutePrivilege {
+				description := ""
+				privName := creatorAddr.String()
 
-// 				lowerCaseSymbol := strings.ToLower(symbol)
-// 				tokenId := fmt.Sprintf("%s/%s/%s", types.ModuleName, creatorAddr.String(), lowerCaseSymbol)
-// 				token := types.NewToken(tokenId, strings.ToLower(name), lowerCaseSymbol, 2, description)
-// 				k.SetToken(ctx, tokenId, token)
+				lowerCaseSymbol := strings.ToLower(symbol)
+				tokenId := fmt.Sprintf("%s/%s/%s", types.ModuleName, creatorAddr.String(), lowerCaseSymbol)
+				token := types.NewToken(tokenId, strings.ToLower(name), lowerCaseSymbol, 2, description)
+				k.SetToken(ctx, tokenId, token)
 
-// 				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{})
-// 				k.SetTokenManagement(ctx, tokenId, tokenManage)
+				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{})
+				k.SetTokenManagement(ctx, tokenId, tokenManage)
 
-// 				k.SetTokenPrivilegeAccount(ctx, tokenId, creatorAddr.String(), userAddr1)
+				k.SetTokenPrivilegeAccount(ctx, tokenId, creatorAddr.String(), userAddr1)
 
-// 				var privilegeMsg any.Any
-// 				// p, e := any.NewAnyWithValue(privilegeMsg)
-// 				// privilege, err := anypb.New(privilegeMsg)
-// 				// s.Require().NoError(err)
-// 				return &types.MsgExecutePrivilege{
-// 					Address:      userAddr1.String(),
-// 					TokenId:      tokenId,
-// 					PrivilegeMsg: &privilegeMsg,
-// 				}
-// 			},
-// 		},
-// 	}
+				err := k.AddPrivilege(MockPrivilegeI{
+					privName: privName,
+				})
+				s.Require().NoError(err)
+				var newMockMsg proto.Message = &MockPrivilegeMsg{
+					privName: privName,
+				}
 
-// 	for _, test := range tests {
-// 		s.Run(test.name, func() {
-// 			s.SetupTest()
-// 			msg := test.setup(*s.assetKeeper, s.ctx)
+				privilegeMsg, err := codectypes.NewAnyWithValue(newMockMsg)
+				s.Require().NoError(err)
 
-// 			s.msgServer.ExecutePrivilege(s.ctx, msg)
-// 		})
-// 	}
-// }
+				return &types.MsgExecutePrivilege{
+					Address:      userAddr1.String(),
+					TokenId:      tokenId,
+					PrivilegeMsg: privilegeMsg,
+				}
+			},
+		},
+		{
+			name:       "token not exists",
+			expectPass: false,
+			setup: func(k keeper.Keeper, ctx sdk.Context) *types.MsgExecutePrivilege {
+				privName := creatorAddr.String()
+
+				lowerCaseSymbol := strings.ToLower(symbol)
+				tokenId := fmt.Sprintf("%s/%s/%s", types.ModuleName, creatorAddr.String(), lowerCaseSymbol)
+
+				var newMockMsg proto.Message = &MockPrivilegeMsg{
+					privName: privName,
+				}
+
+				privilegeMsg, err := codectypes.NewAnyWithValue(newMockMsg)
+				s.Require().NoError(err)
+
+				return &types.MsgExecutePrivilege{
+					Address:      userAddr1.String(),
+					TokenId:      tokenId,
+					PrivilegeMsg: privilegeMsg,
+				}
+			},
+		},
+		{
+			name:       "privilege name is not registered yet",
+			expectPass: false,
+			setup: func(k keeper.Keeper, ctx sdk.Context) *types.MsgExecutePrivilege {
+				description := ""
+				privName := creatorAddr.String()
+
+				lowerCaseSymbol := strings.ToLower(symbol)
+				tokenId := fmt.Sprintf("%s/%s/%s", types.ModuleName, creatorAddr.String(), lowerCaseSymbol)
+				token := types.NewToken(tokenId, strings.ToLower(name), lowerCaseSymbol, 2, description)
+				k.SetToken(ctx, tokenId, token)
+
+				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{})
+				k.SetTokenManagement(ctx, tokenId, tokenManage)
+
+				k.SetTokenPrivilegeAccount(ctx, tokenId, creatorAddr.String(), userAddr1)
+				k.SetTokenPrivilegeAccount(ctx, tokenId, creatorAddr.String(), userAddr2)
+				k.SetTokenPrivilegeAccount(ctx, tokenId, creatorAddr.String(), userAddr3)
+
+				var newMockMsg proto.Message = &MockPrivilegeMsg{
+					privName: privName,
+				}
+
+				privilegeMsg, err := codectypes.NewAnyWithValue(newMockMsg)
+				s.Require().NoError(err)
+
+				return &types.MsgExecutePrivilege{
+					Address:      userAddr1.String(),
+					TokenId:      tokenId,
+					PrivilegeMsg: privilegeMsg,
+				}
+			},
+		},
+	}
+
+	for _, test := range tests {
+		s.Run(test.name, func() {
+			s.SetupTest()
+			msg := test.setup(*s.assetKeeper, s.ctx)
+
+			_, err := s.msgServer.ExecutePrivilege(s.ctx, msg)
+			if test.expectPass {
+				s.Require().NoError(err)
+			} else {
+				s.Require().Error(err)
+			}
+		})
+	}
+}
