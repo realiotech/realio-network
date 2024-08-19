@@ -109,6 +109,8 @@ func Setup(
 				panic(err)
 			}
 			genesisState[feemarkettypes.ModuleName] = app.AppCodec().MustMarshalJSON(feemarketGenesis)
+		} else {
+			genesisState[feemarkettypes.ModuleName] = app.AppCodec().MustMarshalJSON(feemarkettypes.DefaultGenesisState())
 		}
 
 		stateBytes, err := json.MarshalIndent(genesisState, "", " ")
