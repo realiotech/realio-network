@@ -2,9 +2,11 @@ package keeper_test
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"testing"
 
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -17,6 +19,8 @@ import (
 	"github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/asset/types"
 )
+
+const PRIV_NAME = "test"
 
 type KeeperTestSuite struct {
 	suite.Suite
@@ -83,7 +87,15 @@ func (m *MockPrivilegeMsg) XXX_Unmarshal(b []byte) error {
 
 // // MockPrivilegeI defines a mock type PrivilegeI
 type MockPrivilegeI struct {
+	count    uint64
 	privName string
+}
+
+func newMockPrivilegeI(count uint64, name string) MockPrivilegeI {
+	return MockPrivilegeI{
+		count:    count,
+		privName: name,
+	}
 }
 
 var _ types.PrivilegeI = MockPrivilegeI{}
@@ -92,13 +104,28 @@ func (m MockPrivilegeI) Name() string {
 	return m.privName
 }
 
-func (m MockPrivilegeI) RegisterInterfaces() error {
-	return nil
+func (m MockPrivilegeI) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
+	registry.RegisterImplementations((*sdk.Msg)(nil),
+		&types.MsgMock{},
+	)
 }
 
 func (m MockPrivilegeI) MsgHandler() types.MsgHandler {
 	return func(context context.Context, privMsg sdk.Msg) (proto.Message, error) {
-		return nil, nil
+		typeUrl := sdk.MsgTypeURL(privMsg)
+		if typeUrl != sdk.MsgTypeURL(&types.MsgMock{}) {
+			return nil, errors.New("unsupport msg type")
+		}
+
+		msg, ok := privMsg.(*types.MsgMock)
+		if !ok {
+			return nil, errors.New("unable to cast msg type")
+		}
+
+		m.count = msg.Count
+		return &types.MsgMockResponse{
+			Count: m.count,
+		}, nil
 	}
 }
 

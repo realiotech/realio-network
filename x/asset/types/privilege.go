@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
 	"github.com/spf13/cobra"
@@ -14,7 +15,7 @@ type PrivilegeMsgI interface {
 
 type PrivilegeI interface {
 	Name() string
-	RegisterInterfaces() error
+	RegisterInterfaces(registry cdctypes.InterfaceRegistry)
 	MsgHandler() MsgHandler
 	QueryHandler() QueryHandler
 	CLI() *cobra.Command

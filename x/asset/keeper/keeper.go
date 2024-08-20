@@ -7,6 +7,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
@@ -15,7 +16,9 @@ import (
 
 type (
 	Keeper struct {
-		cdc              codec.BinaryCodec
+		cdc codec.BinaryCodec
+		// registry is used to register privilege interface and implementation.
+		registry         cdctypes.InterfaceRegistry
 		storeKey         storetypes.StoreKey
 		memKey           storetypes.StoreKey
 		paramstore       paramtypes.Subspace
@@ -58,7 +61,9 @@ func (k *Keeper) AddPrivilege(priv types.PrivilegeI) error {
 
 	k.PrivilegeManager[priv.Name()] = priv
 	// regiester the privilege's interfaces
-	return priv.RegisterInterfaces()
+	priv.RegisterInterfaces(k.registry)
+
+	return nil
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
