@@ -92,18 +92,18 @@ func (m MockPrivilegeI) Name() string {
 	return m.privName
 }
 
-func (m MockPrivilegeI) RegisterInterfaces() {
-
+func (m MockPrivilegeI) RegisterInterfaces() error {
+	return nil
 }
 
 func (m MockPrivilegeI) MsgHandler() types.MsgHandler {
-	return func(context context.Context, privMsg proto.Message) (proto.Message, error) {
+	return func(context context.Context, privMsg sdk.Msg) (proto.Message, error) {
 		return nil, nil
 	}
 }
 
 func (m MockPrivilegeI) QueryHandler() types.QueryHandler {
-	return func(context context.Context, privQuery proto.Message) (proto.Message, error) {
+	return func(context context.Context, privQuery sdk.Msg) (proto.Message, error) {
 		return nil, nil
 	}
 }
