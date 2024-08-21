@@ -38,9 +38,11 @@ func (suite *KeeperTestSuite) SetupTest() {
 
 	suite.app = app
 	suite.ctx = app.BaseApp.NewContext(false, tmproto.Header{Height: app.LastBlockHeight() + 1})
-	suite.assetKeeper = &app.AssetKeeper
+	suite.assetKeeper = keeper.NewKeeper(
+		app.AppCodec(), app.InterfaceRegistry(), app.GetKey(types.StoreKey),
+		app.GetMemKey(types.MemStoreKey), app.GetSubspace(types.ModuleName), app.BankKeeper, app.AccountKeeper,
+	)
 	suite.govkeeper = app.GovKeeper
-	suite.msgServer = keeper.NewMsgServerImpl(app.AssetKeeper)
 	suite.bankKeeper = app.BankKeeper
 }
 
@@ -91,13 +93,6 @@ type MockPrivilegeI struct {
 	privName string
 }
 
-func newMockPrivilegeI(count uint64, name string) MockPrivilegeI {
-	return MockPrivilegeI{
-		count:    count,
-		privName: name,
-	}
-}
-
 var _ types.PrivilegeI = MockPrivilegeI{}
 
 func (m MockPrivilegeI) Name() string {
@@ -122,9 +117,8 @@ func (m MockPrivilegeI) MsgHandler() types.MsgHandler {
 			return nil, errors.New("unable to cast msg type")
 		}
 
-		m.count = msg.Count
 		return &types.MsgMockResponse{
-			Count: m.count,
+			Count: msg.Count,
 		}, nil
 	}
 }

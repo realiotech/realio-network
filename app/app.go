@@ -407,6 +407,7 @@ func New(
 	// realio keeper
 	app.AssetKeeper = *assetmodulekeeper.NewKeeper(
 		appCodec,
+		app.interfaceRegistry,
 		keys[assetmoduletypes.StoreKey],
 		keys[assetmoduletypes.MemStoreKey],
 		app.GetSubspace(assetmoduletypes.ModuleName),

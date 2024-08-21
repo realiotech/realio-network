@@ -431,16 +431,16 @@ func (s *KeeperTestSuite) TestDisablePrivilege() {
 func (s *KeeperTestSuite) TestExecutePrivilege() {
 
 	tests := []struct {
-		name       string
-		expectPass bool
-		setup      func(k keeper.Keeper, ctx sdk.Context) *types.MsgExecutePrivilege
+		name        string
+		expectPass  bool
+		setup       func(k *keeper.Keeper, ctx sdk.Context) *types.MsgExecutePrivilege
+		expectedErr string
 	}{
 		{
 			name:       "success",
 			expectPass: true,
-			setup: func(k keeper.Keeper, ctx sdk.Context) *types.MsgExecutePrivilege {
+			setup: func(k *keeper.Keeper, ctx sdk.Context) *types.MsgExecutePrivilege {
 				description := ""
-				privName := creatorAddr.String()
 
 				lowerCaseSymbol := strings.ToLower(symbol)
 				tokenId := fmt.Sprintf("%s/%s/%s", types.ModuleName, creatorAddr.String(), lowerCaseSymbol)
@@ -450,14 +450,16 @@ func (s *KeeperTestSuite) TestExecutePrivilege() {
 				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{})
 				k.SetTokenManagement(ctx, tokenId, tokenManage)
 
-				k.SetTokenPrivilegeAccount(ctx, tokenId, creatorAddr.String(), userAddr1)
+				k.SetTokenPrivilegeAccount(ctx, tokenId, "test", userAddr1)
 
 				err := k.AddPrivilege(MockPrivilegeI{
-					privName: privName,
+					count:    0,
+					privName: "test",
 				})
 				s.Require().NoError(err)
-				var newMockMsg proto.Message = &MockPrivilegeMsg{
-					privName: privName,
+
+				newMockMsg := &types.MsgMock{
+					Count: 10,
 				}
 
 				privilegeMsg, err := codectypes.NewAnyWithValue(newMockMsg)
@@ -471,9 +473,44 @@ func (s *KeeperTestSuite) TestExecutePrivilege() {
 			},
 		},
 		{
+			name:       "message is not privilege msg",
+			expectPass: false,
+			setup: func(k *keeper.Keeper, ctx sdk.Context) *types.MsgExecutePrivilege {
+				description := ""
+
+				lowerCaseSymbol := strings.ToLower(symbol)
+				tokenId := fmt.Sprintf("%s/%s/%s", types.ModuleName, creatorAddr.String(), lowerCaseSymbol)
+				token := types.NewToken(tokenId, strings.ToLower(name), lowerCaseSymbol, 2, description)
+				k.SetToken(ctx, tokenId, token)
+
+				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{})
+				k.SetTokenManagement(ctx, tokenId, tokenManage)
+
+				k.SetTokenPrivilegeAccount(ctx, tokenId, "test", userAddr1)
+
+				err := k.AddPrivilege(MockPrivilegeI{
+					count:    0,
+					privName: "test",
+				})
+				s.Require().NoError(err)
+
+				newMockMsg := &types.MsgAllocateToken{}
+
+				privilegeMsg, err := codectypes.NewAnyWithValue(newMockMsg)
+				s.Require().NoError(err)
+
+				return &types.MsgExecutePrivilege{
+					Address:      userAddr1.String(),
+					TokenId:      tokenId,
+					PrivilegeMsg: privilegeMsg,
+				}
+			},
+			expectedErr: "message is not privilege msg",
+		},
+		{
 			name:       "token not exists",
 			expectPass: false,
-			setup: func(k keeper.Keeper, ctx sdk.Context) *types.MsgExecutePrivilege {
+			setup: func(k *keeper.Keeper, ctx sdk.Context) *types.MsgExecutePrivilege {
 				privName := creatorAddr.String()
 
 				lowerCaseSymbol := strings.ToLower(symbol)
@@ -492,11 +529,12 @@ func (s *KeeperTestSuite) TestExecutePrivilege() {
 					PrivilegeMsg: privilegeMsg,
 				}
 			},
+			expectedErr: "token with denom",
 		},
 		{
 			name:       "privilege name is not registered yet",
 			expectPass: false,
-			setup: func(k keeper.Keeper, ctx sdk.Context) *types.MsgExecutePrivilege {
+			setup: func(k *keeper.Keeper, ctx sdk.Context) *types.MsgExecutePrivilege {
 				description := ""
 				privName := creatorAddr.String()
 
@@ -525,19 +563,20 @@ func (s *KeeperTestSuite) TestExecutePrivilege() {
 					PrivilegeMsg: privilegeMsg,
 				}
 			},
+			expectedErr: "is not registered yet",
 		},
 	}
 
 	for _, test := range tests {
 		s.Run(test.name, func() {
 			s.SetupTest()
-			msg := test.setup(*s.assetKeeper, s.ctx)
-
+			msg := test.setup(s.assetKeeper, s.ctx)
+			s.msgServer = keeper.NewMsgServerImpl(*s.assetKeeper)
 			_, err := s.msgServer.ExecutePrivilege(s.ctx, msg)
 			if test.expectPass {
 				s.Require().NoError(err)
 			} else {
-				s.Require().Error(err)
+				s.Require().Contains(err.Error(), test.expectedErr)
 			}
 		})
 	}

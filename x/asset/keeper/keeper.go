@@ -33,6 +33,7 @@ type (
 // store and fetch module parameters. It also has an allowAddrs map[string]bool to skip restrictions for module addresses.
 func NewKeeper(
 	cdc codec.BinaryCodec,
+	registry cdctypes.InterfaceRegistry,
 	storeKey,
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
@@ -44,13 +45,17 @@ func NewKeeper(
 		ps = ps.WithKeyTable(types.ParamKeyTable())
 	}
 
+	newPrivilegeManager := map[string]types.PrivilegeI{}
+
 	return &Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		memKey:     memKey,
-		paramstore: ps,
-		bankKeeper: bankKeeper,
-		ak:         ak,
+		cdc:              cdc,
+		registry:         registry,
+		storeKey:         storeKey,
+		memKey:           memKey,
+		paramstore:       ps,
+		bankKeeper:       bankKeeper,
+		ak:               ak,
+		PrivilegeManager: newPrivilegeManager,
 	}
 }
 
