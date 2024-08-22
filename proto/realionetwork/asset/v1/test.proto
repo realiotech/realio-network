@@ -1,0 +1,12 @@
+syntax = "proto3";
+package realionetwork.asset.v1;
+
+option go_package = "github.com/realiotech/realio-network/x/asset/types";
+
+message MsgMock {
+    uint64 count = 1;
+  }
+
+  message MsgMockResponse {
+    uint64 count = 1;
+  }

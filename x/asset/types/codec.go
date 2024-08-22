@@ -8,15 +8,24 @@ import (
 )
 
 func RegisterCodec(cdc *codec.LegacyAmino) {
+	cdc.RegisterInterface((*PrivilegeI)(nil), nil)
 	cdc.RegisterConcrete(&MsgCreateToken{}, "asset/CreateToken", nil)
 	cdc.RegisterConcrete(&MsgUpdateToken{}, "asset/UpdateToken", nil)
-	cdc.RegisterConcrete(&MsgAuthorizeAddress{}, "asset/AuthorizeAddress", nil)
-	cdc.RegisterConcrete(&MsgUnAuthorizeAddress{}, "asset/UnAuthorizeAddress", nil)
-	cdc.RegisterConcrete(&MsgTransferToken{}, "asset/TransferToken", nil)
+	cdc.RegisterConcrete(&MsgAllocateToken{}, "asset/AllocateToken", nil)
+	cdc.RegisterConcrete(&MsgAssignPrivilege{}, "asset/AssignPrivilege", nil)
+	cdc.RegisterConcrete(&MsgUnassignPrivilege{}, "asset/UnassignPrivilege", nil)
+	cdc.RegisterConcrete(&MsgDisablePrivilege{}, "asset/DisablePrivilege", nil)
+	cdc.RegisterConcrete(&MsgExecutePrivilege{}, "asset/ExecutePrivilege", nil)
 	// this line is used by starport scaffolding # 2
 }
 
 func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
+	var privilege *PrivilegeI
+	registry.RegisterInterface(
+		"realionetwork.asset.v1.PrivilegeI",
+		privilege,
+	)
+
 	registry.RegisterImplementations((*sdk.Msg)(nil),
 		&MsgCreateToken{},
 	)
@@ -24,13 +33,19 @@ func RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 		&MsgUpdateToken{},
 	)
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgAuthorizeAddress{},
+		&MsgAllocateToken{},
 	)
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgUnAuthorizeAddress{},
+		&MsgAssignPrivilege{},
 	)
 	registry.RegisterImplementations((*sdk.Msg)(nil),
-		&MsgTransferToken{},
+		&MsgUnassignPrivilege{},
+	)
+	registry.RegisterImplementations((*sdk.Msg)(nil),
+		&MsgDisablePrivilege{},
+	)
+	registry.RegisterImplementations((*sdk.Msg)(nil),
+		&MsgExecutePrivilege{},
 	)
 	// this line is used by starport scaffolding # 3
 

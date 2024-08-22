@@ -7,6 +7,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 
@@ -15,13 +16,15 @@ import (
 
 type (
 	Keeper struct {
-		cdc        codec.BinaryCodec
-		storeKey   storetypes.StoreKey
-		memKey     storetypes.StoreKey
-		paramstore paramtypes.Subspace
-		bankKeeper types.BankKeeper
-		ak         types.AccountKeeper
-		allowAddrs map[string]bool
+		cdc codec.BinaryCodec
+		// registry is used to register privilege interface and implementation.
+		registry         cdctypes.InterfaceRegistry
+		storeKey         storetypes.StoreKey
+		memKey           storetypes.StoreKey
+		paramstore       paramtypes.Subspace
+		bankKeeper       types.BankKeeper
+		ak               types.AccountKeeper
+		PrivilegeManager map[string]types.PrivilegeI
 	}
 )
 
@@ -30,27 +33,42 @@ type (
 // store and fetch module parameters. It also has an allowAddrs map[string]bool to skip restrictions for module addresses.
 func NewKeeper(
 	cdc codec.BinaryCodec,
+	registry cdctypes.InterfaceRegistry,
 	storeKey,
 	memKey storetypes.StoreKey,
 	ps paramtypes.Subspace,
 	bankKeeper types.BankKeeper,
 	ak types.AccountKeeper,
-	allowAddrs map[string]bool,
 ) *Keeper {
 	// set KeyTable if it has not already been set
 	if !ps.HasKeyTable() {
 		ps = ps.WithKeyTable(types.ParamKeyTable())
 	}
 
+	newPrivilegeManager := map[string]types.PrivilegeI{}
+
 	return &Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		memKey:     memKey,
-		paramstore: ps,
-		bankKeeper: bankKeeper,
-		ak:         ak,
-		allowAddrs: allowAddrs,
+		cdc:              cdc,
+		registry:         registry,
+		storeKey:         storeKey,
+		memKey:           memKey,
+		paramstore:       ps,
+		bankKeeper:       bankKeeper,
+		ak:               ak,
+		PrivilegeManager: newPrivilegeManager,
 	}
+}
+
+func (k *Keeper) AddPrivilege(priv types.PrivilegeI) error {
+	if _, ok := k.PrivilegeManager[priv.Name()]; ok {
+		return fmt.Errorf("privilege %s already exists", priv.Name())
+	}
+
+	k.PrivilegeManager[priv.Name()] = priv
+	// regiester the privilege's interfaces
+	priv.RegisterInterfaces(k.registry)
+
+	return nil
 }
 
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {

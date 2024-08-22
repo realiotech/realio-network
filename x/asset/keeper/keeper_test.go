@@ -1,97 +1,136 @@
 package keeper_test
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"testing"
-	"time"
 
-	"github.com/cosmos/cosmos-sdk/baseapp"
+	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/evmos/ethermint/crypto/ethsecp256k1"
-	"github.com/stretchr/testify/require"
+	"github.com/gogo/protobuf/proto"
+	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
-	"github.com/tendermint/tendermint/crypto/tmhash"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
-	"github.com/tendermint/tendermint/version"
 
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
+	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	"github.com/realiotech/realio-network/app"
-	realiotypes "github.com/realiotech/realio-network/types"
+	"github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/asset/types"
-
-	"github.com/realiotech/realio-network/testutil"
 )
+
+const PRIV_NAME = "test"
 
 type KeeperTestSuite struct {
 	suite.Suite
-	app              *app.RealioNetwork
-	ctx              sdk.Context
-	queryClient      types.QueryClient
-	testUser1Acc     sdk.AccAddress
-	testUser1Address string
-	testUser2Acc     sdk.AccAddress
-	testUser2Address string
-	testUser3Acc     sdk.AccAddress
-	testUser3Address string
+	app *app.RealioNetwork
+	ctx sdk.Context
+
+	assetKeeper *keeper.Keeper
+	govkeeper   govkeeper.Keeper
+	msgServer   types.MsgServer
+	bankKeeper  bankkeeper.Keeper
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	suite.DoSetupTest(suite.T())
-}
+	app := app.Setup(false, nil, 3)
 
-func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
-	checkTx := false
-
-	// user 1 key
-	suite.testUser1Acc = testutil.GenAddress()
-	suite.testUser1Address = suite.testUser1Acc.String()
-
-	// user 2 key
-	suite.testUser2Acc = testutil.GenAddress()
-	suite.testUser2Address = suite.testUser2Acc.String()
-
-	// user 3 key
-	suite.testUser3Acc = testutil.GenAddress()
-	suite.testUser3Address = suite.testUser3Acc.String()
-
-	// consensus key
-	priv, err := ethsecp256k1.GenerateKey()
-	require.NoError(t, err)
-	consAddress := sdk.ConsAddress(priv.PubKey().Address())
-
-	// init app
-	suite.app = app.Setup(checkTx, nil, 1)
-
-	// Set Context
-	suite.ctx = suite.app.BaseApp.NewContext(checkTx, tmproto.Header{
-		Height:          1,
-		ChainID:         realiotypes.TestnetChainID,
-		Time:            time.Now().UTC(),
-		ProposerAddress: consAddress.Bytes(),
-
-		Version: tmversion.Consensus{
-			Block: version.BlockProtocol,
-		},
-		LastBlockId: tmproto.BlockID{
-			Hash: tmhash.Sum([]byte("block_id")),
-			PartSetHeader: tmproto.PartSetHeader{
-				Total: 11,
-				Hash:  tmhash.Sum([]byte("partset_header")),
-			},
-		},
-		AppHash:            tmhash.Sum([]byte("app")),
-		DataHash:           tmhash.Sum([]byte("data")),
-		EvidenceHash:       tmhash.Sum([]byte("evidence")),
-		ValidatorsHash:     tmhash.Sum([]byte("validators")),
-		NextValidatorsHash: tmhash.Sum([]byte("next_validators")),
-		ConsensusHash:      tmhash.Sum([]byte("consensus")),
-		LastResultsHash:    tmhash.Sum([]byte("last_result")),
-	})
-
-	queryHelper := baseapp.NewQueryServerTestHelper(suite.ctx, suite.app.InterfaceRegistry())
-	types.RegisterQueryServer(queryHelper, suite.app.AssetKeeper)
-	suite.queryClient = types.NewQueryClient(queryHelper)
+	suite.app = app
+	suite.ctx = app.BaseApp.NewContext(false, tmproto.Header{Height: app.LastBlockHeight() + 1})
+	suite.assetKeeper = keeper.NewKeeper(
+		app.AppCodec(), app.InterfaceRegistry(), app.GetKey(types.StoreKey),
+		app.GetMemKey(types.MemStoreKey), app.GetSubspace(types.ModuleName), app.BankKeeper, app.AccountKeeper,
+	)
+	suite.govkeeper = app.GovKeeper
+	suite.bankKeeper = app.BankKeeper
 }
 
 func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
+}
+
+func init() {
+	proto.RegisterType((*MockPrivilegeMsg)(nil), "MockPrivilegeMsg")
+}
+
+// MockPrivilegeMsg defines a mock type PrivilegeMsg
+type MockPrivilegeMsg struct {
+	privName string
+}
+
+var _ proto.Message = &MockPrivilegeMsg{}
+
+func (m *MockPrivilegeMsg) ValidateBasic() error {
+	if m.privName == "" {
+		return fmt.Errorf("empty")
+	}
+	return nil
+}
+
+func (m *MockPrivilegeMsg) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{userAddr1}
+}
+
+func (m *MockPrivilegeMsg) Reset()         { *m = MockPrivilegeMsg{} }
+func (m *MockPrivilegeMsg) String() string { return proto.CompactTextString(m) }
+func (m *MockPrivilegeMsg) ProtoMessage()  {}
+
+func (m *MockPrivilegeMsg) NeedPrivilege() string {
+	return m.privName
+}
+func (m *MockPrivilegeMsg) XXX_MessageName() string {
+	return "MockPrivilegeMsg"
+}
+
+func (m *MockPrivilegeMsg) XXX_Unmarshal(b []byte) error {
+	return nil
+}
+
+// // MockPrivilegeI defines a mock type PrivilegeI
+type MockPrivilegeI struct {
+	count    uint64
+	privName string
+}
+
+var _ types.PrivilegeI = MockPrivilegeI{}
+
+func (m MockPrivilegeI) Name() string {
+	return m.privName
+}
+
+func (m MockPrivilegeI) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
+	registry.RegisterImplementations((*sdk.Msg)(nil),
+		&types.MsgMock{},
+	)
+}
+
+func (m MockPrivilegeI) MsgHandler() types.MsgHandler {
+	return func(context context.Context, privMsg sdk.Msg) (proto.Message, error) {
+		typeUrl := sdk.MsgTypeURL(privMsg)
+		if typeUrl != sdk.MsgTypeURL(&types.MsgMock{}) {
+			return nil, errors.New("unsupport msg type")
+		}
+
+		msg, ok := privMsg.(*types.MsgMock)
+		if !ok {
+			return nil, errors.New("unable to cast msg type")
+		}
+
+		return &types.MsgMockResponse{
+			Count: msg.Count,
+		}, nil
+	}
+}
+
+func (m MockPrivilegeI) QueryHandler() types.QueryHandler {
+	return func(context context.Context, privQuery sdk.Msg) (proto.Message, error) {
+		return nil, nil
+	}
+}
+
+func (m MockPrivilegeI) CLI() *cobra.Command {
+	return &cobra.Command{
+		Use: "mock",
+	}
 }
