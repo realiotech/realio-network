@@ -7,12 +7,14 @@ import (
 	"os"
 	"reflect"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/gogo/protobuf/jsonpb"
+	"github.com/realiotech/realio-network/x/asset/types"
 )
 
-// proposal defines the new Msg-based proposal.
 type privilegeMsgContent struct {
 	// Msg defines a sdk.Msgs proto-JSON-encoded as Any.
 	Message     json.RawMessage `json:"message,omitempty"`
@@ -46,4 +48,35 @@ func encodeJSONToProto(name string, jsonMsg []byte) (*codectypes.Any, error) {
 		return nil, fmt.Errorf("provided message is not valid %s: %w", jsonMsg, err)
 	}
 	return codectypes.NewAnyWithValue(msg)
+}
+
+type balances struct {
+	Balances []json.RawMessage `json:"balances,omitempty"`
+}
+
+func parseBalances(cdc codec.Codec, path string) ([]types.Balance, error) {
+	var rawBalances balances
+
+	contents, err := os.ReadFile(path)
+	if err != nil {
+		return nil, err
+	}
+
+	err = json.Unmarshal(contents, &rawBalances)
+	if err != nil {
+		return nil, err
+	}
+
+	balances := make([]types.Balance, len(rawBalances.Balances))
+	for i, jsonMsg := range rawBalances.Balances {
+		var balance types.Balance
+		err := cdc.UnmarshalInterfaceJSON(jsonMsg, &balance)
+		if err != nil {
+			return nil, err
+		}
+
+		balances[i] = balance
+	}
+
+	return balances, nil
 }

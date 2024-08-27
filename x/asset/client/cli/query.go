@@ -25,12 +25,11 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(CmdQueryParams())
 	cmd.AddCommand(CmdQueryTokens())
 	cmd.AddCommand(CmdQueryToken())
+	cmd.AddCommand(NewQueryPrivilegeCmd())
 
 	return cmd
 }
 
-// NewMultiSendTxCmd returns a CLI command handler for creating a MsgMultiSend transaction.
-// For a better UX this command is limited to send funds from one account to two or more accounts.
 func NewQueryPrivilegeCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "query-privilege <privilege_name> <path_to_json_file>",
