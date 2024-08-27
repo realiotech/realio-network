@@ -1,8 +1,6 @@
 package cli
 
 import (
-	"context"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
@@ -20,7 +18,7 @@ func CmdQueryTokens() *cobra.Command {
 
 			queryClient := types.NewQueryClient(clientCtx)
 
-			res, err := queryClient.Tokens(context.Background(), &types.QueryTokensRequest{})
+			res, err := queryClient.Tokens(cmd.Context(), &types.QueryTokensRequest{})
 			if err != nil {
 				return err
 			}
@@ -44,7 +42,7 @@ func CmdQueryToken() *cobra.Command {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			queryClient := types.NewQueryClient(clientCtx)
 			params := types.NewQueryTokenRequest(argSymbol)
-			res, err := queryClient.Token(context.Background(), params)
+			res, err := queryClient.Token(cmd.Context(), params)
 			if err != nil {
 				return err
 			}

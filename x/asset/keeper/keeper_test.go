@@ -9,7 +9,6 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
-	"github.com/spf13/cobra"
 	"github.com/stretchr/testify/suite"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
@@ -124,13 +123,7 @@ func (m MockPrivilegeI) MsgHandler() types.MsgHandler {
 }
 
 func (m MockPrivilegeI) QueryHandler() types.QueryHandler {
-	return func(context context.Context, privQuery sdk.Msg) (proto.Message, error) {
+	return func(context context.Context, privQuery proto.Message) (proto.Message, error) {
 		return nil, nil
-	}
-}
-
-func (m MockPrivilegeI) CLI() *cobra.Command {
-	return &cobra.Command{
-		Use: "mock",
 	}
 }

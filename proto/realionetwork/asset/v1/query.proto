@@ -5,6 +5,8 @@ import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "realionetwork/asset/v1/params.proto";
 import "realionetwork/asset/v1/token.proto";
+import "google/protobuf/any.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/realiotech/realio-network/x/asset/types";
 
@@ -15,15 +17,18 @@ service Query {
     option (google.api.http).get = "/realionetwork/asset/v1/params";
   }
 
-  // Parameters queries the tokens of the module.
+  // Tokens queries the tokens of the module.
   rpc Tokens(QueryTokensRequest) returns (QueryTokensResponse) {
     option (google.api.http).get = "/realionetwork/asset/v1/tokens";
   }
 
-  // Parameters queries the tokens of the module.
+  // Token queries the token of the module based on symbol.
   rpc Token(QueryTokenRequest) returns (QueryTokenResponse) {
     option (google.api.http).get = "/realionetwork/asset/v1/tokens/{symbol}";
   }
+
+  // QueryPrivilege queries the privilege states.
+  rpc QueryPrivilege(QueryPrivilegeRequest) returns (QueryPrivilegeResponse);
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
@@ -54,4 +59,18 @@ message QueryTokenRequest {
 message QueryTokenResponse {
   // params holds all the parameters of this module.
   Token token = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryPrivilegeRequest defines the request to query privilege states.
+message QueryPrivilegeRequest {
+  // name of the privilege
+  string privilege_name = 1;
+  // request message
+  google.protobuf.Any request = 2;
+}
+
+// QueryPrivilegeResponse defines the response to query privilege states.
+message QueryPrivilegeResponse {
+  // response message
+  google.protobuf.Any response = 1;
 }

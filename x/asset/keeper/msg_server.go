@@ -96,7 +96,7 @@ func (k msgServer) AllocateToken(goCtx context.Context, msg *types.MsgAllocateTo
 
 	tm, found := k.GetTokenManagement(ctx, msg.TokenId)
 	if !found {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "token with denom %s is not exists", msg.TokenId)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrNotFound, "token with denom %s is not exist", msg.TokenId)
 	}
 	if tm.Manager != msg.Manager {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "sender is not token manager")
