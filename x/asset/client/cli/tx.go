@@ -27,7 +27,7 @@ func GetTxCmd() *cobra.Command {
 		RunE:                       client.ValidateCmd,
 	}
 
-	// this line is used by starport scaffolding # 1
+	cmd.AddCommand(NewExecutePrivilegeMsgCmd())
 
 	return cmd
 }
@@ -40,7 +40,7 @@ func NewExecutePrivilegeMsgCmd() *cobra.Command {
 		Short: "Execute privilege message for the given user address, token id and message",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Execute a privilege message.
-They should be defined in a JSON file.
+Execute message should be defined in a JSON file.
 
 Example:
 $ %s tx asset execute-msg rio1... tokenID1 path/to/message.json
@@ -55,7 +55,7 @@ Where message.json contains:
       "amount":[{"denom": "stake","amount": "10"}]
     }
   ,
-  "message": "cosmos.bank.v1beta1.MsgSend",
+  "message_type": "cosmos.bank.v1beta1.MsgSend",
 }
 `,
 			)),

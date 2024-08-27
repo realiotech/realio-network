@@ -17,15 +17,18 @@ service Query {
     option (google.api.http).get = "/realionetwork/asset/v1/params";
   }
 
-  // Parameters queries the tokens of the module.
+  // Tokens queries the tokens of the module.
   rpc Tokens(QueryTokensRequest) returns (QueryTokensResponse) {
     option (google.api.http).get = "/realionetwork/asset/v1/tokens";
   }
 
-  // Parameters queries the tokens of the module.
+  // Token queries the token of the module based on symbol.
   rpc Token(QueryTokenRequest) returns (QueryTokenResponse) {
     option (google.api.http).get = "/realionetwork/asset/v1/tokens/{symbol}";
   }
+
+  // QueryPrivilege queries the privilege states.
+  rpc QueryPrivilege(QueryPrivilegeRequest) returns (QueryPrivilegeResponse);
 }
 
 // QueryParamsRequest is request type for the Query/Params RPC method.
