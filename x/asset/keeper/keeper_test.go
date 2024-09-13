@@ -106,7 +106,7 @@ func (m MockPrivilegeI) RegisterInterfaces(registry cdctypes.InterfaceRegistry) 
 }
 
 func (m MockPrivilegeI) MsgHandler() types.MsgHandler {
-	return func(context context.Context, privMsg sdk.Msg) (proto.Message, error) {
+	return func(context context.Context, privMsg sdk.Msg, tokenID string, privAcc sdk.AccAddress) (proto.Message, error) {
 		typeUrl := sdk.MsgTypeURL(privMsg)
 		if typeUrl != sdk.MsgTypeURL(&types.MsgMock{}) {
 			return nil, errors.New("unsupport msg type")

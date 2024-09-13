@@ -1,0 +1,17 @@
+syntax = "proto3";
+package realionetwork.asset.v1;
+
+option go_package = "github.com/realiotech/realio-network/x/asset/priviledges/mint";
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "google/protobuf/any.proto";
+import "realionetwork/asset/v1/token.proto";
+
+
+message MsgMintToken {
+    string account = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+    string token_id = 2;
+    string to_account = 3;
+    uint64 amount = 4;
+}
