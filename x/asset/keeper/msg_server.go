@@ -9,6 +9,8 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	bank "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -197,6 +199,12 @@ func (k msgServer) DisablePrivilege(goCtx context.Context, msg *types.MsgDisable
 	return &types.MsgDisablePrivilegeResponse{}, nil
 }
 
+func (k msgServer) MakePrivilegeStore(ctx sdk.Context, privilegeName string, tokenID string) storetypes.KVStore {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), []byte(tokenID+privilegeName))
+
+	return store
+}
+
 func (k msgServer) ExecutePrivilege(goCtx context.Context, msg *types.MsgExecutePrivilege) (*types.MsgExecutePrivilegeResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	userAcc, err := sdk.AccAddressFromBech32(msg.Address)
@@ -236,7 +244,7 @@ func (k msgServer) ExecutePrivilege(goCtx context.Context, msg *types.MsgExecute
 	}
 
 	msgHandler := privImplementation.MsgHandler()
-	_, err = msgHandler(ctx, sdkMsg, msg.TokenId, userAcc)
+	_, err = msgHandler(ctx, k.MakePrivilegeStore(ctx, privName, msg.TokenId), sdkMsg, msg.TokenId, userAcc)
 	if err != nil {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "fail to execute privilege message")
 	}
