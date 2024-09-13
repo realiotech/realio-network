@@ -3,6 +3,7 @@ package transfer_auth
 import (
 	"fmt"
 
+	"github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/asset/types"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -10,6 +11,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/store/prefix"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
+var (
+	_ keeper.RestrictionChecker = (*TransferAuthPriviledge)(nil)
 )
 
 const priv_name = "transfer_auth"
@@ -131,3 +136,19 @@ func (tp TransferAuthPriviledge) RemoveAddr(ctx sdk.Context, addr, tokenId strin
 }
 
 func (tp TransferAuthPriviledge) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {}
+
+func (tp TransferAuthPriviledge) IsAllow(ctx sdk.Context, tokenID string, sender string) (bool, error) {
+	allowAddrs, err := tp.GetAddrList(ctx, tokenID)
+	if err != nil {
+		return false, err
+	}
+
+	var isAllow bool
+	isAllow, has := allowAddrs.Addrs[sender]
+	if !has {
+		isAllow = false
+	}
+
+	return isAllow, nil
+
+}

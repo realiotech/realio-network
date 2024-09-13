@@ -18,13 +18,14 @@ type (
 	Keeper struct {
 		cdc codec.BinaryCodec
 		// registry is used to register privilege interface and implementation.
-		registry         cdctypes.InterfaceRegistry
-		storeKey         storetypes.StoreKey
-		memKey           storetypes.StoreKey
-		paramstore       paramtypes.Subspace
-		bankKeeper       types.BankKeeper
-		ak               types.AccountKeeper
-		PrivilegeManager map[string]types.PrivilegeI
+		registry           cdctypes.InterfaceRegistry
+		storeKey           storetypes.StoreKey
+		memKey             storetypes.StoreKey
+		paramstore         paramtypes.Subspace
+		bankKeeper         types.BankKeeper
+		ak                 types.AccountKeeper
+		PrivilegeManager   map[string]types.PrivilegeI
+		RestrictionChecker []RestrictionChecker
 	}
 )
 
@@ -67,6 +68,12 @@ func (k *Keeper) AddPrivilege(priv types.PrivilegeI) error {
 	k.PrivilegeManager[priv.Name()] = priv
 	// regiester the privilege's interfaces
 	priv.RegisterInterfaces(k.registry)
+
+	checker, ok := priv.(RestrictionChecker)
+	// currently we should only support one restriction checker at a time
+	if ok && len(k.RestrictionChecker) == 0 {
+		k.RestrictionChecker = append(k.RestrictionChecker, checker)
+	}
 
 	return nil
 }
