@@ -63,15 +63,15 @@ func (tp TransferAuthPriviledge) GetAddrList(ctx sdk.Context, tokenId string) (A
 		}, nil
 	}
 
-	var allowAddrs *AllowAddrs
-	err := tp.cdc.Unmarshal(bz, allowAddrs)
+	var allowAddrs AllowAddrs
+	err := tp.cdc.Unmarshal(bz, &allowAddrs)
 	if err != nil {
 		return AllowAddrs{
 			Addrs: map[string]bool{},
 		}, err
 	}
 
-	return *allowAddrs, nil
+	return allowAddrs, nil
 }
 
 func (tp TransferAuthPriviledge) AddAddr(ctx sdk.Context, addr, tokenId string) error {
