@@ -415,6 +415,8 @@ func New(
 		app.AccountKeeper,
 	)
 
+	app.BankKeeper.AppendSendRestriction(app.AssetKeeper.AssetSendRestriction)
+
 	// IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
 		appCodec, keys[ibchost.StoreKey], app.GetSubspace(ibchost.ModuleName), app.StakingKeeper, app.UpgradeKeeper, scopedIBCKeeper,

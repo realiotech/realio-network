@@ -6,7 +6,6 @@ import (
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gogo/protobuf/proto"
-	"github.com/spf13/cobra"
 	// "github.com/cosmos/cosmos-sdk/store/types"
 )
 
@@ -19,7 +18,6 @@ type PrivilegeI interface {
 	RegisterInterfaces(registry cdctypes.InterfaceRegistry)
 	MsgHandler() MsgHandler
 	QueryHandler() QueryHandler
-	CLI() *cobra.Command
 }
 
 type MsgHandler func(context context.Context, msg proto.Message, tokenID string, privAcc sdk.AccAddress) (proto.Message, error)

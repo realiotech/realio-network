@@ -106,8 +106,8 @@ func (m MockPrivilegeI) RegisterInterfaces(registry cdctypes.InterfaceRegistry) 
 }
 
 func (m MockPrivilegeI) MsgHandler() types.MsgHandler {
-	return func(context context.Context, privMsg sdk.Msg, tokenID string, privAcc sdk.AccAddress) (proto.Message, error) {
-		typeUrl := sdk.MsgTypeURL(privMsg)
+	return func(context context.Context, privMsg proto.Message, tokenID string, privAcc sdk.AccAddress) (proto.Message, error) {
+		typeUrl := "/" + proto.MessageName(privMsg)
 		if typeUrl != sdk.MsgTypeURL(&types.MsgMock{}) {
 			return nil, errors.New("unsupport msg type")
 		}
@@ -124,7 +124,7 @@ func (m MockPrivilegeI) MsgHandler() types.MsgHandler {
 }
 
 func (m MockPrivilegeI) QueryHandler() types.QueryHandler {
-	return func(context context.Context, privQuery sdk.Msg) (proto.Message, error) {
+	return func(context context.Context, privQuery proto.Message, tokenID string) (proto.Message, error) {
 		return nil, nil
 	}
 }
