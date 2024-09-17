@@ -1,11 +1,11 @@
 syntax = "proto3";
 package realionetwork.asset.v1;
 
-option go_package = "github.com/realiotech/realio-network/x/asset/priviledges/clawback";
+option go_package = "github.com/realiotech/realio-network/x/asset/priviledges/freeze";
 
 import "cosmos_proto/cosmos.proto";
 
-message MsgClawbackToken {
+message MsgFreezeToken {
     string account = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
     uint64 amount = 2;
 }

@@ -35,8 +35,12 @@ func (tp TransferAuthPriviledge) Name() string {
 	return priv_name
 }
 
+func tokenPrefix(tokenID string) []byte {
+	return append([]byte{0x01}, tokenID...)
+}
+
 func (tp TransferAuthPriviledge) SetupAllowListForToken(ctx sdk.Context, tokenId string, list map[string]bool) error {
-	store := prefix.NewStore(ctx.KVStore(tp.storeKey), types.TokenKey)
+	store := prefix.NewStore(ctx.KVStore(tp.storeKey), tokenPrefix(tokenId))
 	key := []byte(tokenId)
 	bz := store.Get(key)
 

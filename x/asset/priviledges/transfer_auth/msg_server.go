@@ -10,27 +10,20 @@ import (
 	// "github.com/cosmos/cosmos-sdk/store/types"
 )
 
-type updateFn = func(ctx sdk.Context, addr, tokenId string) error
-
 func (mp TransferAuthPriviledge) UpdateAllowList(ctx sdk.Context, msg *MsgUpdateAllowList, tokenID string) error {
 
-	var fn updateFn
-	switch msg.ActionType {
-	case ActionType_ACTION_TYPE_UNSPECIFIED, ActionType_ACTION_TYPE_ADD:
-		fn = mp.AddAddr
-	case ActionType_ACTION_TYPE_REMOVE:
-		fn = mp.RemoveAddr
-	default:
-		return fmt.Errorf("invalid action type %s", msg.ActionType.String())
-	}
-
-	for _, addr := range msg.Addresses {
-		err := fn(ctx, addr, msg.TokenId)
+	for _, addr := range msg.AllowedAddresses {
+		err := mp.AddAddr(ctx, addr, tokenID)
 		if err != nil {
 			return err
 		}
 	}
-
+	for _, addr := range msg.DisallowedAddresses {
+		err := mp.RemoveAddr(ctx, addr, tokenID)
+		if err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

@@ -10,8 +10,6 @@ import "realionetwork/asset/v1/token.proto";
 
 
 message MsgMintToken {
-    string account = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-    string token_id = 2;
-    string to_account = 3;
-    uint64 amount = 4;
+    string to_account = 1;
+    uint64 amount = 2;
 }
