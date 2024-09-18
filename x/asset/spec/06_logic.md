@@ -32,12 +32,11 @@ type Privilege interface {
     RegisterInterfaces()
     MsgHandler() MsgHandler
     QueryHandler() QueryHandler
-    CLI() *cobra.Command
 }
 
-type MsgHandler func(context Context, privMsg PrivilegeMsg) error
+type MsgHandler func(context Context, privMsg PrivilegeMsg, tokenID string, privAcc sdk.AccAddress) error
 
-type QueryHandler func(context Context, privQuery PrivilegeQuery) error
+type QueryHandler func(context Context, privQuery PrivilegeQuery, tokenID string) error
 ```
 
 This interface provides all the functionality necessary for a privilege, including a message handler, query handler and cli
@@ -58,6 +57,5 @@ Validation:
 
 Flow:
 
-- Prepare store for the privilege of the token via `MakePrivilegeStore(privilege name, token denom)`. That store is the only store accessable by the privilege's `MsgHandler`.
 - `PrivilegeManager` routes the `PrivilegeMsg` to the its `MsgHandler`.
 - `MsgHandler` now handles the `PrivilegeMsg`.
