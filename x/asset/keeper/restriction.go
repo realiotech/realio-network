@@ -1,10 +1,11 @@
 package keeper
 
 import (
-	errorsmod "cosmossdk.io/errors"
-	"github.com/realiotech/realio-network/x/asset/types"
+	"slices"
 
+	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 type RestrictionChecker interface {
@@ -20,34 +21,31 @@ func (k Keeper) AssetSendRestriction(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 		return newToAddr, nil
 	}
 
-	checker := k.RestrictionChecker[0]
-
 	for _, coin := range amt {
 		// Check if the value already exists
 		// fetch bank metadata to get symbol from denom
-		symbol := coin.Denom
-		tokenMetadata, found := k.bankKeeper.GetDenomMetaData(ctx, coin.Denom)
-		if found {
-			symbol = tokenMetadata.Symbol
-		}
-		_, isFound := k.GetToken(
+		tokenID := coin.Denom
+		tm, isFound := k.GetTokenManagement(
 			ctx,
-			symbol,
+			tokenID,
 		)
 		if !isFound {
 			continue
 		}
-
-		isAllow, err := checker.IsAllow(ctx, symbol, fromAddr.String())
-		if err != nil {
-			return newToAddr, err
-		}
-
-		if isAllow {
-			continue
-		} else { //nolint:revive // superfluous else, could fix, but not worth it?
-			err = errorsmod.Wrapf(types.ErrNotAuthorized, "%s is not authorized to transact with %s", fromAddr, coin.Denom)
-			return newToAddr, err
+		enabledPrivileges := tm.EnabledPrivileges
+		for priv, restrictionChecker := range k.RestrictionChecker {
+			if slices.Contains(enabledPrivileges, priv) {
+				isAllow, err := restrictionChecker.IsAllow(ctx, tokenID, fromAddr.String())
+				if err != nil {
+					return newToAddr, err
+				}
+				if isAllow {
+					continue
+				} else { //nolint:revive // superfluous else, could fix, but not worth it?
+					err = errorsmod.Wrapf(types.ErrNotAuthorized, "%s is not authorized to transact with %s", fromAddr, coin.Denom)
+					return newToAddr, err
+				}
+			}
 		}
 	}
 	return newToAddr, nil

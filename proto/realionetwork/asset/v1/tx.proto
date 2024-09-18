@@ -31,6 +31,7 @@ message MsgCreateToken {
   string description = 6;
   repeated string excluded_privileges = 7;
   bool add_new_privilege = 8;
+  repeated string enabled_privileges = 9;
 }
 
 message MsgCreateTokenResponse {}

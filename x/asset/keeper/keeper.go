@@ -25,7 +25,7 @@ type (
 		bankKeeper         types.BankKeeper
 		ak                 types.AccountKeeper
 		PrivilegeManager   map[string]types.PrivilegeI
-		RestrictionChecker []RestrictionChecker
+		RestrictionChecker map[string]RestrictionChecker
 	}
 )
 
@@ -71,8 +71,8 @@ func (k *Keeper) AddPrivilege(priv types.PrivilegeI) error {
 
 	checker, ok := priv.(RestrictionChecker)
 	// currently we should only support one restriction checker at a time
-	if ok && len(k.RestrictionChecker) == 0 {
-		k.RestrictionChecker = append(k.RestrictionChecker, checker)
+	if ok {
+		k.RestrictionChecker[priv.Name()] = checker
 	}
 
 	return nil

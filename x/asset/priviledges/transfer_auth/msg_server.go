@@ -13,16 +13,10 @@ import (
 func (mp TransferAuthPriviledge) UpdateAllowList(ctx sdk.Context, msg *MsgUpdateAllowList, tokenID string) error {
 
 	for _, addr := range msg.AllowedAddresses {
-		err := mp.AddAddr(ctx, addr, tokenID)
-		if err != nil {
-			return err
-		}
+		mp.AddAddressToWhiteList(ctx, tokenID, addr)
 	}
 	for _, addr := range msg.DisallowedAddresses {
-		err := mp.RemoveAddr(ctx, addr, tokenID)
-		if err != nil {
-			return err
-		}
+		mp.RemoveAddressFromWhiteList(ctx, tokenID, addr)
 	}
 	return nil
 }

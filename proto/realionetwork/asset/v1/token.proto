@@ -21,6 +21,7 @@ message TokenManagement {
   string manager = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   bool add_new_privilege = 2;
   repeated string excluded_privileges = 3;
+  repeated string enabled_privileges = 4;
 }
 
 message Balance {

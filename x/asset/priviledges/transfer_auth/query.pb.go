@@ -23,22 +23,22 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-type QueryAllowAddressRequest struct {
+type QueryWhitelistedAddressesRequest struct {
 	TokenId string `protobuf:"bytes,1,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"`
 }
 
-func (m *QueryAllowAddressRequest) Reset()         { *m = QueryAllowAddressRequest{} }
-func (m *QueryAllowAddressRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryAllowAddressRequest) ProtoMessage()    {}
-func (*QueryAllowAddressRequest) Descriptor() ([]byte, []int) {
+func (m *QueryWhitelistedAddressesRequest) Reset()         { *m = QueryWhitelistedAddressesRequest{} }
+func (m *QueryWhitelistedAddressesRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryWhitelistedAddressesRequest) ProtoMessage()    {}
+func (*QueryWhitelistedAddressesRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a20f3df665e91f36, []int{0}
 }
-func (m *QueryAllowAddressRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryWhitelistedAddressesRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryAllowAddressRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryWhitelistedAddressesRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryAllowAddressRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryWhitelistedAddressesRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -48,41 +48,41 @@ func (m *QueryAllowAddressRequest) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *QueryAllowAddressRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryAllowAddressRequest.Merge(m, src)
+func (m *QueryWhitelistedAddressesRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryWhitelistedAddressesRequest.Merge(m, src)
 }
-func (m *QueryAllowAddressRequest) XXX_Size() int {
+func (m *QueryWhitelistedAddressesRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryAllowAddressRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryAllowAddressRequest.DiscardUnknown(m)
+func (m *QueryWhitelistedAddressesRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryWhitelistedAddressesRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryAllowAddressRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryWhitelistedAddressesRequest proto.InternalMessageInfo
 
-func (m *QueryAllowAddressRequest) GetTokenId() string {
+func (m *QueryWhitelistedAddressesRequest) GetTokenId() string {
 	if m != nil {
 		return m.TokenId
 	}
 	return ""
 }
 
-type QueryAllowAddressRespones struct {
-	AllowAddrs *AllowAddrs `protobuf:"bytes,1,opt,name=allow_addrs,json=allowAddrs,proto3" json:"allow_addrs,omitempty"`
+type QueryWhitelistedAddressesResponse struct {
+	WhitelistedAddrs []string `protobuf:"bytes,1,rep,name=whitelisted_addrs,json=whitelistedAddrs,proto3" json:"whitelisted_addrs,omitempty"`
 }
 
-func (m *QueryAllowAddressRespones) Reset()         { *m = QueryAllowAddressRespones{} }
-func (m *QueryAllowAddressRespones) String() string { return proto.CompactTextString(m) }
-func (*QueryAllowAddressRespones) ProtoMessage()    {}
-func (*QueryAllowAddressRespones) Descriptor() ([]byte, []int) {
+func (m *QueryWhitelistedAddressesResponse) Reset()         { *m = QueryWhitelistedAddressesResponse{} }
+func (m *QueryWhitelistedAddressesResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryWhitelistedAddressesResponse) ProtoMessage()    {}
+func (*QueryWhitelistedAddressesResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a20f3df665e91f36, []int{1}
 }
-func (m *QueryAllowAddressRespones) XXX_Unmarshal(b []byte) error {
+func (m *QueryWhitelistedAddressesResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryAllowAddressRespones) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryWhitelistedAddressesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryAllowAddressRespones.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryWhitelistedAddressesResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -92,42 +92,41 @@ func (m *QueryAllowAddressRespones) XXX_Marshal(b []byte, deterministic bool) ([
 		return b[:n], nil
 	}
 }
-func (m *QueryAllowAddressRespones) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryAllowAddressRespones.Merge(m, src)
+func (m *QueryWhitelistedAddressesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryWhitelistedAddressesResponse.Merge(m, src)
 }
-func (m *QueryAllowAddressRespones) XXX_Size() int {
+func (m *QueryWhitelistedAddressesResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryAllowAddressRespones) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryAllowAddressRespones.DiscardUnknown(m)
+func (m *QueryWhitelistedAddressesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryWhitelistedAddressesResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryAllowAddressRespones proto.InternalMessageInfo
+var xxx_messageInfo_QueryWhitelistedAddressesResponse proto.InternalMessageInfo
 
-func (m *QueryAllowAddressRespones) GetAllowAddrs() *AllowAddrs {
+func (m *QueryWhitelistedAddressesResponse) GetWhitelistedAddrs() []string {
 	if m != nil {
-		return m.AllowAddrs
+		return m.WhitelistedAddrs
 	}
 	return nil
 }
 
-type QueryIsAllowedRequest struct {
+type QueryIsAddressWhitelistedRequest struct {
 	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
-	TokenId string `protobuf:"bytes,2,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"`
 }
 
-func (m *QueryIsAllowedRequest) Reset()         { *m = QueryIsAllowedRequest{} }
-func (m *QueryIsAllowedRequest) String() string { return proto.CompactTextString(m) }
-func (*QueryIsAllowedRequest) ProtoMessage()    {}
-func (*QueryIsAllowedRequest) Descriptor() ([]byte, []int) {
+func (m *QueryIsAddressWhitelistedRequest) Reset()         { *m = QueryIsAddressWhitelistedRequest{} }
+func (m *QueryIsAddressWhitelistedRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryIsAddressWhitelistedRequest) ProtoMessage()    {}
+func (*QueryIsAddressWhitelistedRequest) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a20f3df665e91f36, []int{2}
 }
-func (m *QueryIsAllowedRequest) XXX_Unmarshal(b []byte) error {
+func (m *QueryIsAddressWhitelistedRequest) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryIsAllowedRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryIsAddressWhitelistedRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryIsAllowedRequest.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryIsAddressWhitelistedRequest.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -137,48 +136,41 @@ func (m *QueryIsAllowedRequest) XXX_Marshal(b []byte, deterministic bool) ([]byt
 		return b[:n], nil
 	}
 }
-func (m *QueryIsAllowedRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryIsAllowedRequest.Merge(m, src)
+func (m *QueryIsAddressWhitelistedRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryIsAddressWhitelistedRequest.Merge(m, src)
 }
-func (m *QueryIsAllowedRequest) XXX_Size() int {
+func (m *QueryIsAddressWhitelistedRequest) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryIsAllowedRequest) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryIsAllowedRequest.DiscardUnknown(m)
+func (m *QueryIsAddressWhitelistedRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryIsAddressWhitelistedRequest.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryIsAllowedRequest proto.InternalMessageInfo
+var xxx_messageInfo_QueryIsAddressWhitelistedRequest proto.InternalMessageInfo
 
-func (m *QueryIsAllowedRequest) GetAddress() string {
+func (m *QueryIsAddressWhitelistedRequest) GetAddress() string {
 	if m != nil {
 		return m.Address
 	}
 	return ""
 }
 
-func (m *QueryIsAllowedRequest) GetTokenId() string {
-	if m != nil {
-		return m.TokenId
-	}
-	return ""
+type QueryIsAddressWhitelistedRespones struct {
+	IsWhitelisted bool `protobuf:"varint,1,opt,name=is_whitelisted,json=isWhitelisted,proto3" json:"is_whitelisted,omitempty"`
 }
 
-type QueryIsAllowedRespones struct {
-	IsAllow bool `protobuf:"varint,1,opt,name=is_allow,json=isAllow,proto3" json:"is_allow,omitempty"`
-}
-
-func (m *QueryIsAllowedRespones) Reset()         { *m = QueryIsAllowedRespones{} }
-func (m *QueryIsAllowedRespones) String() string { return proto.CompactTextString(m) }
-func (*QueryIsAllowedRespones) ProtoMessage()    {}
-func (*QueryIsAllowedRespones) Descriptor() ([]byte, []int) {
+func (m *QueryIsAddressWhitelistedRespones) Reset()         { *m = QueryIsAddressWhitelistedRespones{} }
+func (m *QueryIsAddressWhitelistedRespones) String() string { return proto.CompactTextString(m) }
+func (*QueryIsAddressWhitelistedRespones) ProtoMessage()    {}
+func (*QueryIsAddressWhitelistedRespones) Descriptor() ([]byte, []int) {
 	return fileDescriptor_a20f3df665e91f36, []int{3}
 }
-func (m *QueryIsAllowedRespones) XXX_Unmarshal(b []byte) error {
+func (m *QueryIsAddressWhitelistedRespones) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *QueryIsAllowedRespones) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *QueryIsAddressWhitelistedRespones) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_QueryIsAllowedRespones.Marshal(b, m, deterministic)
+		return xxx_messageInfo_QueryIsAddressWhitelistedRespones.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -188,30 +180,30 @@ func (m *QueryIsAllowedRespones) XXX_Marshal(b []byte, deterministic bool) ([]by
 		return b[:n], nil
 	}
 }
-func (m *QueryIsAllowedRespones) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryIsAllowedRespones.Merge(m, src)
+func (m *QueryIsAddressWhitelistedRespones) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryIsAddressWhitelistedRespones.Merge(m, src)
 }
-func (m *QueryIsAllowedRespones) XXX_Size() int {
+func (m *QueryIsAddressWhitelistedRespones) XXX_Size() int {
 	return m.Size()
 }
-func (m *QueryIsAllowedRespones) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryIsAllowedRespones.DiscardUnknown(m)
+func (m *QueryIsAddressWhitelistedRespones) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryIsAddressWhitelistedRespones.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryIsAllowedRespones proto.InternalMessageInfo
+var xxx_messageInfo_QueryIsAddressWhitelistedRespones proto.InternalMessageInfo
 
-func (m *QueryIsAllowedRespones) GetIsAllow() bool {
+func (m *QueryIsAddressWhitelistedRespones) GetIsWhitelisted() bool {
 	if m != nil {
-		return m.IsAllow
+		return m.IsWhitelisted
 	}
 	return false
 }
 
 func init() {
-	proto.RegisterType((*QueryAllowAddressRequest)(nil), "realionetwork.asset.v1.QueryAllowAddressRequest")
-	proto.RegisterType((*QueryAllowAddressRespones)(nil), "realionetwork.asset.v1.QueryAllowAddressRespones")
-	proto.RegisterType((*QueryIsAllowedRequest)(nil), "realionetwork.asset.v1.QueryIsAllowedRequest")
-	proto.RegisterType((*QueryIsAllowedRespones)(nil), "realionetwork.asset.v1.QueryIsAllowedRespones")
+	proto.RegisterType((*QueryWhitelistedAddressesRequest)(nil), "realionetwork.asset.v1.QueryWhitelistedAddressesRequest")
+	proto.RegisterType((*QueryWhitelistedAddressesResponse)(nil), "realionetwork.asset.v1.QueryWhitelistedAddressesResponse")
+	proto.RegisterType((*QueryIsAddressWhitelistedRequest)(nil), "realionetwork.asset.v1.QueryIsAddressWhitelistedRequest")
+	proto.RegisterType((*QueryIsAddressWhitelistedRespones)(nil), "realionetwork.asset.v1.QueryIsAddressWhitelistedRespones")
 }
 
 func init() {
@@ -219,31 +211,31 @@ func init() {
 }
 
 var fileDescriptor_a20f3df665e91f36 = []byte{
-	// 332 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x94, 0x51, 0xc1, 0x4e, 0x02, 0x31,
-	0x14, 0x64, 0x3d, 0x08, 0x96, 0x1b, 0x51, 0xc2, 0x72, 0xd8, 0x98, 0x3d, 0x79, 0xa1, 0x8d, 0x10,
-	0x13, 0x3d, 0x82, 0x89, 0x09, 0x47, 0xd7, 0x9b, 0x97, 0xa5, 0xd0, 0x07, 0x34, 0x2c, 0x5b, 0xe8,
-	0xeb, 0x82, 0xfe, 0x85, 0x1f, 0xe3, 0x47, 0x78, 0x24, 0x9e, 0x3c, 0x1a, 0xf8, 0x11, 0x43, 0xbb,
-	0x90, 0x60, 0x48, 0x8c, 0xb7, 0xf7, 0xda, 0x99, 0xce, 0x4c, 0x87, 0xdc, 0x69, 0xe0, 0x89, 0x54,
-	0x29, 0x98, 0xa5, 0xd2, 0x13, 0xc6, 0x11, 0xc1, 0xb0, 0x99, 0x96, 0x0b, 0x99, 0x80, 0x18, 0x01,
-	0x32, 0xa3, 0x79, 0x8a, 0x43, 0xd0, 0x31, 0xcf, 0xcc, 0x98, 0xcd, 0x33, 0xd0, 0xaf, 0x74, 0xa6,
-	0x95, 0x51, 0x95, 0xea, 0x01, 0x95, 0x5a, 0x2a, 0x5d, 0x5c, 0xd7, 0xfd, 0x81, 0xc2, 0xa9, 0xc2,
-	0xd8, 0xa2, 0x98, 0x5b, 0x1c, 0xa5, 0x7e, 0xfb, 0x3f, 0xb5, 0xed, 0x8d, 0x63, 0x86, 0x37, 0xa4,
-	0xf6, 0xb8, 0xd5, 0x6e, 0x27, 0x89, 0x5a, 0xb6, 0x85, 0xd0, 0x80, 0x18, 0xc1, 0x3c, 0x03, 0x34,
-	0x15, 0x9f, 0x94, 0x8c, 0x9a, 0x40, 0x1a, 0x4b, 0x51, 0xf3, 0x2e, 0xbd, 0xab, 0xb3, 0xa8, 0x68,
-	0xf7, 0xae, 0x08, 0x7b, 0xc4, 0x3f, 0x42, 0xc3, 0x99, 0x4a, 0x01, 0x2b, 0xf7, 0xa4, 0xcc, 0xb7,
-	0xe7, 0x31, 0x17, 0x42, 0xa3, 0xa5, 0x96, 0x9b, 0x21, 0x3d, 0x1e, 0x8b, 0xee, 0x9f, 0xc0, 0x88,
-	0xf0, 0xfd, 0x1c, 0x0e, 0xc9, 0x85, 0x55, 0xe8, 0xa2, 0x05, 0x80, 0xd8, 0xb9, 0x6a, 0x92, 0x22,
-	0x77, 0x82, 0xce, 0x54, 0xa7, 0xf6, 0xf9, 0xde, 0x38, 0xcf, 0xbf, 0x23, 0xb7, 0xf2, 0x64, 0xb4,
-	0x4c, 0x47, 0xd1, 0x0e, 0x78, 0x90, 0xe4, 0xe4, 0x30, 0x49, 0x8b, 0x54, 0x7f, 0xeb, 0xe4, 0x31,
-	0x7c, 0x52, 0x92, 0x18, 0x5b, 0x4b, 0x56, 0xa9, 0x14, 0x15, 0xa5, 0x03, 0x75, 0x7a, 0x1f, 0xeb,
-	0xc0, 0x5b, 0xad, 0x03, 0xef, 0x7b, 0x1d, 0x78, 0x6f, 0x9b, 0xa0, 0xb0, 0xda, 0x04, 0x85, 0xaf,
-	0x4d, 0x50, 0x78, 0x7e, 0x18, 0x49, 0x33, 0xce, 0xfa, 0x74, 0xa0, 0xa6, 0xcc, 0x05, 0x36, 0x30,
-	0x18, 0xe7, 0x63, 0x63, 0x57, 0xd0, 0xcb, 0x5f, 0x15, 0xf5, 0x4f, 0x6d, 0x3d, 0xad, 0x9f, 0x00,
-	0x00, 0x00, 0xff, 0xff, 0x82, 0xea, 0x67, 0x0d, 0x48, 0x02, 0x00, 0x00,
+	// 329 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x84, 0x91, 0xc1, 0x4b, 0x3a, 0x41,
+	0x14, 0xc7, 0x5d, 0x7e, 0xf0, 0x53, 0x07, 0x8a, 0x5a, 0x22, 0xb4, 0xc3, 0x62, 0x0b, 0x81, 0x10,
+	0xee, 0x50, 0x9d, 0x3a, 0x74, 0xc8, 0x43, 0x60, 0xa7, 0xda, 0xa0, 0xa0, 0xcb, 0x36, 0x3a, 0x2f,
+	0x77, 0x50, 0x77, 0x74, 0xde, 0x5b, 0xad, 0xff, 0xa2, 0x3f, 0xa6, 0x3f, 0xa2, 0xa3, 0x74, 0xea,
+	0x18, 0xfa, 0x8f, 0x84, 0xbb, 0x23, 0x29, 0x44, 0xdd, 0xe6, 0xf1, 0xde, 0xe7, 0xcb, 0x67, 0xf8,
+	0xb2, 0x53, 0x03, 0xa2, 0xaf, 0x74, 0x02, 0x34, 0xd1, 0xa6, 0xc7, 0x05, 0x22, 0x10, 0x1f, 0x1a,
+	0x35, 0x56, 0x7d, 0x90, 0x5d, 0x40, 0x4e, 0x46, 0x24, 0xf8, 0x08, 0x26, 0x12, 0x29, 0xc5, 0x7c,
+	0x94, 0x82, 0x79, 0x0e, 0x86, 0x46, 0x93, 0x76, 0x77, 0xd7, 0xd0, 0x20, 0x43, 0x83, 0xf1, 0xd1,
+	0x5e, 0xb5, 0xa3, 0x71, 0xa0, 0x31, 0xca, 0xae, 0x78, 0x3e, 0xe4, 0x88, 0x7f, 0xc6, 0x6a, 0xd7,
+	0x8b, 0x84, 0xbb, 0x58, 0x11, 0xf4, 0x15, 0x12, 0xc8, 0x73, 0x29, 0x0d, 0x20, 0x02, 0x86, 0x30,
+	0x4a, 0x01, 0xc9, 0xad, 0xb2, 0x12, 0xe9, 0x1e, 0x24, 0x91, 0x92, 0x15, 0xa7, 0xe6, 0xd4, 0xcb,
+	0x61, 0x31, 0x9b, 0x5b, 0xd2, 0xbf, 0x62, 0xfb, 0xbf, 0xe0, 0x38, 0xd4, 0x09, 0x82, 0x7b, 0xc8,
+	0xb6, 0x27, 0xdf, 0xfb, 0x48, 0x48, 0x69, 0xb0, 0xe2, 0xd4, 0xfe, 0xd5, 0xcb, 0xe1, 0xd6, 0x64,
+	0x1d, 0x44, 0xff, 0xd6, 0x0a, 0xb5, 0xd0, 0x06, 0xad, 0x44, 0x2f, 0x85, 0x8e, 0x59, 0x51, 0xe4,
+	0xcb, 0xdc, 0xa7, 0x59, 0x79, 0x7f, 0x6d, 0xec, 0xd8, 0x7f, 0x59, 0xec, 0x86, 0x8c, 0x4a, 0xba,
+	0xe1, 0xf2, 0xd0, 0xbf, 0xb4, 0xa6, 0x3f, 0xe7, 0x2e, 0x4c, 0x01, 0xdd, 0x03, 0xb6, 0xa9, 0x30,
+	0x5a, 0x71, 0xca, 0xf2, 0x4b, 0xe1, 0x86, 0x5a, 0x3d, 0x6f, 0x3e, 0xbc, 0xcd, 0x3c, 0x67, 0x3a,
+	0xf3, 0x9c, 0xcf, 0x99, 0xe7, 0xbc, 0xcc, 0xbd, 0xc2, 0x74, 0xee, 0x15, 0x3e, 0xe6, 0x5e, 0xe1,
+	0xfe, 0xa2, 0xab, 0x28, 0x4e, 0xdb, 0x41, 0x47, 0x0f, 0x78, 0x5e, 0x06, 0x41, 0x27, 0xb6, 0xcf,
+	0xc6, 0xb2, 0xd3, 0xa7, 0xbf, 0x5a, 0x6d, 0xff, 0xcf, 0xda, 0x39, 0xf9, 0x0a, 0x00, 0x00, 0xff,
+	0xff, 0xb2, 0x87, 0x2d, 0x1a, 0x0d, 0x02, 0x00, 0x00,
 }
 
-func (m *QueryAllowAddressRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryWhitelistedAddressesRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -253,12 +245,12 @@ func (m *QueryAllowAddressRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryAllowAddressRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryWhitelistedAddressesRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryAllowAddressRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryWhitelistedAddressesRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
@@ -273,7 +265,7 @@ func (m *QueryAllowAddressRequest) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryAllowAddressRespones) Marshal() (dAtA []byte, err error) {
+func (m *QueryWhitelistedAddressesResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -283,32 +275,29 @@ func (m *QueryAllowAddressRespones) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryAllowAddressRespones) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryWhitelistedAddressesResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryAllowAddressRespones) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryWhitelistedAddressesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.AllowAddrs != nil {
-		{
-			size, err := m.AllowAddrs.MarshalToSizedBuffer(dAtA[:i])
-			if err != nil {
-				return 0, err
-			}
-			i -= size
-			i = encodeVarintQuery(dAtA, i, uint64(size))
+	if len(m.WhitelistedAddrs) > 0 {
+		for iNdEx := len(m.WhitelistedAddrs) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.WhitelistedAddrs[iNdEx])
+			copy(dAtA[i:], m.WhitelistedAddrs[iNdEx])
+			i = encodeVarintQuery(dAtA, i, uint64(len(m.WhitelistedAddrs[iNdEx])))
+			i--
+			dAtA[i] = 0xa
 		}
-		i--
-		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryIsAllowedRequest) Marshal() (dAtA []byte, err error) {
+func (m *QueryIsAddressWhitelistedRequest) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -318,23 +307,16 @@ func (m *QueryIsAllowedRequest) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryIsAllowedRequest) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryIsAddressWhitelistedRequest) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryIsAllowedRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryIsAddressWhitelistedRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.TokenId) > 0 {
-		i -= len(m.TokenId)
-		copy(dAtA[i:], m.TokenId)
-		i = encodeVarintQuery(dAtA, i, uint64(len(m.TokenId)))
-		i--
-		dAtA[i] = 0x12
-	}
 	if len(m.Address) > 0 {
 		i -= len(m.Address)
 		copy(dAtA[i:], m.Address)
@@ -345,7 +327,7 @@ func (m *QueryIsAllowedRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *QueryIsAllowedRespones) Marshal() (dAtA []byte, err error) {
+func (m *QueryIsAddressWhitelistedRespones) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -355,19 +337,19 @@ func (m *QueryIsAllowedRespones) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *QueryIsAllowedRespones) MarshalTo(dAtA []byte) (int, error) {
+func (m *QueryIsAddressWhitelistedRespones) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *QueryIsAllowedRespones) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *QueryIsAddressWhitelistedRespones) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if m.IsAllow {
+	if m.IsWhitelisted {
 		i--
-		if m.IsAllow {
+		if m.IsWhitelisted {
 			dAtA[i] = 1
 		} else {
 			dAtA[i] = 0
@@ -389,7 +371,7 @@ func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	dAtA[offset] = uint8(v)
 	return base
 }
-func (m *QueryAllowAddressRequest) Size() (n int) {
+func (m *QueryWhitelistedAddressesRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -402,20 +384,22 @@ func (m *QueryAllowAddressRequest) Size() (n int) {
 	return n
 }
 
-func (m *QueryAllowAddressRespones) Size() (n int) {
+func (m *QueryWhitelistedAddressesResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.AllowAddrs != nil {
-		l = m.AllowAddrs.Size()
-		n += 1 + l + sovQuery(uint64(l))
+	if len(m.WhitelistedAddrs) > 0 {
+		for _, s := range m.WhitelistedAddrs {
+			l = len(s)
+			n += 1 + l + sovQuery(uint64(l))
+		}
 	}
 	return n
 }
 
-func (m *QueryIsAllowedRequest) Size() (n int) {
+func (m *QueryIsAddressWhitelistedRequest) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -425,20 +409,16 @@ func (m *QueryIsAllowedRequest) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovQuery(uint64(l))
 	}
-	l = len(m.TokenId)
-	if l > 0 {
-		n += 1 + l + sovQuery(uint64(l))
-	}
 	return n
 }
 
-func (m *QueryIsAllowedRespones) Size() (n int) {
+func (m *QueryIsAddressWhitelistedRespones) Size() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if m.IsAllow {
+	if m.IsWhitelisted {
 		n += 2
 	}
 	return n
@@ -450,7 +430,7 @@ func sovQuery(x uint64) (n int) {
 func sozQuery(x uint64) (n int) {
 	return sovQuery(uint64((x << 1) ^ uint64((int64(x) >> 63))))
 }
-func (m *QueryAllowAddressRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryWhitelistedAddressesRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -473,10 +453,10 @@ func (m *QueryAllowAddressRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryAllowAddressRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryWhitelistedAddressesRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryAllowAddressRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryWhitelistedAddressesRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -532,7 +512,7 @@ func (m *QueryAllowAddressRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryAllowAddressRespones) Unmarshal(dAtA []byte) error {
+func (m *QueryWhitelistedAddressesResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -555,17 +535,17 @@ func (m *QueryAllowAddressRespones) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryAllowAddressRespones: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryWhitelistedAddressesResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryAllowAddressRespones: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryWhitelistedAddressesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field AllowAddrs", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field WhitelistedAddrs", wireType)
 			}
-			var msglen int
+			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return ErrIntOverflowQuery
@@ -575,27 +555,23 @@ func (m *QueryAllowAddressRespones) Unmarshal(dAtA []byte) error {
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				stringLen |= uint64(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
 				return ErrInvalidLengthQuery
 			}
-			postIndex := iNdEx + msglen
+			postIndex := iNdEx + intStringLen
 			if postIndex < 0 {
 				return ErrInvalidLengthQuery
 			}
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.AllowAddrs == nil {
-				m.AllowAddrs = &AllowAddrs{}
-			}
-			if err := m.AllowAddrs.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
+			m.WhitelistedAddrs = append(m.WhitelistedAddrs, string(dAtA[iNdEx:postIndex]))
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -618,7 +594,7 @@ func (m *QueryAllowAddressRespones) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryIsAllowedRequest) Unmarshal(dAtA []byte) error {
+func (m *QueryIsAddressWhitelistedRequest) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -641,10 +617,10 @@ func (m *QueryIsAllowedRequest) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryIsAllowedRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryIsAddressWhitelistedRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryIsAllowedRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryIsAddressWhitelistedRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -679,38 +655,6 @@ func (m *QueryIsAllowedRequest) Unmarshal(dAtA []byte) error {
 			}
 			m.Address = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
-		case 2:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field TokenId", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return ErrIntOverflowQuery
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
-			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return ErrInvalidLengthQuery
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return ErrInvalidLengthQuery
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.TokenId = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
@@ -732,7 +676,7 @@ func (m *QueryIsAllowedRequest) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *QueryIsAllowedRespones) Unmarshal(dAtA []byte) error {
+func (m *QueryIsAddressWhitelistedRespones) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -755,15 +699,15 @@ func (m *QueryIsAllowedRespones) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: QueryIsAllowedRespones: wiretype end group for non-group")
+			return fmt.Errorf("proto: QueryIsAddressWhitelistedRespones: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: QueryIsAllowedRespones: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: QueryIsAddressWhitelistedRespones: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field IsAllow", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field IsWhitelisted", wireType)
 			}
 			var v int
 			for shift := uint(0); ; shift += 7 {
@@ -780,7 +724,7 @@ func (m *QueryIsAllowedRespones) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
-			m.IsAllow = bool(v != 0)
+			m.IsWhitelisted = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])

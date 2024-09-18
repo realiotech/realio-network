@@ -47,10 +47,10 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 	k.SetToken(ctx, tokenId, token)
 	k.bankKeeper.SetDenomMetaData(ctx, bank.Metadata{
 		Base: tokenId, Symbol: lowerCaseSymbol, Name: lowerCaseName,
-		DenomUnits: []*bank.DenomUnit{{Denom: lowerCaseSymbol, Exponent: msg.Decimal}, {Denom: tokenId, Exponent: 0}},
+		DenomUnits: []*bank.DenomUnit{{Denom: tokenId, Exponent: msg.Decimal}},
 	})
 
-	tokenManage := types.NewTokenManagement(msg.Manager, msg.AddNewPrivilege, msg.ExcludedPrivileges)
+	tokenManage := types.NewTokenManagement(msg.Manager, msg.AddNewPrivilege, msg.ExcludedPrivileges, msg.EnabledPrivileges)
 	k.SetTokenManagement(ctx, tokenId, tokenManage)
 
 	ctx.EventManager().EmitEvent(
@@ -135,8 +135,13 @@ func (k msgServer) AssignPrivilege(goCtx context.Context, msg *types.MsgAssignPr
 	if tm.Manager != msg.Manager {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "sender is not token manager")
 	}
-	if slices.Contains(tm.ExcludedPrivileges, msg.Privilege) {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "privilege %s is excluded", msg.Privilege)
+	if !slices.Contains(tm.EnabledPrivileges, msg.GetPrivilege()) {
+		if !tm.AddNewPrivilege {
+			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "can't add new privilege")
+		} else if slices.Contains(tm.ExcludedPrivileges, msg.Privilege) {
+			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "privilege %s is excluded", msg.Privilege)
+		}
+		tm.EnabledPrivileges = append(tm.EnabledPrivileges, msg.Privilege)
 	}
 
 	for _, user := range msg.AssignedTo {
@@ -145,6 +150,7 @@ func (k msgServer) AssignPrivilege(goCtx context.Context, msg *types.MsgAssignPr
 			return nil, err
 		}
 		k.SetTokenPrivilegeAccount(ctx, msg.TokenId, msg.Privilege, userAcc)
+		k.SetTokenManagement(ctx, msg.TokenId, tm)
 	}
 
 	return &types.MsgAssignPrivilegeResponse{}, nil
