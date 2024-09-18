@@ -6,6 +6,9 @@ option go_package = "github.com/realiotech/realio-network/x/asset/priviledges/fr
 import "cosmos_proto/cosmos.proto";
 
 message MsgFreezeToken {
-    string account = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
-    uint64 amount = 2;
+    repeated string accounts = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+}
+
+message MsgUnfreezeToken {
+    repeated string accounts = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
 }

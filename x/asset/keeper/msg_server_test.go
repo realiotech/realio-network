@@ -87,7 +87,7 @@ func (s *KeeperTestSuite) TestUpdateToken() {
 				token := types.NewToken(tokenId, strings.ToLower(name), lowerCaseSymbol, 2, description)
 				k.SetToken(ctx, tokenId, token)
 
-				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{})
+				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{}, []string{})
 				k.SetTokenManagement(ctx, tokenId, tokenManage)
 
 				return &types.MsgUpdateToken{
@@ -162,7 +162,7 @@ func (s *KeeperTestSuite) TestAllocateToken() {
 				token := types.NewToken(tokenId, strings.ToLower(name), lowerCaseSymbol, 2, description)
 				k.SetToken(ctx, tokenId, token)
 
-				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{})
+				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{}, []string{})
 				k.SetTokenManagement(ctx, tokenId, tokenManage)
 
 				return &types.MsgAllocateToken{
@@ -235,7 +235,7 @@ func (s *KeeperTestSuite) TestAssignPrivilege() {
 				token := types.NewToken(tokenId, strings.ToLower(name), lowerCaseSymbol, 2, description)
 				k.SetToken(ctx, tokenId, token)
 
-				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{})
+				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{}, []string{})
 				k.SetTokenManagement(ctx, tokenId, tokenManage)
 
 				return &types.MsgAssignPrivilege{
@@ -307,7 +307,7 @@ func (s *KeeperTestSuite) TestUnassignPrivilege() {
 				token := types.NewToken(tokenId, strings.ToLower(name), lowerCaseSymbol, 2, description)
 				k.SetToken(ctx, tokenId, token)
 
-				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{})
+				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{}, []string{})
 				k.SetTokenManagement(ctx, tokenId, tokenManage)
 
 				k.SetTokenPrivilegeAccount(ctx, tokenId, creatorAddr.String(), userAddr1)
@@ -382,7 +382,7 @@ func (s *KeeperTestSuite) TestDisablePrivilege() {
 				token := types.NewToken(tokenId, strings.ToLower(name), lowerCaseSymbol, 2, description)
 				k.SetToken(ctx, tokenId, token)
 
-				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{})
+				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{}, []string{})
 				k.SetTokenManagement(ctx, tokenId, tokenManage)
 
 				return &types.MsgDisablePrivilege{
@@ -447,7 +447,7 @@ func (s *KeeperTestSuite) TestExecutePrivilege() {
 				token := types.NewToken(tokenId, strings.ToLower(name), lowerCaseSymbol, 2, description)
 				k.SetToken(ctx, tokenId, token)
 
-				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{})
+				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{}, []string{})
 				k.SetTokenManagement(ctx, tokenId, tokenManage)
 
 				k.SetTokenPrivilegeAccount(ctx, tokenId, "test", userAddr1)
@@ -483,7 +483,7 @@ func (s *KeeperTestSuite) TestExecutePrivilege() {
 				token := types.NewToken(tokenId, strings.ToLower(name), lowerCaseSymbol, 2, description)
 				k.SetToken(ctx, tokenId, token)
 
-				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{})
+				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{}, []string{})
 				k.SetTokenManagement(ctx, tokenId, tokenManage)
 
 				k.SetTokenPrivilegeAccount(ctx, tokenId, "test", userAddr1)
@@ -543,7 +543,7 @@ func (s *KeeperTestSuite) TestExecutePrivilege() {
 				token := types.NewToken(tokenId, strings.ToLower(name), lowerCaseSymbol, 2, description)
 				k.SetToken(ctx, tokenId, token)
 
-				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{})
+				tokenManage := types.NewTokenManagement(managerAddr.String(), true, []string{}, []string{})
 				k.SetTokenManagement(ctx, tokenId, tokenManage)
 
 				k.SetTokenPrivilegeAccount(ctx, tokenId, creatorAddr.String(), userAddr1)
