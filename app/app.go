@@ -126,6 +126,11 @@ import (
 	assetmodulekeeper "github.com/realiotech/realio-network/x/asset/keeper"
 	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
 
+	"github.com/realiotech/realio-network/x/asset/priviledges/clawback"
+	"github.com/realiotech/realio-network/x/asset/priviledges/freeze"
+	mintpriviledge "github.com/realiotech/realio-network/x/asset/priviledges/mint"
+	"github.com/realiotech/realio-network/x/asset/priviledges/transfer_auth"
+
 	realionetworktypes "github.com/realiotech/realio-network/types"
 
 	// unnamed import of statik for swagger UI support
@@ -309,6 +314,8 @@ func New(
 		// multi-staking keys
 		multistakingtypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
+		freeze.StoreKey,
+		transfer_auth.StoreKey,
 	)
 
 	// Add the EVM transient store key
@@ -414,6 +421,23 @@ func New(
 		app.BankKeeper,
 		app.AccountKeeper,
 	)
+
+	err := app.AssetKeeper.AddPrivilege(mintpriviledge.NewMintPriviledge(app.BankKeeper))
+	if err != nil {
+		panic(err)
+	}
+	err = app.AssetKeeper.AddPrivilege(freeze.NewFreezePriviledge(keys[freeze.StoreKey]))
+	if err != nil {
+		panic(err)
+	}
+	err = app.AssetKeeper.AddPrivilege(transfer_auth.NewTransferAuthPriviledge(keys[transfer_auth.StoreKey]))
+	if err != nil {
+		panic(err)
+	}
+	err = app.AssetKeeper.AddPrivilege(clawback.NewClawbackPriviledge(app.BankKeeper))
+	if err != nil {
+		panic(err)
+	}
 
 	app.BankKeeper.AppendSendRestriction(app.AssetKeeper.AssetSendRestriction)
 

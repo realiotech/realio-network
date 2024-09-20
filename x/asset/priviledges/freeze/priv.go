@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	_ keeper.RestrictionChecker = (*FreezePriviledge)(nil)
+	_        keeper.RestrictionChecker = (*FreezePriviledge)(nil)
+	StoreKey                           = "freezepriv"
 )
 
 const priv_name = "transfer_auth"

@@ -1,7 +1,7 @@
 package transfer_auth
 
 import (
-	"github.com/realiotech/realio-network/x/asset/keeper"
+	assetkeeper "github.com/realiotech/realio-network/x/asset/keeper"
 
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	_ keeper.RestrictionChecker = (*TransferAuthPriviledge)(nil)
+	_        assetkeeper.RestrictionChecker = (*TransferAuthPriviledge)(nil)
+	StoreKey                                = "transferauthpriv"
 )
 
 const priv_name = "transfer_auth"

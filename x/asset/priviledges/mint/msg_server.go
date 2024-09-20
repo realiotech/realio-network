@@ -25,14 +25,16 @@ func (mp MintPriviledge) MintToken(ctx sdk.Context, msg *MsgMintToken, tokenID s
 	return err
 }
 
-func (mp MintPriviledge) MsgHandler(context context.Context, msg proto.Message, tokenID string, privAcc sdk.AccAddress) (proto.Message, error) {
-	ctx := sdk.UnwrapSDKContext(context)
+func (mp MintPriviledge) MsgHandler() assettypes.MsgHandler {
+	return func(context context.Context, msg proto.Message, tokenID string, privAcc sdk.AccAddress) (proto.Message, error) {
+		ctx := sdk.UnwrapSDKContext(context)
 
-	switch msg := msg.(type) {
-	case *MsgMintToken:
-		return nil, mp.MintToken(ctx, msg, tokenID)
-	default:
-		errMsg := fmt.Sprintf("unrecognized message type: %T for Mint priviledge", msg)
-		return nil, errors.Errorf(errMsg)
+		switch msg := msg.(type) {
+		case *MsgMintToken:
+			return nil, mp.MintToken(ctx, msg, tokenID)
+		default:
+			errMsg := fmt.Sprintf("unrecognized message type: %T for Mint priviledge", msg)
+			return nil, errors.Errorf(errMsg)
+		}
 	}
 }

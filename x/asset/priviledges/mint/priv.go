@@ -1,7 +1,10 @@
 package mint
 
 import (
+	"context"
+
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	proto "github.com/gogo/protobuf/proto"
 	assettypes "github.com/realiotech/realio-network/x/asset/types"
 )
 
@@ -25,4 +28,10 @@ func (mp MintPriviledge) RegisterInterfaces(registry cdctypes.InterfaceRegistry)
 	registry.RegisterImplementations((*assettypes.PrivilegeMsgI)(nil),
 		&MsgMintToken{},
 	)
+}
+
+func (mp MintPriviledge) QueryHandler() assettypes.QueryHandler {
+	return func(context context.Context, privQuery proto.Message, tokenID string) (proto.Message, error) {
+		return nil, nil
+	}
 }

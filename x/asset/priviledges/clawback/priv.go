@@ -1,7 +1,10 @@
 package clawback
 
 import (
+	"context"
+
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	proto "github.com/gogo/protobuf/proto"
 	assettypes "github.com/realiotech/realio-network/x/asset/types"
 )
 
@@ -25,4 +28,10 @@ func (cp ClawbackPriviledge) RegisterInterfaces(registry cdctypes.InterfaceRegis
 	registry.RegisterImplementations((*assettypes.PrivilegeMsgI)(nil),
 		&MsgClawbackToken{},
 	)
+}
+
+func (cb ClawbackPriviledge) QueryHandler() assettypes.QueryHandler {
+	return func(context context.Context, privQuery proto.Message, tokenID string) (proto.Message, error) {
+		return nil, nil
+	}
 }
