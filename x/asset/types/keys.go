@@ -35,4 +35,6 @@ var (
 	PrivilegedAccountsKey = []byte{0x02}
 	// PrivilegeStoreKey
 	PrivilegeStoreKey = []byte{0x03}
+	// PrivilegeStoreKey
+	ManagerStoreKey = []byte{0x04}
 )
