@@ -104,7 +104,7 @@ func (k Keeper) SetTokenPrivilegeAccount(
 		bz := k.cdc.MustMarshal(&privList)
 		store.Set(key, bz)
 	}
-} 
+}
 
 func (k Keeper) DeleteTokenPrivilegeAccount(
 	ctx sdk.Context,
@@ -144,4 +144,29 @@ func (k Keeper) GetTokenAccountPrivileges(
 	k.cdc.MustUnmarshal(bz, &privList)
 
 	return privList.Privileges
+}
+
+func (k Keeper) SetTokenManager(
+	ctx sdk.Context,
+	address sdk.AccAddress,
+) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.ManagerStoreKey)
+	store.Set(types.GetManagerKey(address), types.ManagerExists)
+}
+
+func (k Keeper) IsTokenManager(
+	ctx sdk.Context,
+	address sdk.AccAddress,
+) bool {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.ManagerStoreKey)
+	bz := store.Get(types.GetManagerKey(address))
+	return bz != nil
+}
+
+func (k Keeper) DeleteTokenManager(
+	ctx sdk.Context,
+	address sdk.AccAddress,
+) {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.ManagerStoreKey)
+	store.Delete(types.GetManagerKey(address))
 }

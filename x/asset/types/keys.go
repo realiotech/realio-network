@@ -1,5 +1,7 @@
 package types
 
+import sdk "github.com/cosmos/cosmos-sdk/types"
+
 const (
 	// ModuleName defines the module name
 	ModuleName = "asset"
@@ -37,4 +39,10 @@ var (
 	PrivilegeStoreKey = []byte{0x03}
 	// PrivilegeStoreKey
 	ManagerStoreKey = []byte{0x04}
+	// ManagerExists is the byte to determine manager is exists
+	ManagerExists = []byte{0x01}
 )
+
+func GetManagerKey(manager sdk.AccAddress) []byte {
+	return append(ManagerStoreKey, manager.Bytes()...)
+}
