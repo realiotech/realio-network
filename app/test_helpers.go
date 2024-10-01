@@ -20,7 +20,6 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 
 	"github.com/evmos/ethermint/encoding"
 	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
@@ -57,16 +56,6 @@ var (
 				tmtypes.ABCIPubKeyTypeEd25519,
 			},
 		},
-	}
-	MultiStakingCoinA = multistakingtypes.MultiStakingCoin{
-		Denom:      "ario",
-		Amount:     sdk.NewIntFromUint64(1000000000000000000),
-		BondWeight: sdk.MustNewDecFromStr("1.23"),
-	}
-	MultiStakingCoinB = multistakingtypes.MultiStakingCoin{
-		Denom:      "arst",
-		Amount:     sdk.NewIntFromUint64(1000000000000000000),
-		BondWeight: sdk.MustNewDecFromStr("0.12"),
 	}
 )
 
@@ -138,40 +127,12 @@ func GenesisStateWithValSet(app *RealioNetwork, genesisState simapp.GenesisState
 	authGenesis := authtypes.NewGenesisState(authtypes.DefaultParams(), genAccs)
 	genesisState[authtypes.ModuleName] = app.AppCodec().MustMarshalJSON(authGenesis)
 
-	// set multi staking genesis state
-	msCoinAInfo := multistakingtypes.MultiStakingCoinInfo{
-		Denom:      MultiStakingCoinA.Denom,
-		BondWeight: MultiStakingCoinA.BondWeight,
-	}
-	msCoinBInfo := multistakingtypes.MultiStakingCoinInfo{
-		Denom:      MultiStakingCoinB.Denom,
-		BondWeight: MultiStakingCoinB.BondWeight,
-	}
-	msCoinInfos := []multistakingtypes.MultiStakingCoinInfo{msCoinAInfo, msCoinBInfo}
-	validatorMsCoins := make([]multistakingtypes.ValidatorMultiStakingCoin, 0, len(valSet.Validators))
-	locks := make([]multistakingtypes.MultiStakingLock, 0, len(valSet.Validators))
-	lockCoins := sdk.NewCoins()
-
 	validators := make([]stakingtypes.Validator, 0, len(valSet.Validators))
 	delegations := make([]stakingtypes.Delegation, 0, len(valSet.Validators))
 	bondCoins := sdk.NewCoins()
 
-	for i, val := range valSet.Validators {
-		valMsCoin := MultiStakingCoinA
-		if i%2 == 1 {
-			valMsCoin = MultiStakingCoinB
-		}
-
-		validatorMsCoins = append(validatorMsCoins, multistakingtypes.ValidatorMultiStakingCoin{
-			ValAddr:   sdk.ValAddress(val.Address).String(),
-			CoinDenom: valMsCoin.Denom,
-		})
-
-		lockID := multistakingtypes.MultiStakingLockID(genAccs[0].GetAddress().String(), sdk.ValAddress(val.Address).String())
-		lockRecord := multistakingtypes.NewMultiStakingLock(lockID, valMsCoin)
-
-		locks = append(locks, lockRecord)
-		lockCoins = lockCoins.Add(valMsCoin.ToCoin())
+	for _, val := range valSet.Validators {
+		bondAmt := sdk.DefaultPowerReduction
 
 		pk, _ := cryptocodec.FromTmPubKeyInterface(val.PubKey)
 		pkAny, _ := codectypes.NewAnyWithValue(pk)
@@ -180,7 +141,7 @@ func GenesisStateWithValSet(app *RealioNetwork, genesisState simapp.GenesisState
 			ConsensusPubkey:   pkAny,
 			Jailed:            false,
 			Status:            stakingtypes.Bonded,
-			Tokens:            valMsCoin.BondValue(),
+			Tokens:            bondAmt,
 			DelegatorShares:   sdk.OneDec(),
 			Description:       stakingtypes.Description{},
 			UnbondingHeight:   int64(0),
@@ -192,19 +153,11 @@ func GenesisStateWithValSet(app *RealioNetwork, genesisState simapp.GenesisState
 		validators = append(validators, validator)
 		delegations = append(delegations, stakingtypes.NewDelegation(genAccs[0].GetAddress(), val.Address.Bytes(), sdk.OneDec()))
 
-		bondCoins = bondCoins.Add(sdk.NewCoin(sdk.DefaultBondDenom, valMsCoin.BondValue()))
+		bondCoins = bondCoins.Add(sdk.NewCoin(sdk.DefaultBondDenom, bondAmt))
 	}
 	// set validators and delegations
 	stakingGenesis := stakingtypes.NewGenesisState(stakingtypes.DefaultParams(), validators, delegations)
-
-	multistakingGenesis := multistakingtypes.GenesisState{
-		MultiStakingLocks:          locks,
-		MultiStakingUnlocks:        []multistakingtypes.MultiStakingUnlock{},
-		MultiStakingCoinInfo:       msCoinInfos,
-		ValidatorMultiStakingCoins: validatorMsCoins,
-		StakingGenesisState:        *stakingGenesis,
-	}
-	genesisState[multistakingtypes.ModuleName] = app.AppCodec().MustMarshalJSON(&multistakingGenesis)
+	genesisState[stakingtypes.ModuleName] = app.AppCodec().MustMarshalJSON(stakingGenesis)
 
 	// set mint genesis
 	mintGenesis := minttypes.DefaultGenesisState()
@@ -213,10 +166,6 @@ func GenesisStateWithValSet(app *RealioNetwork, genesisState simapp.GenesisState
 	balances = append(balances, banktypes.Balance{
 		Address: authtypes.NewModuleAddress(stakingtypes.BondedPoolName).String(),
 		Coins:   bondCoins,
-	})
-	balances = append(balances, banktypes.Balance{
-		Address: authtypes.NewModuleAddress(multistakingtypes.ModuleName).String(),
-		Coins:   lockCoins,
 	})
 
 	totalSupply := sdk.NewCoins()

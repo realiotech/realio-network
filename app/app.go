@@ -17,11 +17,6 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	// multi-staking
-	multistaking "github.com/realio-tech/multi-staking-module/x/multi-staking"
-	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
-	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
-
 	evmante "github.com/evmos/ethermint/app/ante"
 	"github.com/evmos/ethermint/encoding"
 	srvflags "github.com/evmos/ethermint/server/flags"
@@ -150,7 +145,6 @@ var (
 		bank.AppModuleBasic{},
 		capability.AppModuleBasic{},
 		staking.AppModuleBasic{},
-		multistaking.AppModuleBasic{},
 		mint.AppModuleBasic{},
 		distr.AppModuleBasic{},
 		gov.NewAppModuleBasic(
@@ -161,8 +155,6 @@ var (
 				upgradeclient.LegacyCancelProposalHandler,
 				ibcclientclient.UpdateClientProposalHandler,
 				ibcclientclient.UpgradeProposalHandler,
-				multistaking.AddMultiStakingProposalHandler,
-				multistaking.UpdateBondWeightProposalHandler,
 			},
 		),
 		params.AppModuleBasic{},
@@ -192,7 +184,6 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner}, // used for secure addition and subtraction of balance using module account
 		assetmoduletypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
-		multistakingtypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -233,23 +224,22 @@ type RealioNetwork struct {
 	memKeys map[string]*storetypes.MemoryStoreKey
 
 	// keepers
-	AccountKeeper      authkeeper.AccountKeeper
-	BankKeeper         bankkeeper.Keeper
-	CapabilityKeeper   *capabilitykeeper.Keeper
-	StakingKeeper      stakingkeeper.Keeper
-	MultiStakingKeeper multistakingkeeper.Keeper
-	SlashingKeeper     slashingkeeper.Keeper
-	MintKeeper         mintkeeper.Keeper
-	DistrKeeper        distrkeeper.Keeper
-	GovKeeper          govkeeper.Keeper
-	CrisisKeeper       crisiskeeper.Keeper
-	UpgradeKeeper      upgradekeeper.Keeper
-	ParamsKeeper       paramskeeper.Keeper
-	FeeGrantKeeper     feegrantkeeper.Keeper
-	AuthzKeeper        authzkeeper.Keeper
-	IBCKeeper          *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
-	EvidenceKeeper     evidencekeeper.Keeper
-	TransferKeeper     ibctransferkeeper.Keeper
+	AccountKeeper    authkeeper.AccountKeeper
+	BankKeeper       bankkeeper.Keeper
+	CapabilityKeeper *capabilitykeeper.Keeper
+	StakingKeeper    stakingkeeper.Keeper
+	SlashingKeeper   slashingkeeper.Keeper
+	MintKeeper       mintkeeper.Keeper
+	DistrKeeper      distrkeeper.Keeper
+	GovKeeper        govkeeper.Keeper
+	CrisisKeeper     crisiskeeper.Keeper
+	UpgradeKeeper    upgradekeeper.Keeper
+	ParamsKeeper     paramskeeper.Keeper
+	FeeGrantKeeper   feegrantkeeper.Keeper
+	AuthzKeeper      authzkeeper.Keeper
+	IBCKeeper        *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
+	EvidenceKeeper   evidencekeeper.Keeper
+	TransferKeeper   ibctransferkeeper.Keeper
 
 	// Ethermint keepers
 	EvmKeeper       *evmkeeper.Keeper
@@ -306,8 +296,6 @@ func New(
 		assetmoduletypes.StoreKey,
 		// ethermint keys
 		evmtypes.StoreKey, feemarkettypes.StoreKey,
-		// multi-staking keys
-		multistakingtypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 
@@ -395,15 +383,6 @@ func New(
 		stakingtypes.NewMultiStakingHooks(app.DistrKeeper.Hooks(), app.SlashingKeeper.Hooks()),
 	)
 
-	// multi-staking keeper
-	app.MultiStakingKeeper = *multistakingkeeper.NewKeeper(
-		appCodec,
-		app.AccountKeeper,
-		app.StakingKeeper,
-		app.BankKeeper,
-		keys[multistakingtypes.StoreKey],
-	)
-
 	// realio keeper
 	app.AssetKeeper = *assetmodulekeeper.NewKeeper(
 		appCodec,
@@ -436,8 +415,7 @@ func New(
 		AddRoute(paramproposal.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper)).
 		AddRoute(distrtypes.RouterKey, distr.NewCommunityPoolSpendProposalHandler(app.DistrKeeper)).
 		AddRoute(upgradetypes.RouterKey, upgrade.NewSoftwareUpgradeProposalHandler(app.UpgradeKeeper)).
-		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper)).
-		AddRoute(multistakingtypes.RouterKey, multistaking.NewMultiStakingProposalHandler(&app.MultiStakingKeeper))
+		AddRoute(ibcclienttypes.RouterKey, ibcclient.NewClientProposalHandler(app.IBCKeeper.ClientKeeper))
 
 	govConfig := govtypes.DefaultConfig()
 	/*
@@ -489,7 +467,6 @@ func New(
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
 		distr.NewAppModule(appCodec, app.DistrKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper),
-		multistaking.NewAppModule(appCodec, app.MultiStakingKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper),
 		upgrade.NewAppModule(app.UpgradeKeeper),
 		evidence.NewAppModule(app.EvidenceKeeper),
 		params.NewAppModule(app.ParamsKeeper),
@@ -523,7 +500,6 @@ func New(
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName,
-		multistakingtypes.ModuleName,
 		ibchost.ModuleName,
 		// no-op modules
 		ibctransfertypes.ModuleName,
@@ -545,7 +521,6 @@ func New(
 	app.mm.SetOrderEndBlockers(
 		crisistypes.ModuleName,
 		govtypes.ModuleName,
-		multistakingtypes.ModuleName,
 		evmtypes.ModuleName,
 		feemarkettypes.ModuleName,
 		// no-op modules
@@ -579,7 +554,6 @@ func New(
 		authtypes.ModuleName,
 		banktypes.ModuleName,
 		distrtypes.ModuleName,
-		multistakingtypes.ModuleName,
 		vestingtypes.ModuleName,
 		slashingtypes.ModuleName,
 		govtypes.ModuleName,
