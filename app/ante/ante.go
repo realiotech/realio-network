@@ -1,12 +1,14 @@
 package ante
 
 import (
+	"fmt"
+	"runtime/debug"
+
 	errorsmod "cosmossdk.io/errors"
+	log "cosmossdk.io/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
-
-	ethante "github.com/evmos/ethermint/app/ante"
 )
 
 // NewAnteHandler returns an ante handler responsible for attempting to route an
@@ -20,18 +22,18 @@ func NewAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	) (newCtx sdk.Context, err error) {
 		var anteHandler sdk.AnteHandler
 
-		defer ethante.Recover(ctx.Logger(), &err)
+		defer Recover(ctx.Logger(), &err)
 
 		txWithExtensions, ok := tx.(authante.HasExtensionOptionsTx)
 		if ok {
 			opts := txWithExtensions.GetExtensionOptions()
 			if len(opts) > 0 {
 				switch typeURL := opts[0].GetTypeUrl(); typeURL {
-				case "/ethermint.evm.v1.ExtensionOptionsEthereumTx":
+				case "/os.evm.v1.ExtensionOptionsEthereumTx":
 					// handle as *evmtypes.MsgEthereumTx
 					anteHandler = newEthAnteHandler(options)
-				case "/ethermint.types.v1.ExtensionOptionsWeb3Tx":
-					// handle as normal Cosmos SDK tx, except signature is checked for EIP712 representation
+				case "/os.types.v1.ExtensionOptionDynamicFeeTx":
+					// cosmos-sdk tx with dynamic fee extension
 					anteHandler = newLegacyCosmosAnteHandlerEip712(options)
 				default:
 					return ctx, errorsmod.Wrapf(
@@ -53,5 +55,24 @@ func NewAnteHandler(options HandlerOptions) sdk.AnteHandler {
 		}
 
 		return anteHandler(ctx, tx, sim)
+	}
+}
+
+func Recover(logger log.Logger, err *error) {
+	if r := recover(); r != nil {
+		*err = errorsmod.Wrapf(errortypes.ErrPanic, "%v", r)
+
+		if e, ok := r.(error); ok {
+			logger.Error(
+				"ante handler panicked",
+				"error", e,
+				"stack trace", string(debug.Stack()),
+			)
+		} else {
+			logger.Error(
+				"ante handler panicked",
+				"recover", fmt.Sprintf("%v", r),
+			)
+		}
 	}
 }

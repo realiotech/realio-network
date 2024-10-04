@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
@@ -12,12 +13,12 @@ func (suite *KeeperTestSuite) TestParamsQuery() {
 	suite.SetupTest()
 
 	k := suite.app.AssetKeeper
-	wctx := sdk.WrapSDKContext(suite.ctx)
 
 	params := types.DefaultParams()
-	k.SetParams(suite.ctx, params)
+	k.Params.Set(suite.ctx, params)
 
-	response, err := k.Params(wctx, &types.QueryParamsRequest{})
+	queryServer := keeper.NewQueryServerImpl(k)
+	response, err := queryServer.Params(suite.ctx, &types.QueryParamsRequest{})
 	suite.Require().NoError(err)
 	suite.Require().Equal(&types.QueryParamsResponse{Params: params}, response)
 }
@@ -52,7 +53,7 @@ func (suite *KeeperTestSuite) TestTokensQuery() {
 					Total:                 "1000",
 					AuthorizationRequired: false,
 				}
-				suite.app.AssetKeeper.SetToken(suite.ctx, token)
+				suite.app.AssetKeeper.Token.Set(suite.ctx, "rst", token)
 
 				expRes = &types.QueryTokensResponse{
 					Tokens: []types.Token{token},
@@ -71,7 +72,7 @@ func (suite *KeeperTestSuite) TestTokensQuery() {
 					Total:                 "1000",
 					AuthorizationRequired: false,
 				}
-				suite.app.AssetKeeper.SetToken(suite.ctx, token1)
+				suite.app.AssetKeeper.Token.Set(suite.ctx, "rst", token1)
 
 				token2 := types.Token{
 					Manager:               suite.testUser1Address,
@@ -80,7 +81,7 @@ func (suite *KeeperTestSuite) TestTokensQuery() {
 					Total:                 "1000",
 					AuthorizationRequired: false,
 				}
-				suite.app.AssetKeeper.SetToken(suite.ctx, token2)
+				suite.app.AssetKeeper.Token.Set(suite.ctx, "btf", token2)
 
 				expRes = &types.QueryTokensResponse{
 					Tokens: []types.Token{token2, token1},

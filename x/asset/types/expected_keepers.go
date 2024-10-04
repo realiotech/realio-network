@@ -1,29 +1,29 @@
 package types
 
 import (
+	"context"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 )
 
 // AccountKeeper defines the expected account keeper
 type AccountKeeper interface {
-	GetAccount(ctx sdk.Context, addr sdk.AccAddress) types.AccountI
+	GetAccount(ctx context.Context, addr sdk.AccAddress) sdk.AccountI
 	GetModuleAddress(moduleName string) sdk.AccAddress
 	// Methods imported from account should be defined here
 }
 
 // BankKeeper defines the expected interface needed to retrieve account balances.
 type BankKeeper interface {
-	SpendableCoins(ctx sdk.Context, addr sdk.AccAddress) sdk.Coins
-	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
-	SendCoinsFromModuleToAccount(ctx sdk.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
-	MintCoins(ctx sdk.Context, moduleName string, amt sdk.Coins) error
-	SetDenomMetaData(ctx sdk.Context, denomMetaData banktypes.Metadata)
-	AppendSendRestriction(restriction bankkeeper.SendRestrictionFn)
-	GetDenomMetaData(ctx sdk.Context, denom string) (banktypes.Metadata, bool)
-	HasSupply(ctx sdk.Context, denom string) bool
+	SpendableCoins(ctx context.Context, addr sdk.AccAddress) sdk.Coins
+	SendCoins(ctx context.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
+	SendCoinsFromModuleToAccount(ctx context.Context, senderModule string, recipientAddr sdk.AccAddress, amt sdk.Coins) error
+	MintCoins(ctx context.Context, moduleName string, amt sdk.Coins) error
+	SetDenomMetaData(ctx context.Context, denomMetaData banktypes.Metadata)
+	AppendSendRestriction(restriction banktypes.SendRestrictionFn)
+	GetDenomMetaData(ctx context.Context, denom string) (banktypes.Metadata, bool)
+	HasSupply(ctx context.Context, denom string) bool
 	BlockedAddr(addr sdk.AccAddress) bool
 	// Methods imported from bank should be defined here
 }

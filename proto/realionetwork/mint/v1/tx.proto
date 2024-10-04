@@ -1,0 +1,26 @@
+syntax = "proto3";
+package realionetwork.mint.v1;
+
+option go_package = "github.com/realiotech/realio-network/x/mint/types";
+
+import "gogoproto/gogo.proto";
+import "realionetwork/mint/v1/mint.proto";
+import "cosmos_proto/cosmos.proto";
+
+// Msg defines the Msg service.
+service Msg {
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
+}
+
+message MsgUpdateParams {
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1;
+
+  // params defines the x/mint parameters to update.
+  //
+  // NOTE: All parameters must be supplied.
+  Params params = 2 [ (gogoproto.nullable) = false ];
+}
+
+message MsgUpdateParamsResponse {}

@@ -6,27 +6,34 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/cosmos/cosmos-sdk/simapp/params"
-	"github.com/cosmos/cosmos-sdk/snapshots"
-	snapshottypes "github.com/cosmos/cosmos-sdk/snapshots/types"
-	tmcfg "github.com/tendermint/tendermint/config"
+	tmcfg "github.com/cometbft/cometbft/config"
+	tmcli "github.com/cometbft/cometbft/libs/cli"
 
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/pflag"
-	tmcli "github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/log"
-	dbm "github.com/tendermint/tm-db"
+
+	"cosmossdk.io/log"
+	"cosmossdk.io/simapp/params"
+	"cosmossdk.io/store"
+	"cosmossdk.io/store/snapshots"
+	snapshottypes "cosmossdk.io/store/snapshots/types"
+	storetypes "cosmossdk.io/store/types"
+	confixcmd "cosmossdk.io/tools/confix/cmd"
+	dbm "github.com/cosmos/cosmos-db"
+	rosettacmd "github.com/cosmos/rosetta/cmd"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
+	"github.com/cosmos/cosmos-sdk/client/snapshot"
 	"github.com/cosmos/cosmos-sdk/server"
+	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
@@ -34,10 +41,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 
-	ethermintclient "github.com/evmos/ethermint/client"
-	"github.com/evmos/ethermint/crypto/hd"
-	ethermintserver "github.com/evmos/ethermint/server"
-	servercfg "github.com/evmos/ethermint/server/config"
+	ethermintclient "github.com/evmos/os/client"
+
+	"github.com/evmos/os/crypto/hd"
+	ethermintserver "github.com/evmos/os/server"
+	servercfg "github.com/evmos/os/server/config"
 
 	"github.com/realiotech/realio-network/app"
 	cmdcfg "github.com/realiotech/realio-network/cmd/config"
@@ -59,7 +67,6 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 		WithLegacyAmino(encodingConfig.Amino).
 		WithInput(os.Stdin).
 		WithAccountRetriever(types.AccountRetriever{}).
-		WithBroadcastMode(flags.BroadcastBlock).
 		WithHomeDir(app.DefaultNodeHome).
 		WithKeyringOptions(hd.EthSecp256k1Option()).
 		WithViper(EnvPrefix)
@@ -86,7 +93,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 				return err
 			}
 
-			customAppTemplate, customAppConfig := initAppConfig()
+			customAppTemplate, customAppConfig := AppConfig()
 			customTMConfig := initTendermintConfig()
 
 			return server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig, customTMConfig)
@@ -106,36 +113,36 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	cfg := sdk.GetConfig()
 	cfg.Seal()
 
+	a := appCreator{encodingConfig}
 	rootCmd.AddCommand(
 		ethermintclient.ValidateChainID(
 			genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		),
-		genutilcli.CollectGenTxsCmd(banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
-		genutilcli.MigrateGenesisCmd(),
-		genutilcli.GenTxCmd(app.ModuleBasics, encodingConfig.TxConfig, banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
-		genutilcli.ValidateGenesisCmd(app.ModuleBasics),
+		genutilcli.Commands(encodingConfig.TxConfig, app.ModuleBasics, app.DefaultNodeHome),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		NewTestnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
-		config.Cmd(),
+		confixcmd.ConfigCommand(),
+		pruning.Cmd(a.newApp, app.DefaultNodeHome),
+		snapshot.Cmd(a.newApp),
+		server.QueryBlockResultsCmd(),
 		// this line is used by starport scaffolding # stargate/root/commands
 	)
 
-	a := appCreator{encodingConfig}
 	ethermintserver.AddCommands(rootCmd, ethermintserver.NewDefaultStartOptions(a.newApp, app.DefaultNodeHome),
 		a.appExport, addModuleInitFlags)
 
 	// add keybase, auxiliary RPC, query, and tx child commands
 	rootCmd.AddCommand(
-		rpc.StatusCommand(),
+		server.StatusCommand(),
 		queryCommand(),
 		txCommand(),
 		ethermintclient.KeyCommands(app.DefaultNodeHome),
 	)
 
 	// add rosetta
-	rootCmd.AddCommand(server.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Codec))
+	rootCmd.AddCommand(rosettacmd.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Codec))
 }
 
 func addModuleInitFlags(startCmd *cobra.Command) {
@@ -154,11 +161,12 @@ func queryCommand() *cobra.Command {
 	}
 
 	cmd.AddCommand(
-		authcmd.GetAccountCmd(),
 		rpc.ValidatorCommand(),
-		rpc.BlockCommand(),
-		authcmd.QueryTxsByEventsCmd(),
+		server.QueryBlockCmd(),
+		server.QueryBlocksCmd(),
 		authcmd.QueryTxCmd(),
+		authcmd.QueryTxsByEventsCmd(),
+		authcmd.GetSimulateCmd(),
 	)
 
 	app.ModuleBasics.AddQueryCommands(cmd)
@@ -180,6 +188,7 @@ func txCommand() *cobra.Command {
 		authcmd.GetSignCommand(),
 		authcmd.GetSignBatchCommand(),
 		authcmd.GetMultiSignCommand(),
+		authcmd.GetMultiSignBatchCmd(),
 		authcmd.GetValidateSignaturesCommand(),
 		flags.LineBreak,
 		authcmd.GetBroadcastCommand(),
@@ -196,8 +205,28 @@ func txCommand() *cobra.Command {
 
 // initAppConfig helps to override default appConfig template and configs.
 // return "", nil if no custom configuration is required for the application.
-func initAppConfig() (string, interface{}) {
-	return servercfg.AppConfig(cmdcfg.BaseDenom)
+func AppConfig() (string, interface{}) {
+	// Optionally allow the chain developer to overwrite the SDK's default
+	// server config.
+	srvCfg := servercfg.DefaultConfig()
+	// The SDK's default minimum gas price is set to "" (empty value) inside
+	// app.toml. If left empty by validators, the node will halt on startup.
+	// However, the chain developer can set a default app.toml value for their
+	// validators here.
+	//
+	// In summary:
+	// - if you leave srvCfg.MinGasPrices = "", all validators MUST tweak their
+	//   own app.toml config,
+	// - if you set srvCfg.MinGasPrices non-empty, validators CAN tweak their
+	//   own app.toml to override, or use this default value.
+	//
+	// In this example application, we set the min gas prices to 0.
+	srvCfg.MinGasPrices = "0" + cmdcfg.BaseDenom
+
+	customAppTemplate := serverconfig.DefaultConfigTemplate +
+		servercfg.DefaultEVMConfigTemplate
+
+	return customAppTemplate, srvCfg
 }
 
 type appCreator struct {
@@ -206,7 +235,7 @@ type appCreator struct {
 
 // newApp is an AppCreator
 func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
-	var cache sdk.MultiStorePersistentCache
+	var cache storetypes.MultiStorePersistentCache
 
 	if cast.ToBool(appOpts.Get(server.FlagInterBlockCache)) {
 		cache = store.NewCommitKVStoreCacheManager()
@@ -268,7 +297,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 // appExport creates a new simapp (optionally at a given height)
 func (a appCreator) appExport(
 	logger log.Logger, db dbm.DB, traceStore io.Writer, height int64, forZeroHeight bool, jailAllowedAddrs []string,
-	appOpts servertypes.AppOptions,
+	appOpts servertypes.AppOptions, moduleToExport []string,
 ) (servertypes.ExportedApp, error) {
 	var anApp *app.RealioNetwork
 
@@ -309,7 +338,7 @@ func (a appCreator) appExport(
 		)
 	}
 
-	return anApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs)
+	return anApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, moduleToExport)
 }
 
 func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {

@@ -5,9 +5,9 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/stretchr/testify/require"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -15,7 +15,7 @@ import (
 func TestFork(t *testing.T) {
 	realio := Setup(false, nil, 1)
 
-	ctx := realio.BaseApp.NewContext(false, tmproto.Header{Height: ForkHeight})
+	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: ForkHeight})
 	stakingKeeper := realio.StakingKeeper
 
 	timeKey := time.Date(2024, 4, 1, 1, 1, 1, 1, time.UTC)
@@ -24,7 +24,7 @@ func TestFork(t *testing.T) {
 		DelegatorAddress: "test_del_1",
 		ValidatorAddress: "test_val_1",
 		Entries: []stakingtypes.UnbondingDelegationEntry{
-			stakingtypes.NewUnbondingDelegationEntry(ForkHeight, timeKey, math.OneInt()),
+			stakingtypes.NewUnbondingDelegationEntry(ForkHeight, timeKey, math.OneInt(), 0),
 		},
 	}
 
@@ -36,7 +36,7 @@ func TestFork(t *testing.T) {
 		ValidatorSrcAddress: "test_val_1",
 		ValidatorDstAddress: "test_val_2",
 		Entries: []stakingtypes.RedelegationEntry{
-			stakingtypes.NewRedelegationEntry(ForkHeight, timeKey, math.OneInt(), sdk.OneDec()),
+			stakingtypes.NewRedelegationEntry(ForkHeight, timeKey, math.OneInt(), math.LegacyOneDec(), 0),
 		},
 	}
 	stakingKeeper.InsertRedelegationQueue(ctx, duplicativeRedelegation, timeKey)
@@ -62,21 +62,24 @@ func TestFork(t *testing.T) {
 	require.False(t, checkDuplicateRelegationQueue(ctx, *realio))
 	require.False(t, checkDuplicateValQueue(ctx, *realio))
 
-	dvPairs := stakingKeeper.GetUBDQueueTimeSlice(ctx, timeKey)
+	dvPairs, err := stakingKeeper.GetUBDQueueTimeSlice(ctx, timeKey)
+	require.NoError(t, err)
 	require.Equal(t, dvPairs[0].DelegatorAddress, duplicativeUnbondingDelegation.DelegatorAddress)
 	require.Equal(t, dvPairs[0].ValidatorAddress, duplicativeUnbondingDelegation.ValidatorAddress)
 
-	triplets := stakingKeeper.GetRedelegationQueueTimeSlice(ctx, timeKey)
+	triplets, err := stakingKeeper.GetRedelegationQueueTimeSlice(ctx, timeKey)
+	require.NoError(t, err)
 	require.Equal(t, triplets[0].DelegatorAddress, duplicativeRedelegation.DelegatorAddress)
 	require.Equal(t, triplets[0].ValidatorDstAddress, duplicativeRedelegation.ValidatorDstAddress)
 	require.Equal(t, triplets[0].ValidatorSrcAddress, duplicativeRedelegation.ValidatorSrcAddress)
 
-	vals := stakingKeeper.GetUnbondingValidators(ctx, timeKey, ForkHeight)
+	vals, err := stakingKeeper.GetUnbondingValidators(ctx, timeKey, ForkHeight)
+	require.NoError(t, err)
 	require.Equal(t, vals[0], duplicativeVal.OperatorAddress)
 }
 
 func checkDuplicateUBDQueue(ctx sdk.Context, realio RealioNetwork) bool {
-	ubdIter := realio.StakingKeeper.UBDQueueIterator(ctx, oneEnternityLater)
+	ubdIter, _ := realio.StakingKeeper.UBDQueueIterator(ctx, oneEnternityLater)
 	defer ubdIter.Close()
 
 	for ; ubdIter.Valid(); ubdIter.Next() {
@@ -100,7 +103,7 @@ func checkDuplicateUBD(eels []stakingtypes.DVPair) bool {
 }
 
 func checkDuplicateRelegationQueue(ctx sdk.Context, realio RealioNetwork) bool {
-	redeIter := realio.StakingKeeper.RedelegationQueueIterator(ctx, oneEnternityLater)
+	redeIter, _ := realio.StakingKeeper.RedelegationQueueIterator(ctx, oneEnternityLater)
 	defer redeIter.Close()
 
 	for ; redeIter.Valid(); redeIter.Next() {
@@ -124,7 +127,7 @@ func checkDuplicateRedelegation(eels []stakingtypes.DVVTriplet) bool {
 }
 
 func checkDuplicateValQueue(ctx sdk.Context, realio RealioNetwork) bool {
-	valsIter := realio.StakingKeeper.ValidatorQueueIterator(ctx, oneEnternityLater, 9999)
+	valsIter, _ := realio.StakingKeeper.ValidatorQueueIterator(ctx, oneEnternityLater, 9999)
 	defer valsIter.Close()
 
 	for ; valsIter.Valid(); valsIter.Next() {

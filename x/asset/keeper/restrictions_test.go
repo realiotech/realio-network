@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/realiotech/realio-network/x/asset/keeper"
@@ -37,28 +38,28 @@ func (suite *KeeperTestSuite) TestRestrictions() {
 			"module accounts can send to any account",
 			suite.app.AccountKeeper.GetModuleAddress(stakingtypes.BondedPoolName),
 			suite.testUser1Acc,
-			sdk.NewCoins(sdk.NewCoin("arst", sdk.NewInt(100))),
+			sdk.NewCoins(sdk.NewCoin("arst", math.NewInt(100))),
 			true,
 		},
 		{
 			"module accounts can send to any account",
 			suite.app.AccountKeeper.GetModuleAddress(stakingtypes.NotBondedPoolName),
 			suite.testUser1Acc,
-			sdk.NewCoins(sdk.NewCoin("arst", sdk.NewInt(100))),
+			sdk.NewCoins(sdk.NewCoin("arst", math.NewInt(100))),
 			true,
 		},
 		{
 			"module accounts can send to any account",
 			suite.app.AccountKeeper.GetModuleAddress(stakingtypes.BondedPoolName),
 			suite.testUser1Acc,
-			sdk.NewCoins(sdk.NewCoin("arst", sdk.NewInt(100))),
+			sdk.NewCoins(sdk.NewCoin("arst", math.NewInt(100))),
 			true,
 		},
 		{
 			"unauthorized accounts cannot send",
 			suite.testUser3Acc,
 			suite.testUser1Acc,
-			sdk.NewCoins(sdk.NewCoin("arst", sdk.NewInt(100))),
+			sdk.NewCoins(sdk.NewCoin("arst", math.NewInt(100))),
 			false,
 		},
 	}

@@ -3,11 +3,11 @@ package app
 import (
 	"fmt"
 
+	storetypes "cosmossdk.io/store/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/realiotech/realio-network/app/upgrades/commission"
 
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 )
 
 func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
@@ -16,7 +16,7 @@ func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		commission.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
-			&app.StakingKeeper,
+			app.StakingKeeper,
 		),
 	)
 

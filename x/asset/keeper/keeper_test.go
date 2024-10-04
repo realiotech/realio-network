@@ -4,18 +4,20 @@ import (
 	"testing"
 	"time"
 
+	"github.com/cometbft/cometbft/crypto/tmhash"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
+	"github.com/cometbft/cometbft/version"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/evmos/ethermint/crypto/ethsecp256k1"
+
+	"github.com/evmos/os/crypto/ethsecp256k1"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/tendermint/tendermint/crypto/tmhash"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
-	"github.com/tendermint/tendermint/version"
 
 	"github.com/realiotech/realio-network/app"
 	realiotypes "github.com/realiotech/realio-network/types"
+	"github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/asset/types"
 
 	"github.com/realiotech/realio-network/testutil"
@@ -62,7 +64,7 @@ func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 	suite.app = app.Setup(checkTx, nil, 1)
 
 	// Set Context
-	suite.ctx = suite.app.BaseApp.NewContext(checkTx, tmproto.Header{
+	suite.ctx = suite.app.BaseApp.NewContextLegacy(checkTx, tmproto.Header{
 		Height:          1,
 		ChainID:         realiotypes.TestnetChainID,
 		Time:            time.Now().UTC(),
@@ -88,7 +90,7 @@ func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 	})
 
 	queryHelper := baseapp.NewQueryServerTestHelper(suite.ctx, suite.app.InterfaceRegistry())
-	types.RegisterQueryServer(queryHelper, suite.app.AssetKeeper)
+	types.RegisterQueryServer(queryHelper, keeper.NewQueryServerImpl(suite.app.AssetKeeper))
 	suite.queryClient = types.NewQueryClient(queryHelper)
 }
 

@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -11,12 +12,11 @@ import (
 )
 
 func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthorizeAddress) (*types.MsgAuthorizeAddressResponse, error) {
-	ctx := sdk.UnwrapSDKContext(goCtx)
-
 	// Check if the value exists
-	token, isFound := k.GetToken(ctx, msg.Symbol)
-	if !isFound {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists", msg.Symbol)
+	lowerCaseSymbol := strings.ToLower(msg.Symbol)
+	token, err := k.Token.Get(goCtx, lowerCaseSymbol)
+	if err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists : %s", lowerCaseSymbol, err.Error())
 	}
 
 	// Checks if the token manager signed
@@ -36,8 +36,12 @@ func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthori
 	}
 
 	token.AuthorizeAddress(accAddress)
-	k.SetToken(ctx, token)
+	err = k.Token.Set(goCtx, lowerCaseSymbol, token)
+	if err != nil {
+		return nil, types.ErrSetTokenUnable
+	}
 
+	ctx := sdk.UnwrapSDKContext(goCtx)
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(
 			types.EventTypeTokenAuthorized,

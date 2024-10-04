@@ -16,21 +16,21 @@ func TestNextAnnualProvision(t *testing.T) {
 
 	tests := []struct {
 		totalSupply  string
-		setInflation sdk.Dec
+		setInflation sdkmath.LegacyDec
 		expected     string
 	}{
 		// with 0 total staking token supply, next annual inflation should increase by InflationRate
-		{"0", sdk.NewDecWithPrec(13, 2), "9750000000000000000000000"},
+		{"0", sdkmath.LegacyNewDecWithPrec(13, 2), "9750000000000000000000000"},
 
 		// with 75 mil total staking token supply, next annual inflation should be 0
-		{"75000000000000000000000000", sdk.NewDecWithPrec(13, 2), "0"},
+		{"75000000000000000000000000", sdkmath.LegacyNewDecWithPrec(13, 2), "0"},
 
 		// with 35mil total staking token supply, next annual inflation should increase by InflationRate
-		{"35000000000000000000000000", sdk.NewDecWithPrec(13, 2), "5200000000000000000000000"},
+		{"35000000000000000000000000", sdkmath.LegacyNewDecWithPrec(13, 2), "5200000000000000000000000"},
 	}
 	for i, tc := range tests {
 		minter.Inflation = tc.setInflation
-		expected, _ := sdk.NewDecFromStr(tc.expected)
+		expected, _ := sdkmath.LegacyNewDecFromStr(tc.expected)
 		totalSupplyConverted, _ := sdkmath.NewIntFromString(tc.totalSupply)
 		annualProv := minter.NextAnnualProvisions(params, totalSupplyConverted)
 		require.True(t, annualProv.Equal(expected),
@@ -40,7 +40,7 @@ func TestNextAnnualProvision(t *testing.T) {
 }
 
 func TestBlockProvision(t *testing.T) {
-	minter := InitialMinter(sdk.NewDecWithPrec(1, 1))
+	minter := InitialMinter(sdkmath.LegacyNewDecWithPrec(1, 1))
 	params := DefaultParams()
 
 	secondsPerYear := int64(60 * 60 * 8766)
@@ -55,11 +55,11 @@ func TestBlockProvision(t *testing.T) {
 		{(secondsPerYear / 5) / 2, 0},
 	}
 	for i, tc := range tests {
-		minter.AnnualProvisions = sdk.NewDec(tc.annualProvisions)
+		minter.AnnualProvisions = sdkmath.LegacyNewDec(tc.annualProvisions)
 		provisions := minter.BlockProvision(params)
 
 		expProvisions := sdk.NewCoin(params.MintDenom,
-			sdk.NewInt(tc.expProvisions))
+			sdkmath.NewInt(tc.expProvisions))
 
 		require.True(t, expProvisions.IsEqual(provisions),
 			"test: %v\n\tExp: %v\n\tGot: %v\n",
@@ -75,12 +75,12 @@ func TestBlockProvision(t *testing.T) {
 // BenchmarkBlockProvision-4 3000000 429 ns/op
 func BenchmarkBlockProvision(b *testing.B) {
 	b.ReportAllocs()
-	minter := InitialMinter(sdk.NewDecWithPrec(1, 1))
+	minter := InitialMinter(sdkmath.LegacyNewDecWithPrec(1, 1))
 	params := DefaultParams()
 
 	s1 := rand.NewSource(100)
 	r1 := rand.New(s1) //nolint:gosec // this is a benchmark and is not relevant to security
-	minter.AnnualProvisions = sdk.NewDec(r1.Int63n(1000000))
+	minter.AnnualProvisions = sdkmath.LegacyNewDec(r1.Int63n(1000000))
 
 	// run the BlockProvision function b.N times
 	for n := 0; n < b.N; n++ {
@@ -92,9 +92,9 @@ func BenchmarkBlockProvision(b *testing.B) {
 // BenchmarkNextAnnualProvisions-4 5000000 251 ns/op
 func BenchmarkNextAnnualProvisions(b *testing.B) {
 	b.ReportAllocs()
-	minter := InitialMinter(sdk.NewDecWithPrec(1, 1))
+	minter := InitialMinter(sdkmath.LegacyNewDecWithPrec(1, 1))
 	params := DefaultParams()
-	totalSupply := sdk.NewInt(100000000000000)
+	totalSupply := sdkmath.NewInt(100000000000000)
 
 	// run the NextAnnualProvisions function b.N times
 	for n := 0; n < b.N; n++ {

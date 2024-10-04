@@ -26,8 +26,10 @@ service Query {
   }
 
   // Parameters queries the tokens of the module.
-  rpc IsAuthorized(QueryIsAuthorizedRequest) returns (QueryIsAuthorizedResponse) {
-    option (google.api.http).get = "/realionetwork/asset/v1/isauthorized/{symbol}/{address}";
+  rpc IsAuthorized(QueryIsAuthorizedRequest)
+      returns (QueryIsAuthorizedResponse) {
+    option (google.api.http).get =
+        "/realionetwork/asset/v1/isauthorized/{symbol}/{address}";
   }
 }
 

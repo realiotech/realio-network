@@ -1,12 +1,15 @@
 package keeper
 
 import (
+	"context"
+	"strings"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
-func (k Keeper) AssetSendRestriction(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) (newToAddr sdk.AccAddress, err error) {
+func (k Keeper) AssetSendRestriction(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) (newToAddr sdk.AccAddress, err error) {
 	newToAddr = toAddr
 	err = nil
 
@@ -23,11 +26,11 @@ func (k Keeper) AssetSendRestriction(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 		if found {
 			symbol = tokenMetadata.Symbol
 		}
-		token, isFound := k.GetToken(
+		token, err := k.Token.Get(
 			ctx,
-			symbol,
+			strings.ToLower(symbol),
 		)
-		if !isFound {
+		if err != nil {
 			continue
 		}
 

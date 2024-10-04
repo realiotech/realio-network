@@ -24,12 +24,12 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 	fromAddress, _ = sdk.AccAddressFromBech32(msg.From)
 	toAddress, _ = sdk.AccAddressFromBech32(msg.To)
 	// Check if the value already exists
-	token, isFound := k.GetToken(
+	token, err := k.Token.Get(
 		ctx,
 		msg.Symbol,
 	)
-	if !isFound {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "token %s not found", msg.Symbol)
+	if err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "token %s not found: %s", msg.Symbol, err.Error())
 	}
 
 	if k.bankKeeper.BlockedAddr(toAddress) {

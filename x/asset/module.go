@@ -4,31 +4,37 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"math/rand"
 
 	// this line is used by starport scaffolding # 1
 
-	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	abci "github.com/tendermint/tendermint/abci/types"
-
+	"cosmossdk.io/core/appmodule"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	simtypes "github.com/cosmos/cosmos-sdk/types/simulation"
 
 	"github.com/realiotech/realio-network/x/asset/client/cli"
+	"github.com/realiotech/realio-network/x/asset/exported"
 	"github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 var (
-	_ module.AppModule      = AppModule{}
-	_ module.AppModuleBasic = AppModuleBasic{}
+	_ module.AppModuleBasic      = AppModule{}
+	_ module.AppModuleSimulation = AppModule{}
+	_ module.HasGenesis          = AppModule{}
+	_ module.HasServices         = AppModule{}
+
+	_ appmodule.AppModule = AppModule{}
 )
+
+// ConsensusVersion defines the current x/asset module consensus version.
+const ConsensusVersion = 2
 
 // ----------------------------------------------------------------------------
 // AppModuleBasic
@@ -38,6 +44,8 @@ var (
 type AppModuleBasic struct {
 	cdc codec.BinaryCodec
 }
+
+var _ module.AppModuleBasic = AppModuleBasic{}
 
 func NewAppModuleBasic(cdc codec.BinaryCodec) AppModuleBasic {
 	return AppModuleBasic{cdc: cdc}
@@ -100,6 +108,9 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 type AppModule struct {
 	AppModuleBasic
 
+	// legacySubspace is used solely for migration of x/params managed parameters
+	legacySubspace exported.Subspace
+
 	keeper     keeper.Keeper
 	bankKeeper types.BankKeeper
 }
@@ -108,36 +119,34 @@ func NewAppModule(
 	cdc codec.Codec,
 	keeper keeper.Keeper,
 	bankKeeper types.BankKeeper,
+	ss exported.Subspace,
 ) AppModule {
 	return AppModule{
 		AppModuleBasic: NewAppModuleBasic(cdc),
 		keeper:         keeper,
 		bankKeeper:     bankKeeper,
+		legacySubspace: ss,
 	}
 }
+
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (AppModule) IsOnePerModuleType() {}
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (AppModule) IsAppModule() {}
 
 // Name returns the capability module's name.
 func (am AppModule) Name() string {
 	return am.AppModuleBasic.Name()
 }
 
-// Route returns the capability module's message routing key.
-func (am AppModule) Route() sdk.Route {
-	return sdk.NewRoute(types.RouterKey, NewHandler(am.keeper))
-}
-
-// QuerierRoute returns the capability module's query routing key.
-func (AppModule) QuerierRoute() string { return types.QuerierRoute }
-
-// LegacyQuerierHandler returns the capability module's Querier.
-func (am AppModule) LegacyQuerierHandler(_ *codec.LegacyAmino) sdk.Querier {
-	return nil
-}
-
 // RegisterServices registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServerImpl(am.keeper))
+
+	// TODO: run migrations
 }
 
 // RegisterInvariants registers the capability module's invariants.
@@ -145,14 +154,12 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // InitGenesis performs the capability module's genesis initialization It returns
 // no validator updates.
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) {
 	var genState types.GenesisState
 	// Initialize global index to index in genesis state
 	cdc.MustUnmarshalJSON(gs, &genState)
 
 	InitGenesis(ctx, am.keeper, genState)
-
-	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the capability module's exported genesis state as raw JSON bytes.
@@ -162,29 +169,16 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 }
 
 // ConsensusVersion implements ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return 1 }
-
-// BeginBlock executes all ABCI BeginBlock logic respective to the capability module.
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {}
-
-// EndBlock executes all ABCI EndBlock logic respective to the capability module. It
-// returns no validator updates.
-func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
-	return []abci.ValidatorUpdate{}
-}
+func (AppModule) ConsensusVersion() uint64 { return ConsensusVersion }
 
 func (am AppModule) GenerateGenesisState(_ *module.SimulationState) {
 }
 
-func (am AppModule) ProposalContents(_ module.SimulationState) []simtypes.WeightedProposalContent {
-	return []simtypes.WeightedProposalContent{}
+func (AppModule) ProposalMsgs(simState module.SimulationState) []simtypes.WeightedProposalMsg {
+	return []simtypes.WeightedProposalMsg{}
 }
 
-func (am AppModule) RandomizedParams(_ *rand.Rand) []simtypes.ParamChange {
-	return []simtypes.ParamChange{}
-}
-
-func (am AppModule) RegisterStoreDecoder(_ sdk.StoreDecoderRegistry) {
+func (am AppModule) RegisterStoreDecoder(_ simtypes.StoreDecoderRegistry) {
 }
 
 func (am AppModule) WeightedOperations(_ module.SimulationState) []simtypes.WeightedOperation {

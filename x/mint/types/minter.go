@@ -12,7 +12,7 @@ var rioSupplyCap, _ = math.NewIntFromString("75000000000000000000000000")
 
 // NewMinter returns a new Minter object with the given inflation and annual
 // provisions values.
-func NewMinter(inflation, annualProvisions sdk.Dec) Minter {
+func NewMinter(inflation, annualProvisions math.LegacyDec) Minter {
 	return Minter{
 		Inflation:        inflation,
 		AnnualProvisions: annualProvisions,
@@ -20,10 +20,10 @@ func NewMinter(inflation, annualProvisions sdk.Dec) Minter {
 }
 
 // InitialMinter returns an initial Minter object with a given inflation value.
-func InitialMinter(inflation sdk.Dec) Minter {
+func InitialMinter(inflation math.LegacyDec) Minter {
 	return NewMinter(
 		inflation,
-		sdk.NewDec(0),
+		math.LegacyNewDec(0),
 	)
 }
 
@@ -31,7 +31,7 @@ func InitialMinter(inflation sdk.Dec) Minter {
 // which uses an inflation rate of 13%.
 func DefaultInitialMinter() Minter {
 	return InitialMinter(
-		sdk.NewDecWithPrec(13, 2),
+		math.LegacyNewDecWithPrec(13, 2),
 	)
 }
 
@@ -46,7 +46,7 @@ func ValidateMinter(minter Minter) error {
 
 // NextAnnualProvisions returns the annual provisions based on current unprovisioned total
 // supply and inflation rate.
-func (m Minter) NextAnnualProvisions(_ Params, totalSupply math.Int) sdk.Dec {
+func (m Minter) NextAnnualProvisions(_ Params, totalSupply math.Int) math.LegacyDec {
 	remainingAnnualProvisions := rioSupplyCap.Sub(totalSupply)
 	return m.Inflation.MulInt(remainingAnnualProvisions)
 }

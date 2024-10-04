@@ -45,7 +45,11 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 		token.Authorized = append(token.Authorized, moduleAuthorization, newAuthorizationManager)
 	}
 
-	k.SetToken(ctx, token)
+	k.Token.Set(ctx, lowerCaseSymbol, token)
+	err = k.Token.Set(goCtx, lowerCaseSymbol, token)
+	if err != nil {
+		return nil, types.ErrSetTokenUnable
+	}
 
 	k.bankKeeper.SetDenomMetaData(ctx, bank.Metadata{
 		Base: baseDenom, Symbol: lowerCaseSymbol, Name: lowerCaseName,
