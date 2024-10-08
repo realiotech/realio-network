@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -13,10 +12,9 @@ import (
 
 func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthorizeAddress) (*types.MsgAuthorizeAddressResponse, error) {
 	// Check if the value exists
-	lowerCaseSymbol := strings.ToLower(msg.Symbol)
-	token, err := k.Token.Get(goCtx, lowerCaseSymbol)
+	token, err := k.Token.Get(goCtx, types.TokenKey(msg.Symbol))
 	if err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists : %s", lowerCaseSymbol, err.Error())
+		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists : %s", msg.Symbol, err.Error())
 	}
 
 	// Checks if the token manager signed
@@ -36,7 +34,7 @@ func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthori
 	}
 
 	token.AuthorizeAddress(accAddress)
-	err = k.Token.Set(goCtx, lowerCaseSymbol, token)
+	err = k.Token.Set(goCtx, types.TokenKey(msg.Symbol), token)
 	if err != nil {
 		return nil, types.ErrSetTokenUnable
 	}

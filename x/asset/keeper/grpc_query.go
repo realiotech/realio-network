@@ -57,7 +57,7 @@ func (q queryServer) Token(c context.Context, req *types.QueryTokenRequest) (*ty
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 
-	if t, err := q.k.Token.Get(ctx, req.Symbol); err != nil {
+	if t, err := q.k.Token.Get(ctx, types.TokenKey(req.Symbol)); err != nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrKeyNotFound, "not found")
 	} else { //nolint:revive // fixing this causes t to be inaccessible, so let's leave all as is.
 		return &types.QueryTokenResponse{Token: t}, nil
@@ -70,7 +70,7 @@ func (q queryServer) IsAuthorized(c context.Context, req *types.QueryIsAuthorize
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 
-	if t, err := q.k.Token.Get(ctx, req.Symbol); err != nil {
+	if t, err := q.k.Token.Get(ctx, types.TokenKey(req.Symbol)); err != nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrKeyNotFound, "not found")
 	} else { //nolint:revive // fixing this causes t to be inaccessible, so let's leave all as is.
 		accAddress, _ := sdk.AccAddressFromBech32(req.Address)

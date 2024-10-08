@@ -3,7 +3,6 @@ package keeper
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"cosmossdk.io/collections"
 	"cosmossdk.io/core/store"
@@ -70,8 +69,7 @@ func (k Keeper) Logger(ctx context.Context) log.Logger {
 }
 
 func (k Keeper) IsAddressAuthorizedToSend(ctx context.Context, symbol string, address sdk.AccAddress) (authorized bool) {
-	lowerCased := strings.ToLower(symbol)
-	token, err := k.Token.Get(ctx, lowerCased)
+	token, err := k.Token.Get(ctx, types.TokenKey(symbol))
 	if err != nil {
 		return false
 	}

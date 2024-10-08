@@ -12,10 +12,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	moduletestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 
-	"github.com/realiotech/realio-network/x/mint"
-	"github.com/realiotech/realio-network/x/mint/exported"
-	v2 "github.com/realiotech/realio-network/x/mint/migrations/v2"
-	"github.com/realiotech/realio-network/x/mint/types"
+	"github.com/realiotech/realio-network/x/asset"
+	"github.com/realiotech/realio-network/x/asset/exported"
+	v2 "github.com/realiotech/realio-network/x/asset/migrations/v2"
+	"github.com/realiotech/realio-network/x/asset/types"
 )
 
 type mockSubspace struct {
@@ -31,7 +31,7 @@ func (ms mockSubspace) GetParamSet(ctx sdk.Context, ps exported.ParamSet) {
 }
 
 func TestMigrate(t *testing.T) {
-	encCfg := moduletestutil.MakeTestEncodingConfig(mint.AppModuleBasic{})
+	encCfg := moduletestutil.MakeTestEncodingConfig(asset.AppModuleBasic{})
 	cdc := encCfg.Codec
 
 	storeKey := storetypes.NewKVStoreKey(v2.ModuleName)

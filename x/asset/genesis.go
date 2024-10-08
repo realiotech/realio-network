@@ -15,7 +15,7 @@ func InitGenesis(ctx context.Context, k keeper.Keeper, genState types.GenesisSta
 		panic(err)
 	}
 	for _, token := range genState.Tokens {
-		err := k.Token.Set(ctx, token.Symbol, token)
+		err := k.Token.Set(ctx, types.TokenKey(token.Symbol), token)
 		if err != nil {
 			panic(err)
 		}

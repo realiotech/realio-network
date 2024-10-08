@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 
@@ -14,10 +13,9 @@ import (
 func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken) (*types.MsgUpdateTokenResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	lowerCaseSymbol := strings.ToLower(msg.Symbol)
-	existing, err := k.Token.Get(ctx, lowerCaseSymbol)
+	existing, err := k.Token.Get(ctx, types.TokenKey(msg.Symbol))
 	if err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists: %s", lowerCaseSymbol, err.Error())
+		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists: %s", msg.Symbol, err.Error())
 	}
 
 	// Checks if the token manager signed
@@ -40,7 +38,7 @@ func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken)
 		AuthorizationRequired: msg.AuthorizationRequired,
 	}
 
-	err = k.Token.Set(goCtx, lowerCaseSymbol, token)
+	err = k.Token.Set(goCtx, types.TokenKey(msg.Symbol), token)
 	if err != nil {
 		return nil, types.ErrSetTokenUnable
 	}

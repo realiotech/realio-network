@@ -53,7 +53,7 @@ func (suite *KeeperTestSuite) TestTokensQuery() {
 					Total:                 "1000",
 					AuthorizationRequired: false,
 				}
-				suite.app.AssetKeeper.Token.Set(suite.ctx, "rst", token)
+				suite.app.AssetKeeper.Token.Set(suite.ctx, types.TokenKey("rst"), token)
 
 				expRes = &types.QueryTokensResponse{
 					Tokens: []types.Token{token},
@@ -72,7 +72,7 @@ func (suite *KeeperTestSuite) TestTokensQuery() {
 					Total:                 "1000",
 					AuthorizationRequired: false,
 				}
-				suite.app.AssetKeeper.Token.Set(suite.ctx, "rst", token1)
+				suite.app.AssetKeeper.Token.Set(suite.ctx, types.TokenKey("rst"), token1)
 
 				token2 := types.Token{
 					Manager:               suite.testUser1Address,
@@ -81,7 +81,7 @@ func (suite *KeeperTestSuite) TestTokensQuery() {
 					Total:                 "1000",
 					AuthorizationRequired: false,
 				}
-				suite.app.AssetKeeper.Token.Set(suite.ctx, "btf", token2)
+				suite.app.AssetKeeper.Token.Set(suite.ctx, types.TokenKey("btf"), token2)
 
 				expRes = &types.QueryTokensResponse{
 					Tokens: []types.Token{token2, token1},

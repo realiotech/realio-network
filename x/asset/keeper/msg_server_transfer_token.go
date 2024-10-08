@@ -28,7 +28,7 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 	// Check if the value already exists
 	token, err := k.Token.Get(
 		ctx,
-		lowerCaseSymbol,
+		types.TokenKey(msg.Symbol),
 	)
 	if err != nil {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "token %s not found: %s", lowerCaseSymbol, err.Error())

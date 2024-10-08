@@ -45,8 +45,7 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 		token.Authorized = append(token.Authorized, moduleAuthorization, newAuthorizationManager)
 	}
 
-	k.Token.Set(ctx, lowerCaseSymbol, token)
-	err = k.Token.Set(goCtx, lowerCaseSymbol, token)
+	err = k.Token.Set(goCtx, types.TokenKey(lowerCaseSymbol), token)
 	if err != nil {
 		return nil, types.ErrSetTokenUnable
 	}

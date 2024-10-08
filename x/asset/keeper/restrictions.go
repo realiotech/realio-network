@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"strings"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,7 +26,7 @@ func (k Keeper) AssetSendRestriction(ctx context.Context, fromAddr, toAddr sdk.A
 		}
 		token, err := k.Token.Get(
 			ctx,
-			strings.ToLower(symbol),
+			types.TokenKey(symbol),
 		)
 		if err != nil {
 			continue
