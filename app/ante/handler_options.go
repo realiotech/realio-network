@@ -10,8 +10,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	ibcante "github.com/cosmos/ibc-go/v9/modules/core/ante"
-	ibckeeper "github.com/cosmos/ibc-go/v9/modules/core/keeper"
+	ibcante "github.com/cosmos/ibc-go/v8/modules/core/ante"
+	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
 	evmosantecosmos "github.com/evmos/os/ante/cosmos"
 	evmosanteevm "github.com/evmos/os/ante/evm"
 	evmosanteinterfaces "github.com/evmos/os/ante/interfaces"
@@ -67,11 +67,7 @@ func (options HandlerOptions) Validate() error {
 // newEthAnteHandler creates the default ante handler for Ethereum transactions
 func newEthAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	return sdk.ChainAnteDecorators(
-		evmosanteevm.NewEthSetUpContextDecorator(options.EvmKeeper),
 		evmosanteevm.NewEVMMonoDecorator(options.AccountKeeper, options.FeeMarketKeeper, options.EvmKeeper, options.MaxTxGasWanted), // outermost AnteDecorator. SetUpContext must be called first
-		evmosanteevm.NewEthSigVerificationDecorator(options.EvmKeeper),
-		evmosanteevm.NewGasWantedDecorator(options.EvmKeeper, options.FeeMarketKeeper),
-		evmosanteevm.NewEthEmitEventDecorator(options.EvmKeeper), // emit eth tx hash and index at the very last ante handler.
 	)
 }
 

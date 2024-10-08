@@ -132,5 +132,5 @@ func (suite *KeeperTestSuite) TestTransferTokenSenderBalanceToSmall() {
 
 	_, err = srv.TransferToken(wctx, expected)
 	suite.Require().Error(err)
-	suite.Require().Equal(err.Error(), "1000000000000000000000arst is smaller than 1001000000000000000000arst: insufficient funds")
+	suite.Require().Equal(err.Error(), "spendable balance 1000000000000000000000arst is smaller than 1001000000000000000000arst: insufficient funds")
 }

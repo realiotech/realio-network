@@ -25,7 +25,8 @@ func (suite *KeeperTestSuite) TestRestrictions() {
 		Symbol:  "RST", Address: testUser,
 	}
 
-	_, _ = srv.AuthorizeAddress(wctx, authUserMsg)
+	_, err = srv.AuthorizeAddress(wctx, authUserMsg)
+	suite.Require().NoError(err)
 
 	cases := []struct {
 		name    string

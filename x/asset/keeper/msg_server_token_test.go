@@ -244,7 +244,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeAddress() {
 	suite.Require().NoError(err)
 
 	token, _ := suite.app.AssetKeeper.Token.Get(suite.ctx,
-		t1.Symbol,
+		strings.ToLower(t1.Symbol),
 	)
 	suite.Require().True(token.AddressIsAuthorized(suite.testUser1Acc))
 
@@ -257,7 +257,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeAddress() {
 	suite.Require().NoError(err)
 
 	token, _ = suite.app.AssetKeeper.Token.Get(suite.ctx,
-		t1.Symbol,
+		strings.ToLower(t1.Symbol),
 	)
 	suite.Require().NotNil(token.Authorized)
 	suite.Require().True(token.AddressIsAuthorized(suite.testUser1Acc))
@@ -328,7 +328,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddress() {
 	suite.Require().NoError(err)
 
 	token, _ := suite.app.AssetKeeper.Token.Get(suite.ctx,
-		t1.Symbol,
+		strings.ToLower(t1.Symbol),
 	)
 	suite.Require().True(token.AddressIsAuthorized(suite.testUser1Acc))
 
@@ -341,7 +341,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddress() {
 	suite.Require().NoError(err)
 
 	token, _ = suite.app.AssetKeeper.Token.Get(suite.ctx,
-		t1.Symbol,
+		strings.ToLower(t1.Symbol),
 	)
 	suite.Require().True(token.AddressIsAuthorized(suite.testUser2Acc))
 
@@ -354,7 +354,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddress() {
 	suite.Require().NoError(err)
 
 	token, _ = suite.app.AssetKeeper.Token.Get(suite.ctx,
-		t1.Symbol,
+		strings.ToLower(t1.Symbol),
 	)
 	suite.Require().False(token.AddressIsAuthorized(suite.testUser2Acc))
 }

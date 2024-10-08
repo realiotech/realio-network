@@ -63,7 +63,7 @@ func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
 						banktypes.NewMsgSend(
 							testAddresses[0],
 							testAddresses[3],
-							sdk.NewCoins(sdk.NewInt64Coin(evmtypes.DefaultEVMDenom, 100e6)),
+							sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100e6)),
 						),
 						&evmtypes.MsgEthereumTx{},
 					},
@@ -94,7 +94,7 @@ func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
 						banktypes.NewMsgSend(
 							testAddresses[0],
 							testAddresses[3],
-							sdk.NewCoins(sdk.NewInt64Coin(evmtypes.DefaultEVMDenom, 100e6)),
+							sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100e6)),
 						),
 					},
 				),
@@ -111,7 +111,7 @@ func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
 						banktypes.NewMsgSend(
 							testAddresses[0],
 							testAddresses[3],
-							sdk.NewCoins(sdk.NewInt64Coin(evmtypes.DefaultEVMDenom, 100e6)),
+							sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100e6)),
 						),
 					},
 				),
@@ -122,7 +122,7 @@ func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
 						banktypes.NewMsgSend(
 							testAddresses[0],
 							testAddresses[3],
-							sdk.NewCoins(sdk.NewInt64Coin(evmtypes.DefaultEVMDenom, 100e6)),
+							sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100e6)),
 						),
 					},
 				),
@@ -162,7 +162,7 @@ func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
 			header := suite.ctx.BlockHeader()
 			blockRes, err := suite.app.FinalizeBlock(
 				&abci.RequestFinalizeBlock{
-					Height:             suite.ctx.BlockHeight() + 1,
+					Height:             1,
 					Txs:                [][]byte{bz},
 					Hash:               header.AppHash,
 					NextValidatorsHash: header.NextValidatorsHash,

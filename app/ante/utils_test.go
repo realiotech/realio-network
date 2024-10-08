@@ -111,8 +111,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	evmParams.EvmDenom = suite.denom
 	_ = suite.app.EvmKeeper.SetParams(suite.ctx, evmParams)
 
-	encodingConfig := encoding.MakeConfig()
-	suite.clientCtx = client.Context{}.WithTxConfig(encodingConfig.TxConfig)
+	suite.clientCtx = client.Context{}.WithTxConfig(suite.app.GetTxConfig())
 }
 
 func TestAnteTestSuite(t *testing.T) {
@@ -319,7 +318,7 @@ func createEIP712CosmosTx(
 ) (sdk.Tx, error) {
 	var err error
 
-	encodingConfig := encoding.MakeConfig()
+	encodingConfig := app.MakeEncodingConfig()
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 
 	// GenerateTypedData TypedData
@@ -328,13 +327,20 @@ func createEIP712CosmosTx(
 	ethermintCodec := codec.NewProtoCodec(registry)
 	cryptocodec.RegisterInterfaces(registry)
 
-	coinAmount := sdk.NewCoin(evmtypes.DefaultEVMDenom, sdkmath.NewInt(20))
+	coinAmount := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(20))
 	amount := sdk.NewCoins(coinAmount)
 	gas := uint64(200000)
 
 	fee := legacytx.NewStdFee(gas, amount) //nolint:staticcheck // ignore staticcheck for deprecated NewStdFee
+
 	data := legacytx.StdSignBytes(realionetworktypes.MainnetChainID, 0, 0, 0, fee, msgs, "")
-	typedData, err := eip712.LegacyWrapTxToTypedData(ethermintCodec, 9000, msgs[0], data, &eip712.FeeDelegationOptions{
+	pc, err := types.ParseChainID(realionetworktypes.MainnetChainID)
+	if err != nil {
+		return nil, err
+	}
+	chainIDNum := pc.Uint64()
+
+	typedData, err := eip712.LegacyWrapTxToTypedData(ethermintCodec, chainIDNum, msgs[0], data, &eip712.FeeDelegationOptions{
 		FeePayer: from,
 	})
 	if err != nil {
@@ -354,20 +360,8 @@ func createEIP712CosmosTx(
 	}
 	signature[crypto.RecoveryIDOffset] += 27 // Transform V from 0/1 to 27/28 according to the yellow paper
 
-	// Add ExtensionOptionsWeb3Tx extension
-	var option *codectypes.Any
-	option, err = codectypes.NewAnyWithValue(&types.ExtensionOptionsWeb3Tx{
-		FeePayer:         from.String(),
-		TypedDataChainID: 9000,
-		FeePayerSig:      signature,
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	builder, _ := txBuilder.(authtx.ExtensionOptionsTxBuilder)
 
-	builder.SetExtensionOptions(option)
 	builder.SetFeeAmount(amount)
 	builder.SetGasLimit(gas)
 

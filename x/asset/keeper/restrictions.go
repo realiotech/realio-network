@@ -11,7 +11,6 @@ import (
 
 func (k Keeper) AssetSendRestriction(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) (newToAddr sdk.AccAddress, err error) {
 	newToAddr = toAddr
-	err = nil
 
 	// module whitelisted addresses can send coins without restrictions
 	if allow := k.AllowAddr(fromAddr) || k.AllowAddr(toAddr); allow {
@@ -45,11 +44,11 @@ func (k Keeper) AssetSendRestriction(ctx context.Context, fromAddr, toAddr sdk.A
 		if isAuthorizedFrom && isAuthorizedTo {
 			continue
 		} else { //nolint:revive // superfluous else, could fix, but not worth it?
-			err = errorsmod.Wrapf(types.ErrNotAuthorized, "%s is not authorized to transact with %s", fromAddr, coin.Denom)
-			break
+			err := errorsmod.Wrapf(types.ErrNotAuthorized, "%s is not authorized to transact with %s", fromAddr, coin.Denom)
+			return nil, err
 		}
 	}
-	return newToAddr, err
+	return newToAddr, nil
 }
 
 // AllowAddr addr checks if a given address is in the list of allowAddrs to skip restrictions
