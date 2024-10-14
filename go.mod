@@ -262,5 +262,5 @@ replace (
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-	github.com/realio-tech/multi-staking-module => github.com/decentrio/multi-staking v0.0.0-20241008033723-844c50d26b84
+	github.com/realio-tech/multi-staking-module => github.com/decentrio/multi-staking v0.0.0-20241009040005-7e6827edf511
 )
