@@ -1,0 +1,47 @@
+syntax = "proto3";
+package realionetwork.bridge.v1;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "realionetwork/bridge/v1/params.proto";
+
+option go_package = "github.com/realiotech/realio-network/x/bridge/types";
+
+// EpochInfo defines the rate limit epoch info
+message EpochInfo {
+  // start_time is the time at which the timer first ever ticks.
+  // If start_time is in the future, the epoch will not begin until the start
+  // time.
+  google.protobuf.Timestamp start_time = 1
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+
+  // duration is the time in between epoch ticks.
+  // In order for intended behavior to be met, duration should
+  // be greater than the chains expected block time.
+  // Duration must be non-zero.
+  google.protobuf.Duration duration = 2 [
+    (gogoproto.nullable) = false,
+    (gogoproto.stdduration) = true,
+    (gogoproto.jsontag) = "duration,omitempty"
+  ];
+  google.protobuf.Timestamp current_epoch_start_time = 3
+      [ (gogoproto.stdtime) = true, (gogoproto.nullable) = false ];
+  // epoch_counting_started is a boolean, that indicates whether this
+  // epoch timer has began yet.
+  bool epoch_counting_started = 4;
+  int64 current_epoch_start_height = 5;
+}
+
+message RateLimit {
+  string ratelimit = 1 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+
+  string current_inflow = 2 [
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+}
