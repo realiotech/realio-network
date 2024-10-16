@@ -6,6 +6,7 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/realiotech/realio-network/app/upgrades/commission"
+	"github.com/realiotech/realio-network/app/upgrades/sdk50"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 )
@@ -17,6 +18,14 @@ func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.mm,
 			app.configurator,
 			app.StakingKeeper,
+		),
+	)
+
+	app.UpgradeKeeper.SetUpgradeHandler(
+		sdk50.UpgradeName,
+		sdk50.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
 		),
 	)
 
