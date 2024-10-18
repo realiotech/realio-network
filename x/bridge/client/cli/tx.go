@@ -43,16 +43,11 @@ func CmdBridgeIn() *cobra.Command {
 				return err
 			}
 
-			coins, err := sdk.ParseCoinsNormalized(args[0])
+			coin, err := sdk.ParseCoinNormalized(args[0])
 			if err != nil {
 				return err
 			}
 
-			if len(coins) != 1 {
-				return fmt.Errorf("expected 1 coin, got %d", len(coins))
-			}
-
-			coin := coins[0]
 			if err = coin.Validate(); err != nil {
 				return err
 			}
@@ -82,16 +77,11 @@ func CmdBridgeOut() *cobra.Command {
 				return err
 			}
 
-			coins, err := sdk.ParseCoinsNormalized(args[0])
+			coin, err := sdk.ParseCoinNormalized(args[0])
 			if err != nil {
 				return err
 			}
 
-			if len(coins) != 1 {
-				return fmt.Errorf("expected 1 coin, got %d", len(coins))
-			}
-
-			coin := coins[0]
 			if err = coin.Validate(); err != nil {
 				return err
 			}
