@@ -41,7 +41,7 @@ func (ms msgServer) BridgeIn(goCtx context.Context, msg *types.MsgBridgeIn) (*ty
 		return nil, err
 	}
 
-	err = ms.UpdateOutflow(goCtx, coin)
+	err = ms.UpdateInflow(goCtx, coin)
 	if err != nil {
 		return nil, err
 	}

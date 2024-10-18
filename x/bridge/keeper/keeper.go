@@ -69,7 +69,7 @@ func (k Keeper) Logger(ctx context.Context) log.Logger {
 	return sdkCtx.Logger().With("module", "x/"+types.ModuleName)
 }
 
-func (k Keeper) UpdateOutflow(ctx context.Context, coin sdk.Coin) error {
+func (k Keeper) UpdateInflow(ctx context.Context, coin sdk.Coin) error {
 	epochInfo, err := k.EpochInfo.Get(ctx)
 	if err != nil {
 		return errorsmod.Wrap(sdkerrors.ErrNotFound, "failed to get bridge epoch info")
