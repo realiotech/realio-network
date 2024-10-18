@@ -8,11 +8,7 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/realiotech/realio-network/app/upgrades/commission"
-<<<<<<< Updated upstream
-	"github.com/realiotech/realio-network/app/upgrades/sdk50"
-=======
 	v2 "github.com/realiotech/realio-network/app/upgrades/v2"
->>>>>>> Stashed changes
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -53,12 +49,6 @@ func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 	)
 
 	app.UpgradeKeeper.SetUpgradeHandler(
-<<<<<<< Updated upstream
-		sdk50.UpgradeName,
-		sdk50.CreateUpgradeHandler(
-			app.mm,
-			app.configurator,
-=======
 		v2.UpgradeName,
 		v2.CreateUpgradeHandler(
 			app.mm,
@@ -66,7 +56,6 @@ func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 			app.ParamsKeeper,
 			app.ConsensusParamsKeeper,
 			*app.IBCKeeper,
->>>>>>> Stashed changes
 		),
 	)
 
