@@ -9,14 +9,14 @@ import (
 // NewParams returns Params instance with the given values.
 func NewParams(authority string, ratelimitDuration time.Duration) Params {
 	return Params{
-		Authority:         authority,
+		Authority: authority,
 	}
 }
 
 // default minting module parameters
 func DefaultParams() Params {
 	return Params{
-		Authority:         "",
+		Authority: "",
 	}
 }
 
