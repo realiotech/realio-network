@@ -132,6 +132,10 @@ import (
 	assetmodulekeeper "github.com/realiotech/realio-network/x/asset/keeper"
 	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
 
+	bridgemodule "github.com/realiotech/realio-network/x/bridge"
+	bridgemodulekeeper "github.com/realiotech/realio-network/x/bridge/keeper"
+	bridgemoduletypes "github.com/realiotech/realio-network/x/bridge/types"
+
 	realionetworktypes "github.com/realiotech/realio-network/types"
 
 	// unnamed import of statik for swagger UI support
@@ -179,6 +183,7 @@ var (
 		evm.AppModuleBasic{},
 		feemarket.AppModuleBasic{},
 		assetmodule.AppModuleBasic{},
+		bridgemodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
@@ -194,6 +199,7 @@ var (
 		ibctransfertypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		evmtypes.ModuleName:            {authtypes.Minter, authtypes.Burner}, // used for secure addition and subtraction of balance using module account
 		assetmoduletypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
+		bridgemoduletypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		multistakingtypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
@@ -264,7 +270,8 @@ type RealioNetwork struct {
 	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
 
 	// Realio Network keepers
-	AssetKeeper assetmodulekeeper.Keeper
+	AssetKeeper  assetmodulekeeper.Keeper
+	BridgeKeeper bridgemodulekeeper.Keeper
 
 	// mm is the module manager
 	mm *module.Manager
@@ -309,7 +316,7 @@ func New(
 		// ibc keys
 		ibcexported.StoreKey, ibctransfertypes.StoreKey,
 		// realio network keys
-		assetmoduletypes.StoreKey,
+		assetmoduletypes.StoreKey, bridgemoduletypes.StoreKey,
 		// ethermint keys
 		evmtypes.StoreKey, feemarkettypes.StoreKey,
 		// multi-staking keys
@@ -465,6 +472,14 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
+	app.BridgeKeeper = bridgemodulekeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[bridgemoduletypes.StoreKey]),
+		app.AccountKeeper,
+		app.BankKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
+
 	// Add transfer restriction
 	app.BankKeeper.AppendSendRestriction(app.AssetKeeper.AssetSendRestriction)
 
@@ -558,6 +573,7 @@ func New(
 
 		// realio network
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper, app.GetSubspace(assetmoduletypes.ModuleName)),
+		bridgemodule.NewAppModule(appCodec, app.BridgeKeeper),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -589,6 +605,7 @@ func New(
 		paramstypes.ModuleName,
 		vestingtypes.ModuleName,
 		assetmoduletypes.ModuleName,
+		bridgemoduletypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -617,6 +634,7 @@ func New(
 		upgradetypes.ModuleName,
 		// realio modules
 		assetmoduletypes.ModuleName,
+		bridgemoduletypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -651,6 +669,7 @@ func New(
 		feegrant.ModuleName,
 		// realio modules
 		assetmoduletypes.ModuleName,
+		bridgemoduletypes.ModuleName,
 		// NOTE: crisis module must go at the end to check for invariants on each module
 		crisistypes.ModuleName,
 		consensusparamtypes.ModuleName,
@@ -680,6 +699,7 @@ func New(
 		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper, app.GetSubspace(evmtypes.ModuleName)),
 		feemarket.NewAppModule(app.FeeMarketKeeper, app.GetSubspace(feemarkettypes.ModuleName)),
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper, app.GetSubspace(assetmoduletypes.ModuleName)),
+		bridgemodule.NewAppModule(appCodec, app.BridgeKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 	app.sm.RegisterStoreDecoders()

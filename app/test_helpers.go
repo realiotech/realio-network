@@ -33,6 +33,7 @@ import (
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	"github.com/realiotech/realio-network/cmd/config"
 	"github.com/realiotech/realio-network/types"
+	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
 )
 
@@ -246,6 +247,15 @@ func GenesisStateWithValSet(app *RealioNetwork, genesisState simapp.GenesisState
 	// update total supply
 	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{}, []banktypes.SendEnabled{})
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
+
+	bridgeGenesis := bridgetypes.DefaultGenesis()
+	bridgeGenesis.RatelimitEpochInfo.CurrentEpochStartHeight = 5
+	bridgeGenesis.RegisteredCoins = []sdk.Coin{
+		sdk.NewCoin(MultiStakingCoinA.Denom, math.NewInt(1000000000)),
+		sdk.NewCoin(MultiStakingCoinB.Denom, math.NewInt(1000000000)),
+	}
+	bridgeGenesis.Params.Authority = genAccs[0].GetAddress().String()
+	genesisState[bridgetypes.ModuleName] = app.AppCodec().MustMarshalJSON(bridgeGenesis)
 
 	return genesisState
 }
