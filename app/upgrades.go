@@ -6,7 +6,6 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	storetypes "cosmossdk.io/store/types"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	"github.com/realiotech/realio-network/app/upgrades/commission"
 	v2 "github.com/realiotech/realio-network/app/upgrades/v2"
 
@@ -37,7 +36,7 @@ type Upgrade struct {
 	StoreUpgrades storetypes.StoreUpgrades
 }
 
-func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
+func (app *RealioNetwork) setupUpgradeHandlers() {
 	// commission
 	app.UpgradeKeeper.SetUpgradeHandler(
 		commission.UpgradeName,

@@ -19,8 +19,11 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	evmtypes "github.com/evmos/os/x/evm/types"
+	assettypes "github.com/realiotech/realio-network/x/asset/types"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v2
@@ -38,8 +41,10 @@ func CreateUpgradeHandler(
 
 			var keyTable paramstypes.KeyTable
 			switch subspace.Name() {
-			case authtypes.ModuleName:
-				keyTable = authtypes.ParamKeyTable() //nolint:staticcheck
+			case evmtypes.ModuleName:
+				keyTable = evmtypes.ParamKeyTable() //nolint:staticcheck
+			case assettypes.ModuleName:
+				keyTable = assettypes.ParamKeyTable() //nolint:staticcheck
 			case banktypes.ModuleName:
 				keyTable = banktypes.ParamKeyTable() //nolint:staticcheck
 			case stakingtypes.ModuleName:
@@ -54,6 +59,8 @@ func CreateUpgradeHandler(
 				keyTable = govv1.ParamKeyTable() //nolint:staticcheck
 			case crisistypes.ModuleName:
 				keyTable = crisistypes.ParamKeyTable() //nolint:staticcheck
+			case authtypes.ModuleName:
+				keyTable = authtypes.ParamKeyTable() //nolint:staticcheck
 			}
 
 			if !subspace.HasKeyTable() {
@@ -65,7 +72,10 @@ func CreateUpgradeHandler(
 		legacyBaseAppSubspace := paramskeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
 		baseapp.MigrateParams(sdkCtx, legacyBaseAppSubspace, consensuskeeper.ParamsStore)
 
-		params := IBCKeeper.ClientKeeper.GetParams(sdkCtx)
+		legacyClientSubspace, _ := paramskeeper.GetSubspace(exported.ModuleName)
+		var params clienttypes.Params
+		legacyClientSubspace.GetParamSet(sdkCtx, &params)
+
 		params.AllowedClients = append(params.AllowedClients, exported.Localhost)
 		IBCKeeper.ClientKeeper.SetParams(sdkCtx, params)
 

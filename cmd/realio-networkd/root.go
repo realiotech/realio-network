@@ -2,6 +2,7 @@ package main
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -41,6 +42,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/realiotech/realio-network/types"
 
 	ethermintclient "github.com/evmos/os/client"
@@ -282,6 +284,22 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		cast.ToUint32(appOpts.Get(server.FlagStateSyncSnapshotKeepRecent)),
 	)
 
+	homeDir := cast.ToString(appOpts.Get(flags.FlagHome))
+	chainID := cast.ToString(appOpts.Get(flags.FlagChainID))
+	if chainID == "" {
+		// fallback to genesis chain-id
+		reader, err := os.Open(filepath.Join(homeDir, "config", "genesis.json"))
+		if err != nil {
+			panic(err)
+		}
+		defer reader.Close()
+
+		chainID, err = genutiltypes.ParseChainIDFromGenesis(reader)
+		if err != nil {
+			panic(fmt.Errorf("failed to parse chain-id from genesis file: %w", err))
+		}
+	}
+
 	// this line is used by starport scaffolding # stargate/root/appBeforeInit
 
 	return app.New(
@@ -291,6 +309,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		a.encCfg,
 		// this line is used by starport scaffolding # stargate/root/appArgument
 		appOpts,
+		baseapp.SetChainID(chainID),
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
 		baseapp.SetMinRetainBlocks(cast.ToUint64(appOpts.Get(server.FlagMinRetainBlocks))),

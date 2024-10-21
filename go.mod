@@ -3,6 +3,8 @@ module github.com/realiotech/realio-network
 go 1.22.5
 
 require (
+	cosmossdk.io/api v0.7.5
+	cosmossdk.io/client/v2 v2.0.0-beta.4
 	cosmossdk.io/collections v0.4.0
 	cosmossdk.io/core v0.11.1
 	cosmossdk.io/errors v1.0.1
@@ -48,8 +50,6 @@ require (
 	cloud.google.com/go/compute/metadata v0.3.0 // indirect
 	cloud.google.com/go/iam v1.1.9 // indirect
 	cloud.google.com/go/storage v1.41.0 // indirect
-	cosmossdk.io/api v0.7.5 // indirect
-	cosmossdk.io/client/v2 v2.0.0-beta.4 // indirect
 	cosmossdk.io/depinject v1.0.0 // indirect
 	cosmossdk.io/x/circuit v0.1.1 // indirect
 	cosmossdk.io/x/nft v0.1.1 // indirect
@@ -244,23 +244,27 @@ require (
 )
 
 replace (
-	// use Realio sdk v0.46.11-realio-4
-	// github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.11-realio-4
-
-	// github.com/cosmos/cosmos-sdk => ./cosmos-sdk
-
 	// need this replace to pick up the store changes (Copy func) in our cosmos-sdk fork
 	cosmossdk.io/store => github.com/evmos/cosmos-sdk/store v0.0.0-20240718141609-414cbd051fbe
+	// use Realio sdk v0.46.11-realio-4
+	// github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.11-realio-4
 
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc4
 
-	// temporary fork evmos-os to suite realio mainnet chain id
-	github.com/evmos/os => github.com/decentrio/evmos-os v0.0.0-20241008080131-6eb206fa5f53
-	github.com/evmos/os/example_chain => github.com/decentrio/evmos-os/example_chain v0.0.0-20241008080131-6eb206fa5f53
+	// fork evmos-os to suite realio's ethermint migrations
+	github.com/evmos/os => github.com/decentrio/evmos-os v0.0.0-20241021100424-9e6ab5217707
+
+	// github.com/realio-tech/multi-staking-module => ../multi-staking
+	// github.com/evmos/os => ../evmos-os
+
+	github.com/evmos/os/example_chain => github.com/decentrio/evmos-os/example_chain v0.0.0-20241021100424-9e6ab5217707
 
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 	github.com/realio-tech/multi-staking-module => github.com/decentrio/multi-staking v0.0.0-20241009040005-7e6827edf511
+
+	// replace broken goleveldb
+	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 )
