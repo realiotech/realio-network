@@ -9,7 +9,7 @@ import (
 
 const (
 	// UpgradeName defines the on-chain upgrade name.
-	UpgradeName = "V2"
+	UpgradeName = "v2"
 )
 
 var V2StoreUpgrades = storetypes.StoreUpgrades{
