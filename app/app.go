@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -8,10 +9,12 @@ import (
 
 	"github.com/realiotech/realio-network/app/ante"
 
+	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	authsims "github.com/cosmos/cosmos-sdk/x/auth/simulation"
 	"github.com/cosmos/cosmos-sdk/x/staking"
+	"github.com/cosmos/gogoproto/proto"
 
 	// staking
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -63,10 +66,12 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	"github.com/cosmos/cosmos-sdk/types/msgservice"
 	"github.com/cosmos/cosmos-sdk/version"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	authcodec "github.com/cosmos/cosmos-sdk/x/auth/codec"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	"github.com/cosmos/cosmos-sdk/x/auth/posthandler"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
@@ -329,6 +334,11 @@ func New(
 		// this line is used by starport scaffolding # stargate/app/storeKey
 	)
 
+	// register streaming services
+	if err := bApp.RegisterStreamingServices(appOpts, keys); err != nil {
+		panic(err)
+	}
+
 	// Add the EVM transient store key
 	tkeys := storetypes.NewTransientStoreKeys(paramstypes.TStoreKey, evmtypes.TransientKey, feemarkettypes.TransientKey)
 	memKeys := storetypes.NewMemoryStoreKeys(capabilitytypes.MemStoreKey)
@@ -515,6 +525,8 @@ func New(
 		appCodec, runtime.NewKVStoreService(keys[govtypes.StoreKey]), app.AccountKeeper, app.BankKeeper,
 		app.StakingKeeper, app.DistrKeeper, app.MsgServiceRouter(), govConfig, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	// Set legacy router for backwards compatibility with gov v1beta1
+	app.GovKeeper.SetLegacyRouter(govRouter)
 
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
@@ -685,9 +697,45 @@ func New(
 		consensusparamtypes.ModuleName,
 	)
 
+	app.mm.SetOrderExportGenesis(
+		// sdk modules
+		capabilitytypes.ModuleName,
+		authtypes.ModuleName,
+		banktypes.ModuleName,
+		distrtypes.ModuleName,
+		multistakingtypes.ModuleName,
+		vestingtypes.ModuleName,
+		slashingtypes.ModuleName,
+		govtypes.ModuleName,
+		minttypes.ModuleName,
+		ibcexported.ModuleName,
+		// ethermint
+		// evm module denomination is used by the feemarket module, in AnteHandle
+		evmtypes.ModuleName,
+		// NOTE: feemarket need to be initialized before genutil module:
+		// gentx transactions use MinGasPriceDecorator.AnteHandle
+		feemarkettypes.ModuleName,
+		genutiltypes.ModuleName,
+		evidencetypes.ModuleName,
+		paramstypes.ModuleName,
+		upgradetypes.ModuleName,
+		ibctransfertypes.ModuleName,
+		authz.ModuleName,
+		feegrant.ModuleName,
+		// realio modules
+		assetmoduletypes.ModuleName,
+		bridgemoduletypes.ModuleName,
+		// NOTE: crisis module must go at the end to check for invariants on each module
+		crisistypes.ModuleName,
+		consensusparamtypes.ModuleName,
+	)
+
 	app.mm.RegisterInvariants(app.CrisisKeeper)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	app.mm.RegisterServices(app.configurator)
+	err := app.mm.RegisterServices(app.configurator)
+	if err != nil {
+		panic(err)
+	}
 
 	app.setupUpgradeHandlers()
 
@@ -716,6 +764,12 @@ func New(
 		bridgemodule.NewAppModule(appCodec, app.BridgeKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
+
+	reflectionSvc, err := runtimeservices.NewReflectionService()
+	if err != nil {
+		panic(err)
+	}
+	reflectionv1.RegisterReflectionServiceServer(app.GRPCQueryRouter(), reflectionSvc)
 	app.sm.RegisterStoreDecoders()
 
 	// initialize stores
@@ -749,6 +803,21 @@ func New(
 	}
 
 	app.SetAnteHandler(ante.NewAnteHandler(options))
+	app.setPostHandler()
+
+	// At startup, after all modules have been registered, check that all prot
+	// annotations are correct.
+	protoFiles, err := proto.MergedRegistry()
+	if err != nil {
+		panic(err)
+	}
+
+	err = msgservice.ValidateProtoAnnotations(protoFiles)
+	if err != nil {
+		// Once we switch to using protoreflect-based antehandlers, we might
+		// want to panic here instead of logging a warning.
+		fmt.Fprintln(os.Stderr, err.Error())
+	}
 
 	if loadLatest {
 		if err := app.LoadLatestVersion(); err != nil {
@@ -761,6 +830,17 @@ func New(
 	// this line is used by starport scaffolding # stargate/app/beforeInitReturn
 
 	return app
+}
+
+func (app *RealioNetwork) setPostHandler() {
+	postHandler, err := posthandler.NewPostHandler(
+		posthandler.HandlerOptions{},
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	app.SetPostHandler(postHandler)
 }
 
 // Name returns the name of the App
@@ -991,6 +1071,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(ibctransfertypes.ModuleName).WithKeyTable(ibctransfertypes.ParamKeyTable())
 	// realio network subspaces
 	paramsKeeper.Subspace(assetmoduletypes.ModuleName)
+	paramsKeeper.Subspace(bridgemoduletypes.ModuleName)
 	// ethermint subspaces
 	paramsKeeper.Subspace(evmtypes.ModuleName)
 	paramsKeeper.Subspace(feemarkettypes.ModuleName).WithKeyTable(feemarkettypes.ParamKeyTable())
