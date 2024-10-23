@@ -61,7 +61,7 @@ message MsgUpdateParams {
   // overwritten).
   string authority = 1;
 
-  // params defines the x/mint parameters to update.
+  // params defines the x/bridge parameters to update.
   //
   // NOTE: All parameters must be supplied.
   Params params = 2 [ (gogoproto.nullable) = false ];

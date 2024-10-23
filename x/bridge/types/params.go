@@ -1,19 +1,17 @@
 package types
 
 import (
-	"time"
-
 	"gopkg.in/yaml.v2"
 )
 
 // NewParams returns Params instance with the given values.
-func NewParams(authority string, ratelimitDuration time.Duration) Params {
+func NewParams(authority string) Params {
 	return Params{
 		Authority: authority,
 	}
 }
 
-// default minting module parameters
+// default bridge module parameters
 func DefaultParams() Params {
 	return Params{
 		Authority: "",

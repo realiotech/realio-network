@@ -15,7 +15,7 @@ import (
 	"github.com/realiotech/realio-network/x/bridge/types"
 )
 
-// Keeper of the mint store
+// Keeper of the bridge store
 type Keeper struct {
 	cdc          codec.BinaryCodec
 	storeService store.KVStoreService
@@ -32,7 +32,7 @@ type Keeper struct {
 	RegisteredCoins collections.Map[string, types.RateLimit]
 }
 
-// NewKeeper creates a new mint Keeper instance
+// NewKeeper creates a new bridge Keeper instance
 func NewKeeper(
 	cdc codec.BinaryCodec, storeService store.KVStoreService,
 	ak types.AccountKeeper, bk types.BankKeeper,
@@ -58,7 +58,7 @@ func NewKeeper(
 	return k
 }
 
-// GetAuthority returns the x/mint module's authority.
+// GetAuthority returns the x/bridge module's authority.
 func (k Keeper) GetAuthority() string {
 	return k.authority
 }

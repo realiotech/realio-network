@@ -33,19 +33,19 @@ var (
 // ConsensusVersion defines the current x/bridge module consensus version.
 const ConsensusVersion = 1
 
-// AppModuleBasic defines the basic application module used by the mint module.
+// AppModuleBasic defines the basic application module used by the bridge module.
 type AppModuleBasic struct {
 	cdc codec.Codec
 }
 
 var _ module.AppModuleBasic = AppModuleBasic{}
 
-// Name returns the mint module's name.
+// Name returns the bridge module's name.
 func (AppModuleBasic) Name() string {
 	return types.ModuleName
 }
 
-// RegisterLegacyAminoCodec registers the mint module's types on the given LegacyAmino codec.
+// RegisterLegacyAminoCodec registers the bridge module's types on the given LegacyAmino codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	types.RegisterCodec(cdc)
 }
@@ -55,13 +55,13 @@ func (b AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(reg)
 }
 
-// DefaultGenesis returns default genesis state as raw bytes for the mint
+// DefaultGenesis returns default genesis state as raw bytes for the bridge
 // module.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(types.DefaultGenesis())
 }
 
-// ValidateGenesis performs genesis state validation for the mint module.
+// ValidateGenesis performs genesis state validation for the bridge module.
 func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
 	var data types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &data); err != nil {
@@ -71,24 +71,24 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingCo
 	return data.Validate()
 }
 
-// RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the mint module.
+// RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the bridge module.
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
 	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
 		panic(err)
 	}
 }
 
-// GetTxCmd returns no root tx command for the mint module.
+// GetTxCmd returns no root tx command for the bridge module.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
 	return cli.GetTxCmd()
 }
 
-// GetQueryCmd returns the root query command for the mint module.
+// GetQueryCmd returns the root query command for the bridge module.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd()
 }
 
-// AppModule implements an application module for the mint module.
+// AppModule implements an application module for the bridge module.
 type AppModule struct {
 	AppModuleBasic
 	keeper keeper.Keeper
@@ -108,12 +108,12 @@ func (AppModule) IsOnePerModuleType() {}
 // IsAppModule implements the appmodule.AppModule interface.
 func (AppModule) IsAppModule() {}
 
-// Name returns the mint module's name.
+// Name returns the bridge module's name.
 func (AppModule) Name() string {
 	return types.ModuleName
 }
 
-// RegisterInvariants registers the mint module invariants.
+// RegisterInvariants registers the bridge module invariants.
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // RegisterServices registers a gRPC query service to respond to the
@@ -123,7 +123,7 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServerImpl(am.keeper))
 }
 
-// InitGenesis performs genesis initialization for the mint module. It returns
+// InitGenesis performs genesis initialization for the bridge module. It returns
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.RawMessage) {
 	var genesisState types.GenesisState
@@ -132,7 +132,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, data json.
 	InitGenesis(ctx, am.keeper, genesisState)
 }
 
-// ExportGenesis returns the exported genesis state as raw bytes for the mint
+// ExportGenesis returns the exported genesis state as raw bytes for the bridge
 // module.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
 	gs := ExportGenesis(ctx, am.keeper)
@@ -142,7 +142,7 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.Raw
 // ConsensusVersion implements AppModule/ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return ConsensusVersion }
 
-// BeginBlock returns the begin blocker for the mint module.
+// BeginBlock returns the begin blocker for the bridge module.
 func (am AppModule) BeginBlock(ctx context.Context) error {
 	return BeginBlocker(ctx, am.keeper)
 }
