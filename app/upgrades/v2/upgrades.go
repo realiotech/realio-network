@@ -3,6 +3,7 @@ package v2
 import (
 	"context"
 
+	storetypes "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -33,6 +34,7 @@ func CreateUpgradeHandler(
 	paramskeeper paramskeeper.Keeper,
 	consensuskeeper consensusparamkeeper.Keeper,
 	IBCKeeper ibckeeper.Keeper,
+	EvmStore storetypes.KVStore,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 
@@ -79,6 +81,27 @@ func CreateUpgradeHandler(
 		params.AllowedClients = append(params.AllowedClients, exported.Localhost)
 		IBCKeeper.ClientKeeper.SetParams(sdkCtx, params)
 
+		err := deleteKVStore(EvmStore)
+		if err != nil {
+			return nil, err
+		}
+
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
+}
+
+func deleteKVStore(kv storetypes.KVStore) error {
+	// Note that we cannot write while iterating, so load all keys here, delete below
+	var keys [][]byte
+	itr := kv.Iterator(nil, nil)
+	for itr.Valid() {
+		keys = append(keys, itr.Key())
+		itr.Next()
+	}
+	_ = itr.Close()
+
+	for _, k := range keys {
+		kv.Delete(k)
+	}
+	return nil
 }
