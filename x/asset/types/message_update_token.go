@@ -18,27 +18,6 @@ func NewMsgUpdateToken(manager string, symbol string, authorizationRequired bool
 	}
 }
 
-func (msg *MsgUpdateToken) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgUpdateToken) Type() string {
-	return TypeMsgUpdateToken
-}
-
-func (msg *MsgUpdateToken) GetSigners() []sdk.AccAddress {
-	manager, err := sdk.AccAddressFromBech32(msg.Manager)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{manager}
-}
-
-func (msg *MsgUpdateToken) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgUpdateToken) ValidateBasic() error {
 	_, err := sdk.AccAddressFromBech32(msg.Manager)
 	if err != nil {

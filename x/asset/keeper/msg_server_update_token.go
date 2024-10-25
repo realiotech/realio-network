@@ -19,13 +19,13 @@ func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken)
 	}
 
 	// Checks if the token manager signed
-	signers := msg.GetSigners()
-	if len(signers) != 1 {
-		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "invalid signers")
+	signers, _, err := k.cdc.GetMsgV1Signers(msg)
+	if err != nil {
+		return nil, err
 	}
 
 	// assert that the manager account is the only signer of the message
-	if signers[0].String() != existing.Manager {
+	if sdk.AccAddress(signers[0]).String() != existing.Manager {
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "caller not authorized")
 	}
 

@@ -16,7 +16,7 @@ import (
 
 type (
 	Keeper struct {
-		cdc          codec.BinaryCodec
+		cdc          codec.Codec
 		storeService store.KVStoreService
 		bankKeeper   types.BankKeeper
 		ak           types.AccountKeeper
@@ -36,7 +36,7 @@ type (
 // store key, a BankKeeper implementation, an AccountKeeper implementation, and a parameter Subspace used to
 // store and fetch module parameters. It also has an allowAddrs map[string]bool to skip restrictions for module addresses.
 func NewKeeper(
-	cdc codec.BinaryCodec,
+	cdc codec.Codec,
 	storeService store.KVStoreService,
 	bankKeeper types.BankKeeper,
 	ak types.AccountKeeper,

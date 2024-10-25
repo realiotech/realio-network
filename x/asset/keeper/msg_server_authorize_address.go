@@ -18,13 +18,17 @@ func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthori
 	}
 
 	// Checks if the token manager signed
-	signers := msg.GetSigners()
+	signers, _, err := k.cdc.GetMsgV1Signers(msg)
+	if err != nil {
+		return nil, err
+	}
+
 	if len(signers) != 1 {
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "invalid signers")
 	}
 
 	// assert that the manager account is the only signer of the message
-	if signers[0].String() != token.Manager {
+	if sdk.AccAddress(signers[0]).String() != token.Manager {
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "caller not authorized")
 	}
 
