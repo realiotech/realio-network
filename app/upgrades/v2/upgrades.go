@@ -39,8 +39,8 @@ import (
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	configurator module.Configurator,
-	paramskeeper paramskeeper.Keeper,
-	consensuskeeper consensusparamkeeper.Keeper,
+	paramsKeeper paramskeeper.Keeper,
+	consensusKeeper consensusparamkeeper.Keeper,
 	IBCKeeper ibckeeper.Keeper,
 	bridgeKeeper bridgekeeper.Keeper,
 	accountKeeper authkeeper.AccountKeeper,
@@ -49,7 +49,7 @@ func CreateUpgradeHandler(
 ) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 
-		for _, subspace := range paramskeeper.GetSubspaces() {
+		for _, subspace := range paramsKeeper.GetSubspaces() {
 			subspace := subspace
 
 			var keyTable paramstypes.KeyTable
@@ -84,10 +84,10 @@ func CreateUpgradeHandler(
 		}
 
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
-		legacyBaseAppSubspace := paramskeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
-		baseapp.MigrateParams(sdkCtx, legacyBaseAppSubspace, consensuskeeper.ParamsStore)
+		legacyBaseAppSubspace := paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
+		baseapp.MigrateParams(sdkCtx, legacyBaseAppSubspace, consensusKeeper.ParamsStore)
 
-		legacyClientSubspace, _ := paramskeeper.GetSubspace(exported.ModuleName)
+		legacyClientSubspace, _ := paramsKeeper.GetSubspace(exported.ModuleName)
 		var params clienttypes.Params
 		legacyClientSubspace.GetParamSet(sdkCtx, &params)
 

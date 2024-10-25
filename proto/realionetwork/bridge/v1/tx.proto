@@ -4,12 +4,14 @@ package realionetwork.bridge.v1;
 import "gogoproto/gogo.proto";
 import "google/protobuf/duration.proto";
 import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/msg/v1/msg.proto";
 import "realionetwork/bridge/v1/params.proto";
 
 option go_package = "github.com/realiotech/realio-network/x/bridge/types";
 
 // Msg defines the Msg service.
 service Msg {
+  option (cosmos.msg.v1.service) = true;
   rpc BridgeIn(MsgBridgeIn) returns (MsgBridgeInResponse);
   rpc BridgeOut(MsgBridgeOut) returns (MsgBridgeOutResponse);
   rpc RegisterNewCoins(MsgRegisterNewCoins) returns (MsgRegisterNewCoinsResponse);
@@ -20,6 +22,7 @@ service Msg {
 }
 
 message MsgBridgeIn {
+  option (cosmos.msg.v1.signer) = "authority";
   string authority = 1;
   cosmos.base.v1beta1.Coin coin = 2 [
     (gogoproto.nullable) = false,
@@ -30,6 +33,7 @@ message MsgBridgeIn {
 message MsgBridgeInResponse {}
 
 message MsgBridgeOut {
+  option (cosmos.msg.v1.signer) = "signer";
   string signer = 1;
   cosmos.base.v1beta1.Coin coin = 2 [
     (gogoproto.nullable) = false,
@@ -50,6 +54,7 @@ message MsgRegisterNewCoins {
 message MsgRegisterNewCoinsResponse {}
 
 message MsgDeregisterCoins {
+  option (cosmos.msg.v1.signer) = "authority";
   string authority = 1;
   repeated string denoms = 2;
 }
@@ -57,6 +62,7 @@ message MsgDeregisterCoins {
 message MsgDeregisterCoinsResponse {}
 
 message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).
   string authority = 1;
@@ -70,6 +76,7 @@ message MsgUpdateParams {
 message MsgUpdateParamsResponse {}
 
 message MsgUpdateEpochDuration {
+  option (cosmos.msg.v1.signer) = "authority";
   // authority is the address that controls the module (defaults to x/gov unless
   // overwritten).
   string authority = 1;
