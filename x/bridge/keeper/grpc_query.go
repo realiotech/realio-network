@@ -40,9 +40,12 @@ func (q queryServer) RateLimits(c context.Context, req *types.QueryRateLimitsReq
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
-	ratelimits := []types.RateLimit{}
+	ratelimits := []types.DenomAndRateLimit{}
 	err := q.k.RegisteredCoins.Walk(c, nil, func(denom string, ratelimit types.RateLimit) (stop bool, err error) {
-		ratelimits = append(ratelimits, ratelimit)
+		ratelimits = append(ratelimits, types.DenomAndRateLimit{
+			Denom:     denom,
+			RateLimit: ratelimit,
+		})
 		return false, nil
 	})
 	if err != nil {

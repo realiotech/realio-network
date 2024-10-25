@@ -46,7 +46,7 @@ message QueryRateLimitsRequest {}
 
 // QueryRateLimitsResponse is response type for the Query/RateLimits RPC method.
 message QueryRateLimitsResponse {
-  repeated RateLimit ratelimits = 1 [ (gogoproto.nullable) = false ];
+  repeated DenomAndRateLimit ratelimits = 1 [ (gogoproto.nullable) = false ];
 }
 
 // QueryRateLimitRequest is request type for the Query/RateLimit RPC method.
@@ -66,4 +66,12 @@ message QueryEpochInfoRequest {}
 // QueryEpochInfoResponse is response type for the Query/EpochInfo RPC method.
 message QueryEpochInfoResponse {
   EpochInfo epoch_info = 1 [ (gogoproto.nullable) = false ];
+}
+
+message DenomAndRateLimit {
+  // denom of the coin.
+  string denom = 1;
+
+  // ratelimit of the coin.
+  RateLimit rate_limit = 2 [ (gogoproto.nullable) = false ];
 }
