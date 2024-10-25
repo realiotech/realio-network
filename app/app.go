@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 
 	"github.com/realiotech/realio-network/app/ante"
+	"github.com/realiotech/realio-network/crypto/ethsecp256k1"
 
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	errorsmod "cosmossdk.io/errors"
@@ -33,7 +34,7 @@ import (
 
 	evmosante "github.com/evmos/os/ante"
 	evmosanteevm "github.com/evmos/os/ante/evm"
-	"github.com/evmos/os/crypto/ethsecp256k1"
+	osecp256k1 "github.com/evmos/os/crypto/ethsecp256k1"
 	srvflags "github.com/evmos/os/server/flags"
 	ethermint "github.com/evmos/os/types"
 
@@ -1094,6 +1095,10 @@ func RealioSigVerificationGasConsumer(
 ) error {
 	pubkey := sig.PubKey
 	switch pubkey := pubkey.(type) {
+	case *osecp256k1.PubKey:
+		// Ethereum keys
+		meter.ConsumeGas(evmosante.Secp256k1VerifyCost, "ante verify: eth_secp256k1")
+		return nil
 	case *ethsecp256k1.PubKey:
 		// Ethereum keys
 		meter.ConsumeGas(evmosante.Secp256k1VerifyCost, "ante verify: eth_secp256k1")
