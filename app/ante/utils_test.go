@@ -30,7 +30,8 @@ import (
 	protov2 "google.golang.org/protobuf/proto"
 
 	cryptocodec "github.com/evmos/os/crypto/codec"
-	"github.com/evmos/os/crypto/ethsecp256k1"
+	osecp256k1 "github.com/evmos/os/crypto/ethsecp256k1"
+	ethcryptocodec "github.com/realiotech/realio-network/crypto/codec"
 
 	"github.com/evmos/os/encoding"
 	"github.com/evmos/os/ethereum/eip712"
@@ -73,7 +74,7 @@ func (mah *MockAnteHandler) AnteHandle(ctx sdk.Context, _ sdk.Tx, _ bool) (sdk.C
 
 func (suite *AnteTestSuite) SetupTest() {
 	t := suite.T()
-	privCons, err := ethsecp256k1.GenerateKey()
+	privCons, err := osecp256k1.GenerateKey()
 	require.NoError(t, err)
 	consAddress := sdk.ConsAddress(privCons.PubKey().Address())
 
@@ -243,15 +244,15 @@ func createNestedMsgExec(a sdk.AccAddress, nestedLvl int, lastLvlMsgs []sdk.Msg)
 	return msgs[nestedLvl-1]
 }
 
-func generatePrivKeyAddressPairs(accCount int) ([]*ethsecp256k1.PrivKey, []sdk.AccAddress, error) {
+func generatePrivKeyAddressPairs(accCount int) ([]*osecp256k1.PrivKey, []sdk.AccAddress, error) {
 	var (
 		err           error
-		testPrivKeys  = make([]*ethsecp256k1.PrivKey, accCount)
+		testPrivKeys  = make([]*osecp256k1.PrivKey, accCount)
 		testAddresses = make([]sdk.AccAddress, accCount)
 	)
 
 	for i := range testPrivKeys {
-		testPrivKeys[i], err = ethsecp256k1.GenerateKey()
+		testPrivKeys[i], err = osecp256k1.GenerateKey()
 		if err != nil {
 			return nil, nil, err
 		}
@@ -260,7 +261,7 @@ func generatePrivKeyAddressPairs(accCount int) ([]*ethsecp256k1.PrivKey, []sdk.A
 	return testPrivKeys, testAddresses, nil
 }
 
-func createTx(priv *ethsecp256k1.PrivKey, msgs ...sdk.Msg) (sdk.Tx, error) {
+func createTx(priv *osecp256k1.PrivKey, msgs ...sdk.Msg) (sdk.Tx, error) {
 	encodingConfig := encoding.MakeConfig()
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 
@@ -326,6 +327,7 @@ func createEIP712CosmosTx(
 	types.RegisterInterfaces(registry)
 	ethermintCodec := codec.NewProtoCodec(registry)
 	cryptocodec.RegisterInterfaces(registry)
+	ethcryptocodec.RegisterInterfaces(registry)
 
 	coinAmount := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(20))
 	amount := sdk.NewCoins(coinAmount)

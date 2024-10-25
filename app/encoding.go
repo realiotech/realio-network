@@ -19,6 +19,7 @@ import (
 	evmostypes "github.com/evmos/os/types"
 	erc20types "github.com/evmos/os/x/erc20/types"
 	evmtypes "github.com/evmos/os/x/evm/types"
+	ethcryptocodec "github.com/realiotech/realio-network/crypto/codec"
 )
 
 // MakeEncodingConfig creates the EncodingConfig for realio network
@@ -49,6 +50,8 @@ func MakeEncodingConfig() params.EncodingConfig {
 	evmostypes.RegisterInterfaces(interfaceRegistry)
 	evmcryptocodec.RegisterCrypto(legacyAmino)
 	evmcryptocodec.RegisterInterfaces(interfaceRegistry)
+	ethcryptocodec.RegisterCrypto(legacyAmino)
+	ethcryptocodec.RegisterInterfaces(interfaceRegistry)
 
 	// This is needed for the EIP712 txs because currently is using
 	// the deprecated method legacytx.StdSignBytes

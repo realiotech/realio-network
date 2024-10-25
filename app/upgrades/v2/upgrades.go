@@ -2,7 +2,9 @@ package v2
 
 import (
 	"context"
+	"time"
 
+	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -24,9 +26,12 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	"github.com/ethereum/go-ethereum/common"
 	evmkeeper "github.com/evmos/os/x/evm/keeper"
 	evmtypes "github.com/evmos/os/x/evm/types"
+	evmaccount "github.com/realiotech/realio-network/crypto/account"
 	assettypes "github.com/realiotech/realio-network/x/asset/types"
+	bridgekeeper "github.com/realiotech/realio-network/x/bridge/keeper"
 	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 )
 
@@ -37,6 +42,7 @@ func CreateUpgradeHandler(
 	paramskeeper paramskeeper.Keeper,
 	consensuskeeper consensusparamkeeper.Keeper,
 	IBCKeeper ibckeeper.Keeper,
+	bridgeKeeper bridgekeeper.Keeper,
 	accountKeeper authkeeper.AccountKeeper,
 	evmKeeper *evmkeeper.Keeper,
 	EvmStoreKey storetypes.StoreKey,
@@ -94,8 +100,67 @@ func CreateUpgradeHandler(
 		}
 
 		delete(vm, evmtypes.ModuleName)
-		return mm.RunMigrations(ctx, configurator, vm)
+		MigrateEthAccountsToBaseAccounts(sdkCtx, accountKeeper, evmKeeper)
+
+		// Run migrations and init genesis for bridge module
+		newVM, err := mm.RunMigrations(ctx, configurator, vm)
+		if err != nil {
+			return nil, err
+		}
+
+		// Update bridge genesis state
+		err = bridgeKeeper.Params.Set(ctx, bridgetypes.NewParams("realio15md2mg7w62xf53gdnv7m06lpumunuhqrm5fuxl"))
+		if err != nil {
+			return nil, err
+		}
+		err = bridgeKeeper.RegisteredCoins.Set(ctx, "ario", bridgetypes.RateLimit{
+			Ratelimit:     math.Int(math.NewUintFromString("1000000000000000000000000")),
+			CurrentInflow: math.ZeroInt(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		err = bridgeKeeper.RegisteredCoins.Set(ctx, "arst", bridgetypes.RateLimit{
+			Ratelimit:     math.Int(math.NewUintFromString("1000000000000000000000000")),
+			CurrentInflow: math.ZeroInt(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		err = bridgeKeeper.EpochInfo.Set(ctx, bridgetypes.EpochInfo{
+			StartTime:            time.Unix(int64(1729763876), 0),
+			Duration:             time.Minute,
+			EpochCountingStarted: false,
+		})
+		if err != nil {
+			return nil, err
+		}
+
+		return newVM, nil
 	}
+}
+
+// MigrateEthAccountsToBaseAccounts is used to store the code hash of the associated
+// smart contracts in the dedicated store in the EVM module and convert the former
+// EthAccounts to standard Cosmos SDK accounts.
+func MigrateEthAccountsToBaseAccounts(ctx sdk.Context, ak authkeeper.AccountKeeper, ek *evmkeeper.Keeper) {
+	ak.IterateAccounts(ctx, func(account sdk.AccountI) (stop bool) {
+		ethAcc, ok := account.(*evmaccount.EthAccount)
+		if !ok {
+			return false
+		}
+
+		// NOTE: we only need to add store entries for smart contracts
+		codeHashBytes := common.HexToHash(ethAcc.CodeHash).Bytes()
+		if !evmtypes.IsEmptyCodeHash(codeHashBytes) {
+			ek.SetCodeHash(ctx, ethAcc.EthAddress().Bytes(), codeHashBytes)
+		}
+
+		// Set the base account in the account keeper instead of the EthAccount
+		ak.SetAccount(ctx, ethAcc.BaseAccount)
+
+		return false
+	})
 }
 
 func deleteKVStore(kv storetypes.KVStore) error {
