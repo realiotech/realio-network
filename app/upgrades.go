@@ -12,6 +12,7 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	evmtypes "github.com/evmos/os/x/evm/types"
 )
 
 // BaseAppParamManager defines an interrace that BaseApp is expected to fullfil
@@ -55,7 +56,7 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 			app.ParamsKeeper,
 			app.ConsensusParamsKeeper,
 			*app.IBCKeeper,
-			app.CommitMultiStore().GetKVStore(app.keys["evm"]),
+			app.CommitMultiStore().GetKVStore(app.keys[evmtypes.StoreKey]),
 		),
 	)
 

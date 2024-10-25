@@ -86,6 +86,7 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
+		delete(vm, evmtypes.ModuleName)
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }
