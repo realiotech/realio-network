@@ -56,7 +56,9 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 			app.ParamsKeeper,
 			app.ConsensusParamsKeeper,
 			*app.IBCKeeper,
-			app.CommitMultiStore().GetKVStore(app.keys[evmtypes.StoreKey]),
+			app.AccountKeeper,
+			app.EvmKeeper,
+			app.keys[evmtypes.StoreKey],
 		),
 	)
 

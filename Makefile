@@ -1,6 +1,7 @@
 PACKAGES_NOSIMULATION=$(shell go list ./... | grep -v '/simulation')
 VERSION ?= $(shell echo $(shell git describe --tags --always) | sed 's/^v//')
 TMVERSION := $(shell go list -m github.com/cometbft/cometbft | sed 's:.* ::')
+EVM_DENOM := ario
 COMMIT := $(shell git log -1 --format='%H')
 LEDGER_ENABLED ?= true
 BINDIR ?= $(GOPATH)/bin
@@ -63,7 +64,8 @@ ldflags = -X github.com/cosmos/cosmos-sdk/version.Name=realio-network \
           -X github.com/cosmos/cosmos-sdk/version.AppName=$(REALIO_BINARY) \
           -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
           -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT) \
-          -X github.com/cometbft/cometbft/version.TMCoreSemVer=$(TMVERSION)
+          -X github.com/cometbft/cometbft/version.TMCoreSemVer=$(TMVERSION) \
+		  -X github.com/evmos/os/x/evm/types.DefaultEVMDenom=$(EVM_DENOM)
 
 # DB backend selection
 ifeq (cleveldb,$(findstring cleveldb,$(COSMOS_BUILD_OPTIONS)))

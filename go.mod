@@ -35,6 +35,7 @@ require (
 	github.com/spf13/cast v1.7.0
 	github.com/spf13/cobra v1.8.1
 	github.com/spf13/pflag v1.0.5
+	github.com/spf13/viper v1.19.0
 	github.com/stretchr/testify v1.9.0
 	golang.org/x/sync v0.8.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20240701130421-f6361c86f094
@@ -200,7 +201,6 @@ require (
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
 	github.com/sourcegraph/conc v0.3.0 // indirect
 	github.com/spf13/afero v1.11.0 // indirect
-	github.com/spf13/viper v1.19.0 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
@@ -252,13 +252,8 @@ replace (
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc4
 
-	// fork evmos-os to suite realio's ethermint migrations
-	github.com/evmos/os => github.com/decentrio/evmos-os v0.0.0-20241021100424-9e6ab5217707
-
 	// github.com/realio-tech/multi-staking-module => ../multi-staking
 	// github.com/evmos/os => ../evmos-os
-
-	github.com/evmos/os/example_chain => github.com/decentrio/evmos-os/example_chain v0.0.0-20241021100424-9e6ab5217707
 
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1

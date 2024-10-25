@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
@@ -23,8 +24,10 @@ import (
 	clienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
 	"github.com/cosmos/ibc-go/v8/modules/core/exported"
 	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
+	evmkeeper "github.com/evmos/os/x/evm/keeper"
 	evmtypes "github.com/evmos/os/x/evm/types"
 	assettypes "github.com/realiotech/realio-network/x/asset/types"
+	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v2
@@ -34,7 +37,9 @@ func CreateUpgradeHandler(
 	paramskeeper paramskeeper.Keeper,
 	consensuskeeper consensusparamkeeper.Keeper,
 	IBCKeeper ibckeeper.Keeper,
-	EvmStore storetypes.KVStore,
+	accountKeeper authkeeper.AccountKeeper,
+	evmKeeper *evmkeeper.Keeper,
+	EvmStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 
@@ -47,6 +52,8 @@ func CreateUpgradeHandler(
 				keyTable = evmtypes.ParamKeyTable() //nolint:staticcheck
 			case assettypes.ModuleName:
 				keyTable = assettypes.ParamKeyTable() //nolint:staticcheck
+			case bridgetypes.ModuleName:
+				keyTable = bridgetypes.ParamKeyTable() //nolint:staticcheck
 			case banktypes.ModuleName:
 				keyTable = banktypes.ParamKeyTable() //nolint:staticcheck
 			case stakingtypes.ModuleName:
@@ -81,7 +88,7 @@ func CreateUpgradeHandler(
 		params.AllowedClients = append(params.AllowedClients, exported.Localhost)
 		IBCKeeper.ClientKeeper.SetParams(sdkCtx, params)
 
-		err := deleteKVStore(EvmStore)
+		err := deleteKVStore(sdkCtx.KVStore(EvmStoreKey))
 		if err != nil {
 			return nil, err
 		}
