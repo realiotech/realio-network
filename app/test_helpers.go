@@ -103,7 +103,7 @@ func Setup(
 	}
 
 	db := dbm.NewMemDB()
-	opt := baseapp.SetChainID(types.MainnetChainID)
+	opt := baseapp.SetChainID(types.MainnetChainID + "-1")
 	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, encCdc, simtestutil.EmptyAppOptions{}, opt)
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
@@ -127,7 +127,7 @@ func Setup(
 		// Initialize the chain
 		if _, err = app.InitChain(
 			&abci.RequestInitChain{
-				ChainId:         types.MainnetChainID,
+				ChainId:         types.MainnetChainID + "-1",
 				Validators:      []abci.ValidatorUpdate{},
 				ConsensusParams: DefaultConsensusParams,
 				AppStateBytes:   stateBytes,

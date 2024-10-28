@@ -8,9 +8,12 @@ func (suite *KeeperTestSuite) TestGRPCQuery() {
 	ratelimits, err := suite.queryClient.RateLimits(suite.ctx, &types.QueryRateLimitsRequest{})
 	suite.Require().NoError(err)
 
-	expectedRateLimits := []types.RateLimit{}
-	err = suite.app.BridgeKeeper.RegisteredCoins.Walk(suite.ctx, nil, func(_ string, ratelimit types.RateLimit) (stop bool, err error) {
-		expectedRateLimits = append(expectedRateLimits, ratelimit)
+	expectedRateLimits := []types.DenomAndRateLimit{}
+	err = suite.app.BridgeKeeper.RegisteredCoins.Walk(suite.ctx, nil, func(denom string, ratelimit types.RateLimit) (stop bool, err error) {
+		expectedRateLimits = append(expectedRateLimits, types.DenomAndRateLimit{
+			Denom:     denom,
+			RateLimit: ratelimit,
+		})
 		return false, nil
 	})
 	suite.Require().NoError(err)

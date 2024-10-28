@@ -84,7 +84,7 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	suite.ctx = suite.app.BaseApp.NewContextLegacy(isCheckTx, tmproto.Header{
 		Height:          1,
-		ChainID:         realionetworktypes.MainnetChainID,
+		ChainID:         realionetworktypes.MainnetChainID + "-1",
 		Time:            time.Now().UTC(),
 		ProposerAddress: consAddress.Bytes(),
 
@@ -292,7 +292,7 @@ func createTx(priv *osecp256k1.PrivKey, msgs ...sdk.Msg) (sdk.Tx, error) {
 	}
 
 	signerData := authsigning.SignerData{
-		ChainID:       realionetworktypes.MainnetChainID,
+		ChainID:       realionetworktypes.MainnetChainID + "-1",
 		AccountNumber: 0,
 		Sequence:      0,
 	}
@@ -335,8 +335,8 @@ func createEIP712CosmosTx(
 
 	fee := legacytx.NewStdFee(gas, amount) //nolint:staticcheck // ignore staticcheck for deprecated NewStdFee
 
-	data := legacytx.StdSignBytes(realionetworktypes.MainnetChainID, 0, 0, 0, fee, msgs, "")
-	pc, err := types.ParseChainID(realionetworktypes.MainnetChainID)
+	data := legacytx.StdSignBytes(realionetworktypes.MainnetChainID+"-1", 0, 0, 0, fee, msgs, "")
+	pc, err := types.ParseChainID(realionetworktypes.MainnetChainID + "-1")
 	if err != nil {
 		return nil, err
 	}

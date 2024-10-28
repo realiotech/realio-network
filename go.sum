@@ -494,8 +494,8 @@ github.com/evmos/go-ethereum v1.10.26-evmos-rc4 h1:vwDVMScuB2KSu8ze5oWUuxm6v3bMU
 github.com/evmos/go-ethereum v1.10.26-evmos-rc4/go.mod h1:/6CsT5Ceen2WPLI/oCA3xMcZ5sWMF/D46SjM/ayY0Oo=
 github.com/evmos/os v0.0.0-20241002122822-02a9121016ee h1:lPqHHT7ezQbrF7NLK2tCCjD8NQ31TeNXW7l4nNFWslI=
 github.com/evmos/os v0.0.0-20241002122822-02a9121016ee/go.mod h1:uQQyppk8z2C7Ypk/zj8/wnJSrf74rY8cXLzsD8F1tEE=
-github.com/evmos/os/example_chain v0.0.0-20240924163020-b2a4187dad50 h1:zWJYHc0WXE5YnuzYJnUzjMwuloxSz5ALCoNSzcuhKsA=
-github.com/evmos/os/example_chain v0.0.0-20240924163020-b2a4187dad50/go.mod h1:+SPMqw9wtbWO3jG02uLbLtVVjMHBldmXTN51kxbWqJ8=
+github.com/evmos/os/example_chain v0.0.0-20241002122822-02a9121016ee h1:BZpePPAM2zYn8P9EkU14K0p4TTgwEQJLaQG4FjNh99Q=
+github.com/evmos/os/example_chain v0.0.0-20241002122822-02a9121016ee/go.mod h1:+SPMqw9wtbWO3jG02uLbLtVVjMHBldmXTN51kxbWqJ8=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.13.0/go.mod h1:kLAiJbzzSOZDVNGyDpeOxJ47H46qBXwg5ILebYFFOfk=
 github.com/fatih/color v1.17.0 h1:GlRw1BRJxkpqUCBKzKOw098ed57fEsKeNjpTe3cSjK4=
