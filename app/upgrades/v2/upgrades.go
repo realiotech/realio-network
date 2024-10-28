@@ -48,7 +48,6 @@ func CreateUpgradeHandler(
 	EvmStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
-
 		for _, subspace := range paramsKeeper.GetSubspaces() {
 			subspace := subspace
 

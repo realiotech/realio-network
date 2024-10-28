@@ -5,11 +5,11 @@ package codec
 import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
-	"github.com/realiotech/realio-network/crypto/ethsecp256k1"
 	"github.com/realiotech/realio-network/crypto/account"
+	"github.com/realiotech/realio-network/crypto/ethsecp256k1"
 )
 
 // RegisterInterfaces register the evmOS key concrete types.

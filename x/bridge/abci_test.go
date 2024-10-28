@@ -19,7 +19,7 @@ func TestRateLimitTrigger(t *testing.T) {
 	realio := app.Setup(false, nil, 1)
 	ctx := realio.BaseApp.NewContext(true)
 	err := realio.BridgeKeeper.RegisteredCoins.Set(ctx, app.MultiStakingCoinA.Denom, types.RateLimit{
-		Ratelimit: math.NewInt(1000000000),
+		Ratelimit:     math.NewInt(1000000000),
 		CurrentInflow: math.NewInt(100000000),
 	})
 	rateLimit, err := realio.BridgeKeeper.RegisteredCoins.Get(ctx, app.MultiStakingCoinA.Denom)
