@@ -15,8 +15,6 @@ import (
 var (
 	_ authtypes.AccountI                 = (*EthAccount)(nil)
 	_ authtypes.AccountI                 = (*EthAccount)(nil)
-	_ EthAccountI                        = (*EthAccount)(nil)
-	_ EthAccountI                        = (*EthAccount)(nil)
 	_ authtypes.GenesisAccount           = (*EthAccount)(nil)
 	_ authtypes.GenesisAccount           = (*EthAccount)(nil)
 	_ codectypes.UnpackInterfacesMessage = (*EthAccount)(nil)
@@ -31,31 +29,6 @@ const (
 	// AccountTypeContract defines the type for contract accounts
 	AccountTypeContract
 )
-
-// EthAccountI represents the interface of an EVM compatible account
-type EthAccountI interface {
-	authtypes.AccountI
-	// EthAddress returns the ethereum Address representation of the AccAddress
-	EthAddress() common.Address
-	// CodeHash is the keccak256 hash of the contract code (if any)
-	GetCodeHash() common.Hash
-	// SetCodeHash sets the code hash to the account fields
-	SetCodeHash(code common.Hash) error
-	// Type returns the type of Ethereum Account (EOA or Contract)
-	Type() int8
-}
-
-// ----------------------------------------------------------------------------
-// Main Evmos account
-// ----------------------------------------------------------------------------
-// ProtoAccount defines the prototype function for BaseAccount used for an
-// AccountKeeper.
-func ProtoAccount() authtypes.AccountI {
-	return &EthAccount{
-		BaseAccount: &authtypes.BaseAccount{},
-		CodeHash:    common.BytesToHash(emptyCodeHash).String(),
-	}
-}
 
 // GetBaseAccount returns base account.
 func (acc EthAccount) GetBaseAccount() *authtypes.BaseAccount {
