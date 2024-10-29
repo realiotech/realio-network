@@ -56,7 +56,6 @@ import (
 
 	"github.com/evmos/os/crypto/hd"
 	"github.com/evmos/os/server/config"
-	evmsrvconfig "github.com/evmos/os/server/config"
 	ethermint "github.com/evmos/os/types"
 
 	"github.com/realiotech/realio-network/app"
@@ -494,7 +493,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			return nil, err
 		}
 
-		customAppTemplate := srvconfig.DefaultConfigTemplate + evmsrvconfig.DefaultEVMConfigTemplate
+		customAppTemplate := srvconfig.DefaultConfigTemplate + config.DefaultEVMConfigTemplate
 		srvconfig.SetConfigTemplate(customAppTemplate)
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), appCfg)
 

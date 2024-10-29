@@ -8,6 +8,6 @@ import (
 
 type MockErc20Keeper struct{}
 
-func (k MockErc20Keeper) GetERC20PrecompileInstance(ctx sdk.Context, address common.Address) (contract vm.PrecompiledContract, found bool, err error) {
+func (k MockErc20Keeper) GetERC20PrecompileInstance(_ sdk.Context, _ common.Address) (contract vm.PrecompiledContract, found bool, err error) {
 	return nil, false, nil
 }

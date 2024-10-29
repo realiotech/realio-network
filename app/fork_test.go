@@ -28,8 +28,10 @@ func TestFork(t *testing.T) {
 		},
 	}
 
-	stakingKeeper.InsertUBDQueue(ctx, duplicativeUnbondingDelegation, timeKey)
-	stakingKeeper.InsertUBDQueue(ctx, duplicativeUnbondingDelegation, timeKey)
+	err := stakingKeeper.InsertUBDQueue(ctx, duplicativeUnbondingDelegation, timeKey)
+	require.NoError(t, err)
+	err = stakingKeeper.InsertUBDQueue(ctx, duplicativeUnbondingDelegation, timeKey)
+	require.NoError(t, err)
 
 	duplicativeRedelegation := stakingtypes.Redelegation{
 		DelegatorAddress:    "test_del_1",
@@ -39,9 +41,14 @@ func TestFork(t *testing.T) {
 			stakingtypes.NewRedelegationEntry(ForkHeight, timeKey, math.OneInt(), math.LegacyOneDec(), 0),
 		},
 	}
-	stakingKeeper.InsertRedelegationQueue(ctx, duplicativeRedelegation, timeKey)
-	stakingKeeper.InsertRedelegationQueue(ctx, duplicativeRedelegation, timeKey)
-	stakingKeeper.InsertRedelegationQueue(ctx, duplicativeRedelegation, timeKey)
+	err = stakingKeeper.InsertRedelegationQueue(ctx, duplicativeRedelegation, timeKey)
+	require.NoError(t, err)
+
+	err = stakingKeeper.InsertRedelegationQueue(ctx, duplicativeRedelegation, timeKey)
+	require.NoError(t, err)
+
+	err = stakingKeeper.InsertRedelegationQueue(ctx, duplicativeRedelegation, timeKey)
+	require.NoError(t, err)
 
 	duplicativeVal := stakingtypes.Validator{
 		OperatorAddress: "test_op",
@@ -49,8 +56,11 @@ func TestFork(t *testing.T) {
 		UnbondingTime:   timeKey,
 	}
 
-	stakingKeeper.InsertUnbondingValidatorQueue(ctx, duplicativeVal)
-	stakingKeeper.InsertUnbondingValidatorQueue(ctx, duplicativeVal)
+	err = stakingKeeper.InsertUnbondingValidatorQueue(ctx, duplicativeVal)
+	require.NoError(t, err)
+
+	err = stakingKeeper.InsertUnbondingValidatorQueue(ctx, duplicativeVal)
+	require.NoError(t, err)
 
 	require.True(t, checkDuplicateUBDQueue(ctx, *realio))
 	require.True(t, checkDuplicateRelegationQueue(ctx, *realio))

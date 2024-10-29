@@ -41,11 +41,11 @@ func CreateUpgradeHandler(
 	configurator module.Configurator,
 	paramsKeeper paramskeeper.Keeper,
 	consensusKeeper consensusparamkeeper.Keeper,
-	IBCKeeper ibckeeper.Keeper,
+	ibcKeeper ibckeeper.Keeper,
 	bridgeKeeper bridgekeeper.Keeper,
 	accountKeeper authkeeper.AccountKeeper,
 	evmKeeper *evmkeeper.Keeper,
-	EvmStoreKey storetypes.StoreKey,
+	evmStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		for _, subspace := range paramsKeeper.GetSubspaces() {
@@ -54,27 +54,27 @@ func CreateUpgradeHandler(
 			var keyTable paramstypes.KeyTable
 			switch subspace.Name() {
 			case evmtypes.ModuleName:
-				keyTable = evmtypes.ParamKeyTable() //nolint:staticcheck
+				keyTable = evmtypes.ParamKeyTable() //nolint: staticcheck // SA1019
 			case assettypes.ModuleName:
-				keyTable = assettypes.ParamKeyTable() //nolint:staticcheck
+				keyTable = assettypes.ParamKeyTable()
 			case bridgetypes.ModuleName:
-				keyTable = bridgetypes.ParamKeyTable() //nolint:staticcheck
+				keyTable = bridgetypes.ParamKeyTable()
 			case banktypes.ModuleName:
-				keyTable = banktypes.ParamKeyTable() //nolint:staticcheck
+				keyTable = banktypes.ParamKeyTable() //nolint: staticcheck // SA1019
 			case stakingtypes.ModuleName:
-				keyTable = stakingtypes.ParamKeyTable() //nolint:staticcheck
+				keyTable = stakingtypes.ParamKeyTable() //nolint: staticcheck // SA1019
 			case minttypes.ModuleName:
-				keyTable = minttypes.ParamKeyTable() //nolint:staticcheck
+				keyTable = minttypes.ParamKeyTable() //nolint: staticcheck // SA1019
 			case distrtypes.ModuleName:
-				keyTable = distrtypes.ParamKeyTable() //nolint:staticcheck
+				keyTable = distrtypes.ParamKeyTable() //nolint: staticcheck // SA1019
 			case slashingtypes.ModuleName:
-				keyTable = slashingtypes.ParamKeyTable() //nolint:staticcheck
+				keyTable = slashingtypes.ParamKeyTable() //nolint: staticcheck // SA1019
 			case govtypes.ModuleName:
-				keyTable = govv1.ParamKeyTable() //nolint:staticcheck
+				keyTable = govv1.ParamKeyTable() //nolint: staticcheck // SA1019
 			case crisistypes.ModuleName:
-				keyTable = crisistypes.ParamKeyTable() //nolint:staticcheck
+				keyTable = crisistypes.ParamKeyTable() //nolint: staticcheck // SA1019
 			case authtypes.ModuleName:
-				keyTable = authtypes.ParamKeyTable() //nolint:staticcheck
+				keyTable = authtypes.ParamKeyTable() //nolint: staticcheck // SA1019
 			}
 
 			if !subspace.HasKeyTable() {
@@ -84,20 +84,19 @@ func CreateUpgradeHandler(
 
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 		legacyBaseAppSubspace := paramsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramstypes.ConsensusParamsKeyTable())
-		baseapp.MigrateParams(sdkCtx, legacyBaseAppSubspace, consensusKeeper.ParamsStore)
+		err := baseapp.MigrateParams(sdkCtx, legacyBaseAppSubspace, consensusKeeper.ParamsStore)
+		if err != nil {
+			return nil, err
+		}
 
 		legacyClientSubspace, _ := paramsKeeper.GetSubspace(exported.ModuleName)
 		var params clienttypes.Params
 		legacyClientSubspace.GetParamSet(sdkCtx, &params)
 
 		params.AllowedClients = append(params.AllowedClients, exported.Localhost)
-		IBCKeeper.ClientKeeper.SetParams(sdkCtx, params)
+		ibcKeeper.ClientKeeper.SetParams(sdkCtx, params)
 
-		err := deleteKVStore(sdkCtx.KVStore(EvmStoreKey))
-		if err != nil {
-			return nil, err
-		}
-
+		deleteKVStore(sdkCtx.KVStore(evmStoreKey))
 		delete(vm, evmtypes.ModuleName)
 		MigrateEthAccountsToBaseAccounts(sdkCtx, accountKeeper, evmKeeper)
 
@@ -162,7 +161,7 @@ func MigrateEthAccountsToBaseAccounts(ctx sdk.Context, ak authkeeper.AccountKeep
 	})
 }
 
-func deleteKVStore(kv storetypes.KVStore) error {
+func deleteKVStore(kv storetypes.KVStore) {
 	// Note that we cannot write while iterating, so load all keys here, delete below
 	var keys [][]byte
 	itr := kv.Iterator(nil, nil)
@@ -175,5 +174,4 @@ func deleteKVStore(kv storetypes.KVStore) error {
 	for _, k := range keys {
 		kv.Delete(k)
 	}
-	return nil
 }

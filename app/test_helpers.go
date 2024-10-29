@@ -185,7 +185,7 @@ func GenesisStateWithValSet(app *RealioNetwork, genesisState simapp.GenesisState
 		locks = append(locks, lockRecord)
 		lockCoins = lockCoins.Add(valMsCoin.ToCoin())
 
-		pk, _ := cryptocodec.FromTmPubKeyInterface(val.PubKey)
+		pk, _ := cryptocodec.FromCmtPubKeyInterface(val.PubKey)
 
 		comm := stakingtypes.NewCommission(math.LegacyZeroDec(), math.LegacyZeroDec(), math.LegacyZeroDec())
 		pkAny, _ := codectypes.NewAnyWithValue(pk)

@@ -17,7 +17,7 @@ import (
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
-func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken) (*types.MsgCreateTokenResponse, error) {
+func (ms msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken) (*types.MsgCreateTokenResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Check if the value already exists
@@ -25,7 +25,7 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 	lowerCaseName := strings.ToLower(msg.Name)
 	baseDenom := fmt.Sprintf("a%s", lowerCaseSymbol)
 
-	isFound := k.bankKeeper.HasSupply(ctx, baseDenom)
+	isFound := ms.bankKeeper.HasSupply(ctx, baseDenom)
 	if isFound {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "token with denom %s already exists", baseDenom)
 	}
@@ -39,18 +39,18 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 
 	if msg.AuthorizationRequired {
 		// create authorization for module account and manager
-		assetModuleAddress := k.ak.GetModuleAddress(types.ModuleName)
+		assetModuleAddress := ms.ak.GetModuleAddress(types.ModuleName)
 		moduleAuthorization := types.NewAuthorization(assetModuleAddress)
 		newAuthorizationManager := types.NewAuthorization(managerAccAddress)
 		token.Authorized = append(token.Authorized, moduleAuthorization, newAuthorizationManager)
 	}
 
-	err = k.Token.Set(goCtx, types.TokenKey(lowerCaseSymbol), token)
+	err = ms.Token.Set(goCtx, types.TokenKey(lowerCaseSymbol), token)
 	if err != nil {
 		return nil, types.ErrSetTokenUnable
 	}
 
-	k.bankKeeper.SetDenomMetaData(ctx, bank.Metadata{
+	ms.bankKeeper.SetDenomMetaData(ctx, bank.Metadata{
 		Base: baseDenom, Symbol: lowerCaseSymbol, Name: lowerCaseName,
 		DenomUnits: []*bank.DenomUnit{{Denom: lowerCaseSymbol, Exponent: 18}, {Denom: baseDenom, Exponent: 0}},
 	})
@@ -61,12 +61,12 @@ func (k msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken)
 	canonicalAmount := totalInt.Mul(realionetworktypes.PowerReduction)
 	coin := sdk.Coins{{Denom: baseDenom, Amount: canonicalAmount}}
 
-	err = k.bankKeeper.MintCoins(ctx, types.ModuleName, coin)
+	err = ms.bankKeeper.MintCoins(ctx, types.ModuleName, coin)
 	if err != nil {
 		panic(err)
 	}
 
-	err = k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, managerAccAddress, coin)
+	err = ms.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, managerAccAddress, coin)
 	if err != nil {
 		panic(err)
 	}

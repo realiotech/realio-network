@@ -112,9 +112,7 @@ func CmdDeregisterCoins() *cobra.Command {
 			}
 
 			var denoms []string
-			for _, arg := range args[0 : len(args)-1] {
-				denoms = append(denoms, arg)
-			}
+			denoms = append(denoms, args[0:len(args)-1]...)
 
 			msg := &types.MsgDeregisterCoins{
 				Authority: clientCtx.GetFromAddress().String(),

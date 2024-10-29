@@ -44,10 +44,14 @@ func TestCommissionUpgrade(t *testing.T) {
 	validators[2].Commission.CommissionRates = comm2
 	validators[3].Commission.CommissionRates = comm3
 
-	app.StakingKeeper.SetValidator(ctx, validators[0])
-	app.StakingKeeper.SetValidator(ctx, validators[1])
-	app.StakingKeeper.SetValidator(ctx, validators[2])
-	app.StakingKeeper.SetValidator(ctx, validators[3])
+	err = app.StakingKeeper.SetValidator(ctx, validators[0])
+	require.NoError(t, err)
+	err = app.StakingKeeper.SetValidator(ctx, validators[1])
+	require.NoError(t, err)
+	err = app.StakingKeeper.SetValidator(ctx, validators[2])
+	require.NoError(t, err)
+	err = app.StakingKeeper.SetValidator(ctx, validators[3])
+	require.NoError(t, err)
 
 	upgradePlan := upgradetypes.Plan{
 		Name:   commission.UpgradeName,
@@ -57,7 +61,8 @@ func TestCommissionUpgrade(t *testing.T) {
 	require.NoError(t, err)
 
 	ctx = ctx.WithBlockHeader(tmproto.Header{Time: time.Now()})
-	app.UpgradeKeeper.ApplyUpgrade(ctx, upgradePlan)
+	err = app.UpgradeKeeper.ApplyUpgrade(ctx, upgradePlan)
+	require.NoError(t, err)
 
 	validatorsAfter, err := app.StakingKeeper.GetAllValidators(ctx)
 	require.NoError(t, err)

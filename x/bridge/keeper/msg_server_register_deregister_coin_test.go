@@ -13,14 +13,14 @@ func (suite *KeeperTestSuite) TestRegisterNewCoins() {
 	testAccAddress := testutil.GenAddress().String()
 	testCases := []struct {
 		name         string
-		msg          types.MsgRegisterNewCoins
+		msg          *types.MsgRegisterNewCoins
 		setAuthority bool
 		expectErr    bool
 		errString    string
 	}{
 		{
 			name: "valid MsgRegisterNewCoins",
-			msg: types.MsgRegisterNewCoins{
+			msg: &types.MsgRegisterNewCoins{
 				Authority: "",
 				Coins: sdk.NewCoins(
 					sdk.NewInt64Coin("eth", 1000000),
@@ -31,7 +31,7 @@ func (suite *KeeperTestSuite) TestRegisterNewCoins() {
 		},
 		{
 			name: "invalid MsgRegisterNewCoins; duplicated denom ario",
-			msg: types.MsgRegisterNewCoins{
+			msg: &types.MsgRegisterNewCoins{
 				Authority: "",
 				Coins: sdk.NewCoins(
 					sdk.NewInt64Coin("ario", 1000000),
@@ -43,7 +43,7 @@ func (suite *KeeperTestSuite) TestRegisterNewCoins() {
 		},
 		{
 			name: "invalid MsgRegisterNewCoins; duplicated denom bar",
-			msg: types.MsgRegisterNewCoins{
+			msg: &types.MsgRegisterNewCoins{
 				Authority: "",
 				Coins: sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 1000000),
@@ -55,7 +55,7 @@ func (suite *KeeperTestSuite) TestRegisterNewCoins() {
 		},
 		{
 			name: "invalid MsgRegisterNewCoins; unauthorized",
-			msg: types.MsgRegisterNewCoins{
+			msg: &types.MsgRegisterNewCoins{
 				Authority: testAccAddress,
 				Coins: sdk.NewCoins(
 					sdk.NewInt64Coin("eth", 1000000),
@@ -87,7 +87,7 @@ func (suite *KeeperTestSuite) TestRegisterNewCoins() {
 				tc.msg.Authority = suite.admin
 			}
 
-			_, err = srv.RegisterNewCoins(suite.ctx, &tc.msg)
+			_, err = srv.RegisterNewCoins(suite.ctx, tc.msg)
 			if tc.expectErr {
 				suite.Require().ErrorContains(err, tc.errString)
 			} else {
@@ -110,14 +110,14 @@ func (suite *KeeperTestSuite) TestDeregisterCoins() {
 	testAccAddress := testutil.GenAddress().String()
 	testCases := []struct {
 		name         string
-		msg          types.MsgDeregisterCoins
+		msg          *types.MsgDeregisterCoins
 		setAuthority bool
 		expectErr    bool
 		errString    string
 	}{
 		{
 			name: "valid MsgDeregisterCoins",
-			msg: types.MsgDeregisterCoins{
+			msg: &types.MsgDeregisterCoins{
 				Authority: "",
 				Denoms:    []string{"ario"},
 			},
@@ -126,7 +126,7 @@ func (suite *KeeperTestSuite) TestDeregisterCoins() {
 		},
 		{
 			name: "invalid MsgDeregisterCoins; coin not in register list",
-			msg: types.MsgDeregisterCoins{
+			msg: &types.MsgDeregisterCoins{
 				Authority: "",
 				Denoms:    []string{"eth"},
 			},
@@ -136,7 +136,7 @@ func (suite *KeeperTestSuite) TestDeregisterCoins() {
 		},
 		{
 			name: "invalid MsgDeregisterCoins; unauthorized",
-			msg: types.MsgDeregisterCoins{
+			msg: &types.MsgDeregisterCoins{
 				Authority: testAccAddress,
 				Denoms:    []string{"ario"},
 			},
@@ -156,7 +156,7 @@ func (suite *KeeperTestSuite) TestDeregisterCoins() {
 				tc.msg.Authority = suite.admin
 			}
 
-			_, err := srv.DeregisterCoins(suite.ctx, &tc.msg)
+			_, err := srv.DeregisterCoins(suite.ctx, tc.msg)
 			if tc.expectErr {
 				suite.Require().ErrorContains(err, tc.errString)
 			} else {

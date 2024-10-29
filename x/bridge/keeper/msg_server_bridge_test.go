@@ -12,14 +12,14 @@ func (suite *KeeperTestSuite) TestBridgeIn() {
 	testAccAddress := testutil.GenAddress().String()
 	testCases := []struct {
 		name         string
-		msg          types.MsgBridgeIn
+		msg          *types.MsgBridgeIn
 		setAuthority bool
 		expectErr    bool
 		errString    string
 	}{
 		{
 			name: "valid MsgBridgeIn",
-			msg: types.MsgBridgeIn{
+			msg: &types.MsgBridgeIn{
 				Authority: "",
 				Coin:      sdk.NewInt64Coin("ario", 1000000),
 			},
@@ -28,7 +28,7 @@ func (suite *KeeperTestSuite) TestBridgeIn() {
 		},
 		{
 			name: "invalid MsgBridgeIn; coin not in register list",
-			msg: types.MsgBridgeIn{
+			msg: &types.MsgBridgeIn{
 				Authority: "",
 				Coin:      sdk.NewInt64Coin("eth", 1000000),
 			},
@@ -38,7 +38,7 @@ func (suite *KeeperTestSuite) TestBridgeIn() {
 		},
 		{
 			name: "invalid MsgBridgeIn; unauthorized",
-			msg: types.MsgBridgeIn{
+			msg: &types.MsgBridgeIn{
 				Authority: testAccAddress,
 				Coin:      sdk.NewInt64Coin("ario", 1000000),
 			},
@@ -62,7 +62,7 @@ func (suite *KeeperTestSuite) TestBridgeIn() {
 			suite.Require().NoError(err)
 			prevBalance := suite.app.BankKeeper.GetBalance(suite.ctx, addr, tc.msg.Coin.Denom)
 
-			_, err = srv.BridgeIn(suite.ctx, &tc.msg)
+			_, err = srv.BridgeIn(suite.ctx, tc.msg)
 			if tc.expectErr {
 				suite.Require().ErrorContains(err, tc.errString)
 			} else {
@@ -81,13 +81,13 @@ func (suite *KeeperTestSuite) TestBridgeOut() {
 	prevBalance := sdk.NewInt64Coin("ario", 2000000)
 	testCases := []struct {
 		name      string
-		msg       types.MsgBridgeOut
+		msg       *types.MsgBridgeOut
 		expectErr bool
 		errString string
 	}{
 		{
 			name: "valid MsgBridgeOut",
-			msg: types.MsgBridgeOut{
+			msg: &types.MsgBridgeOut{
 				Signer: testAccAddress,
 				Coin:   sdk.NewInt64Coin("ario", 1000000),
 			},
@@ -95,7 +95,7 @@ func (suite *KeeperTestSuite) TestBridgeOut() {
 		},
 		{
 			name: "invalid MsgBridgeOut; coin not in register list",
-			msg: types.MsgBridgeOut{
+			msg: &types.MsgBridgeOut{
 				Signer: testAccAddress,
 				Coin:   sdk.NewInt64Coin("eth", 1000000),
 			},
@@ -104,7 +104,7 @@ func (suite *KeeperTestSuite) TestBridgeOut() {
 		},
 		{
 			name: "invalid MsgBridgeOut; insufficient funds",
-			msg: types.MsgBridgeOut{
+			msg: &types.MsgBridgeOut{
 				Signer: testAccAddress,
 				Coin:   sdk.NewInt64Coin("arst", 1000000),
 			},
@@ -124,7 +124,7 @@ func (suite *KeeperTestSuite) TestBridgeOut() {
 			err = suite.app.BankKeeper.SendCoins(suite.ctx, adminAcc, testAcc, sdk.NewCoins(prevBalance))
 			suite.Require().NoError(err)
 
-			_, err = srv.BridgeOut(suite.ctx, &tc.msg)
+			_, err = srv.BridgeOut(suite.ctx, tc.msg)
 			if tc.expectErr {
 				suite.Require().EqualError(err, tc.errString)
 			} else {

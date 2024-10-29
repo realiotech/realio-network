@@ -7,14 +7,15 @@ import (
 	"bytes"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
 )
 
 var (
-	_ authtypes.AccountI                 = (*EthAccount)(nil)
-	_ authtypes.AccountI                 = (*EthAccount)(nil)
+	_ sdk.AccountI                       = (*EthAccount)(nil)
+	_ sdk.AccountI                       = (*EthAccount)(nil)
 	_ authtypes.GenesisAccount           = (*EthAccount)(nil)
 	_ authtypes.GenesisAccount           = (*EthAccount)(nil)
 	_ codectypes.UnpackInterfacesMessage = (*EthAccount)(nil)

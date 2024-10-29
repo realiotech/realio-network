@@ -3,7 +3,7 @@ package v2_test
 import (
 	"testing"
 
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/assert"
 
 	storetypes "cosmossdk.io/store/types"
 
@@ -26,7 +26,7 @@ func newMockSubspace(ps types.Params) mockSubspace {
 	return mockSubspace{ps: ps}
 }
 
-func (ms mockSubspace) GetParamSet(ctx sdk.Context, ps exported.ParamSet) {
+func (ms mockSubspace) GetParamSet(_ sdk.Context, ps exported.ParamSet) {
 	*ps.(*types.Params) = ms.ps
 }
 
@@ -41,11 +41,11 @@ func TestMigrate(t *testing.T) {
 	store := kvStoreService.OpenKVStore(ctx)
 
 	legacySubspace := newMockSubspace(types.DefaultParams())
-	require.NoError(t, v2.Migrate(ctx, store, legacySubspace, cdc))
+	assert.NoError(t, v2.Migrate(ctx, store, legacySubspace, cdc))
 
 	var res types.Params
 	bz, err := store.Get(v2.ParamsKey)
-	require.NoError(t, err)
-	require.NoError(t, cdc.Unmarshal(bz, &res))
-	require.Equal(t, legacySubspace.ps, res)
+	assert.NoError(t, err)
+	assert.NoError(t, cdc.Unmarshal(bz, &res))
+	assert.Equal(t, legacySubspace.ps, res)
 }

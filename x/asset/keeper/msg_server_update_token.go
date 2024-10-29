@@ -10,16 +10,16 @@ import (
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
-func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken) (*types.MsgUpdateTokenResponse, error) {
+func (ms msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken) (*types.MsgUpdateTokenResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	existing, err := k.Token.Get(ctx, types.TokenKey(msg.Symbol))
+	existing, err := ms.Token.Get(ctx, types.TokenKey(msg.Symbol))
 	if err != nil {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists: %s", msg.Symbol, err.Error())
 	}
 
 	// Checks if the token manager signed
-	signers, _, err := k.cdc.GetMsgV1Signers(msg)
+	signers, _, err := ms.cdc.GetMsgV1Signers(msg)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken)
 		AuthorizationRequired: msg.AuthorizationRequired,
 	}
 
-	err = k.Token.Set(goCtx, types.TokenKey(msg.Symbol), token)
+	err = ms.Token.Set(goCtx, types.TokenKey(msg.Symbol), token)
 	if err != nil {
 		return nil, types.ErrSetTokenUnable
 	}

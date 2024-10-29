@@ -20,13 +20,13 @@ var _ = strconv.IntSize
 func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 	testCases := []struct {
 		name      string
-		msg       types.MsgCreateToken
+		msg       *types.MsgCreateToken
 		expectErr bool
 		errString string
 	}{
 		{
 			name: "valid MsgCreateToken",
-			msg: types.MsgCreateToken{
+			msg: &types.MsgCreateToken{
 				Manager: suite.testUser1Address,
 				Symbol:  "FOO", Total: "1000",
 			},
@@ -34,7 +34,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 		},
 		{
 			name: "invalid MsgCreateToken; duplicated denom ario",
-			msg: types.MsgCreateToken{
+			msg: &types.MsgCreateToken{
 				Manager: suite.testUser1Address,
 				Symbol:  "RIO", Total: "100",
 			},
@@ -43,7 +43,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 		},
 		{
 			name: "invalid MsgCreateToken; duplicated denom abar",
-			msg: types.MsgCreateToken{
+			msg: &types.MsgCreateToken{
 				Manager: suite.testUser1Address,
 				Symbol:  "BAR", Total: "100",
 			},
@@ -52,7 +52,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 		},
 		{
 			name: "invalid MsgCreateToken; invalid manager address",
-			msg: types.MsgCreateToken{
+			msg: &types.MsgCreateToken{
 				Manager: "invalid address",
 				Symbol:  "FOO", Total: "100",
 			},
@@ -66,7 +66,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 			suite.SetupTest()
 
 			srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-			wctx := sdk.WrapSDKContext(suite.ctx)
+			wctx := suite.ctx
 
 			// we created a token here with symbol "BAR"
 			// there's a test case to make sure we CANNOT create tokens with the same symbol
@@ -76,7 +76,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreate() {
 			})
 			suite.Require().NoError(err)
 
-			_, err = srv.CreateToken(wctx, &tc.msg)
+			_, err = srv.CreateToken(wctx, tc.msg)
 			if tc.expectErr {
 				suite.Require().EqualError(err, tc.errString)
 			} else {
@@ -99,7 +99,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateInvalidSender() {
 	suite.SetupTest()
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 	manager := "invalid"
 	expected := &types.MsgCreateToken{
 		Manager: manager,
@@ -113,7 +113,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateAuthorizationDefaultFalse(
 	suite.SetupTest()
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 	manager := suite.testUser1Address
 	expected := &types.MsgCreateToken{
 		Manager: manager,
@@ -131,7 +131,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateErrorDupIndex() {
 	suite.SetupTest()
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 	manager := suite.testUser1Address
 	t1 := &types.MsgCreateToken{
 		Manager: manager,
@@ -153,7 +153,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerCreateVerifyDistribution() {
 	suite.SetupTest()
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 	manager := suite.testUser1Address
 	t1 := &types.MsgCreateToken{
 		Manager: manager,
@@ -177,7 +177,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUpdate() {
 	suite.SetupTest()
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 	manager := suite.testUser1Address
 	t1 := &types.MsgCreateToken{
 		Manager: manager,
@@ -210,7 +210,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUpdateNotFound() {
 	suite.SetupTest()
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 	manager := suite.testUser1Address
 	t1 := &types.MsgCreateToken{
 		Manager: manager,
@@ -232,7 +232,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeAddress() {
 	suite.SetupTest()
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 	manager := suite.testUser1Address
 	testUser := suite.testUser2Address
 	t1 := &types.MsgCreateToken{
@@ -266,7 +266,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeTokenNotFound() {
 	suite.SetupTest()
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 	manager := suite.testUser1Address
 	testUser := suite.testUser2Address
 	t1 := &types.MsgCreateToken{
@@ -290,7 +290,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerAuthorizeAddressSenderUnauthoriz
 	suite.SetupTest()
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 	manager := suite.testUser1Address
 	manager2 := suite.testUser2Address
 	testUser := suite.testUser3Address
@@ -316,7 +316,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddress() {
 	suite.SetupTest()
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 	manager := suite.testUser1Address
 	testUser := suite.testUser2Address
 	t1 := &types.MsgCreateToken{
@@ -362,7 +362,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeTokenNotFound() {
 	suite.SetupTest()
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 	manager := suite.testUser1Address
 	testUser := suite.testUser2Address
 	t1 := &types.MsgCreateToken{
@@ -386,7 +386,7 @@ func (suite *KeeperTestSuite) TestTokenMsgServerUnAuthorizeAddressSenderUnauthor
 	suite.SetupTest()
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 	manager := suite.testUser1Address
 	manager2 := suite.testUser2Address
 	testUser := suite.testUser3Address

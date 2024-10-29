@@ -8,7 +8,6 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
 	"github.com/cometbft/cometbft/version"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/ethereum/go-ethereum/common"
 
 	"github.com/evmos/os/crypto/ethsecp256k1"
@@ -32,8 +31,6 @@ type KeeperTestSuite struct {
 	ctx         sdk.Context
 	queryClient types.QueryClient
 	address     common.Address
-
-	legacyQuerierCdc *codec.AminoCodec
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
@@ -85,8 +82,6 @@ func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 	queryHelper := baseapp.NewQueryServerTestHelper(suite.ctx, suite.app.InterfaceRegistry())
 	types.RegisterQueryServer(queryHelper, keeper.NewQueryServerImpl(suite.app.MintKeeper))
 	suite.queryClient = types.NewQueryClient(queryHelper)
-
-	suite.legacyQuerierCdc = codec.NewAminoCodec(suite.app.LegacyAmino())
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -112,7 +107,8 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	// block 2
 	header := tmproto.Header{Height: currentHeight + 1}
 	suite.ctx = suite.ctx.WithBlockHeader(header)
-	suite.app.BeginBlocker(suite.ctx)
+	_, err = suite.app.BeginBlocker(suite.ctx)
+	suite.Require().NoError(err)
 
 	newSupply := suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
 	expectedMintedAmount := newSupply.Sub(currentSupply).String()
@@ -128,7 +124,8 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	// block 3
 	header = tmproto.Header{Height: currentHeight + 1}
 	suite.ctx = suite.ctx.WithBlockHeader(header)
-	suite.app.BeginBlocker(suite.ctx)
+	_, err = suite.app.BeginBlocker(suite.ctx)
+	suite.Require().NoError(err)
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
 	expectedMintedAmount = newSupply.Sub(currentSupply).String()
@@ -144,7 +141,8 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	// block 4
 	header = tmproto.Header{Height: currentHeight + 1}
 	suite.ctx = suite.ctx.WithBlockHeader(header)
-	suite.app.BeginBlocker(suite.ctx)
+	_, err = suite.app.BeginBlocker(suite.ctx)
+	suite.Require().NoError(err)
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
 	expectedMintedAmount = newSupply.Sub(currentSupply).String()
@@ -160,7 +158,8 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	// block 5
 	header = tmproto.Header{Height: currentHeight + 1}
 	suite.ctx = suite.ctx.WithBlockHeader(header)
-	suite.app.BeginBlocker(suite.ctx)
+	_, err = suite.app.BeginBlocker(suite.ctx)
+	suite.Require().NoError(err)
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
 	expectedMintedAmount = newSupply.Sub(currentSupply).String()
@@ -176,7 +175,8 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	// block 6
 	header = tmproto.Header{Height: currentHeight + 1}
 	suite.ctx = suite.ctx.WithBlockHeader(header)
-	suite.app.BeginBlocker(suite.ctx)
+	_, err = suite.app.BeginBlocker(suite.ctx)
+	suite.Require().NoError(err)
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
 	expectedMintedAmount = newSupply.Sub(currentSupply).String()

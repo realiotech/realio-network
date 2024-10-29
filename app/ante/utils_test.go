@@ -20,7 +20,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	xauthsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authtx "github.com/cosmos/cosmos-sdk/x/auth/tx"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	"github.com/ethereum/go-ethereum/common"
@@ -127,8 +126,9 @@ func (suite *AnteTestSuite) Commit() {
 
 // Commit commits a block at a given time.
 func (suite *AnteTestSuite) CommitAfter(t time.Duration) {
-	suite.app.EndBlocker(suite.ctx)
-	_, err := suite.app.Commit()
+	_, err := suite.app.EndBlocker(suite.ctx)
+	suite.Require().NoError(err)
+	_, err = suite.app.Commit()
 	suite.Require().NoError(err)
 
 	header := suite.ctx.BlockHeader()
@@ -136,7 +136,8 @@ func (suite *AnteTestSuite) CommitAfter(t time.Duration) {
 	header.Time = header.Time.Add(t)
 
 	suite.ctx = suite.app.BaseApp.NewContextLegacy(false, header)
-	suite.app.BeginBlocker(suite.ctx)
+	_, err = suite.app.BeginBlocker(suite.ctx)
+	suite.Require().NoError(err)
 }
 
 func (suite *AnteTestSuite) CreateTestTxBuilder(gasPrice sdkmath.Int, denom string, msgs ...sdk.Msg) client.TxBuilder {
@@ -272,7 +273,7 @@ func createTx(priv *osecp256k1.PrivKey, msgs ...sdk.Msg) (sdk.Tx, error) {
 
 	// First round: we gather all the signer infos. We use the "set empty
 	// signature" hack to do that.
-	defaultSignMode, err := xauthsigning.APISignModeToInternal(encodingConfig.TxConfig.SignModeHandler().DefaultMode())
+	defaultSignMode, err := authsigning.APISignModeToInternal(encodingConfig.TxConfig.SignModeHandler().DefaultMode())
 	if err != nil {
 		return nil, err
 	}
@@ -333,7 +334,7 @@ func createEIP712CosmosTx(
 	amount := sdk.NewCoins(coinAmount)
 	gas := uint64(200000)
 
-	fee := legacytx.NewStdFee(gas, amount) //nolint:staticcheck // ignore staticcheck for deprecated NewStdFee
+	fee := legacytx.NewStdFee(gas, amount) //nolint
 
 	data := legacytx.StdSignBytes(realionetworktypes.MainnetChainID+"-1", 0, 0, 0, fee, msgs, "")
 	pc, err := types.ParseChainID(realionetworktypes.MainnetChainID + "-1")

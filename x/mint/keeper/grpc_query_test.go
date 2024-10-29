@@ -1,13 +1,11 @@
 package keeper_test
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
 	"github.com/realiotech/realio-network/x/mint/types"
 )
 
 func (suite *KeeperTestSuite) TestGRPCParams() {
-	ctx := sdk.WrapSDKContext(suite.ctx)
+	ctx := suite.ctx
 
 	inflation, err := suite.queryClient.Inflation(ctx, &types.QueryInflationRequest{})
 	suite.Require().NoError(err)

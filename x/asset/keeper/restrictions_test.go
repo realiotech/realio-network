@@ -10,7 +10,7 @@ import (
 
 func (suite *KeeperTestSuite) TestRestrictions() {
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 	manager := suite.testUser1Address
 	testUser := suite.testUser2Address
 	t1 := &types.MsgCreateToken{

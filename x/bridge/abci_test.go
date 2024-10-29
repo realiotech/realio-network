@@ -1,7 +1,6 @@
 package bridge_test
 
 import (
-	"fmt"
 	"testing"
 
 	"cosmossdk.io/math"
@@ -22,10 +21,9 @@ func TestRateLimitTrigger(t *testing.T) {
 		Ratelimit:     math.NewInt(1000000000),
 		CurrentInflow: math.NewInt(100000000),
 	})
-	rateLimit, err := realio.BridgeKeeper.RegisteredCoins.Get(ctx, app.MultiStakingCoinA.Denom)
-
-	fmt.Println("realio.BridgeKeeper :", rateLimit.CurrentInflow)
-	fmt.Println("realio.BridgeKeeper :", rateLimit.Ratelimit)
+	require.NoError(t, err)
+	_, err = realio.BridgeKeeper.RegisteredCoins.Get(ctx, app.MultiStakingCoinA.Denom)
+	require.NoError(t, err)
 
 	ver0 := realio.LastBlockHeight()
 	// commit 10 blocks
@@ -35,10 +33,12 @@ func TestRateLimitTrigger(t *testing.T) {
 			AppHash: realio.LastCommitID().Hash,
 		}
 
-		realio.FinalizeBlock(&abci.RequestFinalizeBlock{
+		_, err = realio.FinalizeBlock(&abci.RequestFinalizeBlock{
 			Height: header.Height,
 		})
-		realio.Commit()
+		require.NoError(t, err)
+		_, err = realio.Commit()
+		require.NoError(t, err)
 	}
 
 	require.Equal(t, ver0+10, realio.LastBlockHeight())
@@ -47,7 +47,6 @@ func TestRateLimitTrigger(t *testing.T) {
 	epochInfo, err := realio.BridgeKeeper.EpochInfo.Get(ctx)
 	require.NoError(t, err)
 	require.True(t, epochInfo.EpochCountingStarted)
-	rateLimit, err = realio.BridgeKeeper.RegisteredCoins.Get(ctx, app.MultiStakingCoinA.Denom)
-	fmt.Println("realio.BridgeKeeper :", rateLimit.CurrentInflow)
-	fmt.Println("realio.BridgeKeeper :", rateLimit.Ratelimit)
+	_, err = realio.BridgeKeeper.RegisteredCoins.Get(ctx, app.MultiStakingCoinA.Denom)
+	require.NoError(t, err)
 }

@@ -150,7 +150,7 @@ func (am AppModule) BeginBlock(ctx context.Context) error {
 func (am AppModule) GenerateGenesisState(_ *module.SimulationState) {
 }
 
-func (AppModule) ProposalMsgs(simState module.SimulationState) []simtypes.WeightedProposalMsg {
+func (AppModule) ProposalMsgs(_ module.SimulationState) []simtypes.WeightedProposalMsg {
 	return []simtypes.WeightedProposalMsg{}
 }
 

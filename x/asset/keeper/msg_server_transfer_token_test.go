@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/asset/types"
 )
@@ -16,7 +15,7 @@ func (suite *KeeperTestSuite) TestTransferToken() {
 	suite.SetupTest()
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 
 	manager := suite.testUser1Address
 	testUser := suite.testUser2Address
@@ -58,7 +57,7 @@ func (suite *KeeperTestSuite) TestTransferTokenInvalidAmount() {
 	suite.SetupTest()
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 
 	manager := suite.testUser1Address
 	testUser := suite.testUser2Address
@@ -98,7 +97,7 @@ func (suite *KeeperTestSuite) TestTransferTokenSenderBalanceToSmall() {
 	suite.SetupTest()
 
 	srv := keeper.NewMsgServerImpl(suite.app.AssetKeeper)
-	wctx := sdk.WrapSDKContext(suite.ctx)
+	wctx := suite.ctx
 
 	manager := suite.testUser1Address
 	testUser := suite.testUser2Address

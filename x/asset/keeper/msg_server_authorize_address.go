@@ -10,15 +10,15 @@ import (
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
-func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthorizeAddress) (*types.MsgAuthorizeAddressResponse, error) {
+func (ms msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthorizeAddress) (*types.MsgAuthorizeAddressResponse, error) {
 	// Check if the value exists
-	token, err := k.Token.Get(goCtx, types.TokenKey(msg.Symbol))
+	token, err := ms.Token.Get(goCtx, types.TokenKey(msg.Symbol))
 	if err != nil {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists : %s", msg.Symbol, err.Error())
 	}
 
 	// Checks if the token manager signed
-	signers, _, err := k.cdc.GetMsgV1Signers(msg)
+	signers, _, err := ms.cdc.GetMsgV1Signers(msg)
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +38,7 @@ func (k msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthori
 	}
 
 	token.AuthorizeAddress(accAddress)
-	err = k.Token.Set(goCtx, types.TokenKey(msg.Symbol), token)
+	err = ms.Token.Set(goCtx, types.TokenKey(msg.Symbol), token)
 	if err != nil {
 		return nil, types.ErrSetTokenUnable
 	}
