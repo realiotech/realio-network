@@ -14,23 +14,21 @@ import (
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
-type (
-	Keeper struct {
-		cdc          codec.Codec
-		storeService store.KVStoreService
-		bankKeeper   types.BankKeeper
-		ak           types.AccountKeeper
-		allowAddrs   map[string]bool
+type Keeper struct {
+	cdc          codec.Codec
+	storeService store.KVStoreService
+	bankKeeper   types.BankKeeper
+	ak           types.AccountKeeper
+	allowAddrs   map[string]bool
 
-		// the address capable of executing a MsgUpdateParams message. Typically, this
-		// should be the x/gov module account.
-		authority string
+	// the address capable of executing a MsgUpdateParams message. Typically, this
+	// should be the x/gov module account.
+	authority string
 
-		Schema collections.Schema
-		Params collections.Item[types.Params]
-		Token  collections.Map[string, types.Token]
-	}
-)
+	Schema collections.Schema
+	Params collections.Item[types.Params]
+	Token  collections.Map[string, types.Token]
+}
 
 // NewKeeper returns a new Keeper object with a given codec, dedicated
 // store key, a BankKeeper implementation, an AccountKeeper implementation, and a parameter Subspace used to
