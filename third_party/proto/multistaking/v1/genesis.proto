@@ -1,0 +1,28 @@
+syntax = "proto3";
+package multistaking.v1;
+
+import "google/protobuf/any.proto";
+import "google/protobuf/timestamp.proto";
+import "gogoproto/gogo.proto";
+
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/staking/v1beta1/genesis.proto";
+import "multistaking/v1/multi_staking.proto";
+
+import "cosmos/msg/v1/msg.proto";
+
+option go_package = "github.com/realiotech/multi-staking/x/multi-staking/types";
+
+message GenesisState {
+  repeated MultiStakingLock multi_staking_locks = 1
+      [ (gogoproto.nullable) = false ];
+  repeated MultiStakingUnlock multi_staking_unlocks = 2
+      [ (gogoproto.nullable) = false ];
+  repeated MultiStakingCoinInfo multi_staking_coin_info = 3
+      [ (gogoproto.nullable) = false ];
+  repeated ValidatorMultiStakingCoin validator_multi_staking_coins = 4
+      [ (gogoproto.nullable) = false ];
+  cosmos.staking.v1beta1.GenesisState staking_genesis_state = 5
+      [ (gogoproto.nullable) = false ];
+}

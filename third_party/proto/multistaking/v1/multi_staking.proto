@@ -1,0 +1,112 @@
+syntax = "proto3";
+package multistaking.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "cosmos/staking/v1beta1/staking.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+option go_package = "github.com/realiotech/multi-staking/x/multi-staking/types";
+
+message MultiStakingCoin {
+  string denom = 1;
+  string amount = 2 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string bond_weight = 3 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message LockID {
+  string multi_staker_addr = 1;
+  string val_addr = 2;
+}
+
+message MultiStakingLock {
+  option (gogoproto.goproto_getters) = false;
+  //   option (gogoproto.goproto_stringer) = false;
+
+  LockID lockID = 1 [ (gogoproto.nullable) = false ];
+
+  MultiStakingCoin locked_coin = 2 [ (gogoproto.nullable) = false ];
+};
+
+message ValidatorMultiStakingCoin {
+  string val_addr = 1;
+  string coin_denom = 2;
+}
+
+message UnlockID {
+  string multi_staker_addr = 1;
+  string val_addr = 2;
+}
+
+message MultiStakingUnlock {
+  option (gogoproto.goproto_getters) = false;
+  option (gogoproto.goproto_stringer) = false;
+
+  UnlockID unlockID = 1 [ (gogoproto.nullable) = false ];
+
+  repeated UnlockEntry entries = 2 [ (gogoproto.nullable) = false ];
+}
+
+message UnlockEntry {
+  option (gogoproto.goproto_stringer) = false;
+
+  // creation_height is the height which the unbonding took place.
+  int64 creation_height = 1;
+
+  MultiStakingCoin unlocking_coin = 2 [ (gogoproto.nullable) = false ];
+}
+
+message MultiStakingCoinInfo {
+  string denom = 1;
+  string bond_weight = 2 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+message ValidatorInfo {
+  option (gogoproto.equal) = false;
+  option (gogoproto.goproto_stringer) = false;
+  option (gogoproto.goproto_getters) = false;
+
+  string operator_address = 1
+      [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  google.protobuf.Any consensus_pubkey = 2
+      [ (cosmos_proto.accepts_interface) = "cosmos.crypto.PubKey" ];
+  bool jailed = 3;
+  cosmos.staking.v1beta1.BondStatus status = 4;
+  string tokens = 5 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string delegator_shares = 6 [
+    (cosmos_proto.scalar) = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable) = false
+  ];
+  cosmos.staking.v1beta1.Description description = 7
+      [ (gogoproto.nullable) = false ];
+  int64 unbonding_height = 8;
+  google.protobuf.Timestamp unbonding_time = 9
+      [ (gogoproto.nullable) = false, (gogoproto.stdtime) = true ];
+  cosmos.staking.v1beta1.Commission commission = 10
+      [ (gogoproto.nullable) = false ];
+  string min_self_delegation = 11 [
+    (cosmos_proto.scalar) = "cosmos.Int",
+    (gogoproto.customtype) = "cosmossdk.io/math.Int",
+    (gogoproto.nullable) = false
+  ];
+  string bond_denom = 12;
+}

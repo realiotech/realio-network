@@ -3,11 +3,13 @@ package app
 import (
 	"fmt"
 	"io"
+	"io/fs"
 	"net/http"
 	"os"
 	"path/filepath"
 
 	"github.com/realiotech/realio-network/app/ante"
+	"github.com/realiotech/realio-network/client/docs"
 	"github.com/realiotech/realio-network/crypto/ethsecp256k1"
 
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
@@ -46,7 +48,6 @@ import (
 	feemarkettypes "github.com/evmos/os/x/feemarket/types"
 
 	"github.com/gorilla/mux"
-	"github.com/rakyll/statik/fs"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -154,9 +155,6 @@ import (
 	bridgemoduletypes "github.com/realiotech/realio-network/x/bridge/types"
 
 	realionetworktypes "github.com/realiotech/realio-network/types"
-
-	// unnamed import of statik for swagger UI support
-	_ "github.com/realiotech/realio-network/client/docs/statik"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 )
 
@@ -1038,12 +1036,12 @@ func (app *RealioNetwork) AutoCliOpts() autocli.AppOptions {
 
 // RegisterSwaggerAPI registers swagger route with API Server
 func RegisterSwaggerAPI(_ client.Context, rtr *mux.Router) {
-	statikFS, err := fs.New()
+	root, err := fs.Sub(docs.SwaggerUI, "swagger-ui")
 	if err != nil {
 		panic(err)
 	}
 
-	staticServer := http.FileServer(statikFS)
+	staticServer := http.FileServer(http.FS(root))
 	rtr.PathPrefix("/swagger/").Handler(http.StripPrefix("/swagger/", staticServer))
 }
 

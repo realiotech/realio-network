@@ -1,0 +1,9 @@
+syntax = "proto3";
+package multistaking.v1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/realiotech/multi-staking/x/multi-staking/types";
+
+// Params defines the incentives module params
+message Params { string main_bond_denom = 1; }

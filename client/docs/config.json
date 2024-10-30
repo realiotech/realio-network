@@ -23,7 +23,7 @@
       }
     },
     {
-      "url": "./tmp-swagger-gen/ethermint/evm/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/os/evm/v1/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "EvmParams"
@@ -31,7 +31,7 @@
       }
     },
     {
-      "url": "./tmp-swagger-gen/ethermint/feemarket/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/os/feemarket/v1/query.swagger.json",
       "operationIds": {
         "rename": {
           "Params": "FeeMarketParams",
@@ -132,10 +132,12 @@
       }
     },
     {
-      "url": "./tmp-swagger-gen/realiotech/multistaking/v1/query.swagger.json",
+      "url": "./tmp-swagger-gen/multistaking/v1/query.swagger.json",
       "operationIds": {
         "rename": {
-          "Params": "MultiStakingParams"
+          "Params": "MultiStakingParams",
+          "Validator": "MultiStakingValidator",
+          "Validators": "MultiStakingValidators"
         }
       }
     }
