@@ -60,11 +60,11 @@ func (q queryServer) RateLimit(c context.Context, req *types.QueryRateLimitReque
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 
-	if r, err := q.k.RegisteredCoins.Get(ctx, req.Denom); err != nil {
+	r, err := q.k.RegisteredCoins.Get(ctx, req.Denom)
+	if err != nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrKeyNotFound, "not found")
-	} else { //nolint:revive // fixing this causes t to be inaccessible, so let's leave all as is.
-		return &types.QueryRateLimitResponse{Ratelimit: r}, nil
 	}
+	return &types.QueryRateLimitResponse{Ratelimit: r}, nil
 }
 
 func (q queryServer) EpochInfo(c context.Context, req *types.QueryEpochInfoRequest) (*types.QueryEpochInfoResponse, error) {
@@ -73,9 +73,9 @@ func (q queryServer) EpochInfo(c context.Context, req *types.QueryEpochInfoReque
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 
-	if epochInfo, err := q.k.EpochInfo.Get(ctx); err != nil {
+	epochInfo, err := q.k.EpochInfo.Get(ctx) 
+	if err != nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrKeyNotFound, "not found")
-	} else { //nolint:revive // fixing this causes t to be inaccessible, so let's leave all as is.
-		return &types.QueryEpochInfoResponse{EpochInfo: epochInfo}, nil
 	}
+	return &types.QueryEpochInfoResponse{EpochInfo: epochInfo}, nil
 }
