@@ -57,8 +57,6 @@ func CreateUpgradeHandler(
 				keyTable = evmtypes.ParamKeyTable() //nolint: staticcheck // SA1019
 			case assettypes.ModuleName:
 				keyTable = assettypes.ParamKeyTable()
-			case bridgetypes.ModuleName:
-				keyTable = bridgetypes.ParamKeyTable()
 			case banktypes.ModuleName:
 				keyTable = banktypes.ParamKeyTable() //nolint: staticcheck // SA1019
 			case stakingtypes.ModuleName:
