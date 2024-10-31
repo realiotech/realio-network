@@ -42,7 +42,3 @@ func (r *RateLimit) CheckAddInflowThreshold(amount math.Int) error {
 	r.CurrentInflow = netInflow
 	return nil
 }
-
-func (r *RateLimit) ResetInflow() {
-	r.CurrentInflow = math.ZeroInt()
-}

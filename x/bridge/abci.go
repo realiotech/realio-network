@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/telemetry"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -45,7 +46,8 @@ func BeginBlocker(goCtx context.Context, k keeper.Keeper) error {
 		epochInfo.CurrentEpochStartTime = epochInfo.CurrentEpochStartTime.Add(epochInfo.Duration)
 
 		err = k.RegisteredCoins.Walk(goCtx, nil, func(denom string, ratelimit types.RateLimit) (stop bool, err error) {
-			ratelimit.ResetInflow()
+			// Reset Inflow
+			ratelimit.CurrentInflow = math.ZeroInt()
 			err = k.RegisteredCoins.Set(goCtx, denom, ratelimit)
 			if err != nil {
 				k.Logger(goCtx).Error(fmt.Sprintf("Error reset ratelimit with denom %s at height %d", denom, epochInfo.CurrentEpochStartHeight))

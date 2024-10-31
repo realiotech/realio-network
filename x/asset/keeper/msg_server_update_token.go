@@ -18,14 +18,8 @@ func (ms msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken
 		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists: %s", msg.Symbol, err.Error())
 	}
 
-	// Checks if the token manager signed
-	signers, _, err := ms.cdc.GetMsgV1Signers(msg)
-	if err != nil {
-		return nil, err
-	}
-
 	// assert that the manager account is the only signer of the message
-	if sdk.AccAddress(signers[0]).String() != existing.Manager {
+	if msg.Manager != existing.Manager {
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "caller not authorized")
 	}
 

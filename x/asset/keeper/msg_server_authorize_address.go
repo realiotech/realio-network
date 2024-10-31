@@ -28,7 +28,7 @@ func (ms msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthor
 	}
 
 	// assert that the manager account is the only signer of the message
-	if sdk.AccAddress(signers[0]).String() != token.Manager {
+	if msg.Manager != token.Manager {
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "caller not authorized")
 	}
 
