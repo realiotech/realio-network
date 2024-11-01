@@ -73,7 +73,7 @@ func (q queryServer) EpochInfo(c context.Context, req *types.QueryEpochInfoReque
 	}
 	ctx := sdk.UnwrapSDKContext(c)
 
-	epochInfo, err := q.k.EpochInfo.Get(ctx) 
+	epochInfo, err := q.k.EpochInfo.Get(ctx)
 	if err != nil {
 		return nil, errorsmod.Wrap(sdkerrors.ErrKeyNotFound, "not found")
 	}
