@@ -17,16 +17,6 @@ func (ms msgServer) AuthorizeAddress(goCtx context.Context, msg *types.MsgAuthor
 		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists : %s", msg.Symbol, err.Error())
 	}
 
-	// Checks if the token manager signed
-	signers, _, err := ms.cdc.GetMsgV1Signers(msg)
-	if err != nil {
-		return nil, err
-	}
-
-	if len(signers) != 1 {
-		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "invalid signers")
-	}
-
 	// assert that the manager account is the only signer of the message
 	if msg.Manager != token.Manager {
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "caller not authorized")
