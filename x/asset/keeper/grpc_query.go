@@ -41,7 +41,7 @@ func (q queryServer) Tokens(c context.Context, req *types.QueryTokensRequest) (*
 	}
 
 	tokens := []types.Token{}
-	err := q.k.Token.Walk(c, nil, func(symbol string, token types.Token) (stop bool, err error) {
+	err := q.k.Token.Walk(c, nil, func(_ string, token types.Token) (stop bool, err error) {
 		tokens = append(tokens, token)
 		return false, nil
 	})

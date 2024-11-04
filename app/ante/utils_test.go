@@ -301,7 +301,6 @@ func createTx(priv *osecp256k1.PrivKey, msgs ...sdk.Msg) (sdk.Tx, error) {
 		context.TODO(), defaultSignMode, signerData,
 		txBuilder, priv, encodingConfig.TxConfig, 0,
 	)
-
 	if err != nil {
 		return nil, err
 	}

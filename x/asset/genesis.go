@@ -31,7 +31,7 @@ func ExportGenesis(ctx context.Context, k keeper.Keeper) *types.GenesisState {
 	}
 	genesis.Params = params
 	tokens := []types.Token{}
-	err = k.Token.Walk(ctx, nil, func(symbol string, token types.Token) (stop bool, err error) {
+	err = k.Token.Walk(ctx, nil, func(_ string, token types.Token) (stop bool, err error) {
 		tokens = append(tokens, token)
 		return false, nil
 	})

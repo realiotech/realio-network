@@ -35,7 +35,7 @@ func CmdQueryParams() *cobra.Command {
 		Use:   "params",
 		Short: "shows the parameters of the module",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			queryClient := types.NewQueryClient(clientCtx)
@@ -59,7 +59,7 @@ func CmdQueryRateLimits() *cobra.Command {
 		Use:   "ratelimits",
 		Short: "shows the ratelimits of the module",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			queryClient := types.NewQueryClient(clientCtx)
@@ -108,7 +108,7 @@ func CmdQueryEpochInfo() *cobra.Command {
 		Use:   "epoch-info",
 		Short: "shows the epoch info of the module",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			queryClient := types.NewQueryClient(clientCtx)
