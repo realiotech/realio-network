@@ -132,6 +132,14 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
+		evmParams := evmtypes.DefaultParams()
+		evmParams.ActiveStaticPrecompiles = []string{
+			evmtypes.StakingPrecompileAddress,
+		}
+		err = evmKeeper.SetParams(sdkCtx, evmParams)
+		if err != nil {
+			return nil, err
+		}
 		return newVM, nil
 	}
 }

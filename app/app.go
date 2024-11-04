@@ -4,10 +4,12 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"net/http"
 	"os"
 	"path/filepath"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/realiotech/realio-network/app/ante"
 	"github.com/realiotech/realio-network/client/docs"
 	"github.com/realiotech/realio-network/crypto/ethsecp256k1"
@@ -40,7 +42,11 @@ import (
 	srvflags "github.com/evmos/os/server/flags"
 	ethermint "github.com/evmos/os/types"
 
+	"github.com/evmos/os/precompiles/bech32"
+	"github.com/evmos/os/precompiles/p256"
+	stakingprecompile "github.com/evmos/os/precompiles/staking"
 	"github.com/evmos/os/x/evm"
+	"github.com/evmos/os/x/evm/core/vm"
 	evmkeeper "github.com/evmos/os/x/evm/keeper"
 	evmtypes "github.com/evmos/os/x/evm/types"
 	"github.com/evmos/os/x/feemarket"
@@ -159,7 +165,8 @@ import (
 )
 
 const (
-	Name = "realio-network"
+	Name                    = "realio-network"
+	bech32PrecompileBaseGas = 6_000
 )
 
 var (
@@ -553,6 +560,9 @@ func New(
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
 	app.IBCKeeper.SetRouter(ibcRouter)
 
+	app.EvmKeeper.WithStaticPrecompiles(
+		RealioPrecompile(*app.StakingKeeper, app.AuthzKeeper),
+	)
 	/****  Module Options ****/
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
@@ -1087,6 +1097,36 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
+}
+
+func RealioPrecompile(
+	stakingKeeper stakingkeeper.Keeper,
+	authzKeeper authzkeeper.Keeper,
+) map[common.Address]vm.PrecompiledContract {
+	// Clone the mapping from the latest EVM fork.
+	precompiles := maps.Clone(vm.PrecompiledContractsBerlin)
+
+	// secp256r1 precompile as per EIP-7212
+	p256Precompile := &p256.Precompile{}
+
+	bech32Precompile, err := bech32.NewPrecompile(bech32PrecompileBaseGas)
+	if err != nil {
+		panic(fmt.Errorf("failed to instantiate bech32 precompile: %w", err))
+	}
+
+	stakingPrecompile, err := stakingprecompile.NewPrecompile(stakingKeeper, authzKeeper)
+	if err != nil {
+		panic(fmt.Errorf("failed to instantiate staking precompile: %w", err))
+	}
+
+	// Stateless precompiles
+	precompiles[bech32Precompile.Address()] = bech32Precompile
+	precompiles[p256Precompile.Address()] = p256Precompile
+
+	// Stateful precompiles
+	precompiles[stakingPrecompile.Address()] = stakingPrecompile
+
+	return precompiles
 }
 
 func RealioSigVerificationGasConsumer(
