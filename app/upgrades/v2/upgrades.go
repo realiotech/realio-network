@@ -33,6 +33,7 @@ import (
 	assettypes "github.com/realiotech/realio-network/x/asset/types"
 	bridgekeeper "github.com/realiotech/realio-network/x/bridge/keeper"
 	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
+	mintkeeper "github.com/realiotech/realio-network/x/mint/keeper"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v2
@@ -44,6 +45,7 @@ func CreateUpgradeHandler(
 	ibcKeeper ibckeeper.Keeper,
 	bridgeKeeper bridgekeeper.Keeper,
 	accountKeeper authkeeper.AccountKeeper,
+	mintKeeper mintkeeper.Keeper,
 	evmKeeper *evmkeeper.Keeper,
 	evmStoreKey storetypes.StoreKey,
 ) upgradetypes.UpgradeHandler {
@@ -110,14 +112,7 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 		err = bridgeKeeper.RegisteredCoins.Set(ctx, "ario", bridgetypes.RateLimit{
-			Ratelimit:     math.Int(math.NewUintFromString("1000000000000000000000000")),
-			CurrentInflow: math.ZeroInt(),
-		})
-		if err != nil {
-			return nil, err
-		}
-		err = bridgeKeeper.RegisteredCoins.Set(ctx, "arst", bridgetypes.RateLimit{
-			Ratelimit:     math.Int(math.NewUintFromString("1000000000000000000000000")),
+			Ratelimit:     math.Int(math.NewUintFromString("1750000000000000000000000")),
 			CurrentInflow: math.ZeroInt(),
 		})
 		if err != nil {
@@ -140,6 +135,19 @@ func CreateUpgradeHandler(
 		if err != nil {
 			return nil, err
 		}
+
+		mintParams, err := mintKeeper.Params.Get(ctx)
+		if err != nil {
+			return nil, err
+		}
+
+		mintParams.InflationRate = math.LegacyNewDecWithPrec(8, 2)
+
+		err = mintKeeper.Params.Set(ctx, mintParams)
+		if err != nil {
+			return nil, err
+		}
+
 		return newVM, nil
 	}
 }

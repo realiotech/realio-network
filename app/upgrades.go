@@ -58,6 +58,7 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 			*app.IBCKeeper,
 			app.BridgeKeeper,
 			app.AccountKeeper,
+			app.MintKeeper,
 			app.EvmKeeper,
 			app.keys[evmtypes.StoreKey],
 		),

@@ -8,7 +8,7 @@ import (
 )
 
 // Supply cap 1 RIO : 10^18 aRIO (attoRio)
-var rioSupplyCap, _ = math.NewIntFromString("75000000000000000000000000")
+var rioSupplyCap, _ = math.NewIntFromString("175000000000000000000000000")
 
 // NewMinter returns a new Minter object with the given inflation and annual
 // provisions values.
