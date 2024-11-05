@@ -20,13 +20,13 @@ func TestNextAnnualProvision(t *testing.T) {
 		expected     string
 	}{
 		// with 0 total staking token supply, next annual inflation should increase by InflationRate
-		{"0", sdkmath.LegacyNewDecWithPrec(13, 2), "9750000000000000000000000"},
+		{"0", sdkmath.LegacyNewDecWithPrec(13, 2), "22750000000000000000000000"},
 
-		// with 75 mil total staking token supply, next annual inflation should be 0
-		{"75000000000000000000000000", sdkmath.LegacyNewDecWithPrec(13, 2), "0"},
+		// with 175 mil total staking token supply, next annual inflation should be 0
+		{"175000000000000000000000000", sdkmath.LegacyNewDecWithPrec(13, 2), "0"},
 
 		// with 35mil total staking token supply, next annual inflation should increase by InflationRate
-		{"35000000000000000000000000", sdkmath.LegacyNewDecWithPrec(13, 2), "5200000000000000000000000"},
+		{"35000000000000000000000000", sdkmath.LegacyNewDecWithPrec(13, 2), "18200000000000000000000000"},
 	}
 	for i, tc := range tests {
 		minter.Inflation = tc.setInflation

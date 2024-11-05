@@ -1,11 +1,7 @@
 package ante
 
 import (
-	"fmt"
-	"runtime/debug"
-
 	errorsmod "cosmossdk.io/errors"
-	log "cosmossdk.io/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	authante "github.com/cosmos/cosmos-sdk/x/auth/ante"
@@ -22,8 +18,6 @@ func NewAnteHandler(options HandlerOptions) sdk.AnteHandler {
 	) (newCtx sdk.Context, err error) {
 		var anteHandler sdk.AnteHandler
 
-		defer Recover(ctx.Logger(), &err)
-
 		txWithExtensions, ok := tx.(authante.HasExtensionOptionsTx)
 		if ok {
 			opts := txWithExtensions.GetExtensionOptions()
@@ -34,7 +28,7 @@ func NewAnteHandler(options HandlerOptions) sdk.AnteHandler {
 					anteHandler = newEthAnteHandler(options)
 				case "/os.types.v1.ExtensionOptionDynamicFeeTx":
 					// cosmos-sdk tx with dynamic fee extension
-					anteHandler = newLegacyCosmosAnteHandlerEip712(options)
+					anteHandler = newCosmosAnteHandler(options)
 				default:
 					return ctx, errorsmod.Wrapf(
 						errortypes.ErrUnknownExtensionOptions,
@@ -55,24 +49,5 @@ func NewAnteHandler(options HandlerOptions) sdk.AnteHandler {
 		}
 
 		return anteHandler(ctx, tx, sim)
-	}
-}
-
-func Recover(logger log.Logger, err *error) {
-	if r := recover(); r != nil {
-		*err = errorsmod.Wrapf(errortypes.ErrPanic, "%v", r)
-
-		if e, ok := r.(error); ok {
-			logger.Error(
-				"ante handler panicked",
-				"error", e,
-				"stack trace", string(debug.Stack()),
-			)
-		} else {
-			logger.Error(
-				"ante handler panicked",
-				"recover", fmt.Sprintf("%v", r),
-			)
-		}
 	}
 }

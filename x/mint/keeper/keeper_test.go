@@ -90,7 +90,7 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	suite.DoSetupTest(suite.T())
-	rioSupplyCap, _ := math.NewIntFromString("75000000000000000000000000")
+	rioSupplyCap, _ := math.NewIntFromString("175000000000000000000000000")
 
 	// params.MintDenom, params.BlocksPerYear and minter.Inflation are not changed when go to next block
 	params, err := suite.app.MintKeeper.Params.Get(suite.ctx)
