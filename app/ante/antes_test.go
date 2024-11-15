@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"time"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
-	abci "github.com/tendermint/tendermint/abci/types"
+	evmtypes "github.com/evmos/os/x/evm/types"
 )
 
 func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
@@ -63,7 +63,7 @@ func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
 						banktypes.NewMsgSend(
 							testAddresses[0],
 							testAddresses[3],
-							sdk.NewCoins(sdk.NewInt64Coin(evmtypes.DefaultEVMDenom, 100e6)),
+							sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100e6)),
 						),
 						&evmtypes.MsgEthereumTx{},
 					},
@@ -94,7 +94,7 @@ func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
 						banktypes.NewMsgSend(
 							testAddresses[0],
 							testAddresses[3],
-							sdk.NewCoins(sdk.NewInt64Coin(evmtypes.DefaultEVMDenom, 100e6)),
+							sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100e6)),
 						),
 					},
 				),
@@ -111,7 +111,7 @@ func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
 						banktypes.NewMsgSend(
 							testAddresses[0],
 							testAddresses[3],
-							sdk.NewCoins(sdk.NewInt64Coin(evmtypes.DefaultEVMDenom, 100e6)),
+							sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100e6)),
 						),
 					},
 				),
@@ -122,7 +122,7 @@ func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
 						banktypes.NewMsgSend(
 							testAddresses[0],
 							testAddresses[3],
-							sdk.NewCoins(sdk.NewInt64Coin(evmtypes.DefaultEVMDenom, 100e6)),
+							sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100e6)),
 						),
 					},
 				),
@@ -150,20 +150,30 @@ func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
 			bz, err := txEncoder(tx)
 			suite.Require().NoError(err)
 
-			resCheckTx := suite.app.CheckTx(
-				abci.RequestCheckTx{
+			resCheckTx, err := suite.app.CheckTx(
+				&abci.RequestCheckTx{
 					Tx:   bz,
 					Type: abci.CheckTxType_New,
 				},
 			)
+			suite.Require().NoError(err)
 			suite.Require().Equal(resCheckTx.Code, tc.expectedCode, resCheckTx.Log)
 
-			resDeliverTx := suite.app.DeliverTx(
-				abci.RequestDeliverTx{
-					Tx: bz,
+			header := suite.ctx.BlockHeader()
+			blockRes, err := suite.app.FinalizeBlock(
+				&abci.RequestFinalizeBlock{
+					Height:             1,
+					Txs:                [][]byte{bz},
+					Hash:               header.AppHash,
+					NextValidatorsHash: header.NextValidatorsHash,
+					ProposerAddress:    header.ProposerAddress,
+					Time:               header.Time.Add(time.Second),
 				},
 			)
-			suite.Require().Equal(resDeliverTx.Code, tc.expectedCode, resDeliverTx.Log)
+			suite.Require().NoError(err)
+			suite.Require().Len(blockRes.TxResults, 1)
+			txRes := blockRes.TxResults[0]
+			suite.Require().Equal(txRes.Code, tc.expectedCode, txRes.Log)
 		})
 	}
 }

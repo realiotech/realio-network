@@ -20,7 +20,7 @@ cd ../third_party/proto
 
 echo "Generate third_party swagger files"
 
-proto_dirs=$(find ./cosmos ./ethermint ./ibc -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | sort | uniq)
+proto_dirs=$(find ./cosmos ./os ./ibc ./multistaking -path -prune -o -name '*.proto' -print0 | xargs -0 -n1 dirname | sort | uniq)
 for dir in $proto_dirs; do
   # generate swagger files (filter query files)
   query_file=$(find "${dir}" -maxdepth 1 \( -name 'query.proto' -o -name 'service.proto' \))
@@ -41,11 +41,3 @@ swagger-combine ./client/docs/config.json -o ./client/docs/swagger-ui/swagger.ya
 # clean swagger files
 rm -rf ./tmp-swagger-gen
 
-echo "Update statik data"
-install_statik() {
-  go install github.com/rakyll/statik@v0.1.7
-}
-install_statik
-
-# generate binary for static server
-statik -f -src=./client/docs/swagger-ui -dest=./client/docs

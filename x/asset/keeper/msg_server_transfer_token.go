@@ -15,30 +15,32 @@ import (
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
-func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferToken) (*types.MsgTransferTokenResponse, error) {
+func (ms msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferToken) (*types.MsgTransferTokenResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	var fromAddress, toAddress sdk.AccAddress
 	isAuthorizedFrom, isAuthorizedTo := true, true
 
+	lowerCaseSymbol := strings.ToLower(msg.Symbol)
+
 	fromAddress, _ = sdk.AccAddressFromBech32(msg.From)
 	toAddress, _ = sdk.AccAddressFromBech32(msg.To)
 	// Check if the value already exists
-	token, isFound := k.GetToken(
+	token, err := ms.Token.Get(
 		ctx,
-		msg.Symbol,
+		types.TokenKey(msg.Symbol),
 	)
-	if !isFound {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "token %s not found", msg.Symbol)
+	if err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "token %s not found: %s", lowerCaseSymbol, err.Error())
 	}
 
-	if k.bankKeeper.BlockedAddr(toAddress) {
+	if ms.bankKeeper.BlockedAddr(toAddress) {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "%s is not allowed to receive funds", msg.To)
 	}
 
 	if token.AuthorizationRequired {
-		isAuthorizedFrom = k.IsAddressAuthorizedToSend(ctx, msg.Symbol, fromAddress)
-		isAuthorizedTo = k.IsAddressAuthorizedToSend(ctx, msg.Symbol, toAddress)
+		isAuthorizedFrom = ms.IsAddressAuthorizedToSend(ctx, lowerCaseSymbol, fromAddress)
+		isAuthorizedTo = ms.IsAddressAuthorizedToSend(ctx, lowerCaseSymbol, toAddress)
 	}
 
 	if isAuthorizedFrom && isAuthorizedTo {
@@ -47,14 +49,14 @@ func (k msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferTo
 			return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "invalid coin amount %s", msg.Amount)
 		}
 
-		baseDenom := fmt.Sprintf("a%s", strings.ToLower(msg.Symbol))
+		baseDenom := fmt.Sprintf("a%s", lowerCaseSymbol)
 		coin := sdk.Coins{{Denom: baseDenom, Amount: totalInt}}
-		err := k.bankKeeper.SendCoins(ctx, fromAddress, toAddress, coin)
+		err := ms.bankKeeper.SendCoins(ctx, fromAddress, toAddress, coin)
 		if err != nil {
 			return nil, err
 		}
 	} else {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "%s transfer not authorized", msg.Symbol)
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "%s transfer not authorized", lowerCaseSymbol)
 	}
 
 	return &types.MsgTransferTokenResponse{}, nil

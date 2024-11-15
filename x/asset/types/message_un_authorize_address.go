@@ -17,27 +17,6 @@ func NewMsgUnAuthorizeAddress(manager string, symbol string, address string) *Ms
 	}
 }
 
-func (msg *MsgUnAuthorizeAddress) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgUnAuthorizeAddress) Type() string {
-	return TypeMsgUnAuthorizeAddress
-}
-
-func (msg *MsgUnAuthorizeAddress) GetSigners() []sdk.AccAddress {
-	manager, err := sdk.AccAddressFromBech32(msg.Manager)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{manager}
-}
-
-func (msg *MsgUnAuthorizeAddress) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgUnAuthorizeAddress) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.Manager); err != nil {
 		return sdkerrors.ErrInvalidAddress.Wrapf("invalid manager address: %s", err)

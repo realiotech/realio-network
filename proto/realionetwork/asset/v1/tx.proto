@@ -4,10 +4,14 @@ package realionetwork.asset.v1;
 option go_package = "github.com/realiotech/realio-network/x/asset/types";
 
 import "gogoproto/gogo.proto";
+import "realionetwork/asset/v1/params.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/msg/v1/msg.proto";
 
 // Msg defines the Msg service.
 service Msg {
-
+  option (cosmos.msg.v1.service) = true;
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
   rpc CreateToken(MsgCreateToken) returns (MsgCreateTokenResponse);
   rpc UpdateToken(MsgUpdateToken) returns (MsgUpdateTokenResponse);
   rpc AuthorizeAddress(MsgAuthorizeAddress)
@@ -19,6 +23,7 @@ service Msg {
 }
 
 message MsgCreateToken {
+  option (cosmos.msg.v1.signer) = "manager";
   string manager = 1;
   string name = 2;
   string symbol = 3;
@@ -29,6 +34,7 @@ message MsgCreateToken {
 message MsgCreateTokenResponse {}
 
 message MsgUpdateToken {
+  option (cosmos.msg.v1.signer) = "manager";
   string manager = 1;
   string symbol = 2;
   bool authorizationRequired = 3;
@@ -37,6 +43,7 @@ message MsgUpdateToken {
 message MsgUpdateTokenResponse {}
 
 message MsgAuthorizeAddress {
+  option (cosmos.msg.v1.signer) = "manager";
   string manager = 1;
   string symbol = 2;
   string address = 3;
@@ -45,6 +52,7 @@ message MsgAuthorizeAddress {
 message MsgAuthorizeAddressResponse {}
 
 message MsgUnAuthorizeAddress {
+  option (cosmos.msg.v1.signer) = "manager";
   string manager = 1;
   string symbol = 2;
   string address = 3;
@@ -61,4 +69,17 @@ message MsgTransferToken {
 
 message MsgTransferTokenResponse {}
 
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  // authority is the address that controls the module (defaults to x/gov unless
+  // overwritten).
+  string authority = 1;
+
+  // params defines the x/mint parameters to update.
+  //
+  // NOTE: All parameters must be supplied.
+  Params params = 2 [ (gogoproto.nullable) = false ];
+}
+
+message MsgUpdateParamsResponse {}
 // this line is used by starport scaffolding # proto/tx/message

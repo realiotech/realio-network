@@ -3,34 +3,64 @@ package app
 import (
 	"fmt"
 
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
-	"github.com/realiotech/realio-network/app/upgrades/commission"
-	multistaking "github.com/realiotech/realio-network/app/upgrades/multi-staking"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	storetypes "cosmossdk.io/store/types"
+	"github.com/realiotech/realio-network/app/upgrades/commission"
+	v2 "github.com/realiotech/realio-network/app/upgrades/v2"
+
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	evmtypes "github.com/evmos/os/x/evm/types"
 )
 
-func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
-	app.UpgradeKeeper.SetUpgradeHandler(
-		multistaking.UpgradeName,
-		multistaking.CreateUpgradeHandler(
-			app.mm,
-			app.configurator,
-			appOpts,
-			app.AppCodec(),
-			app.BankKeeper,
-			app.AccountKeeper,
-		),
-	)
+// BaseAppParamManager defines an interrace that BaseApp is expected to fullfil
+// that allows upgrade handlers to modify BaseApp parameters.
+type BaseAppParamManager interface {
+	GetConsensusParams(ctx sdk.Context) *tmproto.ConsensusParams
+	StoreConsensusParams(ctx sdk.Context, cp *tmproto.ConsensusParams)
+}
 
+// Upgrade defines a struct containing necessary fields that a SoftwareUpgradeProposal
+// must have written, in order for the state migration to go smoothly.
+// An upgrade must implement this struct, and then set it in the app.go.
+// The app.go will then define the handler.
+type Upgrade struct {
+	// Upgrade version name, for the upgrade handler, e.g. `v3`
+	UpgradeName string
+
+	// CreateUpgradeHandler defines the function that creates an upgrade handler
+	CreateUpgradeHandler func(*module.Manager, module.Configurator, BaseAppParamManager) upgradetypes.UpgradeHandler
+
+	// Store upgrades, should be used for any new modules introduced, new modules deleted, or store names renamed.
+	StoreUpgrades storetypes.StoreUpgrades
+}
+
+func (app *RealioNetwork) setupUpgradeHandlers() {
+	// commission
 	app.UpgradeKeeper.SetUpgradeHandler(
 		commission.UpgradeName,
 		commission.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
-			&app.StakingKeeper,
+			app.StakingKeeper,
+		),
+	)
+
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v2.UpgradeName,
+		v2.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.ParamsKeeper,
+			app.ConsensusParamsKeeper,
+			*app.IBCKeeper,
+			app.BridgeKeeper,
+			app.AccountKeeper,
+			app.MintKeeper,
+			app.EvmKeeper,
+			app.keys[evmtypes.StoreKey],
 		),
 	)
 
@@ -43,15 +73,7 @@ func (app *RealioNetwork) setupUpgradeHandlers(appOpts servertypes.AppOptions) {
 		return
 	}
 
-	var storeUpgrades *storetypes.StoreUpgrades
-
-	if upgradeInfo.Name == multistaking.UpgradeName {
-		storeUpgrades = &storetypes.StoreUpgrades{
-			Added: []string{multistakingtypes.ModuleName},
-		}
-	}
-
-	if storeUpgrades != nil {
-		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, storeUpgrades))
+	if upgradeInfo.Name == v2.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &v2.V2StoreUpgrades))
 	}
 }

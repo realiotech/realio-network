@@ -10,22 +10,16 @@ import (
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
-func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken) (*types.MsgUpdateTokenResponse, error) {
+func (ms msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken) (*types.MsgUpdateTokenResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	existing, isFound := k.GetToken(ctx, msg.Symbol)
-	if !isFound {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists", msg.Symbol)
-	}
-
-	// Checks if the token manager signed
-	signers := msg.GetSigners()
-	if len(signers) != 1 {
-		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "invalid signers")
+	existing, err := ms.Token.Get(ctx, types.TokenKey(msg.Symbol))
+	if err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists: %s", msg.Symbol, err.Error())
 	}
 
 	// assert that the manager account is the only signer of the message
-	if signers[0].String() != existing.Manager {
+	if msg.Manager != existing.Manager {
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "caller not authorized")
 	}
 
@@ -38,7 +32,10 @@ func (k msgServer) UpdateToken(goCtx context.Context, msg *types.MsgUpdateToken)
 		AuthorizationRequired: msg.AuthorizationRequired,
 	}
 
-	k.SetToken(ctx, token)
+	err = ms.Token.Set(goCtx, types.TokenKey(msg.Symbol), token)
+	if err != nil {
+		return nil, types.ErrSetTokenUnable
+	}
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(

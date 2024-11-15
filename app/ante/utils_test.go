@@ -1,11 +1,16 @@
 package ante_test
 
 import (
+	"context"
 	"math/big"
 	"testing"
 	"time"
 
-	"cosmossdk.io/math"
+	sdkmath "cosmossdk.io/math"
+	"github.com/cometbft/cometbft/crypto/tmhash"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
+	"github.com/cometbft/cometbft/version"
 	client "github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -21,23 +26,24 @@ import (
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
-	cryptocodec "github.com/evmos/ethermint/crypto/codec"
-	"github.com/evmos/ethermint/crypto/ethsecp256k1"
-	"github.com/evmos/ethermint/encoding"
-	"github.com/evmos/ethermint/ethereum/eip712"
-	"github.com/evmos/ethermint/tests"
-	"github.com/evmos/ethermint/types"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
-	feemarkettypes "github.com/evmos/ethermint/x/feemarket/types"
+	protov2 "google.golang.org/protobuf/proto"
+
+	cryptocodec "github.com/evmos/os/crypto/codec"
+	osecp256k1 "github.com/evmos/os/crypto/ethsecp256k1"
+	ethcryptocodec "github.com/realiotech/realio-network/crypto/codec"
+
+	"github.com/evmos/os/encoding"
+	"github.com/evmos/os/ethereum/eip712"
+	tests "github.com/evmos/os/testutil/tx"
+	"github.com/evmos/os/types"
+	evmtypes "github.com/evmos/os/x/evm/types"
+
+	feemarkettypes "github.com/evmos/os/x/feemarket/types"
+
 	"github.com/realiotech/realio-network/app"
 	realionetworktypes "github.com/realiotech/realio-network/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/crypto/tmhash"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
-	"github.com/tendermint/tendermint/version"
 )
 
 var (
@@ -67,7 +73,7 @@ func (mah *MockAnteHandler) AnteHandle(ctx sdk.Context, _ sdk.Tx, _ bool) (sdk.C
 
 func (suite *AnteTestSuite) SetupTest() {
 	t := suite.T()
-	privCons, err := ethsecp256k1.GenerateKey()
+	privCons, err := osecp256k1.GenerateKey()
 	require.NoError(t, err)
 	consAddress := sdk.ConsAddress(privCons.PubKey().Address())
 
@@ -75,9 +81,9 @@ func (suite *AnteTestSuite) SetupTest() {
 	suite.app = app.Setup(isCheckTx, feemarkettypes.DefaultGenesisState(), 1)
 	suite.Require().NotNil(suite.app.AppCodec())
 
-	suite.ctx = suite.app.BaseApp.NewContext(isCheckTx, tmproto.Header{
+	suite.ctx = suite.app.BaseApp.NewContextLegacy(isCheckTx, tmproto.Header{
 		Height:          1,
-		ChainID:         realionetworktypes.MainnetChainID,
+		ChainID:         realionetworktypes.MainnetChainID + "-1",
 		Time:            time.Now().UTC(),
 		ProposerAddress: consAddress.Bytes(),
 
@@ -105,8 +111,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	evmParams.EvmDenom = suite.denom
 	_ = suite.app.EvmKeeper.SetParams(suite.ctx, evmParams)
 
-	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
-	suite.clientCtx = client.Context{}.WithTxConfig(encodingConfig.TxConfig)
+	suite.clientCtx = client.Context{}.WithTxConfig(suite.app.GetTxConfig())
 }
 
 func TestAnteTestSuite(t *testing.T) {
@@ -121,22 +126,22 @@ func (suite *AnteTestSuite) Commit() {
 
 // Commit commits a block at a given time.
 func (suite *AnteTestSuite) CommitAfter(t time.Duration) {
-	header := suite.ctx.BlockHeader()
-	suite.app.EndBlock(abci.RequestEndBlock{Height: header.Height})
-	_ = suite.app.Commit()
+	_, err := suite.app.EndBlocker(suite.ctx)
+	suite.Require().NoError(err)
+	_, err = suite.app.Commit()
+	suite.Require().NoError(err)
 
+	header := suite.ctx.BlockHeader()
 	header.Height++
 	header.Time = header.Time.Add(t)
-	suite.app.BeginBlock(abci.RequestBeginBlock{
-		Header: header,
-	})
 
-	// update ctx
-	suite.ctx = suite.app.BaseApp.NewContext(false, header)
+	suite.ctx = suite.app.BaseApp.NewContextLegacy(false, header)
+	_, err = suite.app.BeginBlocker(suite.ctx)
+	suite.Require().NoError(err)
 }
 
-func (suite *AnteTestSuite) CreateTestTxBuilder(gasPrice math.Int, denom string, msgs ...sdk.Msg) client.TxBuilder {
-	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
+func (suite *AnteTestSuite) CreateTestTxBuilder(gasPrice sdkmath.Int, denom string, msgs ...sdk.Msg) client.TxBuilder {
+	encodingConfig := encoding.MakeConfig()
 	gasLimit := uint64(1000000)
 
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
@@ -150,7 +155,7 @@ func (suite *AnteTestSuite) CreateTestTxBuilder(gasPrice math.Int, denom string,
 }
 
 func (suite *AnteTestSuite) CreateEthTestTxBuilder(msgEthereumTx *evmtypes.MsgEthereumTx) client.TxBuilder {
-	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
+	encodingConfig := encoding.MakeConfig()
 	option, err := codectypes.NewAnyWithValue(&evmtypes.ExtensionOptionsEthereumTx{})
 	suite.Require().NoError(err)
 
@@ -165,7 +170,7 @@ func (suite *AnteTestSuite) CreateEthTestTxBuilder(msgEthereumTx *evmtypes.MsgEt
 	txData, err := evmtypes.UnpackTxData(msgEthereumTx.Data)
 	suite.Require().NoError(err)
 
-	fees := sdk.Coins{{Denom: s.denom, Amount: sdk.NewIntFromBigInt(txData.Fee())}}
+	fees := sdk.Coins{{Denom: s.denom, Amount: sdkmath.NewIntFromBigInt(txData.Fee())}}
 	builder.SetFeeAmount(fees)
 	builder.SetGasLimit(msgEthereumTx.GetGas())
 
@@ -187,18 +192,20 @@ func (suite *AnteTestSuite) BuildTestEthTx(
 	)
 	data := make([]byte, 0)
 	gasLimit := uint64(100000)
-	msgEthereumTx := evmtypes.NewTx(
-		chainID,
-		nonce,
-		&to,
-		nil,
-		gasLimit,
-		gasPrice,
-		gasFeeCap,
-		gasTipCap,
-		data,
-		accesses,
-	)
+
+	args := evmtypes.EvmTxArgs{
+		Nonce:     nonce,
+		GasLimit:  gasLimit,
+		Input:     data,
+		GasFeeCap: gasFeeCap,
+		GasPrice:  gasPrice,
+		ChainID:   chainID,
+		GasTipCap: gasTipCap,
+		Amount:    nil,
+		To:        &to,
+		Accesses:  accesses,
+	}
+	msgEthereumTx := evmtypes.NewTx(&args)
 	msgEthereumTx.From = from.String()
 	return msgEthereumTx
 }
@@ -207,7 +214,10 @@ var _ sdk.Tx = &invalidTx{}
 
 type invalidTx struct{}
 
-func (invalidTx) GetMsgs() []sdk.Msg   { return []sdk.Msg{nil} }
+func (invalidTx) GetMsgs() []sdk.Msg { return []sdk.Msg{nil} }
+func (invalidTx) GetMsgsV2() ([]protov2.Message, error) {
+	return []protov2.Message{nil}, nil
+}
 func (invalidTx) ValidateBasic() error { return nil }
 
 func newMsgGrant(granter sdk.AccAddress, grantee sdk.AccAddress, a authz.Authorization, expiration *time.Time) *authz.MsgGrant {
@@ -235,15 +245,15 @@ func createNestedMsgExec(a sdk.AccAddress, nestedLvl int, lastLvlMsgs []sdk.Msg)
 	return msgs[nestedLvl-1]
 }
 
-func generatePrivKeyAddressPairs(accCount int) ([]*ethsecp256k1.PrivKey, []sdk.AccAddress, error) {
+func generatePrivKeyAddressPairs(accCount int) ([]*osecp256k1.PrivKey, []sdk.AccAddress, error) {
 	var (
 		err           error
-		testPrivKeys  = make([]*ethsecp256k1.PrivKey, accCount)
+		testPrivKeys  = make([]*osecp256k1.PrivKey, accCount)
 		testAddresses = make([]sdk.AccAddress, accCount)
 	)
 
 	for i := range testPrivKeys {
-		testPrivKeys[i], err = ethsecp256k1.GenerateKey()
+		testPrivKeys[i], err = osecp256k1.GenerateKey()
 		if err != nil {
 			return nil, nil, err
 		}
@@ -252,8 +262,8 @@ func generatePrivKeyAddressPairs(accCount int) ([]*ethsecp256k1.PrivKey, []sdk.A
 	return testPrivKeys, testAddresses, nil
 }
 
-func createTx(priv *ethsecp256k1.PrivKey, msgs ...sdk.Msg) (sdk.Tx, error) {
-	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
+func createTx(priv *osecp256k1.PrivKey, msgs ...sdk.Msg) (sdk.Tx, error) {
+	encodingConfig := encoding.MakeConfig()
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 
 	txBuilder.SetGasLimit(1000000)
@@ -263,10 +273,14 @@ func createTx(priv *ethsecp256k1.PrivKey, msgs ...sdk.Msg) (sdk.Tx, error) {
 
 	// First round: we gather all the signer infos. We use the "set empty
 	// signature" hack to do that.
+	defaultSignMode, err := authsigning.APISignModeToInternal(encodingConfig.TxConfig.SignModeHandler().DefaultMode())
+	if err != nil {
+		return nil, err
+	}
 	sigV2 := signing.SignatureV2{
 		PubKey: priv.PubKey(),
 		Data: &signing.SingleSignatureData{
-			SignMode:  encodingConfig.TxConfig.SignModeHandler().DefaultMode(),
+			SignMode:  defaultSignMode,
 			Signature: nil,
 		},
 		Sequence: 0,
@@ -279,14 +293,13 @@ func createTx(priv *ethsecp256k1.PrivKey, msgs ...sdk.Msg) (sdk.Tx, error) {
 	}
 
 	signerData := authsigning.SignerData{
-		ChainID:       realionetworktypes.MainnetChainID,
+		ChainID:       realionetworktypes.MainnetChainID + "-1",
 		AccountNumber: 0,
 		Sequence:      0,
 	}
-	sigV2, err := tx.SignWithPrivKey(
-		encodingConfig.TxConfig.SignModeHandler().DefaultMode(), signerData,
-		txBuilder, priv, encodingConfig.TxConfig,
-		0,
+	sigV2, err = tx.SignWithPrivKey(
+		context.TODO(), defaultSignMode, signerData,
+		txBuilder, priv, encodingConfig.TxConfig, 0,
 	)
 	if err != nil {
 		return nil, err
@@ -306,7 +319,7 @@ func createEIP712CosmosTx(
 ) (sdk.Tx, error) {
 	var err error
 
-	encodingConfig := encoding.MakeConfig(app.ModuleBasics)
+	encodingConfig := app.MakeEncodingConfig()
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 
 	// GenerateTypedData TypedData
@@ -314,14 +327,22 @@ func createEIP712CosmosTx(
 	types.RegisterInterfaces(registry)
 	ethermintCodec := codec.NewProtoCodec(registry)
 	cryptocodec.RegisterInterfaces(registry)
+	ethcryptocodec.RegisterInterfaces(registry)
 
-	coinAmount := sdk.NewCoin(evmtypes.DefaultEVMDenom, sdk.NewInt(20))
+	coinAmount := sdk.NewCoin(sdk.DefaultBondDenom, sdkmath.NewInt(20))
 	amount := sdk.NewCoins(coinAmount)
 	gas := uint64(200000)
 
-	fee := legacytx.NewStdFee(gas, amount) //nolint:staticcheck // ignore staticcheck for deprecated NewStdFee
-	data := legacytx.StdSignBytes(realionetworktypes.MainnetChainID, 0, 0, 0, fee, msgs, "", nil)
-	typedData, err := eip712.WrapTxToTypedData(ethermintCodec, 9000, msgs[0], data, &eip712.FeeDelegationOptions{
+	fee := legacytx.NewStdFee(gas, amount) //nolint
+
+	data := legacytx.StdSignBytes(realionetworktypes.MainnetChainID+"-1", 0, 0, 0, fee, msgs, "")
+	pc, err := types.ParseChainID(realionetworktypes.MainnetChainID + "-1")
+	if err != nil {
+		return nil, err
+	}
+	chainIDNum := pc.Uint64()
+
+	typedData, err := eip712.LegacyWrapTxToTypedData(ethermintCodec, chainIDNum, msgs[0], data, &eip712.FeeDelegationOptions{
 		FeePayer: from,
 	})
 	if err != nil {
@@ -335,26 +356,14 @@ func createEIP712CosmosTx(
 
 	// Sign typedData
 	keyringSigner := tests.NewSigner(priv)
-	signature, pubKey, err := keyringSigner.SignByAddress(from, sigHash)
+	signature, pubKey, err := keyringSigner.SignByAddress(from, sigHash, signing.SignMode_SIGN_MODE_DIRECT)
 	if err != nil {
 		return nil, err
 	}
 	signature[crypto.RecoveryIDOffset] += 27 // Transform V from 0/1 to 27/28 according to the yellow paper
 
-	// Add ExtensionOptionsWeb3Tx extension
-	var option *codectypes.Any
-	option, err = codectypes.NewAnyWithValue(&types.ExtensionOptionsWeb3Tx{
-		FeePayer:         from.String(),
-		TypedDataChainID: 9000,
-		FeePayerSig:      signature,
-	})
-	if err != nil {
-		return nil, err
-	}
-
 	builder, _ := txBuilder.(authtx.ExtensionOptionsTxBuilder)
 
-	builder.SetExtensionOptions(option)
 	builder.SetFeeAmount(amount)
 	builder.SetGasLimit(gas)
 

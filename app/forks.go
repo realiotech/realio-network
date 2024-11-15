@@ -66,7 +66,11 @@ func removeDuplicateValueRedelegationQueueKey(app *RealioNetwork, ctx sdk.Contex
 	cdc := app.AppCodec()
 	store := ctx.KVStore(app.keys[stakingtypes.ModuleName])
 
-	redelegationTimesliceIterator := sk.RedelegationQueueIterator(ctx, oneEnternityLater) // make sure to iterate all queue
+	redelegationTimesliceIterator, err := sk.RedelegationQueueIterator(ctx, oneEnternityLater) // make sure to iterate all queue
+	if err != nil {
+		panic(err)
+	}
+
 	defer redelegationTimesliceIterator.Close()
 
 	for ; redelegationTimesliceIterator.Valid(); redelegationTimesliceIterator.Next() {
@@ -103,7 +107,11 @@ func containsDVVTriplets(s []stakingtypes.DVVTriplet, e stakingtypes.DVVTriplet)
 }
 
 func removeDuplicateUnbondingValidator(app *RealioNetwork, ctx sdk.Context) {
-	valIter := app.StakingKeeper.ValidatorQueueIterator(ctx, oneEnternityLater, 99999999999999)
+	valIter, err := app.StakingKeeper.ValidatorQueueIterator(ctx, oneEnternityLater, 99999999999999)
+	if err != nil {
+		panic(err)
+	}
+
 	defer valIter.Close()
 
 	for ; valIter.Valid(); valIter.Next() {
@@ -131,7 +139,11 @@ func removeDuplicateValueUnbondingQueueKey(app *RealioNetwork, ctx sdk.Context) 
 	cdc := app.AppCodec()
 	store := ctx.KVStore(app.keys[stakingtypes.ModuleName])
 
-	unbondingTimesliceIterator := sk.UBDQueueIterator(ctx, oneEnternityLater) // make sure to iterate all queue
+	unbondingTimesliceIterator, err := sk.UBDQueueIterator(ctx, oneEnternityLater) // make sure to iterate all queue
+	if err != nil {
+		panic(err)
+	}
+
 	defer unbondingTimesliceIterator.Close()
 
 	for ; unbondingTimesliceIterator.Valid(); unbondingTimesliceIterator.Next() {

@@ -9,27 +9,27 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"strings"
 	"sync"
+	"syscall"
 	"testing"
 	"time"
 
 	"github.com/realiotech/realio-network/types"
+	"golang.org/x/sync/errgroup"
 
 	"cosmossdk.io/math"
-	"github.com/ethereum/go-ethereum/common"
+	tmrand "github.com/cometbft/cometbft/libs/rand"
+	"github.com/cometbft/cometbft/node"
+	tmclient "github.com/cometbft/cometbft/rpc/client"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/spf13/cobra"
-	tmcfg "github.com/tendermint/tendermint/config"
-	tmflags "github.com/tendermint/tendermint/libs/cli/flags"
-	"github.com/tendermint/tendermint/libs/log"
-	tmrand "github.com/tendermint/tendermint/libs/rand"
-	"github.com/tendermint/tendermint/node"
-	tmclient "github.com/tendermint/tendermint/rpc/client"
-	dbm "github.com/tendermint/tm-db"
 	"google.golang.org/grpc"
 
+	pruningtypes "cosmossdk.io/store/pruning/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -37,26 +37,28 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-	pruningtypes "github.com/cosmos/cosmos-sdk/pruning/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/simapp"
-	"github.com/cosmos/cosmos-sdk/simapp/params"
+
+	"cosmossdk.io/log"
+	"cosmossdk.io/simapp"
+	"cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/testutil"
+	networktestutil "github.com/cosmos/cosmos-sdk/testutil/network"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/evmos/ethermint/crypto/hd"
-	"github.com/realiotech/realio-network/app"
 
-	"github.com/evmos/ethermint/encoding"
-	"github.com/evmos/ethermint/server/config"
-	ethermint "github.com/evmos/ethermint/types"
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	"github.com/evmos/os/crypto/hd"
+	"github.com/evmos/os/server/config"
+	ethermint "github.com/evmos/os/types"
+
+	"github.com/realiotech/realio-network/app"
 )
 
 // package-wide network lock to only allow one test network at a time
@@ -92,7 +94,7 @@ type Config struct {
 	JSONRPCAddress    string              // JSON-RPC listen address (including port)
 	APIAddress        string              // REST API listen address (including port)
 	GRPCAddress       string              // GRPC server listen address (including port)
-	EnableTMLogging   bool                // enable Tendermint logging to STDOUT
+	EnableLogging     bool                // enable logging to STDOUT
 	CleanupDir        bool                // remove base temporary directory during cleanup
 	PrintMnemonic     bool                // print the mnemonic of first validator as log output for testing
 }
@@ -100,7 +102,7 @@ type Config struct {
 // DefaultConfig returns a sane default configuration suitable for nearly all
 // testing requirements.
 func DefaultConfig() Config {
-	encCfg := encoding.MakeConfig(app.ModuleBasics)
+	encCfg := app.MakeEncodingConfig()
 
 	return Config{
 		Codec:             encCfg.Codec,
@@ -116,9 +118,9 @@ func DefaultConfig() Config {
 		BondDenom:         "ario,arst",
 		BaseDenom:         types.BaseDenom,
 		MinGasPrices:      fmt.Sprintf("0.000006%s", types.BaseDenom),
-		RSTTokens:         sdk.TokensFromConsensusPower(500000, ethermint.PowerReduction),
-		BaseTokens:        sdk.TokensFromConsensusPower(1000000, ethermint.PowerReduction),
-		BondedTokens:      sdk.TokensFromConsensusPower(100000, ethermint.PowerReduction),
+		RSTTokens:         sdk.TokensFromConsensusPower(500000, sdk.DefaultPowerReduction),
+		BaseTokens:        sdk.TokensFromConsensusPower(1000000, sdk.DefaultPowerReduction),
+		BondedTokens:      sdk.TokensFromConsensusPower(100000, sdk.DefaultPowerReduction),
 		PruningStrategy:   pruningtypes.PruningOptionNothing,
 		CleanupDir:        true,
 		SigningAlgo:       string(hd.EthSecp256k1Type),
@@ -133,7 +135,7 @@ func NewAppConstructor(encodingCfg params.EncodingConfig) AppConstructor {
 		return app.New(
 			val.Ctx.Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.Ctx.Config.RootDir, 0,
 			encodingCfg,
-			simapp.EmptyAppOptions{},
+			simtestutil.EmptyAppOptions{},
 			baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.AppConfig.Pruning)),
 			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
 		)
@@ -184,6 +186,8 @@ type (
 		grpcWeb     *http.Server
 		jsonrpc     *http.Server
 		jsonrpcDone chan struct{}
+		errGroup    *errgroup.Group
+		cancelFn    context.CancelFunc
 	}
 )
 
@@ -268,13 +272,17 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		appCfg.GRPCWeb.Enable = false
 		appCfg.JSONRPC.Enable = false
 		apiListenAddr := ""
+		var closeFn func() error
 		if i == 0 {
 			if cfg.APIAddress != "" {
 				apiListenAddr = cfg.APIAddress
 			} else {
 				var err error
-				apiListenAddr, _, err = server.FreeTCPAddr()
+				apiListenAddr, _, closeFn, err = networktestutil.FreeTCPAddr()
 				if err != nil {
+					return nil, err
+				}
+				if err = closeFn(); err != nil {
 					return nil, err
 				}
 			}
@@ -289,36 +297,39 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			if cfg.RPCAddress != "" {
 				tmCfg.RPC.ListenAddress = cfg.RPCAddress
 			} else {
-				rpcAddr, _, err := server.FreeTCPAddr()
+				rpcAddr, _, closeFn, err := networktestutil.FreeTCPAddr()
 				if err != nil {
 					return nil, err
 				}
 				tmCfg.RPC.ListenAddress = rpcAddr
+				if err = closeFn(); err != nil {
+					return nil, err
+				}
 			}
 
 			if cfg.GRPCAddress != "" {
 				appCfg.GRPC.Address = cfg.GRPCAddress
 			} else {
-				_, grpcPort, err := server.FreeTCPAddr()
+				_, grpcPort, closeFn, err := networktestutil.FreeTCPAddr()
 				if err != nil {
 					return nil, err
 				}
 				appCfg.GRPC.Address = fmt.Sprintf("0.0.0.0:%s", grpcPort)
+				if err = closeFn(); err != nil {
+					return nil, err
+				}
 			}
 			appCfg.GRPC.Enable = true
-
-			_, grpcWebPort, err := server.FreeTCPAddr()
-			if err != nil {
-				return nil, err
-			}
-			appCfg.GRPCWeb.Address = fmt.Sprintf("0.0.0.0:%s", grpcWebPort)
 			appCfg.GRPCWeb.Enable = true
 
 			if cfg.JSONRPCAddress != "" {
 				appCfg.JSONRPC.Address = cfg.JSONRPCAddress
 			} else {
-				_, jsonRPCPort, err := server.FreeTCPAddr()
+				_, jsonRPCPort, closeFn, err := networktestutil.FreeTCPAddr()
 				if err != nil {
+					return nil, err
+				}
+				if err = closeFn(); err != nil {
 					return nil, err
 				}
 				appCfg.JSONRPC.Address = fmt.Sprintf("0.0.0.0:%s", jsonRPCPort)
@@ -328,9 +339,8 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		}
 
 		logger := log.NewNopLogger()
-		if cfg.EnableTMLogging {
-			logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-			logger, _ = tmflags.ParseLogLevel("info", logger, tmcfg.DefaultLogLevel)
+		if cfg.EnableLogging {
+			logger = log.NewLogger(os.Stdout) // TODO(mr): enable selection of log destination.
 		}
 
 		ctx.Logger = logger
@@ -354,14 +364,20 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		tmCfg.Moniker = nodeDirName
 		monikers[i] = nodeDirName
 
-		proxyAddr, _, err := server.FreeTCPAddr()
+		proxyAddr, _, closeFn, err := networktestutil.FreeTCPAddr()
 		if err != nil {
+			return nil, err
+		}
+		if err = closeFn(); err != nil {
 			return nil, err
 		}
 		tmCfg.ProxyApp = proxyAddr
 
-		p2pAddr, _, err := server.FreeTCPAddr()
+		p2pAddr, _, closeFn, err := networktestutil.FreeTCPAddr()
 		if err != nil {
+			return nil, err
+		}
+		if err = closeFn(); err != nil {
 			return nil, err
 		}
 		tmCfg.P2P.ListenAddress = p2pAddr
@@ -416,12 +432,9 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 
 		genFiles = append(genFiles, tmCfg.GenesisFile())
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: balances.Sort()})
-		genAccounts = append(genAccounts, &ethermint.EthAccount{
-			BaseAccount: authtypes.NewBaseAccount(addr, nil, 0, 0),
-			CodeHash:    common.BytesToHash(evmtypes.EmptyCodeHash).Hex(),
-		})
+		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 
-		commission, err := sdk.NewDecFromStr("0.5")
+		commission, err := math.LegacyNewDecFromStr("0.5")
 		if err != nil {
 			return nil, err
 		}
@@ -433,12 +446,12 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		}
 
 		createValMsg, err := stakingtypes.NewMsgCreateValidator(
-			sdk.ValAddress(addr),
+			sdk.ValAddress(addr).String(),
 			valPubKeys[i],
 			sdk.NewCoin(tokenToBond, cfg.BondedTokens),
 			stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
-			stakingtypes.NewCommissionRates(commission, sdk.OneDec(), sdk.OneDec()),
-			sdk.OneInt(),
+			stakingtypes.NewCommissionRates(commission, math.LegacyOneDec(), math.LegacyOneDec()),
+			math.OneInt(),
 		)
 		if err != nil {
 			return nil, err
@@ -450,7 +463,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 		}
 
 		memo := fmt.Sprintf("%s@%s:%s", nodeIDs[i], p2pURL.Hostname(), p2pURL.Port())
-		fee := sdk.NewCoins(sdk.NewCoin(types.BaseDenom, sdk.NewInt(0)))
+		fee := sdk.NewCoins(sdk.NewCoin(types.BaseDenom, math.NewInt(0)))
 		txBuilder := cfg.TxConfig.NewTxBuilder()
 		err = txBuilder.SetMsgs(createValMsg)
 		if err != nil {
@@ -467,7 +480,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			WithKeybase(kb).
 			WithTxConfig(cfg.TxConfig)
 
-		if err := tx.Sign(txFactory, nodeDirName, txBuilder, true); err != nil {
+		if err := tx.Sign(context.TODO(), txFactory, nodeDirName, txBuilder, true); err != nil {
 			return nil, err
 		}
 
@@ -480,7 +493,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 			return nil, err
 		}
 
-		customAppTemplate, _ := config.AppConfig(types.BaseDenom)
+		customAppTemplate := srvconfig.DefaultConfigTemplate + config.DefaultEVMConfigTemplate
 		srvconfig.SetConfigTemplate(customAppTemplate)
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), appCfg)
 
@@ -539,7 +552,7 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 
 	// Ensure we cleanup incase any test was abruptly halted (e.g. SIGINT) as any
 	// defer in a test would not be called.
-	server.TrapSignal(network.Cleanup)
+	trapSignal(network.Cleanup)
 
 	return network, nil
 }
@@ -625,6 +638,12 @@ func (n *Network) Cleanup() {
 	n.Logger.Log("cleaning up test network...")
 
 	for _, v := range n.Validators {
+		v.cancelFn()
+
+		if err := v.errGroup.Wait(); err != nil {
+			n.Logger.Log("unexpected error waiting for validator gRPC and API processes to exit", "err", err)
+		}
+
 		if v.tmNode != nil && v.tmNode.IsRunning() {
 			_ = v.tmNode.Stop()
 		}
@@ -703,4 +722,27 @@ func centerText(text string, width int) string {
 	rightBuffer := strings.Repeat(" ", (width-textLen)/2+(width-textLen)%2)
 
 	return fmt.Sprintf("%s%s%s", leftBuffer, text, rightBuffer)
+}
+
+func trapSignal(cleanupFunc func()) {
+	sigs := make(chan os.Signal, 1)
+	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
+
+	go func() {
+		sig := <-sigs
+
+		if cleanupFunc != nil {
+			cleanupFunc()
+		}
+		exitCode := 128
+
+		switch sig {
+		case syscall.SIGINT:
+			exitCode += int(syscall.SIGINT)
+		case syscall.SIGTERM:
+			exitCode += int(syscall.SIGTERM)
+		}
+
+		os.Exit(exitCode)
+	}()
 }

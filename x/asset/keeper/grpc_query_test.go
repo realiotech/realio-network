@@ -3,8 +3,7 @@ package keeper_test
 import (
 	"fmt"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
+	"github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
@@ -12,12 +11,13 @@ func (suite *KeeperTestSuite) TestParamsQuery() {
 	suite.SetupTest()
 
 	k := suite.app.AssetKeeper
-	wctx := sdk.WrapSDKContext(suite.ctx)
 
 	params := types.DefaultParams()
-	k.SetParams(suite.ctx, params)
+	err := k.Params.Set(suite.ctx, params)
+	suite.Require().NoError(err)
 
-	response, err := k.Params(wctx, &types.QueryParamsRequest{})
+	queryServer := keeper.NewQueryServerImpl(k)
+	response, err := queryServer.Params(suite.ctx, &types.QueryParamsRequest{})
 	suite.Require().NoError(err)
 	suite.Require().Equal(&types.QueryParamsResponse{Params: params}, response)
 }
@@ -52,7 +52,8 @@ func (suite *KeeperTestSuite) TestTokensQuery() {
 					Total:                 "1000",
 					AuthorizationRequired: false,
 				}
-				suite.app.AssetKeeper.SetToken(suite.ctx, token)
+				err := suite.app.AssetKeeper.Token.Set(suite.ctx, types.TokenKey("rst"), token)
+				suite.Require().NoError(err)
 
 				expRes = &types.QueryTokensResponse{
 					Tokens: []types.Token{token},
@@ -71,7 +72,8 @@ func (suite *KeeperTestSuite) TestTokensQuery() {
 					Total:                 "1000",
 					AuthorizationRequired: false,
 				}
-				suite.app.AssetKeeper.SetToken(suite.ctx, token1)
+				err := suite.app.AssetKeeper.Token.Set(suite.ctx, types.TokenKey("rst"), token1)
+				suite.Require().NoError(err)
 
 				token2 := types.Token{
 					Manager:               suite.testUser1Address,
@@ -80,7 +82,8 @@ func (suite *KeeperTestSuite) TestTokensQuery() {
 					Total:                 "1000",
 					AuthorizationRequired: false,
 				}
-				suite.app.AssetKeeper.SetToken(suite.ctx, token2)
+				err = suite.app.AssetKeeper.Token.Set(suite.ctx, types.TokenKey("btf"), token2)
+				suite.Require().NoError(err)
 
 				expRes = &types.QueryTokensResponse{
 					Tokens: []types.Token{token2, token1},
@@ -93,7 +96,7 @@ func (suite *KeeperTestSuite) TestTokensQuery() {
 		suite.Run(fmt.Sprintf("Case %s", tc.name), func() {
 			suite.SetupTest() // reset
 
-			ctx := sdk.WrapSDKContext(suite.ctx)
+			ctx := suite.ctx
 			tc.malleate()
 
 			res, err := suite.queryClient.Tokens(ctx, req)

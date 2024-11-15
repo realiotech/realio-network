@@ -1,14 +1,15 @@
 package keeper
 
 import (
+	"context"
+
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
-func (k Keeper) AssetSendRestriction(ctx sdk.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) (newToAddr sdk.AccAddress, err error) {
+func (k Keeper) AssetSendRestriction(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) (newToAddr sdk.AccAddress, err error) {
 	newToAddr = toAddr
-	err = nil
 
 	// module whitelisted addresses can send coins without restrictions
 	if allow := k.AllowAddr(fromAddr) || k.AllowAddr(toAddr); allow {
@@ -23,11 +24,11 @@ func (k Keeper) AssetSendRestriction(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 		if found {
 			symbol = tokenMetadata.Symbol
 		}
-		token, isFound := k.GetToken(
+		token, err := k.Token.Get(
 			ctx,
-			symbol,
+			types.TokenKey(symbol),
 		)
-		if !isFound {
+		if err != nil {
 			continue
 		}
 
@@ -42,11 +43,11 @@ func (k Keeper) AssetSendRestriction(ctx sdk.Context, fromAddr, toAddr sdk.AccAd
 		if isAuthorizedFrom && isAuthorizedTo {
 			continue
 		} else { //nolint:revive // superfluous else, could fix, but not worth it?
-			err = errorsmod.Wrapf(types.ErrNotAuthorized, "%s is not authorized to transact with %s", fromAddr, coin.Denom)
-			break
+			err := errorsmod.Wrapf(types.ErrNotAuthorized, "%s is not authorized to transact with %s", fromAddr, coin.Denom)
+			return nil, err
 		}
 	}
-	return newToAddr, err
+	return newToAddr, nil
 }
 
 // AllowAddr addr checks if a given address is in the list of allowAddrs to skip restrictions

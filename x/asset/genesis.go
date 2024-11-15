@@ -1,7 +1,7 @@
 package asset
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"context"
 
 	"github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/asset/types"
@@ -9,18 +9,36 @@ import (
 
 // InitGenesis initializes the assets module's state from a provided genesis
 // state.
-func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) {
-	k.SetParams(ctx, genState.Params)
+func InitGenesis(ctx context.Context, k keeper.Keeper, genState types.GenesisState) {
+	err := k.Params.Set(ctx, genState.Params)
+	if err != nil {
+		panic(err)
+	}
 	for _, token := range genState.Tokens {
-		k.SetToken(ctx, token)
+		err := k.Token.Set(ctx, types.TokenKey(token.Symbol), token)
+		if err != nil {
+			panic(err)
+		}
 	}
 }
 
 // ExportGenesis returns the capability module's exported genesis.
-func ExportGenesis(ctx sdk.Context, k keeper.Keeper) *types.GenesisState {
+func ExportGenesis(ctx context.Context, k keeper.Keeper) *types.GenesisState {
 	genesis := types.DefaultGenesis()
-	genesis.Params = k.GetParams(ctx)
-	genesis.Tokens = k.GetAllToken(ctx)
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		panic(err)
+	}
+	genesis.Params = params
+	tokens := []types.Token{}
+	err = k.Token.Walk(ctx, nil, func(_ string, token types.Token) (stop bool, err error) {
+		tokens = append(tokens, token)
+		return false, nil
+	})
+	if err != nil {
+		panic(err)
+	}
+	genesis.Tokens = tokens
 	// this line is used by starport scaffolding # genesis/module/export
 
 	return genesis

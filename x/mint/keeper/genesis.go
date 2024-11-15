@@ -8,14 +8,28 @@ import (
 
 // InitGenesis new mint genesis
 func (k Keeper) InitGenesis(ctx sdk.Context, ak types.AccountKeeper, data *types.GenesisState) {
-	k.SetMinter(ctx, data.Minter)
-	k.SetParams(ctx, data.Params)
+	if err := k.Minter.Set(ctx, data.Minter); err != nil {
+		panic(err)
+	}
+
+	if err := k.Params.Set(ctx, data.Params); err != nil {
+		panic(err)
+	}
+
 	ak.GetModuleAccount(ctx, types.ModuleName)
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
-	minter := k.GetMinter(ctx)
-	params := k.GetParams(ctx)
+	minter, err := k.Minter.Get(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	params, err := k.Params.Get(ctx)
+	if err != nil {
+		panic(err)
+	}
+
 	return types.NewGenesisState(minter, params)
 }

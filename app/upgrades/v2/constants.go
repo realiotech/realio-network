@@ -1,10 +1,21 @@
 package v2
 
-const (
-// UpgradeName is the shared upgrade plan name for mainnet and testnet
-// UpgradeName = "v2.0.0"
-// MainnetUpgradeHeight defines the Realio Network mainnet block height on which the upgrade will take place
-// MainnetUpgradeHeight =
-// UpgradeInfo defines the binaries that will be used for the upgrade
-// UpgradeInfo = `'{"binaries":{"darwin/arm64":"https://github.com/realiotech/realio-network/releases/download/v0.1.0/realio-network_0.1.0_Darwin_arm64.tar.gz","darwin/x86_64":"https://github.com/realiotech/realio-network/releases/download/v0.1.0/realio-network_0.1.0_Darwin_x86_64.tar.gz","linux/arm64":"https://github.com/realiotech/realio-network/releases/download/v0.1.0/realio-network_0.1.0_Linux_arm64.tar.gz","linux/x86_64":"https://github.com/realiotech/realio-network/releases/download/v0.1.0/realio-network_0.1.0_Linux_x86_64.tar.gz","windows/x86_64":"https://github.com/realiotech/realio-network/releases/download/v0.1.0/realio-network_0.1.0_Windows_x86_64.zip"}}'`
+import (
+	storetypes "cosmossdk.io/store/types"
+	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 )
+
+const (
+	// UpgradeName defines the on-chain upgrade name.
+	UpgradeName = "v2"
+)
+
+var V2StoreUpgrades = storetypes.StoreUpgrades{
+	Added: []string{
+		consensustypes.ModuleName,
+		crisistypes.ModuleName,
+		bridgetypes.ModuleName,
+	},
+}

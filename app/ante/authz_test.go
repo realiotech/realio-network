@@ -13,7 +13,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	evmtypes "github.com/evmos/ethermint/x/evm/types"
+	evmtypes "github.com/evmos/os/x/evm/types"
 
 	"github.com/realiotech/realio-network/app/ante"
 )
@@ -48,7 +48,7 @@ func TestAuthzLimiterDecorator(t *testing.T) {
 				banktypes.NewMsgSend(
 					testAddresses[0],
 					testAddresses[1],
-					sdk.NewCoins(sdk.NewInt64Coin(evmtypes.DefaultEVMDenom, 100e6)),
+					sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100e6)),
 				),
 			},
 			false,
@@ -130,7 +130,7 @@ func TestAuthzLimiterDecorator(t *testing.T) {
 					[]sdk.Msg{banktypes.NewMsgSend(
 						testAddresses[0],
 						testAddresses[3],
-						sdk.NewCoins(sdk.NewInt64Coin(evmtypes.DefaultEVMDenom, 100e6)),
+						sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100e6)),
 					)}),
 			},
 			false,
@@ -164,7 +164,7 @@ func TestAuthzLimiterDecorator(t *testing.T) {
 						banktypes.NewMsgSend(
 							testAddresses[0],
 							testAddresses[3],
-							sdk.NewCoins(sdk.NewInt64Coin(evmtypes.DefaultEVMDenom, 100e6)),
+							sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100e6)),
 						),
 						&evmtypes.MsgEthereumTx{},
 					},
@@ -215,7 +215,7 @@ func TestAuthzLimiterDecorator(t *testing.T) {
 						banktypes.NewMsgSend(
 							testAddresses[0],
 							testAddresses[3],
-							sdk.NewCoins(sdk.NewInt64Coin(evmtypes.DefaultEVMDenom, 100e6)),
+							sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100e6)),
 						),
 					},
 				),
@@ -233,7 +233,7 @@ func TestAuthzLimiterDecorator(t *testing.T) {
 						banktypes.NewMsgSend(
 							testAddresses[0],
 							testAddresses[3],
-							sdk.NewCoins(sdk.NewInt64Coin(evmtypes.DefaultEVMDenom, 100e6)),
+							sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100e6)),
 						),
 					},
 				),
@@ -244,7 +244,7 @@ func TestAuthzLimiterDecorator(t *testing.T) {
 						banktypes.NewMsgSend(
 							testAddresses[0],
 							testAddresses[3],
-							sdk.NewCoins(sdk.NewInt64Coin(evmtypes.DefaultEVMDenom, 100e6)),
+							sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 100e6)),
 						),
 					},
 				),

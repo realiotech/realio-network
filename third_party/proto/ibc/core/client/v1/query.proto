@@ -2,10 +2,12 @@ syntax = "proto3";
 
 package ibc.core.client.v1;
 
-option go_package = "github.com/cosmos/ibc-go/v3/modules/core/02-client/types";
+option go_package = "github.com/cosmos/ibc-go/v8/modules/core/02-client/types";
 
 import "cosmos/base/query/v1beta1/pagination.proto";
+import "cosmos/query/v1/query.proto";
 import "ibc/core/client/v1/client.proto";
+import "ibc/core/commitment/v1/commitment.proto";
 import "google/protobuf/any.proto";
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
@@ -14,20 +16,17 @@ import "gogoproto/gogo.proto";
 service Query {
   // ClientState queries an IBC light client.
   rpc ClientState(QueryClientStateRequest) returns (QueryClientStateResponse) {
-    option (google.api.http).get =
-        "/ibc/core/client/v1/client_states/{client_id}";
+    option (google.api.http).get = "/ibc/core/client/v1/client_states/{client_id}";
   }
 
   // ClientStates queries all the IBC light clients of a chain.
-  rpc ClientStates(QueryClientStatesRequest)
-      returns (QueryClientStatesResponse) {
+  rpc ClientStates(QueryClientStatesRequest) returns (QueryClientStatesResponse) {
     option (google.api.http).get = "/ibc/core/client/v1/client_states";
   }
 
   // ConsensusState queries a consensus state associated with a client state at
   // a given height.
-  rpc ConsensusState(QueryConsensusStateRequest)
-      returns (QueryConsensusStateResponse) {
+  rpc ConsensusState(QueryConsensusStateRequest) returns (QueryConsensusStateResponse) {
     option (google.api.http).get = "/ibc/core/client/v1/consensus_states/"
                                    "{client_id}/revision/{revision_number}/"
                                    "height/{revision_height}";
@@ -35,36 +34,42 @@ service Query {
 
   // ConsensusStates queries all the consensus state associated with a given
   // client.
-  rpc ConsensusStates(QueryConsensusStatesRequest)
-      returns (QueryConsensusStatesResponse) {
-    option (google.api.http).get =
-        "/ibc/core/client/v1/consensus_states/{client_id}";
+  rpc ConsensusStates(QueryConsensusStatesRequest) returns (QueryConsensusStatesResponse) {
+    option (google.api.http).get = "/ibc/core/client/v1/consensus_states/{client_id}";
+  }
+
+  // ConsensusStateHeights queries the height of every consensus states associated with a given client.
+  rpc ConsensusStateHeights(QueryConsensusStateHeightsRequest) returns (QueryConsensusStateHeightsResponse) {
+    option (google.api.http).get = "/ibc/core/client/v1/consensus_states/{client_id}/heights";
   }
 
   // Status queries the status of an IBC client.
-  rpc ClientStatus(QueryClientStatusRequest)
-      returns (QueryClientStatusResponse) {
-    option (google.api.http).get =
-        "/ibc/core/client/v1/client_status/{client_id}";
+  rpc ClientStatus(QueryClientStatusRequest) returns (QueryClientStatusResponse) {
+    option (google.api.http).get = "/ibc/core/client/v1/client_status/{client_id}";
   }
 
-  // ClientParams queries all parameters of the ibc client.
-  rpc ClientParams(QueryClientParamsRequest)
-      returns (QueryClientParamsResponse) {
-    option (google.api.http).get = "/ibc/client/v1/params";
+  // ClientParams queries all parameters of the ibc client submodule.
+  rpc ClientParams(QueryClientParamsRequest) returns (QueryClientParamsResponse) {
+    option (google.api.http).get = "/ibc/core/client/v1/params";
   }
 
   // UpgradedClientState queries an Upgraded IBC light client.
-  rpc UpgradedClientState(QueryUpgradedClientStateRequest)
-      returns (QueryUpgradedClientStateResponse) {
+  rpc UpgradedClientState(QueryUpgradedClientStateRequest) returns (QueryUpgradedClientStateResponse) {
     option (google.api.http).get = "/ibc/core/client/v1/upgraded_client_states";
   }
 
   // UpgradedConsensusState queries an Upgraded IBC consensus state.
-  rpc UpgradedConsensusState(QueryUpgradedConsensusStateRequest)
-      returns (QueryUpgradedConsensusStateResponse) {
-    option (google.api.http).get =
-        "/ibc/core/client/v1/upgraded_consensus_states";
+  rpc UpgradedConsensusState(QueryUpgradedConsensusStateRequest) returns (QueryUpgradedConsensusStateResponse) {
+    option (google.api.http).get = "/ibc/core/client/v1/upgraded_consensus_states";
+  }
+
+  // VerifyMembership queries an IBC light client for proof verification of a value at a given key path.
+  rpc VerifyMembership(QueryVerifyMembershipRequest) returns (QueryVerifyMembershipResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http)                   = {
+      post: "/ibc/core/client/v1/verify_membership"
+      body: "*"
+    };
   }
 }
 
@@ -84,7 +89,7 @@ message QueryClientStateResponse {
   // merkle proof of existence
   bytes proof = 2;
   // height at which the proof was retrieved
-  ibc.core.client.v1.Height proof_height = 3 [ (gogoproto.nullable) = false ];
+  ibc.core.client.v1.Height proof_height = 3 [(gogoproto.nullable) = false];
 }
 
 // QueryClientStatesRequest is the request type for the Query/ClientStates RPC
@@ -98,10 +103,8 @@ message QueryClientStatesRequest {
 // method.
 message QueryClientStatesResponse {
   // list of stored ClientStates of the chain.
-  repeated IdentifiedClientState client_states = 1 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "IdentifiedClientStates"
-  ];
+  repeated IdentifiedClientState client_states = 1
+      [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "IdentifiedClientStates"];
   // pagination response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -129,7 +132,7 @@ message QueryConsensusStateResponse {
   // merkle proof of existence
   bytes proof = 2;
   // height at which the proof was retrieved
-  ibc.core.client.v1.Height proof_height = 3 [ (gogoproto.nullable) = false ];
+  ibc.core.client.v1.Height proof_height = 3 [(gogoproto.nullable) = false];
 }
 
 // QueryConsensusStatesRequest is the request type for the Query/ConsensusStates
@@ -145,8 +148,25 @@ message QueryConsensusStatesRequest {
 // Query/ConsensusStates RPC method
 message QueryConsensusStatesResponse {
   // consensus states associated with the identifier
-  repeated ConsensusStateWithHeight consensus_states = 1
-      [ (gogoproto.nullable) = false ];
+  repeated ConsensusStateWithHeight consensus_states = 1 [(gogoproto.nullable) = false];
+  // pagination response
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}
+
+// QueryConsensusStateHeightsRequest is the request type for Query/ConsensusStateHeights
+// RPC method.
+message QueryConsensusStateHeightsRequest {
+  // client identifier
+  string client_id = 1;
+  // pagination request
+  cosmos.base.query.v1beta1.PageRequest pagination = 2;
+}
+
+// QueryConsensusStateHeightsResponse is the response type for the
+// Query/ConsensusStateHeights RPC method
+message QueryConsensusStateHeightsResponse {
+  // consensus state heights
+  repeated Height consensus_state_heights = 1 [(gogoproto.nullable) = false];
   // pagination response
   cosmos.base.query.v1beta1.PageResponse pagination = 2;
 }
@@ -160,7 +180,9 @@ message QueryClientStatusRequest {
 
 // QueryClientStatusResponse is the response type for the Query/ClientStatus RPC
 // method. It returns the current status of the IBC client.
-message QueryClientStatusResponse { string status = 1; }
+message QueryClientStatusResponse {
+  string status = 1;
+}
 
 // QueryClientParamsRequest is the request type for the Query/ClientParams RPC
 // method.
@@ -193,4 +215,28 @@ message QueryUpgradedConsensusStateRequest {}
 message QueryUpgradedConsensusStateResponse {
   // Consensus state associated with the request identifier
   google.protobuf.Any upgraded_consensus_state = 1;
+}
+
+// QueryVerifyMembershipRequest is the request type for the Query/VerifyMembership RPC method
+message QueryVerifyMembershipRequest {
+  // client unique identifier.
+  string client_id = 1;
+  // the proof to be verified by the client.
+  bytes proof = 2;
+  // the height of the commitment root at which the proof is verified.
+  ibc.core.client.v1.Height proof_height = 3 [(gogoproto.nullable) = false];
+  // the commitment key path.
+  ibc.core.commitment.v1.MerklePath merkle_path = 4 [(gogoproto.nullable) = false];
+  // the value which is proven.
+  bytes value = 5;
+  // optional time delay
+  uint64 time_delay = 6;
+  // optional block delay
+  uint64 block_delay = 7;
+}
+
+// QueryVerifyMembershipResponse is the response type for the Query/VerifyMembership RPC method
+message QueryVerifyMembershipResponse {
+  // boolean indicating success or failure of proof verification.
+  bool success = 1;
 }

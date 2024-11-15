@@ -9,23 +9,17 @@ import (
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
-func (k msgServer) UnAuthorizeAddress(goCtx context.Context, msg *types.MsgUnAuthorizeAddress) (*types.MsgUnAuthorizeAddressResponse, error) {
+func (ms msgServer) UnAuthorizeAddress(goCtx context.Context, msg *types.MsgUnAuthorizeAddress) (*types.MsgUnAuthorizeAddressResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	// Check if the value exists
-	token, isFound := k.GetToken(ctx, msg.Symbol)
-	if !isFound {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists", msg.Symbol)
-	}
-
-	// Checks if the token manager signed
-	signers := msg.GetSigners()
-	if len(signers) != 1 {
-		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "invalid signers")
+	token, err := ms.Token.Get(ctx, types.TokenKey(msg.Symbol))
+	if err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "symbol %s does not exists: %s", msg.Symbol, err.Error())
 	}
 
 	// assert that the manager account is the only signer of the message
-	if signers[0].String() != token.Manager {
+	if msg.Manager != token.Manager {
 		return nil, errorsmod.Wrap(sdkerrors.ErrUnauthorized, "caller not authorized")
 	}
 
@@ -35,7 +29,10 @@ func (k msgServer) UnAuthorizeAddress(goCtx context.Context, msg *types.MsgUnAut
 	}
 
 	token.UnAuthorizeAddress(accAddress)
-	k.SetToken(ctx, token)
+	err = ms.Token.Set(goCtx, types.TokenKey(msg.Symbol), token)
+	if err != nil {
+		return nil, types.ErrSetTokenUnable
+	}
 
 	ctx.EventManager().EmitEvent(
 		sdk.NewEvent(

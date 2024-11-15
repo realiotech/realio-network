@@ -1,0 +1,77 @@
+syntax = "proto3";
+package realionetwork.bridge.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "realionetwork/bridge/v1/params.proto";
+import "realionetwork/bridge/v1/ratelimit.proto";
+
+option go_package = "github.com/realiotech/realio-network/x/bridge/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Parameters queries the parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/realionetwork/bridge/v1/params";
+  }
+
+  // Parameters queries the ratelimits of the module.
+  rpc RateLimits(QueryRateLimitsRequest) returns (QueryRateLimitsResponse) {
+    option (google.api.http).get = "/realionetwork/bridge/v1/ratelimits";
+  }
+
+  // Parameters queries the ratelimit of a specific denom of the module.
+  rpc RateLimit(QueryRateLimitRequest) returns (QueryRateLimitResponse) {
+    option (google.api.http).get =
+        "/realionetwork/bridge/v1/ratelimits/{denom}";
+  }
+
+  // Parameters queries the epoch info of the module.
+  rpc EpochInfo(QueryEpochInfoRequest) returns (QueryEpochInfoResponse) {
+    option (google.api.http).get = "/realionetwork/bridge/v1/epoch_info";
+  }
+}
+
+// QueryParamsRequest is request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params holds all the parameters of this module.
+  Params params = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryRateLimitsRequest is request type for the Query/RateLimits RPC method.
+message QueryRateLimitsRequest {}
+
+// QueryRateLimitsResponse is response type for the Query/RateLimits RPC method.
+message QueryRateLimitsResponse {
+  repeated DenomAndRateLimit ratelimits = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryRateLimitRequest is request type for the Query/RateLimit RPC method.
+message QueryRateLimitRequest {
+  // denom of the coin to query for.
+  string denom = 1;
+}
+
+// QueryRateLimitResponse is response type for the Query/RateLimit RPC method.
+message QueryRateLimitResponse {
+  RateLimit ratelimit = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryEpochInfoRequest is request type for the Query/EpochInfo RPC method.
+message QueryEpochInfoRequest {}
+
+// QueryEpochInfoResponse is response type for the Query/EpochInfo RPC method.
+message QueryEpochInfoResponse {
+  EpochInfo epoch_info = 1 [ (gogoproto.nullable) = false ];
+}
+
+message DenomAndRateLimit {
+  // denom of the coin.
+  string denom = 1;
+
+  // ratelimit of the coin.
+  RateLimit rate_limit = 2 [ (gogoproto.nullable) = false ];
+}

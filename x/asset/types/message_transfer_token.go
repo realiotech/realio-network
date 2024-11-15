@@ -18,27 +18,6 @@ func NewMsgTransferToken(symbol string, from string, to string, amount string) *
 	}
 }
 
-func (msg *MsgTransferToken) Route() string {
-	return RouterKey
-}
-
-func (msg *MsgTransferToken) Type() string {
-	return TypeMsgTransferToken
-}
-
-func (msg *MsgTransferToken) GetSigners() []sdk.AccAddress {
-	signer, err := sdk.AccAddressFromBech32(msg.From)
-	if err != nil {
-		panic(err)
-	}
-	return []sdk.AccAddress{signer}
-}
-
-func (msg *MsgTransferToken) GetSignBytes() []byte {
-	bz := ModuleCdc.MustMarshalJSON(msg)
-	return sdk.MustSortJSON(bz)
-}
-
 func (msg *MsgTransferToken) ValidateBasic() error {
 	if _, err := sdk.AccAddressFromBech32(msg.From); err != nil {
 		return sdkerrors.ErrInvalidAddress.Wrapf("invalid from address: %s", err)

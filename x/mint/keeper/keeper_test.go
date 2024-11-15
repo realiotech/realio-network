@@ -4,15 +4,15 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cometbft/cometbft/crypto/tmhash"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	tmversion "github.com/cometbft/cometbft/proto/tendermint/version"
+	"github.com/cometbft/cometbft/version"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/evmos/ethermint/crypto/ethsecp256k1"
+
+	"github.com/evmos/os/crypto/ethsecp256k1"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/tendermint/tendermint/crypto/tmhash"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmversion "github.com/tendermint/tendermint/proto/tendermint/version"
-	"github.com/tendermint/tendermint/version"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,8 +20,8 @@ import (
 	"cosmossdk.io/math"
 	"github.com/realiotech/realio-network/app"
 	realiotypes "github.com/realiotech/realio-network/types"
+	"github.com/realiotech/realio-network/x/mint/keeper"
 	"github.com/realiotech/realio-network/x/mint/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 type KeeperTestSuite struct {
@@ -31,8 +31,6 @@ type KeeperTestSuite struct {
 	ctx         sdk.Context
 	queryClient types.QueryClient
 	address     common.Address
-
-	legacyQuerierCdc *codec.AminoCodec
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
@@ -56,9 +54,9 @@ func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 	suite.app = app.Setup(checkTx, nil, 1)
 
 	// Set Context
-	suite.ctx = suite.app.BaseApp.NewContext(checkTx, tmproto.Header{
+	suite.ctx = suite.app.BaseApp.NewContextLegacy(checkTx, tmproto.Header{
 		Height:          1,
-		ChainID:         realiotypes.MainnetChainID,
+		ChainID:         realiotypes.MainnetChainID + "-1",
 		Time:            time.Now().UTC(),
 		ProposerAddress: consAddress.Bytes(),
 
@@ -82,10 +80,8 @@ func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 	})
 
 	queryHelper := baseapp.NewQueryServerTestHelper(suite.ctx, suite.app.InterfaceRegistry())
-	types.RegisterQueryServer(queryHelper, suite.app.MintKeeper)
+	types.RegisterQueryServer(queryHelper, keeper.NewQueryServerImpl(suite.app.MintKeeper))
 	suite.queryClient = types.NewQueryClient(queryHelper)
-
-	suite.legacyQuerierCdc = codec.NewAminoCodec(suite.app.LegacyAmino())
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -94,11 +90,13 @@ func TestKeeperTestSuite(t *testing.T) {
 
 func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 	suite.DoSetupTest(suite.T())
-	rioSupplyCap, _ := math.NewIntFromString("75000000000000000000000000")
+	rioSupplyCap, _ := math.NewIntFromString("175000000000000000000000000")
 
 	// params.MintDenom, params.BlocksPerYear and minter.Inflation are not changed when go to next block
-	params := suite.app.MintKeeper.GetParams(suite.ctx)
-	minter := suite.app.MintKeeper.GetMinter(suite.ctx)
+	params, err := suite.app.MintKeeper.Params.Get(suite.ctx)
+	suite.Require().NoError(err)
+	minter, err := suite.app.MintKeeper.Minter.Get(suite.ctx)
+	suite.Require().NoError(err)
 
 	// block 1 vs block 2
 	currentSupply := suite.app.BankKeeper.GetSupply(suite.ctx, params.MintDenom).Amount
@@ -108,7 +106,9 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 
 	// block 2
 	header := tmproto.Header{Height: currentHeight + 1}
-	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
+	suite.ctx = suite.ctx.WithBlockHeader(header)
+	_, err = suite.app.BeginBlocker(suite.ctx)
+	suite.Require().NoError(err)
 
 	newSupply := suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
 	expectedMintedAmount := newSupply.Sub(currentSupply).String()
@@ -123,7 +123,9 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 
 	// block 3
 	header = tmproto.Header{Height: currentHeight + 1}
-	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
+	suite.ctx = suite.ctx.WithBlockHeader(header)
+	_, err = suite.app.BeginBlocker(suite.ctx)
+	suite.Require().NoError(err)
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
 	expectedMintedAmount = newSupply.Sub(currentSupply).String()
@@ -138,7 +140,9 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 
 	// block 4
 	header = tmproto.Header{Height: currentHeight + 1}
-	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
+	suite.ctx = suite.ctx.WithBlockHeader(header)
+	_, err = suite.app.BeginBlocker(suite.ctx)
+	suite.Require().NoError(err)
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
 	expectedMintedAmount = newSupply.Sub(currentSupply).String()
@@ -153,7 +157,9 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 
 	// block 5
 	header = tmproto.Header{Height: currentHeight + 1}
-	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
+	suite.ctx = suite.ctx.WithBlockHeader(header)
+	_, err = suite.app.BeginBlocker(suite.ctx)
+	suite.Require().NoError(err)
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
 	expectedMintedAmount = newSupply.Sub(currentSupply).String()
@@ -168,7 +174,9 @@ func (suite *KeeperTestSuite) TestMintedCoinsEachBlock() {
 
 	// block 6
 	header = tmproto.Header{Height: currentHeight + 1}
-	suite.app.BeginBlock(abci.RequestBeginBlock{Header: header})
+	suite.ctx = suite.ctx.WithBlockHeader(header)
+	_, err = suite.app.BeginBlocker(suite.ctx)
+	suite.Require().NoError(err)
 
 	newSupply = suite.app.MintKeeper.StakingTokenSupply(suite.ctx, params)
 	expectedMintedAmount = newSupply.Sub(currentSupply).String()
