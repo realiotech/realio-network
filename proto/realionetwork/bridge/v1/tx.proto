@@ -28,6 +28,7 @@ message MsgBridgeIn {
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
   ];
+  string reciever = 3;
 }
 
 message MsgBridgeInResponse {}
