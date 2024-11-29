@@ -31,7 +31,7 @@ func (ms msgServer) BridgeIn(goCtx context.Context, msg *types.MsgBridgeIn) (*ty
 	}
 
 	addrCodec := ms.authKeeper.AddressCodec()
-	accAddr, err := addrCodec.StringToBytes(msg.Authority)
+	accAddr, err := addrCodec.StringToBytes(msg.Reciever)
 	if err != nil {
 		return nil, err
 	}
