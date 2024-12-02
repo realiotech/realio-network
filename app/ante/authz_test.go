@@ -15,7 +15,7 @@ import (
 
 	evmtypes "github.com/evmos/os/x/evm/types"
 
-	"github.com/realiotech/realio-network/app/v2/ante"
+	"github.com/realiotech/realio-network/app/ante"
 )
 
 func TestAuthzLimiterDecorator(t *testing.T) {
