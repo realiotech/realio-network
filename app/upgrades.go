@@ -7,7 +7,7 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 	"github.com/realiotech/realio-network/app/upgrades/commission"
-	v1 "github.com/realiotech/realio-network/app/upgrades/v1"
+	v2 "github.com/realiotech/realio-network/app/upgrades/v2"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -49,8 +49,8 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 	)
 
 	app.UpgradeKeeper.SetUpgradeHandler(
-		v1.UpgradeName,
-		v1.CreateUpgradeHandler(
+		v2.UpgradeName,
+		v2.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
 			app.ParamsKeeper,
@@ -73,7 +73,7 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 		return
 	}
 
-	if upgradeInfo.Name == v1.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &v1.V1StoreUpgrades))
+	if upgradeInfo.Name == v2.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &v2.V2StoreUpgrades))
 	}
 }

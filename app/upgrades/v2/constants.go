@@ -1,4 +1,4 @@
-package v1
+package v2
 
 import (
 	storetypes "cosmossdk.io/store/types"
@@ -9,10 +9,10 @@ import (
 
 const (
 	// UpgradeName defines the on-chain upgrade name.
-	UpgradeName = "v1"
+	UpgradeName = "v2"
 )
 
-var V1StoreUpgrades = storetypes.StoreUpgrades{
+var V2StoreUpgrades = storetypes.StoreUpgrades{
 	Added: []string{
 		consensustypes.ModuleName,
 		crisistypes.ModuleName,
