@@ -34,9 +34,9 @@ func GetTxCmd() *cobra.Command {
 
 func CmdBridgeIn() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "bridge-in [amount]",
+		Use:   "bridge-in [amount] [address]",
 		Short: "Broadcast message BridgeIn",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -55,6 +55,7 @@ func CmdBridgeIn() *cobra.Command {
 			msg := &types.MsgBridgeIn{
 				Authority: clientCtx.GetFromAddress().String(),
 				Coin:      coin,
+				Reciever:  args[1],
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
