@@ -107,7 +107,7 @@ func CreateUpgradeHandler(
 		}
 
 		// Update bridge genesis state
-		err = bridgeKeeper.Params.Set(ctx, bridgetypes.NewParams("realio1n36uf34zhrrhkynk8p3jqkmtx769q3menz0dr0"))
+		err = bridgeKeeper.Params.Set(ctx, bridgetypes.NewParams("realio1yxmgj2rp86xt4lrw4xzuszqqzff2lelewm99ft"))
 		if err != nil {
 			return nil, err
 		}
@@ -119,7 +119,7 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 		err = bridgeKeeper.EpochInfo.Set(ctx, bridgetypes.EpochInfo{
-			StartTime:            time.Unix(int64(1732262400), 0), // 8:00 UTC, Friday, 22 November 2024
+			StartTime:            time.Unix(int64(1734948000), 0), // 10:00 UTC, Monday, 23 December 2024
 			Duration:             time.Minute,
 			EpochCountingStarted: false,
 		})
