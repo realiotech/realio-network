@@ -119,7 +119,7 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 		err = bridgeKeeper.EpochInfo.Set(ctx, bridgetypes.EpochInfo{
-			StartTime:            time.Unix(int64(1734706800), 0), // 15:00 UTC, Friday, 20 December 2024
+			StartTime:            time.Unix(int64(1734948000), 0), // 10:00 UTC, Monday, 23 December 2024
 			Duration:             time.Minute,
 			EpochCountingStarted: false,
 		})
