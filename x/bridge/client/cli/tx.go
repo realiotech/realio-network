@@ -2,6 +2,7 @@ package cli
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/spf13/cobra"
 
@@ -27,6 +28,7 @@ func GetTxCmd() *cobra.Command {
 	cmd.AddCommand(CmdBridgeOut())
 	cmd.AddCommand(CmdRegisterNewCoins())
 	cmd.AddCommand(CmdDeregisterCoins())
+	cmd.AddCommand(CmdUpdateEpochDuration())
 	// this line is used by starport scaffolding # 1
 
 	return cmd
@@ -146,6 +148,35 @@ func CmdRegisterNewCoins() *cobra.Command {
 			msg := &types.MsgRegisterNewCoins{
 				Authority: clientCtx.GetFromAddress().String(),
 				Coins:     coins,
+			}
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
+		},
+	}
+
+	flags.AddTxFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdUpdateEpochDuration() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "update-epoch-duration [duration]",
+		Short: "Broadcast message UpdateEpochDuration",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) (err error) {
+			clientCtx, err := client.GetClientTxContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			duration, err := time.ParseDuration(args[0])
+			if err != nil {
+				return err
+			}
+
+			msg := &types.MsgUpdateEpochDuration{
+				Authority: clientCtx.GetFromAddress().String(),
+				Duration:  duration,
 			}
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
 		},
