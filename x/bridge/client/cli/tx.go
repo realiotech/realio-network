@@ -34,9 +34,9 @@ func GetTxCmd() *cobra.Command {
 
 func CmdBridgeIn() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "bridge-in [amount]",
+		Use:   "bridge-in [amount] [receiver]",
 		Short: "Broadcast message BridgeIn",
-		Args:  cobra.ExactArgs(1),
+		Args:  cobra.ExactArgs(2),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
@@ -52,9 +52,15 @@ func CmdBridgeIn() *cobra.Command {
 				return err
 			}
 
+			_, err = sdk.AccAddressFromBech32(args[1])
+			if err != nil {
+				return err
+			}
+
 			msg := &types.MsgBridgeIn{
 				Authority: clientCtx.GetFromAddress().String(),
 				Coin:      coin,
+				Reciever:  args[1],
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -112,7 +118,7 @@ func CmdDeregisterCoins() *cobra.Command {
 			}
 
 			var denoms []string
-			denoms = append(denoms, args[0:len(args)-1]...)
+			denoms = append(denoms, args...)
 
 			msg := &types.MsgDeregisterCoins{
 				Authority: clientCtx.GetFromAddress().String(),
@@ -131,6 +137,7 @@ func CmdRegisterNewCoins() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "register-coins [amount]",
 		Short: "Broadcast message RegisterNewCoins",
+		Example: "realio-networkd tx bridge register-coins 100denoma,200denomb",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
