@@ -60,7 +60,7 @@ func CmdBridgeIn() *cobra.Command {
 			msg := &types.MsgBridgeIn{
 				Authority: clientCtx.GetFromAddress().String(),
 				Coin:      coin,
-				Reciever:  args[1],
+				Receiver:  args[1],
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -135,10 +135,10 @@ func CmdDeregisterCoins() *cobra.Command {
 
 func CmdRegisterNewCoins() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "register-coins [amount]",
-		Short: "Broadcast message RegisterNewCoins",
+		Use:     "register-coins [amount]",
+		Short:   "Broadcast message RegisterNewCoins",
 		Example: "realio-networkd tx bridge register-coins 100denoma,200denomb",
-		Args:  cobra.ExactArgs(1),
+		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {
