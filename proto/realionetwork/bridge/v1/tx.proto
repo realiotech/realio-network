@@ -45,6 +45,7 @@ message MsgBridgeOut {
 message MsgBridgeOutResponse {}
 
 message MsgRegisterNewCoins {
+  option (cosmos.msg.v1.signer) = "authority";
   string authority = 1;
   repeated cosmos.base.v1beta1.Coin coins = 2 [
     (gogoproto.nullable) = false,
