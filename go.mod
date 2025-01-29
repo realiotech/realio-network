@@ -24,7 +24,7 @@ require (
 	github.com/cosmos/gogoproto v1.7.0
 	github.com/cosmos/ibc-go/modules/capability v1.0.1
 	github.com/cosmos/ibc-go/v8 v8.5.1
-	github.com/cosmos/rosetta v0.50.10
+	github.com/cosmos/rosetta v0.50.11
 	github.com/ethereum/go-ethereum v1.11.5
 	github.com/evmos/os v0.0.0-20241002122822-02a9121016ee
 	github.com/golang/protobuf v1.5.4
