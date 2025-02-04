@@ -29,7 +29,7 @@
   </a>
 </div>
 
-**Note**: Requires [Go 1.20](https://golang.org/dl/)
+**Note**: Requires [Go 1.22.5](https://golang.org/dl/)
 
 ## Description
 
@@ -40,7 +40,7 @@ Realio Network is an EVM compatible blockchain built using the [Cosmos SDK](http
 Our documentation be found at [docs.realio.network](https://docs.realio.network).
 Head over there and check it out.
 
-**Note**: Requires [Go 1.20+](https://golang.org/dl/)
+**Note**: Requires [Go 1.22.5+](https://golang.org/dl/)
 
 ## Installation
 
