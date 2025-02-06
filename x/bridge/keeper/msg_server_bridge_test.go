@@ -56,7 +56,7 @@ func (suite *KeeperTestSuite) TestBridgeIn() {
 
 			if tc.setAuthority {
 				tc.msg.Authority = suite.admin
-				tc.msg.Reciever = suite.admin
+				tc.msg.Receiver = suite.admin
 			}
 
 			addr, err := suite.app.AccountKeeper.AddressCodec().StringToBytes(tc.msg.Authority)
