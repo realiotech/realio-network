@@ -52,9 +52,19 @@ func CmdBridgeIn() *cobra.Command {
 				return err
 			}
 
+			receiver, err := cmd.Flags().GetString("receiver")
+			if err != nil {
+				return err
+			}
+
+			if receiver == "" {
+				return fmt.Errorf("receiver address cannot be empty")
+			}
+
 			msg := &types.MsgBridgeIn{
 				Authority: clientCtx.GetFromAddress().String(),
 				Coin:      coin,
+				Reciever:  receiver,
 			}
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), msg)
@@ -62,6 +72,7 @@ func CmdBridgeIn() *cobra.Command {
 	}
 
 	flags.AddTxFlagsToCmd(cmd)
+	cmd.Flags().String("receiver", "", "Destination address of the receiver")
 
 	return cmd
 }
@@ -69,7 +80,7 @@ func CmdBridgeIn() *cobra.Command {
 func CmdBridgeOut() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "bridge-out [amount]",
-		Short: "Broadcast message BridgeIn",
+		Short: "Broadcast message BridgeOut",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) (err error) {
 			clientCtx, err := client.GetClientTxContext(cmd)
@@ -111,8 +122,7 @@ func CmdDeregisterCoins() *cobra.Command {
 				return err
 			}
 
-			var denoms []string
-			denoms = append(denoms, args[0:len(args)-1]...)
+			denoms := args
 
 			msg := &types.MsgDeregisterCoins{
 				Authority: clientCtx.GetFromAddress().String(),
