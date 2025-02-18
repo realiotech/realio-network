@@ -55,7 +55,6 @@ fi
 if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	# Remove the previous folder
 	rm -rf "$HOMEDIR"
-
 	# Set client config
   realio-networkd config keyring-backend $KEYRING --home $HOMEDIR
   realio-networkd config chain-id $CHAINID --home $HOMEDIR
@@ -131,6 +130,5 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 		echo "pending mode is on, please wait for the first block committed."
 	fi
 fi
-
 # Start the node (remove the --pruning=nothing flag if historical queries are not needed)
 realio-networkd start --pruning=nothing "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0.00001ario --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --home "$HOMEDIR"
