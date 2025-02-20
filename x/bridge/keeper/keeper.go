@@ -91,3 +91,11 @@ func (k Keeper) UpdateInflow(ctx context.Context, coin sdk.Coin) error {
 
 	return nil
 }
+
+func (k Keeper) GetCoinsRegistered(ctx context.Context, denom string) (types.RateLimit, error) {
+	rCoin, err := k.RegisteredCoins.Get(ctx, denom)
+	if err != nil {
+		return types.RateLimit{} ,err
+	}
+	return rCoin, nil
+}

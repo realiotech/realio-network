@@ -16,7 +16,12 @@ func (ms msgServer) BridgeIn(goCtx context.Context, msg *types.MsgBridgeIn) (*ty
 		return nil, errorsmod.Wrap(sdkerrors.ErrNotFound, "failed to get bridge params")
 	}
 
-	if msg.Authority != param.Authority {
+	coinRegistered, err := ms.Keeper.GetCoinsRegistered(goCtx, msg.Coin.Denom)
+	if err != nil {
+		return nil, err
+	}
+	// Check if token authority
+	if msg.Authority != coinRegistered.Authority {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "invalid authority; expected %s, got %s", param.Authority, msg.Authority)
 	}
 

@@ -29,6 +29,7 @@ func (ms msgServer) RegisterNewCoins(goCtx context.Context, msg *types.MsgRegist
 		err = ms.RegisteredCoins.Set(goCtx, coin.Denom, types.RateLimit{
 			Ratelimit:     coin.Amount,
 			CurrentInflow: math.ZeroInt(),
+			Authority:     msg.CoinAuthority,
 		})
 		if err != nil {
 			return nil, err
