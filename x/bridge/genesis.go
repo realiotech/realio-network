@@ -23,9 +23,10 @@ func InitGenesis(ctx context.Context, k keeper.Keeper, genState types.GenesisSta
 	}
 
 	for _, coin := range genState.RegisteredCoins {
-		err := k.RegisteredCoins.Set(ctx, coin.Denom, types.RateLimit{
-			Ratelimit:     coin.Amount,
+		err := k.RegisteredCoins.Set(ctx, coin.Coin.Denom, types.RateLimit{
+			Ratelimit:     coin.Coin.Amount,
 			CurrentInflow: math.ZeroInt(),
+			Authority: coin.Authority,
 		})
 		if err != nil {
 			panic(err)
@@ -48,15 +49,15 @@ func ExportGenesis(ctx context.Context, k keeper.Keeper) *types.GenesisState {
 	}
 	genesis.RatelimitEpochInfo = epochInfo
 
-	coins := []sdk.Coin{}
+	coins := []types.CoinAuthority{}
 	err = k.RegisteredCoins.Walk(ctx, nil, func(denom string, ratelimit types.RateLimit) (stop bool, err error) {
-		coins = append(coins, sdk.NewCoin(denom, ratelimit.Ratelimit))
+		coins = append(coins, types.CoinAuthority{Coin: sdk.NewCoin(denom, ratelimit.Ratelimit), Authority: ratelimit.Authority})
 		return false, nil
 	})
 	if err != nil {
 		panic(err)
 	}
-	genesis.RegisteredCoins = sdk.NewCoins(coins...)
+	genesis.RegisteredCoins = coins
 
 	return genesis
 }

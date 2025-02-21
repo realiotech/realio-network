@@ -44,4 +44,6 @@ message RateLimit {
     (gogoproto.customtype) = "cosmossdk.io/math.Int",
     (gogoproto.nullable) = false
   ];
+
+  string authority = 3;
 }

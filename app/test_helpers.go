@@ -250,9 +250,9 @@ func GenesisStateWithValSet(app *RealioNetwork, genesisState simapp.GenesisState
 
 	bridgeGenesis := bridgetypes.DefaultGenesis()
 	bridgeGenesis.RatelimitEpochInfo.CurrentEpochStartHeight = 5
-	bridgeGenesis.RegisteredCoins = []sdk.Coin{
-		sdk.NewCoin(MultiStakingCoinA.Denom, math.NewInt(1000000000)),
-		sdk.NewCoin(MultiStakingCoinB.Denom, math.NewInt(1000000000)),
+	bridgeGenesis.RegisteredCoins = []bridgetypes.CoinAuthority{
+		{Coin: sdk.NewCoin(MultiStakingCoinA.Denom, math.NewInt(1000000000)), Authority: genAccs[0].GetAddress().String()},
+		{Coin: sdk.NewCoin(MultiStakingCoinB.Denom, math.NewInt(1000000000)), Authority: genAccs[0].GetAddress().String()},
 	}
 	bridgeGenesis.Params.Authority = genAccs[0].GetAddress().String()
 	genesisState[bridgetypes.ModuleName] = app.AppCodec().MustMarshalJSON(bridgeGenesis)

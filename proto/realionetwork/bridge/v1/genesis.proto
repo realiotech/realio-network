@@ -14,11 +14,16 @@ option go_package = "github.com/realiotech/realio-network/x/bridge/types";
 message GenesisState {
   Params params = 1 [ (gogoproto.nullable) = false ];
   // registered denoms and its rate limit
-  repeated cosmos.base.v1beta1.Coin registered_coins = 2 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
+  repeated CoinAuthority registered_coins = 2 [(gogoproto.nullable) = false];
 
   // rate limit epoch info
   EpochInfo ratelimit_epoch_info = 3 [ (gogoproto.nullable) = false ];
+}
+
+message CoinAuthority {
+  cosmos.base.v1beta1.Coin coin = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coin"
+  ];
+  string authority = 2;
 }
