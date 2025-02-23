@@ -33,6 +33,7 @@ import (
 	multistaking "github.com/realio-tech/multi-staking-module/x/multi-staking"
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
+	realiotypes "github.com/realiotech/realio-network/types"
 
 	evmosante "github.com/evmos/os/ante"
 	evmosanteevm "github.com/evmos/os/ante/evm"
@@ -238,6 +239,23 @@ var (
 	_ ibctesting.TestingApp   = (*RealioNetwork)(nil)
 )
 
+var sealed = false
+// EvmosAppOptions allows to setup the global configuration
+// for the Evmos chain.
+func EvmosAppOptions(chainID string) error {
+	if sealed {
+		return nil
+	}
+	config := evmtypes.NewEVMConfigurator().
+	WithEVMCoinInfo(realiotypes.BaseDenom, 18).WithChainConfig(nil)
+	err := config.Configure()
+	if err != nil {
+		return err
+	}
+	sealed = true
+	return nil
+}
+
 func init() {
 	userHomeDir, err := os.UserHomeDir()
 	if err != nil {
@@ -291,7 +309,7 @@ type RealioNetwork struct {
 	// Ethermint keepers
 	EvmKeeper       *evmkeeper.Keeper
 	FeeMarketKeeper feemarketkeeper.Keeper
-	Erc20Keeper     erc20keeper.Keeper
+	Erc20Keeper     MockErc20Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -322,6 +340,7 @@ func New(
 	invCheckPeriod uint,
 	encodingConfig simappparams.EncodingConfig,
 	appOpts servertypes.AppOptions,
+	evmosAppOptions func(string) error,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *RealioNetwork {
 	appCodec := encodingConfig.Codec
@@ -333,6 +352,11 @@ func New(
 	bApp.SetVersion(version.Version)
 	bApp.SetTxEncoder(encodingConfig.TxConfig.TxEncoder())
 	bApp.SetInterfaceRegistry(interfaceRegistry)
+
+	// initialize the evmOS application configuration
+	if err := evmosAppOptions(bApp.ChainID()); err != nil {
+		panic(err)
+	}
 
 	keys := storetypes.NewKVStoreKeys(
 		// sdk keys
@@ -542,21 +566,27 @@ func New(
 
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey], authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper, &app.Erc20Keeper,
+		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper, &app.Erc20Keeper.Keeper,
 		tracer, app.GetSubspace(evmtypes.ModuleName),
 	)
 
 	// Create Transfer Keepers
-	app.Erc20Keeper = erc20keeper.NewKeeper(
-		keys[erc20types.StoreKey],
-		appCodec,
-		authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper,
+	app.Erc20Keeper = NewMockErc20Keeper(
+		erc20keeper.NewKeeper(
+			keys[erc20types.StoreKey],
+			appCodec,
+			authtypes.NewModuleAddress(govtypes.ModuleName),
+			app.AccountKeeper,
+			app.BankKeeper,
+			app.EvmKeeper,
+			app.StakingKeeper,
+			app.AuthzKeeper,
+			&app.TransferKeeper,
+		),
 		app.BankKeeper,
-		app.EvmKeeper,
-		app.StakingKeeper,
 		app.AuthzKeeper,
 		&app.TransferKeeper,
+		app.BridgeKeeper,
 	)
 
 	// instantiate IBC transfer keeper AFTER the ERC-20 keeper to use it in the instantiation
@@ -565,7 +595,7 @@ func New(
 		nil, // we are passing no ics4 wrapper
 		app.IBCKeeper.ChannelKeeper, app.IBCKeeper.PortKeeper,
 		app.AccountKeeper, app.BankKeeper, app.ScopedTransferKeeper,
-		app.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
+		app.Erc20Keeper.Keeper, // Add ERC20 Keeper for ERC20 transfers
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -575,7 +605,7 @@ func New(
 	var transferStack porttypes.IBCModule
 
 	transferStack = transfer.NewIBCModule(app.TransferKeeper)
-	transferStack = erc20.NewIBCMiddleware(app.Erc20Keeper, transferStack)
+	transferStack = erc20.NewIBCMiddleware(app.Erc20Keeper.Keeper, transferStack)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()
@@ -587,7 +617,7 @@ func New(
 			*app.StakingKeeper,
 			app.DistrKeeper,
 			app.BankKeeper,
-			app.Erc20Keeper,
+			app.Erc20Keeper.Keeper,
 			app.AuthzKeeper,
 			app.TransferKeeper,
 			app.IBCKeeper.ChannelKeeper,
@@ -635,7 +665,7 @@ func New(
 		// ethermint
 		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper, app.GetSubspace(evmtypes.ModuleName)),
 		feemarket.NewAppModule(app.FeeMarketKeeper, app.GetSubspace(feemarkettypes.ModuleName)),
-		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper, app.GetSubspace(erc20types.ModuleName)),
+		erc20.NewAppModule(app.Erc20Keeper.Keeper, app.AccountKeeper, app.GetSubspace(erc20types.ModuleName)),
 
 		// realio network
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper, app.GetSubspace(assetmoduletypes.ModuleName)),
@@ -847,7 +877,7 @@ func New(
 		FeeMarketKeeper:        app.FeeMarketKeeper,
 		MaxTxGasWanted:         maxGasWanted,
 		ExtensionOptionChecker: ostypes.HasDynamicFeeExtensionOption,
-		TxFeeChecker:           evmosanteevm.NewDynamicFeeChecker(app.EvmKeeper),
+		TxFeeChecker:           evmosanteevm.NewDynamicFeeChecker(app.FeeMarketKeeper),
 	}
 
 	if err := options.Validate(); err != nil {
