@@ -17,6 +17,7 @@ import (
 	erc20types "github.com/evmos/os/x/erc20/types"
 	"github.com/evmos/os/x/evm/core/vm"
 	transferkeeper "github.com/evmos/os/x/ibc/transfer/keeper"
+	bridgekeeper "github.com/realiotech/realio-network/x/bridge/keeper"
 )
 
 const (
@@ -48,7 +49,8 @@ type Precompile struct {
 	tokenPair      erc20types.TokenPair
 	transferKeeper transferkeeper.Keeper
 	// BankKeeper is a public field so that the werc20 precompile can use it.
-	BankKeeper bankkeeper.Keeper
+	BankKeeper   bankkeeper.Keeper
+	brigdeKeeper bridgekeeper.Keeper
 }
 
 // NewPrecompile creates a new ERC-20 Precompile instance as a
@@ -58,7 +60,7 @@ func NewPrecompile(
 	bankKeeper bankkeeper.Keeper,
 	authzKeeper authzkeeper.Keeper,
 	transferKeeper transferkeeper.Keeper,
-	
+	bridgeKeeper bridgekeeper.Keeper,
 ) (*Precompile, error) {
 	newABI, err := cmn.LoadABI(f, abiPath)
 	if err != nil {
@@ -76,6 +78,7 @@ func NewPrecompile(
 		tokenPair:      tokenPair,
 		BankKeeper:     bankKeeper,
 		transferKeeper: transferKeeper,
+		brigdeKeeper:   bridgeKeeper,
 	}
 	// Address defines the address of the ERC-20 precompile contract.
 	p.SetAddress(p.tokenPair.GetERC20Contract())
@@ -197,6 +200,12 @@ func (p *Precompile) HandleMethod(
 		bz, err = p.IncreaseAllowance(ctx, contract, stateDB, method, args)
 	case auth.DecreaseAllowanceMethod:
 		bz, err = p.DecreaseAllowance(ctx, contract, stateDB, method, args)
+	case MintMethod:
+		bz, err = p.Mint(ctx, contract, stateDB, method, args)
+	case BurnMethod:
+		bz, err = p.Burn(ctx, contract, stateDB, method, args)
+	case BurnFromMethod:
+		bz, err = p.BurnFrom(ctx, contract, stateDB, method, args)
 	// ERC-20 queries
 	case NameMethod:
 		bz, err = p.Name(ctx, contract, stateDB, method, args)

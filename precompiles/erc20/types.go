@@ -133,6 +133,61 @@ func ParseBalanceOfArgs(args []interface{}) (common.Address, error) {
 	return account, nil
 }
 
+func ParseMintArgs(args []interface{}) (
+	to common.Address, amount *big.Int, err error,
+) {
+	if len(args) != 2 {
+		return common.Address{}, nil, fmt.Errorf("invalid number of arguments; expected 2; got: %d", len(args))
+	}
+
+	to, ok := args[0].(common.Address)
+	if !ok {
+		return common.Address{}, nil, fmt.Errorf("invalid to address: %v", args[0])
+	}
+
+	amount, ok = args[1].(*big.Int)
+	if !ok {
+		return common.Address{}, nil, fmt.Errorf("invalid amount: %v", args[1])
+	}
+
+	return to, amount, nil
+}
+
+func ParseBurnArgs(args []interface{}) (
+	amount *big.Int, err error,
+) {
+	if len(args) != 1 {
+		return nil, fmt.Errorf("invalid number of arguments; expected 1; got: %d", len(args))
+	}
+
+	amount, ok := args[0].(*big.Int)
+	if !ok {
+		return nil, fmt.Errorf("invalid amount: %v", args[0])
+	}
+
+	return amount, nil
+}
+
+func ParseBurnFromArgs(args []interface{}) (
+	from common.Address, amount *big.Int, err error,
+) {
+	if len(args) != 2 {
+		return common.Address{}, nil, fmt.Errorf("invalid number of arguments; expected 2; got: %d", len(args))
+	}
+
+	from, ok := args[0].(common.Address)
+	if !ok {
+		return common.Address{}, nil, fmt.Errorf("invalid to address: %v", args[0])
+	}
+
+	amount, ok = args[1].(*big.Int)
+	if !ok {
+		return common.Address{}, nil, fmt.Errorf("invalid amount: %v", args[1])
+	}
+
+	return from, amount, nil
+}
+
 // updateOrAddCoin replaces the coin of the given denomination in the coins slice or adds it if it
 // does not exist yet.
 //

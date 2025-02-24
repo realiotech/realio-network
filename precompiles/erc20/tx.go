@@ -4,6 +4,7 @@
 package erc20
 
 import (
+	"fmt"
 	"math/big"
 
 	errorsmod "cosmossdk.io/errors"
@@ -17,6 +18,8 @@ import (
 	cmn "github.com/evmos/os/precompiles/common"
 	"github.com/evmos/os/x/evm/core/vm"
 	evmtypes "github.com/evmos/os/x/evm/types"
+	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
+	sdkaddress "github.com/cosmos/cosmos-sdk/types/address"
 )
 
 const (
@@ -26,6 +29,12 @@ const (
 	// TransferFromMethod defines the ABI method name for the ERC-20 transferFrom
 	// transaction.
 	TransferFromMethod = "transferFrom"
+
+	BurnMethod = "burn"
+
+	BurnFromMethod = "burnFrom"
+
+	MintMethod = "mint"
 )
 
 // SendMsgURL defines the authorization type for MsgSend
@@ -141,4 +150,187 @@ func (p *Precompile) transfer(
 	}
 
 	return method.Outputs.Pack(true)
+}
+
+func (p *Precompile) Mint(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	to, amount, err := ParseMintArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
+	return p.mint(ctx, contract, stateDB, method, to, amount)
+}
+
+func (p *Precompile) mint(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	to common.Address,
+	amount *big.Int,
+) (data []byte, err error) {
+
+	minter := contract.CallerAddress
+	denom := p.tokenPair.Denom
+
+	// Check if caller is token owner
+	coinRegisterd, err := p.brigdeKeeper.GetCoinsRegistered(ctx, denom)
+	if err != nil {
+		return nil, err
+	}
+	if sdk.AccAddress(minter.Bytes()).String() != coinRegisterd.Authority {
+		return nil, fmt.Errorf("sender is not token owner: %s", sdk.AccAddress(minter.Bytes()).String())
+	}
+
+	mintToAddr := sdk.AccAddress(to.Bytes())
+
+	coins := sdk.Coins{{Denom: denom, Amount: math.NewIntFromBigInt(amount)}}
+
+	// Mint coins to bridge module then transfer to minter addr
+	err = p.BankKeeper.MintCoins(ctx, bridgetypes.ModuleName, coins)
+	if err != nil {
+		return nil, ConvertErrToERC20Error(err)
+	}
+
+	err = p.BankKeeper.SendCoinsFromModuleToAccount(ctx, bridgetypes.ModuleName, mintToAddr, coins)
+	if err != nil {
+		return nil, ConvertErrToERC20Error(err)
+	}
+
+	evmDenom := evmtypes.GetEVMCoinDenom()
+	if denom == evmDenom {
+		convertedAmount := evmtypes.ConvertAmountTo18DecimalsBigInt(amount)
+		p.SetBalanceChangeEntries(cmn.NewBalanceChangeEntry(to, convertedAmount, cmn.Add))
+	}
+
+	if err = p.EmitMintEvent(ctx, stateDB, to, amount); err != nil {
+		return nil, err
+	}
+
+	return method.Outputs.Pack(true)
+}
+
+func (p *Precompile) Burn(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	from := contract.CallerAddress
+	amount, err := ParseBurnArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
+	return p.burn(ctx, contract, stateDB, method, from, amount)
+}
+
+func (p *Precompile) BurnFrom(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	from, amount, err := ParseBurnFromArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
+	return p.burn(ctx, contract, stateDB, method, from, amount)
+}
+
+func (p *Precompile) burn(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	from common.Address,
+	amount *big.Int,
+) (data []byte, err error) {
+
+	coins := sdk.Coins{{Denom: p.tokenPair.Denom, Amount: math.NewIntFromBigInt(amount)}}
+
+	if err = coins.Validate(); err != nil {
+		return nil, err
+	}
+
+	isBurnFrom := method.Name == BurnFromMethod
+	owner := sdk.AccAddress(from.Bytes())
+	spenderAddr := contract.CallerAddress
+	spender := sdk.AccAddress(spenderAddr.Bytes()) // aka. grantee
+	ownerIsSpender := spender.Equals(owner)
+
+	var prevAllowance *big.Int
+	if ownerIsSpender {
+		err := p.BankKeeper.SendCoinsFromAccountToModule(ctx, owner, bridgetypes.ModuleName, coins)
+		if err != nil {
+			return nil, err
+		}
+
+		err = p.BankKeeper.BurnCoins(ctx, bridgetypes.ModuleName, coins)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		_, _, prevAllowance, err = GetAuthzExpirationAndAllowance(p.AuthzKeeper, ctx, spenderAddr, from, p.tokenPair.Denom)
+		if err != nil {
+			return nil, ConvertErrToERC20Error(errorsmod.Wrap(err, authz.ErrNoAuthorizationFound.Error()))
+		}
+
+		msg := banktypes.NewMsgSend(from.Bytes(), sdkaddress.Module(bridgetypes.ModuleName), coins)
+
+		_, err = p.AuthzKeeper.DispatchActions(ctx, spender, []sdk.Msg{msg})
+		if err != nil {
+			return nil, ConvertErrToERC20Error(err)
+		}
+
+		err = p.BankKeeper.BurnCoins(ctx, bridgetypes.ModuleName, coins)
+	}
+
+	if err != nil {
+		err = ConvertErrToERC20Error(err)
+		// This should return an error to avoid the contract from being executed and an event being emitted
+		return nil, err
+	}
+
+	evmDenom := evmtypes.GetEVMCoinDenom()
+	if p.tokenPair.Denom == evmDenom {
+		convertedAmount := evmtypes.ConvertAmountTo18DecimalsBigInt(amount)
+		p.SetBalanceChangeEntries(cmn.NewBalanceChangeEntry(from, convertedAmount, cmn.Sub),
+			cmn.NewBalanceChangeEntry(from, convertedAmount, cmn.Add))
+	}
+
+	if err = p.EmitBurnEvent(ctx, stateDB, from, amount); err != nil {
+		return nil, err
+	}
+
+	// NOTE: if it's a direct transfer, we return here but if used through transferFrom,
+	// we need to emit the approval event with the new allowance.
+	if !isBurnFrom {
+		return method.Outputs.Pack(true)
+	}
+
+	var newAllowance *big.Int
+	if ownerIsSpender {
+		// NOTE: in case the spender is the owner we emit an approval event with
+		// the maxUint256 value.
+		newAllowance = abi.MaxUint256
+	} else {
+		newAllowance = new(big.Int).Sub(prevAllowance, amount)
+	}
+
+	if err = p.EmitApprovalEvent(ctx, stateDB, from, spenderAddr, newAllowance); err != nil {
+		return nil, err
+	}
+
+	return method.Outputs.Pack(true)
+	
 }
