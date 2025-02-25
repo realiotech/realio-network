@@ -58,7 +58,7 @@ func (k MockErc20Keeper) GetERC20PrecompileInstance(ctx sdk.Context, addr common
 		return nil, false, fmt.Errorf("token pair not found: %s", address)
 	}
 
-	precompile, err := erc20.NewPrecompile(pair, k.bankKeeper, k.authzKeeper, *k.transferKeeper)
+	precompile, err := erc20.NewPrecompile(pair, k.bankKeeper, k.authzKeeper, *k.transferKeeper, k.bridgeKeeper)
 	if err != nil {
 		return nil, false, err
 	}
