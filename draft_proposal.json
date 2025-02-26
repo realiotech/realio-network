@@ -1,0 +1,23 @@
+{
+  "messages": [
+    {
+      "@type": "/os.erc20.v1.MsgRegisterERC20",
+      "authority": "realio10d07y265gmmuvt4z0w9aw880jnsr700jnhh02f",
+      "erc20addresses": ["0x2F5FE4504bc6e4D1B29AE795DE19c839B61F6353"]
+    },
+    {
+      "@type": "/os.erc20.v1.MsgUpdateParams",
+      "authority": "realio10d07y265gmmuvt4z0w9aw880jnsr700jnhh02f",
+      "params": {
+        "enable_erc20": true,
+        "native_precompiles": [],
+        "dynamic_precompiles": ["0x2F5FE4504bc6e4D1B29AE795DE19c839B61F6353"]
+      }
+    }
+  ],
+  "metadata": "ipfs://CID",
+  "deposit": "100000000000000000000ario",
+  "title": "Test",
+  "summary": "Test",
+  "expedited": false
+}
