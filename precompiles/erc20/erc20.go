@@ -25,6 +25,8 @@ const (
 	abiPath = "abi.json"
 
 	GasTransfer          = 3_000_000
+	GasMint              = 3_000_000
+	GasBurn              = 3_000_000
 	GasApprove           = 30_956
 	GasIncreaseAllowance = 34_605
 	GasDecreaseAllowance = 34_519
@@ -107,6 +109,12 @@ func (p Precompile) RequiredGas(input []byte) uint64 {
 		return GasTransfer
 	case TransferFromMethod:
 		return GasTransfer
+	case MintMethod:
+		return GasMint
+	case BurnMethod:
+		return GasBurn
+	case BurnFromMethod:
+		return GasBurn
 	case auth.ApproveMethod:
 		return GasApprove
 	case auth.IncreaseAllowanceMethod:
@@ -171,6 +179,9 @@ func (Precompile) IsTransaction(method *abi.Method) bool {
 	switch method.Name {
 	case TransferMethod,
 		TransferFromMethod,
+		MintMethod,
+		BurnMethod,
+		BurnFromMethod,
 		auth.ApproveMethod,
 		auth.IncreaseAllowanceMethod,
 		auth.DecreaseAllowanceMethod:

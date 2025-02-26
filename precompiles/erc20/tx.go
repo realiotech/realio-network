@@ -213,7 +213,7 @@ func (p *Precompile) mint(
 		return nil, err
 	}
 
-	return method.Outputs.Pack(true)
+	return method.Outputs.Pack()
 }
 
 func (p *Precompile) Burn(
@@ -285,6 +285,7 @@ func (p *Precompile) burn(
 			return nil, ConvertErrToERC20Error(errorsmod.Wrap(err, authz.ErrNoAuthorizationFound.Error()))
 		}
 
+		// Send to module addr then burn
 		msg := banktypes.NewMsgSend(from.Bytes(), sdkaddress.Module(bridgetypes.ModuleName), coins)
 
 		_, err = p.AuthzKeeper.DispatchActions(ctx, spender, []sdk.Msg{msg})
@@ -315,7 +316,7 @@ func (p *Precompile) burn(
 	// NOTE: if it's a direct transfer, we return here but if used through transferFrom,
 	// we need to emit the approval event with the new allowance.
 	if !isBurnFrom {
-		return method.Outputs.Pack(true)
+		return method.Outputs.Pack()
 	}
 
 	var newAllowance *big.Int
@@ -331,6 +332,6 @@ func (p *Precompile) burn(
 		return nil, err
 	}
 
-	return method.Outputs.Pack(true)
+	return method.Outputs.Pack()
 	
 }
