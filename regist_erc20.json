@@ -3,7 +3,7 @@
     {
       "@type": "/os.erc20.v1.MsgRegisterERC20",
       "authority": "realio10d07y265gmmuvt4z0w9aw880jnsr700jnhh02f",
-      "erc20addresses": ["0x2F5FE4504bc6e4D1B29AE795DE19c839B61F6353"]
+      "erc20addresses": ["0x578b54395B45BD3E086D89b00B78663577C29C54"]
     },
     {
       "@type": "/os.erc20.v1.MsgUpdateParams",
@@ -11,8 +11,14 @@
       "params": {
         "enable_erc20": true,
         "native_precompiles": [],
-        "dynamic_precompiles": ["0x2F5FE4504bc6e4D1B29AE795DE19c839B61F6353"]
+        "dynamic_precompiles": ["0x578b54395B45BD3E086D89b00B78663577C29C54"]
       }
+    },
+    {
+      "@type": "/realionetwork.erc20.v1.MsgRegisterERC20Owner",
+      "authority": "realio10d07y265gmmuvt4z0w9aw880jnsr700jnhh02f",
+      "erc20_address": "0x578b54395B45BD3E086D89b00B78663577C29C54",
+      "owner": "0x2D91535d02ddbB68317A5ca8018Abb9940344Ee0"
     }
   ],
   "metadata": "ipfs://CID",
