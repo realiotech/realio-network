@@ -11,12 +11,12 @@ import (
 	"github.com/evmos/os/x/evm/core/vm"
 	transferkeeper "github.com/evmos/os/x/ibc/transfer/keeper"
 	"github.com/realiotech/realio-network/precompiles/erc20"
-	bridgekeeper "github.com/realiotech/realio-network/x/bridge/keeper"
+	erc20extendkeeper "github.com/realiotech/realio-network/x/erc20/keeper"
 )
 
 type MockErc20Keeper struct {
 	erc20keeper.Keeper
-	bridgeKeeper bridgekeeper.Keeper
+	erc20ExtendKeeper erc20extendkeeper.Erc20Keeper
 
 	bankKeeper     bankkeeper.Keeper
 	authzKeeper    authzkeeper.Keeper
@@ -24,24 +24,23 @@ type MockErc20Keeper struct {
 }
 
 func NewMockErc20Keeper(
-	erc20k erc20keeper.Keeper, 
+	erc20k erc20keeper.Keeper,
 	bk bankkeeper.Keeper,
 	ak authzkeeper.Keeper,
 	tk *transferkeeper.Keeper,
-	bridgeKeeper bridgekeeper.Keeper,
+	erc20ExtendKeeper erc20extendkeeper.Erc20Keeper,
 ) MockErc20Keeper {
 	return MockErc20Keeper{
-		Keeper: erc20k,
-		bankKeeper: bk,
-		authzKeeper: ak,
-		transferKeeper: tk,
-		bridgeKeeper: bridgeKeeper,
+		Keeper:            erc20k,
+		bankKeeper:        bk,
+		authzKeeper:       ak,
+		transferKeeper:    tk,
+		erc20ExtendKeeper: erc20ExtendKeeper,
 	}
 }
 
 func (k MockErc20Keeper) GetERC20PrecompileInstance(ctx sdk.Context, addr common.Address) (contract vm.PrecompiledContract, found bool, err error) {
 	params := k.GetParams(ctx)
-
 	if !k.IsAvailableERC20Precompile(&params, addr) {
 		return nil, false, nil
 	}
@@ -58,7 +57,7 @@ func (k MockErc20Keeper) GetERC20PrecompileInstance(ctx sdk.Context, addr common
 		return nil, false, fmt.Errorf("token pair not found: %s", address)
 	}
 
-	precompile, err := erc20.NewPrecompile(pair, k.bankKeeper, k.authzKeeper, *k.transferKeeper, k.bridgeKeeper)
+	precompile, err := erc20.NewPrecompile(pair, k.bankKeeper, k.authzKeeper, *k.transferKeeper, k.erc20ExtendKeeper)
 	if err != nil {
 		return nil, false, err
 	}

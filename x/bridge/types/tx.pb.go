@@ -220,7 +220,7 @@ func (m *MsgBridgeOutResponse) XXX_DiscardUnknown() {
 var xxx_messageInfo_MsgBridgeOutResponse proto.InternalMessageInfo
 
 // authority should be gov addr
-// other coin_authority should coin's authority (gov addr or contract addr)
+// other coin_authority should coin's authority (DAO addr or contract addr)
 type MsgRegisterNewCoins struct {
 	Authority     string                                   `protobuf:"bytes,1,opt,name=authority,proto3" json:"authority,omitempty"`
 	Coins         github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=coins,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"coins"`

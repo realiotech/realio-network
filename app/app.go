@@ -157,6 +157,10 @@ import (
 	bridgemodulekeeper "github.com/realiotech/realio-network/x/bridge/keeper"
 	bridgemoduletypes "github.com/realiotech/realio-network/x/bridge/types"
 
+	erc20extendkeeper "github.com/realiotech/realio-network/x/erc20/keeper"
+	erc20extendtypes "github.com/realiotech/realio-network/x/erc20/types"
+	erc20extend "github.com/realiotech/realio-network/x/erc20"
+
 	realionetworktypes "github.com/realiotech/realio-network/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
@@ -208,6 +212,7 @@ var (
 		evm.AppModuleBasic{},
 		feemarket.AppModuleBasic{},
 		erc20.AppModuleBasic{},
+		erc20extend.AppModuleBasic{},
 		assetmodule.AppModuleBasic{},
 		bridgemodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
@@ -370,7 +375,7 @@ func New(
 		// realio network keys
 		assetmoduletypes.StoreKey, bridgemoduletypes.StoreKey,
 		// ethermint keys
-		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey,
+		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, erc20extendtypes.ModuleName,
 		// multi-staking keys
 		multistakingtypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
@@ -566,8 +571,27 @@ func New(
 
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey], authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper, &app.Erc20Keeper.Keeper,
+		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper, &app.Erc20Keeper,
 		tracer, app.GetSubspace(evmtypes.ModuleName),
+	)
+
+	erc20Keeper := erc20keeper.NewKeeper(
+		keys[erc20types.StoreKey],
+		appCodec,
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.EvmKeeper,
+		app.StakingKeeper,
+		app.AuthzKeeper,
+		&app.TransferKeeper,
+	)
+
+	erc20ExtendKeeper := erc20extendkeeper.NewErc20Keeper(
+		erc20Keeper,
+		appCodec,
+		runtime.NewKVStoreService(keys[erc20extendtypes.StoreKey]),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	// Create Transfer Keepers
@@ -586,7 +610,7 @@ func New(
 		app.BankKeeper,
 		app.AuthzKeeper,
 		&app.TransferKeeper,
-		app.BridgeKeeper,
+		erc20ExtendKeeper,
 	)
 
 	// instantiate IBC transfer keeper AFTER the ERC-20 keeper to use it in the instantiation
@@ -666,6 +690,7 @@ func New(
 		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper, app.GetSubspace(evmtypes.ModuleName)),
 		feemarket.NewAppModule(app.FeeMarketKeeper, app.GetSubspace(feemarkettypes.ModuleName)),
 		erc20.NewAppModule(app.Erc20Keeper.Keeper, app.AccountKeeper, app.GetSubspace(erc20types.ModuleName)),
+		erc20extend.NewAppModule(app.Erc20Keeper.erc20ExtendKeeper),
 
 		// realio network
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper, app.GetSubspace(assetmoduletypes.ModuleName)),
@@ -763,6 +788,7 @@ func New(
 		// gentx transactions use MinGasPriceDecorator.AnteHandle
 		feemarkettypes.ModuleName,
 		erc20types.ModuleName,
+		erc20extendtypes.ModuleName,
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		paramstypes.ModuleName,
@@ -797,6 +823,7 @@ func New(
 		// gentx transactions use MinGasPriceDecorator.AnteHandle
 		feemarkettypes.ModuleName,
 		erc20types.ModuleName,
+		erc20extendtypes.ModuleName,
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		paramstypes.ModuleName,
