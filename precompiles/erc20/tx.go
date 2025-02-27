@@ -10,6 +10,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkaddress "github.com/cosmos/cosmos-sdk/types/address"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -19,7 +20,6 @@ import (
 	"github.com/evmos/os/x/evm/core/vm"
 	evmtypes "github.com/evmos/os/x/evm/types"
 	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
-	sdkaddress "github.com/cosmos/cosmos-sdk/types/address"
 )
 
 const (
@@ -35,6 +35,10 @@ const (
 	BurnFromMethod = "burnFrom"
 
 	MintMethod = "mint"
+
+	RenounceOwnership = "renounceOwnership"
+
+	TransferOwnership = "transferOwnership"
 )
 
 // SendMsgURL defines the authorization type for MsgSend
@@ -179,15 +183,12 @@ func (p *Precompile) mint(
 	minter := contract.CallerAddress
 	denom := p.tokenPair.Denom
 
-	// Check if caller is token owner
-	coinRegisterd, err := p.brigdeKeeper.GetCoinsRegistered(ctx, denom)
-	if err != nil {
-		return nil, err
+	// Check if minter is token owner
+	isOwner := p.ExtendKeeper.IsContractOwner(ctx, p.tokenPair.GetERC20Contract(), minter)
+	if !isOwner {
+		return nil, ConvertErrToERC20Error(fmt.Errorf("minter is not token owner"))
 	}
-	if sdk.AccAddress(minter.Bytes()).String() != coinRegisterd.Authority {
-		return nil, fmt.Errorf("sender is not token owner: %s", sdk.AccAddress(minter.Bytes()).String())
-	}
-
+	
 	mintToAddr := sdk.AccAddress(to.Bytes())
 
 	coins := sdk.Coins{{Denom: denom, Amount: math.NewIntFromBigInt(amount)}}
@@ -197,6 +198,8 @@ func (p *Precompile) mint(
 	if err != nil {
 		return nil, ConvertErrToERC20Error(err)
 	}
+
+	fmt.Println("MintCoins", err)
 
 	err = p.BankKeeper.SendCoinsFromModuleToAccount(ctx, bridgetypes.ModuleName, mintToAddr, coins)
 	if err != nil {
@@ -209,9 +212,9 @@ func (p *Precompile) mint(
 		p.SetBalanceChangeEntries(cmn.NewBalanceChangeEntry(to, convertedAmount, cmn.Add))
 	}
 
-	if err = p.EmitMintEvent(ctx, stateDB, to, amount); err != nil {
-		return nil, err
-	}
+	// if err = p.EmitMintEvent(ctx, stateDB, to, amount); err != nil {
+	// 	return nil, err
+	// }
 
 	return method.Outputs.Pack()
 }
@@ -334,4 +337,56 @@ func (p *Precompile) burn(
 
 	return method.Outputs.Pack()
 	
+}
+
+func (p *Precompile) RenounceOwnership(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	// Check if caller is contract owner
+	caller := contract.CallerAddress
+	isOwner := p.ExtendKeeper.IsContractOwner(ctx, p.tokenPair.GetERC20Contract(), caller)
+	if !isOwner {
+		return nil, ConvertErrToERC20Error(fmt.Errorf("caller is not contract owner"))
+	}
+
+	// Set owner to zero
+	err := p.ExtendKeeper.SetContractOwner(ctx, p.tokenPair.GetERC20Contract().String(), "")
+	if err != nil {
+		return nil, ConvertErrToERC20Error(err)
+	}
+
+	return method.Outputs.Pack()
+}
+
+func (p *Precompile) TransferOwnership(
+	ctx sdk.Context,
+	contract *vm.Contract,
+	stateDB vm.StateDB,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+
+	newOwner, err := ParseTransferOwnershipArgs(args)
+	if err != nil {
+		return nil, err
+	}
+
+	// Check if caller is contract owner
+	caller := contract.CallerAddress
+	isOwner := p.ExtendKeeper.IsContractOwner(ctx, p.tokenPair.GetERC20Contract(), caller)
+	if !isOwner {
+		return nil, ConvertErrToERC20Error(fmt.Errorf("caller is not contract owner"))
+	}
+
+	// Set owner to newOwner
+	err = p.ExtendKeeper.SetContractOwner(ctx, p.tokenPair.GetERC20Contract().String(), newOwner.String())
+	if err != nil {
+		return nil, ConvertErrToERC20Error(err)
+	}
+
+	return method.Outputs.Pack()
 }

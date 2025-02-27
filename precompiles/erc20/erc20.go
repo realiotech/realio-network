@@ -17,7 +17,7 @@ import (
 	erc20types "github.com/evmos/os/x/erc20/types"
 	"github.com/evmos/os/x/evm/core/vm"
 	transferkeeper "github.com/evmos/os/x/ibc/transfer/keeper"
-	bridgekeeper "github.com/realiotech/realio-network/x/bridge/keeper"
+	erc20extendkeeper "github.com/realiotech/realio-network/x/erc20/keeper"
 )
 
 const (
@@ -36,6 +36,9 @@ const (
 	GasTotalSupply       = 2_477
 	GasBalanceOf         = 2_851
 	GasAllowance         = 3_246
+	GasOwner = 3_422
+	GasRenounceOwnership = 33_320
+	GasTransferOwnership = 35_333
 )
 
 // Embed abi json file to the executable binary. Needed when importing as dependency.
@@ -52,7 +55,7 @@ type Precompile struct {
 	transferKeeper transferkeeper.Keeper
 	// BankKeeper is a public field so that the werc20 precompile can use it.
 	BankKeeper   bankkeeper.Keeper
-	brigdeKeeper bridgekeeper.Keeper
+	ExtendKeeper erc20extendkeeper.Erc20Keeper
 }
 
 // NewPrecompile creates a new ERC-20 Precompile instance as a
@@ -62,7 +65,7 @@ func NewPrecompile(
 	bankKeeper bankkeeper.Keeper,
 	authzKeeper authzkeeper.Keeper,
 	transferKeeper transferkeeper.Keeper,
-	bridgeKeeper bridgekeeper.Keeper,
+	erc20ExtendKeeper erc20extendkeeper.Erc20Keeper,
 ) (*Precompile, error) {
 	newABI, err := cmn.LoadABI(f, abiPath)
 	if err != nil {
@@ -80,8 +83,9 @@ func NewPrecompile(
 		tokenPair:      tokenPair,
 		BankKeeper:     bankKeeper,
 		transferKeeper: transferKeeper,
-		brigdeKeeper:   bridgeKeeper,
+		ExtendKeeper:   erc20ExtendKeeper,
 	}
+	fmt.Println("ERC20 contract addr", p.tokenPair.GetERC20Contract())
 	// Address defines the address of the ERC-20 precompile contract.
 	p.SetAddress(p.tokenPair.GetERC20Contract())
 	return p, nil
@@ -134,6 +138,15 @@ func (p Precompile) RequiredGas(input []byte) uint64 {
 		return GasBalanceOf
 	case auth.AllowanceMethod:
 		return GasAllowance
+
+	// Ownable transactions:
+	case RenounceOwnership:
+		return GasRenounceOwnership
+	case TransferOwnership:
+		return GasTransferOwnership
+	// Ownable query
+	case OwnerMethod:
+		return GasOwner
 	default:
 		return 0
 	}
@@ -141,6 +154,7 @@ func (p Precompile) RequiredGas(input []byte) uint64 {
 
 // Run executes the precompiled contract ERC-20 methods defined in the ABI.
 func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz []byte, err error) {
+	fmt.Println("Go to Precompile.Run")
 	// ERC20 precompiles cannot receive funds because they are not managed by an
 	// EOA and will not be possible to recover funds sent to an instance of
 	// them.This check is a safety measure because currently funds cannot be
@@ -150,6 +164,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	}
 
 	ctx, stateDB, snapshot, method, initialGas, args, err := p.RunSetup(evm, contract, readOnly, p.IsTransaction)
+	fmt.Println("RunSetup", err, method, args)
 	if err != nil {
 		return nil, err
 	}
@@ -158,6 +173,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
 	defer cmn.HandleGasError(ctx, contract, initialGas, &err)()
 
+	fmt.Println("Method name: ", method.Name)
 	bz, err = p.HandleMethod(ctx, contract, stateDB, method, args)
 	if err != nil {
 		return nil, err
@@ -199,6 +215,7 @@ func (p *Precompile) HandleMethod(
 	method *abi.Method,
 	args []interface{},
 ) (bz []byte, err error) {
+	fmt.Println("HandleMethod", method.Name)
 	switch method.Name {
 	// ERC-20 transactions
 	case TransferMethod:
@@ -230,6 +247,15 @@ func (p *Precompile) HandleMethod(
 		bz, err = p.BalanceOf(ctx, contract, stateDB, method, args)
 	case auth.AllowanceMethod:
 		bz, err = p.Allowance(ctx, contract, stateDB, method, args)
+
+	// Ownable transactions
+	case RenounceOwnership:
+		bz, err = p.RenounceOwnership(ctx, contract, stateDB, method, args)
+	case TransferOwnership:
+		bz, err = p.TransferOwnership(ctx, contract, stateDB, method, args)
+	// Ownable transactions
+	case OwnerMethod:
+		bz, err = p.Owner(ctx, contract, stateDB, method, args)
 	default:
 		return nil, fmt.Errorf(cmn.ErrUnknownMethod, method.Name)
 	}

@@ -39,6 +39,8 @@ const (
 	// BalanceOfMethod defines the ABI method name for the ERC-20 BalanceOf
 	// query.
 	BalanceOfMethod = "balanceOf"
+
+	OwnerMethod = "owner"
 )
 
 // Name returns the name of the token. If the token metadata is registered in the
@@ -174,6 +176,20 @@ func (p Precompile) BalanceOf(
 	balance := p.BankKeeper.GetBalance(ctx, account.Bytes(), p.tokenPair.Denom)
 
 	return method.Outputs.Pack(balance.Amount.BigInt())
+}
+
+func (p Precompile) Owner(
+	ctx sdk.Context,
+	_ *vm.Contract,
+	_ vm.StateDB,
+	method *abi.Method,
+	_ []interface{},
+) ([]byte, error) {
+	owner, err := p.ExtendKeeper.GetContractOwner(ctx, p.tokenPair.Erc20Address)
+	if err != nil {
+		return nil, err
+	}
+	return method.Outputs.Pack(owner)
 }
 
 // Allowance returns the remaining allowance of a spender to the contract by

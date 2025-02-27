@@ -188,6 +188,21 @@ func ParseBurnFromArgs(args []interface{}) (
 	return from, amount, nil
 }
 
+func ParseTransferOwnershipArgs(args []interface{}) (
+	to common.Address, err error,
+) {
+	if len(args) != 1 {
+		return common.Address{}, fmt.Errorf("invalid number of arguments; expected 1; got: %d", len(args))
+	}
+
+	to, ok := args[0].(common.Address)
+	if !ok {
+		return common.Address{}, fmt.Errorf("invalid to address: %v", args[0])
+	}
+
+	return to, nil
+}
+
 // updateOrAddCoin replaces the coin of the given denomination in the coins slice or adds it if it
 // does not exist yet.
 //
