@@ -1,0 +1,15 @@
+syntax = "proto3";
+package realionetwork.erc20.v1;
+
+import "amino/amino.proto";
+import "gogoproto/gogo.proto";
+import "realionetwork/erc20/v1/erc20.proto";
+
+option go_package = "github.com/realiotech/realio-network/x/erc20/types";
+
+// GenesisState defines the module's genesis state.
+message GenesisState {
+  repeated TokenOwner token_owners = 2
+      [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
+}
+

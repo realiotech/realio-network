@@ -104,7 +104,7 @@ func Setup(
 
 	db := dbm.NewMemDB()
 	opt := baseapp.SetChainID(types.MainnetChainID + "-1")
-	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, encCdc, simtestutil.EmptyAppOptions{}, opt)
+	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, encCdc, simtestutil.EmptyAppOptions{}, EvmosAppOptions, opt)
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
 		genesisState := NewDefaultGenesisState(encCdc.Codec)
@@ -269,7 +269,7 @@ func NewDefaultGenesisState(cdc codec.JSONCodec) simapp.GenesisState {
 func SetupTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	db := dbm.NewMemDB()
 	cfg := MakeEncodingConfig()
-	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, cfg, simtestutil.EmptyAppOptions{})
+	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, cfg, simtestutil.EmptyAppOptions{}, EvmosAppOptions)
 	return app, NewDefaultGenesisState(cfg.Codec)
 }
 
