@@ -44,15 +44,12 @@ message MsgBridgeOut {
 
 message MsgBridgeOutResponse {}
 
-// authority should be gov addr
-// other coin_authority should coin's authority (DAO addr or contract addr)
 message MsgRegisterNewCoins {
   string authority = 1;
   repeated cosmos.base.v1beta1.Coin coins = 2 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
-  string coin_authority = 3;
 }
 
 message MsgRegisterNewCoinsResponse {}

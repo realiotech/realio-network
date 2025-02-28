@@ -1,11 +1,15 @@
 package types
 
+import (
+	sdk "github.com/cosmos/cosmos-sdk/types"
+)
+
 // DefaultGenesis returns the default Capability genesis state
 func DefaultGenesis() *GenesisState {
 	return &GenesisState{
 		// this line is used by starport scaffolding # genesis/types/default
 		Params:             DefaultParams(),
-		RegisteredCoins:    []CoinAuthority{},
+		RegisteredCoins:    []sdk.Coin{},
 		RatelimitEpochInfo: DefaultEpochInfo(),
 	}
 }
@@ -18,11 +22,9 @@ func (gs GenesisState) Validate() error {
 		return err
 	}
 
-	for _, coinAuth := range gs.RegisteredCoins {
-		err := coinAuth.Coin.Validate()
-		if err != nil {
-			return err
-		}
+	err = gs.RegisteredCoins.Validate()
+	if err != nil {
+		return err
 	}
 
 	return gs.RatelimitEpochInfo.Validate()
