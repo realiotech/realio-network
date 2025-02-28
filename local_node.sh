@@ -58,6 +58,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	# Set client config
   ./build/realio-networkd config keyring-backend $KEYRING --home $HOMEDIR
   ./build/realio-networkd config chain-id $CHAINID --home $HOMEDIR
+  ./build/realio-networkd config set app json-rpc.enable true
 
 	# If keys exist they should be deleted
 	for KEY in "${KEYS[@]}"; do
