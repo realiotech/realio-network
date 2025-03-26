@@ -37,7 +37,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
-## Unreleased
+## [v1.0.5](https://github.com/realiotech/realio-network/releases/tag/v1.0.5)
 
 - (chore)[213](https://github.com/realiotech/realio-network/pull/213): register geth tracers at app.go
 
