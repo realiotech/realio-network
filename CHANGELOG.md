@@ -43,6 +43,10 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 - (chore) [#211](https://github.com/realiotech/realio-network/pull/211): Update changelog from v1.0.1
 
+## [v1.0.5](https://github.com/realiotech/realio-network/releases/tag/v1.0.5)
+
+- (chore)[213](https://github.com/realiotech/realio-network/pull/213): register geth tracers at app.go
+
 ## [v1.0.4](https://github.com/realiotech/realio-network/releases/tag/v1.0.4)
 
 ### Bug Fixes
@@ -95,7 +99,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ### Bug Fixes
 
-- (asset) [#131](https://github.com/realiotech/realio-network/pull/131) Fix send restriction 
+- (asset) [#131](https://github.com/realiotech/realio-network/pull/131) Fix send restriction
 
 
 ## [v0.9.0] - 2024-03-27
@@ -153,7 +157,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### Features
 
 ### Improvements
-- (deps) [fffc39](https://github.com/realiotech/realio-network/commit/fffc39c10369ae12691d58dd936d0d7f481dc486) migrate ethermint coin type 
+- (deps) [fffc39](https://github.com/realiotech/realio-network/commit/fffc39c10369ae12691d58dd936d0d7f481dc486) migrate ethermint coin type
 
 ### Bug Fixes
 ## [v0.7.1] - 2023-01-24
