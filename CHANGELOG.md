@@ -39,6 +39,10 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## Unreleased
 
+### Bug Fixes
+
+- (evm) [#212](https://github.com/realiotech/realio-network/pull/212): Add Berlin precomiles to memory
+
 ### Improvements
 
 - (chore) [#211](https://github.com/realiotech/realio-network/pull/211): Update changelog from v1.0.1
