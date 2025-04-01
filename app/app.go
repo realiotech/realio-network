@@ -157,6 +157,10 @@ import (
 
 	realionetworktypes "github.com/realiotech/realio-network/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
+
+	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
+	_ "github.com/evmos/os/x/evm/core/tracers/js"
+	_ "github.com/evmos/os/x/evm/core/tracers/native"
 )
 
 const (

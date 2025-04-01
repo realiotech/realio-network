@@ -37,6 +37,52 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
+## Unreleased
+
+### Improvements
+
+- (chore) [#211](https://github.com/realiotech/realio-network/pull/211): Update changelog from v1.0.1
+
+## [v1.0.5](https://github.com/realiotech/realio-network/releases/tag/v1.0.5)
+
+- (chore)[213](https://github.com/realiotech/realio-network/pull/213): register geth tracers at app.go
+
+## [v1.0.4](https://github.com/realiotech/realio-network/releases/tag/v1.0.4)
+
+### Bug Fixes
+
+- [#185](https://github.com/realiotech/realio-network/pull/185) Fix bridge module cli
+
+## [v1.0.3](https://github.com/realiotech/realio-network/releases/tag/v1.0.3) - 2025-03-01
+
+### Improvements
+
+- (app) [#187](https://github.com/realiotech/realio-network/pull/187): Add gentx
+- (chore) [#199](https://github.com/realiotech/realio-network/pull/199): Update local node start script
+- (bump) [#204](https://github.com/realiotech/realio-network/pull/204): patch ibc-go v8.6.1
+
+
+## [v1.0.2](https://github.com/realiotech/realio-network/releases/tag/v1.0.2) - 2024-12-19
+
+### Improvements
+
+- (bump) [#184](https://github.com/realiotech/realio-network/pull/184): Patch cosmos sdk v0.50.11
+
+## [v1.0.1](https://github.com/realiotech/realio-network/releases/tag/1.0.1) - 2024-12-13
+
+### Feature
+
+- [#179](https://github.com/realiotech/realio-network/pull/179): Bridge module and upgrade sdk50
+- [#180](https://github.com/realiotech/realio-network/pull/180): Update bridge params for testnet
+- [#182](https://github.com/realiotech/realio-network/pull/182): Allow MsgBridgeIn transfer coin directly to reciever
+- [#183](https://github.com/realiotech/realio-network/pull/183): Update bridge params for mainnet
+
+### Improvements
+
+- (chore) [#172](https://github.com/realiotech/realio-network/pull/172): Update local node scripts for multistaking
+- (ci) [#173](https://github.com/realiotech/realio-network/pull/173): Remove unnecessary windows tests
+- (chore) [#181](https://github.com/realiotech/realio-network/pull/181): Change upgrade folder naming
+
 ## [v0.9.3](https://github.com/realiotech/realio-network/releases/tag/v0.9.3) - 2024-6-26
 
 ### Improvements
@@ -53,7 +99,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ### Bug Fixes
 
-- (asset) [#131](https://github.com/realiotech/realio-network/pull/131) Fix send restriction 
+- (asset) [#131](https://github.com/realiotech/realio-network/pull/131) Fix send restriction
 
 
 ## [v0.9.0] - 2024-03-27
@@ -111,7 +157,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### Features
 
 ### Improvements
-- (deps) [fffc39](https://github.com/realiotech/realio-network/commit/fffc39c10369ae12691d58dd936d0d7f481dc486) migrate ethermint coin type 
+- (deps) [fffc39](https://github.com/realiotech/realio-network/commit/fffc39c10369ae12691d58dd936d0d7f481dc486) migrate ethermint coin type
 
 ### Bug Fixes
 ## [v0.7.1] - 2023-01-24
