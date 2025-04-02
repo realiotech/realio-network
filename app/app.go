@@ -39,6 +39,7 @@ import (
 	osecp256k1 "github.com/evmos/os/crypto/ethsecp256k1"
 	srvflags "github.com/evmos/os/server/flags"
 	ostypes "github.com/evmos/os/types"
+	evmosvm "github.com/evmos/os/x/evm/core/vm"
 
 	"github.com/evmos/os/x/evm"
 	evmkeeper "github.com/evmos/os/x/evm/keeper"
@@ -483,6 +484,8 @@ func New(
 		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper, MockErc20Keeper{},
 		tracer, app.GetSubspace(evmtypes.ModuleName),
 	)
+
+	app.EvmKeeper.WithStaticPrecompiles(evmosvm.PrecompiledContractsBerlin)
 
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
