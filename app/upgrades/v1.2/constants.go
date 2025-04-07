@@ -2,5 +2,5 @@ package v2
 
 const (
 	// UpgradeName defines the on-chain upgrade name.
-	UpgradeName = "v2"
+	UpgradeName = "v1.2.0"
 )

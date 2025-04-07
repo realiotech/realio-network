@@ -18,7 +18,7 @@ func CreateUpgradeHandler(
 ) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
-		sdkCtx.Logger().Info("Starting upgrade for v2...")
+		sdkCtx.Logger().Info("Starting upgrade for v1.2.0...")
 		evmKeeper.WithStaticPrecompiles(evmosvm.PrecompiledContractsBerlin)
 		return mm.RunMigrations(ctx, configurator, vm)
 	}

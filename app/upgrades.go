@@ -8,7 +8,7 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/realiotech/realio-network/app/upgrades/commission"
 	v1 "github.com/realiotech/realio-network/app/upgrades/v1"
-	v2 "github.com/realiotech/realio-network/app/upgrades/v2"
+	v2 "github.com/realiotech/realio-network/app/upgrades/v1.2"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
