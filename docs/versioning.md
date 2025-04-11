@@ -168,15 +168,6 @@ We maintain a clear separation between **testnet** and **mainnet** releases to s
 - Require community coordination if involving consensus or network upgrades
 - Documented with migration guides and upgrade instructions
 
-### 🚦 Recommended Practices
-
-- Use **separate branches** (e.g., `mainnet`, `testnet`, `dev`) to manage environment-specific code and tag releases from the appropriate branch.
-- Use `rc` pre-releases only for testnet deployments.
-- When introducing a new feature or upgrade:
-    1. Release it as an `rc` version for testnet (e.g., `v1.4.0-rc.1`)
-    2. Iterate if necessary (e.g., `v1.4.0-rc.2`)
-    3. Finalize and release for mainnet (e.g., `v1.4.0`)
-
 ### 🔒 Versioning Summary
 
 | Release Type | Example Tag | Intended Use | Stability |
