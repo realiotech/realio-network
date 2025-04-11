@@ -42,6 +42,10 @@ Head over there and check it out.
 
 **Note**: Requires [Go 1.22.5+](https://golang.org/dl/)
 
+## Versioning
+
+Realio Network follows Semantic Versioning for all releases. For details on our versioning policy, including how we handle testnet and mainnet releases, please refer to our [Versioning Guide](./docs/versioning.md).
+
 ## Installation
 
 For prerequisites and detailed build instructions
