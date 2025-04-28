@@ -6,7 +6,6 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	evmosvm "github.com/evmos/os/x/evm/core/vm"
 	evmkeeper "github.com/evmos/os/x/evm/keeper"
 )
 
@@ -19,7 +18,6 @@ func CreateUpgradeHandler(
 	return func(ctx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 		sdkCtx.Logger().Info("Starting upgrade for v1.2.0...")
-		evmKeeper.WithStaticPrecompiles(evmosvm.PrecompiledContractsBerlin)
 		return mm.RunMigrations(ctx, configurator, vm)
 	}
 }
