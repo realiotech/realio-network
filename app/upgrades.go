@@ -70,7 +70,6 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 		v2.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
-			app.EvmKeeper,
 		),
 	)
 
