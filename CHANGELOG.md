@@ -47,6 +47,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 - (chore) [#211](https://github.com/realiotech/realio-network/pull/211): Update changelog from v1.0.1
 - (feat) [#232](https://github.com/realiotech/realio-network/pull/232): Add bank end blocker
+- (chore) [#233](https://github.com/realiotech/realio-network/pull/233): Clean up upgrade handler
 
 ## [v1.0.5](https://github.com/realiotech/realio-network/releases/tag/v1.0.5)
 
