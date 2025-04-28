@@ -648,7 +648,6 @@ func New(
 
 	// NOTE: fee market module must go last in order to retrieve the block gas used.
 	app.mm.SetOrderEndBlockers(
-		banktypes.ModuleName,
 		crisistypes.ModuleName,
 		govtypes.ModuleName,
 		multistakingtypes.ModuleName,

@@ -70,3 +70,11 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 
 	return nil
 }
+
+// EndBlocker called every block, process transfer coins from EVM dead account to gov.
+// Then burn these coins from gov module.
+func EndBlocker(ctx sdk.Context, keeper keeper.Keeper) error {
+	defer telemetry.ModuleMeasureSince(types.ModuleName, telemetry.Now(), telemetry.MetricKeyEndBlocker)
+
+	return keeper.BurnDeadAccount(ctx)
+}

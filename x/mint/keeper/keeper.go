@@ -95,6 +95,24 @@ func (k Keeper) MintCoins(ctx context.Context, newCoins sdk.Coins) error {
 	return k.bankKeeper.MintCoins(ctx, types.ModuleName, newCoins)
 }
 
+// BurnDeadAccount take all balances from dead account then burn.
+func (k Keeper) BurnDeadAccount(ctx context.Context) error {
+	deadBalances := k.bankKeeper.GetAllBalances(ctx, types.EvmDeadAddr)
+	if deadBalances.Empty() {
+		return nil
+	}
+	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, types.EvmDeadAddr, "gov", deadBalances)
+	if err != nil {
+		return err
+	}
+
+	err = k.bankKeeper.BurnCoins(ctx, "gov", deadBalances)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // AddCollectedFees implements an alias call to the underlying supply keeper's
 // AddCollectedFees to be used in BeginBlocker.
 func (k Keeper) AddCollectedFees(ctx context.Context, fees sdk.Coins) error {

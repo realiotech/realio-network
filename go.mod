@@ -245,7 +245,7 @@ require (
 replace (
 	// need this replace to pick up the store changes (Copy func) in our cosmos-sdk fork
 	cosmossdk.io/store => github.com/evmos/cosmos-sdk/store v0.0.0-20240718141609-414cbd051fbe
-	github.com/cosmos/cosmos-sdk => github.com/decentrio/cosmos-sdk v0.50.11-realio
+	// github.com/cosmos/cosmos-sdk => github.com/decentrio/cosmos-sdk v0.50.11-realio
 	// use Evmos geth fork
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc4
 	github.com/evmos/os/example_chain => github.com/evmos/os/example_chain v0.0.0-20241002122822-02a9121016ee
