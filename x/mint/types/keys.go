@@ -2,14 +2,14 @@ package types
 
 import (
 	"cosmossdk.io/collections"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/bech32"
 )
 
 var (
 	// MinterKey is the key to use for the keeper store.
-	MinterKey   = collections.NewPrefix(0)
-	ParamsKey   = collections.NewPrefix(1)
-	EvmDeadAddr = sdk.MustAccAddressFromBech32("realio1qqqqqqqqqqqqqqqqqqqqqqqqqqqqph4dujhguh")
+	MinterKey         = collections.NewPrefix(0)
+	ParamsKey         = collections.NewPrefix(1)
+	_, EvmDeadAddr, _ = bech32.DecodeAndConvert("realio1qqqqqqqqqqqqqqqqqqqqqqqqqqqqph4dujhguh")
 )
 
 const (
