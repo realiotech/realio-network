@@ -7,9 +7,9 @@ import (
 
 var (
 	// MinterKey is the key to use for the keeper store.
-	MinterKey         = collections.NewPrefix(0)
-	ParamsKey         = collections.NewPrefix(1)
-	_, EvmDeadAddr, _ = bech32.DecodeAndConvert("realio1qqqqqqqqqqqqqqqqqqqqqqqqqqqqph4dujhguh")
+	MinterKey   = collections.NewPrefix(0)
+	ParamsKey   = collections.NewPrefix(1)
+	EvmDeadAddr = getEvmDeadAddr()
 )
 
 const (
@@ -24,3 +24,11 @@ const (
 	QueryInflation        = "inflation"
 	QueryAnnualProvisions = "annual_provisions"
 )
+
+func getEvmDeadAddr() []byte {
+	_, EvmDeadAddr, err := bech32.DecodeAndConvert("realio1qqqqqqqqqqqqqqqqqqqqqqqqqqqqph4dujhguh")
+	if err != nil {
+		panic(err)
+	}
+	return EvmDeadAddr
+}
