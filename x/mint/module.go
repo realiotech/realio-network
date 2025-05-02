@@ -156,7 +156,7 @@ func (am AppModule) BeginBlock(ctx context.Context) error {
 	return BeginBlocker(ctx, am.keeper)
 }
 
-// BeginBlock returns the begin blocker for the mint module.
+// EndBlock returns the end blocker for the mint module.
 func (am AppModule) EndBlock(ctx context.Context) error {
 	return EndBlocker(ctx, am.keeper)
 }
