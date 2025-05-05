@@ -75,7 +75,9 @@ func (k Keeper) Logger(ctx context.Context) log.Logger {
 
 // StakingTokenSupply to be used in BeginBlocker.
 func (k Keeper) StakingTokenSupply(ctx context.Context, params types.Params) math.Int {
-	return k.bankKeeper.GetSupply(ctx, params.MintDenom).Amount
+	totalSupply := k.bankKeeper.GetSupply(ctx, params.MintDenom)
+	deadBalance := k.bankKeeper.GetBalance(ctx, types.EvmDeadAddr, params.MintDenom)
+	return totalSupply.Amount.Sub(deadBalance.Amount)
 }
 
 // BondedRatio implements an alias call to the underlying staking keeper's
