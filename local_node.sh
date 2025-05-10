@@ -19,7 +19,7 @@ MONIKER="realionetworklocal"
 KEYRING="test"
 KEYALGO="eth_secp256k1"
 LOGLEVEL="info"
-# Set dedicated home directory for the realio-networkd instance
+# Set dedicated home directory for the ./build/realio-networkd instance
 HOMEDIR="$HOME/.realio-network"
 # to trace evm
 #TRACE="--trace"
@@ -55,21 +55,21 @@ fi
 if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	# Remove the previous folder
 	rm -rf "$HOMEDIR"
-
 	# Set client config
-  realio-networkd config keyring-backend $KEYRING --home $HOMEDIR
-  realio-networkd config chain-id $CHAINID --home $HOMEDIR
+  ./build/realio-networkd config keyring-backend $KEYRING --home $HOMEDIR
+  ./build/realio-networkd config chain-id $CHAINID --home $HOMEDIR
+  ./build/realio-networkd config set app json-rpc.enable true
 
 	# If keys exist they should be deleted
 	for KEY in "${KEYS[@]}"; do
-		realio-networkd keys add $KEY --keyring-backend $KEYRING --algo $KEYALGO --home "$HOMEDIR"
+		./build/realio-networkd keys add $KEY --keyring-backend $KEYRING --algo $KEYALGO --home "$HOMEDIR"
 	done
 
 
-	RST_ISSUER=$(realio-networkd keys show ${KEYS[2]} --keyring-backend $KEYRING --home "$HOMEDIR" -a)
+	RST_ISSUER=$(./build/realio-networkd keys show ${KEYS[2]} --keyring-backend $KEYRING --home "$HOMEDIR" -a)
 
 	# Set moniker and chain-id for Realio Network (Moniker can be anything, chain-id must be an integer)
-	realio-networkd init $MONIKER --overwrite --chain-id $CHAINID --home "$HOMEDIR"
+	./build/realio-networkd init $MONIKER --overwrite --chain-id $CHAINID --home "$HOMEDIR"
 
 	# Change parameter token denominations to ario
 	jq '.app_state["multistaking"]["multi_staking_coin_info"]=[{"denom": "ario", "bond_weight": "1.000000000000000000"}, {"denom": "arst", "bond_weight": "1.000000000000000000"}]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -77,8 +77,11 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["staking"]["params"]["bond_denom"]="stake"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["crisis"]["constant_fee"]["denom"]="stake"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["gov"]["deposit_params"]["min_deposit"][0]["denom"]="ario"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["gov"]["voting_params"]["voting_period"]="45s"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["gov"]["params"]["min_deposit"][0]["denom"]="ario"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["gov"]["params"]["voting_period"]="45s"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["gov"]["params"]["expedited_voting_period"]="40s"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["evm"]["params"]["evm_denom"]="ario"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+	jq '.app_state["feemarket"]["params"]["no_base_fee"]=true' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["asset"]["tokens"]=[{ "authorizationRequired": true, "authorized": [{ "address": "'"$RST_ISSUER"'", "authorized": true }], "manager": "'"$RST_ISSUER"'", "name": "Realio Security Token", "symbol": "rst", "total": "50000000" }]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["bank"]["denom_metadata"]=[ { "description": "The native utility, gas, evm, governance and staking token of the Realio Network", "denom_units": [ { "denom": "ario", "exponent": 0, "aliases": [ "attorio" ] }, { "denom": "rio", "exponent": 18, "aliases": [] } ], "base": "ario", "display": "rio", "name": "Realio Network Rio", "symbol": "RIO", "uri": "", "uri_hash": "" }, { "description": "Realio Security Token", "denom_units": [ { "denom": "arst", "exponent": 0, "aliases": [ "attorst" ] }, { "denom": "rst", "exponent": 18, "aliases": [] } ], "base": "arst", "display": "rst", "name": "Realio Security Token", "symbol": "RST", "uri": "", "uri_hash": "" } ]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
@@ -108,29 +111,28 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	fi
 
 	# Allocate genesis accounts (cosmos formatted addresses)
-  realio-networkd genesis add-genesis-account ${KEYS[0]} 10000000000000000000000000ario --keyring-backend $KEYRING --home "$HOMEDIR"
-  realio-networkd genesis add-genesis-account ${KEYS[1]} 10000000000000000000000000ario --keyring-backend $KEYRING --home "$HOMEDIR"
-  realio-networkd genesis add-genesis-account "$RST_ISSUER" 10000000000000000000000000ario,50000000000000000000000000arst --keyring-backend $KEYRING --home "$HOMEDIR"
+  ./build/realio-networkd genesis add-genesis-account ${KEYS[0]} 10000000000000000000000000ario --keyring-backend $KEYRING --home "$HOMEDIR"
+  ./build/realio-networkd genesis add-genesis-account ${KEYS[1]} 10000000000000000000000000ario --keyring-backend $KEYRING --home "$HOMEDIR"
+  ./build/realio-networkd genesis add-genesis-account "$RST_ISSUER" 10000000000000000000000000ario,50000000000000000000000000arst --keyring-backend $KEYRING --home "$HOMEDIR"
 
 	# Sign genesis transaction
-	realio-networkd genesis gentx ${KEYS[0]} 1000000000000000000000000ario --keyring-backend $KEYRING --chain-id $CHAINID --home "$HOMEDIR"
+	./build/realio-networkd genesis gentx ${KEYS[0]} 1000000000000000000000000ario --keyring-backend $KEYRING --chain-id $CHAINID --home "$HOMEDIR"
 	## In case you want to create multiple validators at genesis
-	## 1. Back to `realio-networkd keys add` step, init more keys
-	## 2. Back to `realio-networkd add-genesis-account` step, add balance for those
+	## 1. Back to `./build/realio-networkd keys add` step, init more keys
+	## 2. Back to `./build/realio-networkd add-genesis-account` step, add balance for those
 	## 3. Clone this ~/.realio-network home directory into some others, let's say `~/.clonedRealioNetwork`
 	## 4. Run `gentx` in each of those folders
 	## 5. Copy the `gentx-*` folders under `~/.clonedRealioNetworkd/config/gentx/` folders into the original `~/.realio-network/config/gentx`
 
 	# Collect genesis tx
-	realio-networkd genesis collect-gentxs --home "$HOMEDIR"
+	./build/realio-networkd genesis collect-gentxs --home "$HOMEDIR"
 
 	# Run this to ensure everything worked and that the genesis file is setup correctly
-	realio-networkd genesis validate --home "$HOMEDIR"
+	./build/realio-networkd genesis validate --home "$HOMEDIR"
 
 	if [[ $1 == "pending" ]]; then
 		echo "pending mode is on, please wait for the first block committed."
 	fi
 fi
-
 # Start the node (remove the --pruning=nothing flag if historical queries are not needed)
-realio-networkd start --pruning=nothing "$TRACE" --log_level $LOGLEVEL --minimum-gas-prices=0.00001ario --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --home "$HOMEDIR"
+./build/realio-networkd start --pruning=nothing "$TRACE" --log_level $LOGLEVEL --json-rpc.api eth,txpool,personal,net,debug,web3 --api.enable --home "$HOMEDIR" --minimum-gas-prices 0.001ario
