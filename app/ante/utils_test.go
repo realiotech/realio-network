@@ -185,7 +185,7 @@ func (suite *AnteTestSuite) BuildTestEthTx(
 	gasTipCap *big.Int,
 	accesses *ethtypes.AccessList,
 ) *evmtypes.MsgEthereumTx {
-	chainID := suite.app.EvmKeeper.ChainID()
+	chainID := evmtypes.GetEthChainConfig().ChainID
 	nonce := suite.app.EvmKeeper.GetNonce(
 		suite.ctx,
 		common.BytesToAddress(from.Bytes()),
