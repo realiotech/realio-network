@@ -259,7 +259,7 @@ replace (
 	github.com/ethereum/go-ethereum => github.com/evmos/go-ethereum v1.10.26-evmos-rc4
 
 	// github.com/realio-tech/multi-staking-module => ../multi-staking
-	github.com/evmos/os => ../os-strangelove
+	github.com/evmos/os => github.com/strangelove-ventures/os v0.2.0
 	// use Realio sdk v0.46.11-realio-4
 	// github.com/cosmos/cosmos-sdk => github.com/realiotech/cosmos-sdk v0.46.11-realio-4
 	github.com/evmos/os/example_chain => github.com/evmos/os/example_chain v0.0.0-20241002122822-02a9121016ee
