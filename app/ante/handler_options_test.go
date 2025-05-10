@@ -138,7 +138,7 @@ func (suite *AnteTestSuite) TestValidateHandlerOptions() {
 				SignModeHandler:        encoding.MakeConfig().TxConfig.SignModeHandler(),
 				SigGasConsumer:         evmosante.SigVerificationGasConsumer,
 				MaxTxGasWanted:         40000000,
-				TxFeeChecker:           evmosanteevm.NewDynamicFeeChecker(suite.app.EvmKeeper),
+				TxFeeChecker:           evmosanteevm.NewDynamicFeeChecker(suite.app.FeeMarketKeeper),
 			},
 			true,
 		},

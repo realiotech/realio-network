@@ -39,8 +39,11 @@ import (
 	osecp256k1 "github.com/evmos/os/crypto/ethsecp256k1"
 	srvflags "github.com/evmos/os/server/flags"
 	ostypes "github.com/evmos/os/types"
+	"github.com/evmos/os/x/erc20"
 	evmosvm "github.com/evmos/os/x/evm/core/vm"
 
+	erc20keeper "github.com/evmos/os/x/erc20/keeper"
+	erc20types "github.com/evmos/os/x/erc20/types"
 	"github.com/evmos/os/x/evm"
 	evmkeeper "github.com/evmos/os/x/evm/keeper"
 	evmtypes "github.com/evmos/os/x/evm/types"
@@ -125,8 +128,7 @@ import (
 	"github.com/cosmos/ibc-go/modules/capability"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
+	ibctransfer "github.com/cosmos/ibc-go/v8/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v8/modules/core"
 	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
@@ -161,6 +163,11 @@ import (
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	_ "github.com/evmos/os/x/evm/core/tracers/js"
 	_ "github.com/evmos/os/x/evm/core/tracers/native"
+
+	// NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens
+
+	"github.com/evmos/os/x/ibc/transfer"
+	transferkeeper "github.com/evmos/os/x/ibc/transfer/keeper"
 )
 
 const (
@@ -202,13 +209,14 @@ var (
 		authzmodule.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
-		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		evm.AppModuleBasic{},
+		erc20.AppModuleBasic{},
 		feemarket.AppModuleBasic{},
 		assetmodule.AppModuleBasic{},
 		bridgemodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
+		transfer.AppModuleBasic{AppModuleBasic: &ibctransfer.AppModuleBasic{}},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -225,6 +233,7 @@ var (
 		assetmoduletypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		bridgemoduletypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		multistakingtypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
+		erc20types.ModuleName:          {authtypes.Minter, authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -282,12 +291,13 @@ type RealioNetwork struct {
 	AuthzKeeper           authzkeeper.Keeper
 	IBCKeeper             *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	EvidenceKeeper        evidencekeeper.Keeper
-	TransferKeeper        ibctransferkeeper.Keeper
+	TransferKeeper        transferkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
 
 	// Ethermint keepers
 	EvmKeeper       *evmkeeper.Keeper
 	FeeMarketKeeper feemarketkeeper.Keeper
+	Erc20Keeper     erc20keeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -342,7 +352,7 @@ func New(
 		// realio network keys
 		assetmoduletypes.StoreKey, bridgemoduletypes.StoreKey,
 		// ethermint keys
-		evmtypes.StoreKey, feemarkettypes.StoreKey,
+		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey,
 		// multi-staking keys
 		multistakingtypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
@@ -481,8 +491,20 @@ func New(
 
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey], authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper, MockErc20Keeper{},
+		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper, &app.Erc20Keeper,
 		tracer, app.GetSubspace(evmtypes.ModuleName),
+	)
+
+	app.Erc20Keeper = erc20keeper.NewKeeper(
+		keys[erc20types.StoreKey],
+		appCodec,
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.EvmKeeper,
+		app.StakingKeeper,
+		app.AuthzKeeper,
+		&app.TransferKeeper,
 	)
 
 	app.EvmKeeper.WithStaticPrecompiles(evmosvm.PrecompiledContractsBerlin)
@@ -545,12 +567,12 @@ func New(
 	app.GovKeeper.SetLegacyRouter(govRouter)
 
 	// Create Transfer Keepers
-	app.TransferKeeper = ibctransferkeeper.NewKeeper(
+	app.TransferKeeper = transferkeeper.NewKeeper(
 		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
 		app.IBCKeeper.ChannelKeeper, // ISC4 Wrapper: fee IBC middleware
 		app.IBCKeeper.ChannelKeeper, app.IBCKeeper.PortKeeper,
 		app.AccountKeeper, app.BankKeeper, scopedTransferKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		app.Erc20Keeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
@@ -603,6 +625,7 @@ func New(
 		// ethermint
 		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper, app.GetSubspace(evmtypes.ModuleName)),
 		feemarket.NewAppModule(app.FeeMarketKeeper, app.GetSubspace(feemarkettypes.ModuleName)),
+		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper, app.GetSubspace(erc20types.ModuleName)),
 
 		// realio network
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper, app.GetSubspace(assetmoduletypes.ModuleName)),
@@ -624,6 +647,7 @@ func New(
 		capabilitytypes.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName,
+		erc20types.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName,
@@ -652,6 +676,7 @@ func New(
 		govtypes.ModuleName,
 		multistakingtypes.ModuleName,
 		evmtypes.ModuleName,
+		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
 		// no-op modules
 		ibcexported.ModuleName,
@@ -694,6 +719,7 @@ func New(
 		// ethermint
 		// evm module denomination is used by the feemarket module, in AnteHandle
 		evmtypes.ModuleName,
+		erc20types.ModuleName,
 		// NOTE: feemarket need to be initialized before genutil module:
 		// gentx transactions use MinGasPriceDecorator.AnteHandle
 		feemarkettypes.ModuleName,
@@ -727,6 +753,7 @@ func New(
 		// ethermint
 		// evm module denomination is used by the feemarket module, in AnteHandle
 		evmtypes.ModuleName,
+		erc20types.ModuleName,
 		// NOTE: feemarket need to be initialized before genutil module:
 		// gentx transactions use MinGasPriceDecorator.AnteHandle
 		feemarkettypes.ModuleName,
@@ -810,7 +837,7 @@ func New(
 		FeeMarketKeeper:        app.FeeMarketKeeper,
 		MaxTxGasWanted:         maxGasWanted,
 		ExtensionOptionChecker: ostypes.HasDynamicFeeExtensionOption,
-		TxFeeChecker:           evmosanteevm.NewDynamicFeeChecker(app.EvmKeeper),
+		TxFeeChecker:           evmosanteevm.NewDynamicFeeChecker(app.FeeMarketKeeper),
 	}
 
 	if err := options.Validate(); err != nil {
@@ -1016,7 +1043,7 @@ func (app *RealioNetwork) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
 	return app.ScopedIBCKeeper
 }
 
-// GetTxConfig implements the TestingApp interface.
+// GetTxConfig implementxs the TestingApp interface.
 func (app *RealioNetwork) GetTxConfig() client.TxConfig {
 	return app.txConfig
 }
@@ -1094,6 +1121,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// ethermint subspaces
 	paramsKeeper.Subspace(evmtypes.ModuleName).WithKeyTable(evmtypes.ParamKeyTable()) //nolint: staticcheck // SA1019
 	paramsKeeper.Subspace(feemarkettypes.ModuleName).WithKeyTable(feemarkettypes.ParamKeyTable())
+	paramsKeeper.Subspace(erc20types.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
