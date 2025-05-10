@@ -168,6 +168,7 @@ import (
 
 	"github.com/evmos/os/x/ibc/transfer"
 	transferkeeper "github.com/evmos/os/x/ibc/transfer/keeper"
+	realiotypes "github.com/realiotech/realio-network/types"
 )
 
 const (
@@ -243,6 +244,23 @@ var (
 	_ servertypes.Application = (*RealioNetwork)(nil)
 	_ ibctesting.TestingApp   = (*RealioNetwork)(nil)
 )
+
+var sealed = false
+// EvmosAppOptions allows to setup the global configuration
+// for the Evmos chain.
+func EvmosAppOptions(chainID string) error {
+	if sealed {
+		return nil
+	}
+	config := evmtypes.NewEVMConfigurator().
+	WithEVMCoinInfo(realiotypes.BaseDenom, 18).WithChainConfig(nil)
+	err := config.Configure()
+	if err != nil {
+		return err
+	}
+	sealed = true
+	return nil
+}
 
 func init() {
 	userHomeDir, err := os.UserHomeDir()
@@ -339,6 +357,9 @@ func New(
 	bApp.SetVersion(version.Version)
 	bApp.SetTxEncoder(encodingConfig.TxConfig.TxEncoder())
 	bApp.SetInterfaceRegistry(interfaceRegistry)
+	if err := EvmosAppOptions(bApp.ChainID()); err != nil {
+		panic(err)
+	}
 
 	keys := storetypes.NewKVStoreKeys(
 		// sdk keys
