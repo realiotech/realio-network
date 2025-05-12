@@ -503,8 +503,6 @@ github.com/evmos/cosmos-sdk/store v0.0.0-20240718141609-414cbd051fbe h1:CKvjP3Cc
 github.com/evmos/cosmos-sdk/store v0.0.0-20240718141609-414cbd051fbe/go.mod h1:Bm6h8ZkYgVTytHK5vhHOMKw9OHyiumm3b1UbkYIJ/Ug=
 github.com/evmos/go-ethereum v1.10.26-evmos-rc4 h1:vwDVMScuB2KSu8ze5oWUuxm6v3bMUp6dL3PWvJNJY+I=
 github.com/evmos/go-ethereum v1.10.26-evmos-rc4/go.mod h1:/6CsT5Ceen2WPLI/oCA3xMcZ5sWMF/D46SjM/ayY0Oo=
-github.com/evmos/os/example_chain v0.0.0-20241002122822-02a9121016ee h1:BZpePPAM2zYn8P9EkU14K0p4TTgwEQJLaQG4FjNh99Q=
-github.com/evmos/os/example_chain v0.0.0-20241002122822-02a9121016ee/go.mod h1:+SPMqw9wtbWO3jG02uLbLtVVjMHBldmXTN51kxbWqJ8=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.13.0/go.mod h1:kLAiJbzzSOZDVNGyDpeOxJ47H46qBXwg5ILebYFFOfk=
 github.com/fatih/color v1.17.0 h1:GlRw1BRJxkpqUCBKzKOw098ed57fEsKeNjpTe3cSjK4=
@@ -1092,6 +1090,8 @@ github.com/status-im/keycard-go v0.2.0 h1:QDLFswOQu1r5jsycloeQh3bVU8n/NatHHaZobt
 github.com/status-im/keycard-go v0.2.0/go.mod h1:wlp8ZLbsmrF6g6WjugPAx+IzoLrkdf9+mHxBEeo3Hbg=
 github.com/strangelove-ventures/os v0.2.0 h1:WW9ZmDSVV+N9HNMQAx4D8WrVZ+ys0SZJaIv5ygVholc=
 github.com/strangelove-ventures/os v0.2.0/go.mod h1:zgs0dJ8M4AQtRDtGNCa6h2XqQDh4a5ar4Za+B80YJwc=
+github.com/strangelove-ventures/os/example_chain v0.0.0-20250326213903-e7b9d02d20ec h1:WW0eGdl3dIUPxHWY/ujZMVpv3GQlvqVxzMpDQbWY8L0=
+github.com/strangelove-ventures/os/example_chain v0.0.0-20250326213903-e7b9d02d20ec/go.mod h1:ALY1u9KZWYNThz8odluSyAasiYxIOgR3pueYsMS63r8=
 github.com/streadway/amqp v0.0.0-20190404075320-75d898a42a94/go.mod h1:AZpEONHx3DKn8O/DFsRAY58/XVQiIPMTMB1SddzLXVw=
 github.com/streadway/amqp v0.0.0-20190827072141-edfb9018d271/go.mod h1:AZpEONHx3DKn8O/DFsRAY58/XVQiIPMTMB1SddzLXVw=
 github.com/streadway/handy v0.0.0-20190108123426-d5acb3125c2a/go.mod h1:qNTQ5P5JnDBl6z3cMAg/SywNDC5ABu5ApDIw6lUbRmI=
