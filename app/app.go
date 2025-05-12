@@ -246,6 +246,7 @@ var (
 )
 
 var sealed = false
+
 // EvmosAppOptions allows to setup the global configuration
 // for the Evmos chain.
 func EvmosAppOptions(chainID string) error {
@@ -253,7 +254,7 @@ func EvmosAppOptions(chainID string) error {
 		return nil
 	}
 	config := evmtypes.NewEVMConfigurator().
-	WithEVMCoinInfo(realiotypes.BaseDenom, 18).WithChainConfig(nil)
+		WithEVMCoinInfo(realiotypes.BaseDenom, 18).WithChainConfig(nil)
 	err := config.Configure()
 	if err != nil {
 		return err
