@@ -21,7 +21,7 @@ func TestItCreatesModuleAccountOnInitBlock(t *testing.T) {
 	require.NotNil(t, acc)
 }
 
-func TestEndBlcoker(t *testing.T) {
+func TestEndBlockker(t *testing.T) {
 	realio := app.Setup(false, nil, 1)
 	ctx := realio.BaseApp.NewContext(false)
 	// For pass feemarket endblock
