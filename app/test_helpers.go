@@ -17,7 +17,7 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -27,8 +27,8 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	evmtypes "github.com/evmos/os/x/evm/types"
-	feemarkettypes "github.com/evmos/os/x/feemarket/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	"github.com/realiotech/realio-network/cmd/config"
@@ -104,7 +104,7 @@ func Setup(
 
 	db := dbm.NewMemDB()
 	opt := baseapp.SetChainID(types.MainnetChainID + "-1")
-	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, encCdc, simtestutil.EmptyAppOptions{}, opt)
+	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, encCdc, simtestutil.EmptyAppOptions{}, EvmAppOptions, opt)
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
 		genesisState := NewDefaultGenesisState(encCdc.Codec)
@@ -269,7 +269,7 @@ func NewDefaultGenesisState(cdc codec.JSONCodec) simapp.GenesisState {
 func SetupTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	db := dbm.NewMemDB()
 	cfg := MakeEncodingConfig()
-	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, cfg, simtestutil.EmptyAppOptions{})
+	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, cfg,  simtestutil.EmptyAppOptions{}, NoOpEVMOptions)
 	return app, NewDefaultGenesisState(cfg.Codec)
 }
 

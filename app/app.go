@@ -1,6 +1,7 @@
 package app
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"io/fs"
@@ -34,19 +35,19 @@ import (
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 
-	evmosante "github.com/evmos/os/ante"
-	evmosanteevm "github.com/evmos/os/ante/evm"
-	osecp256k1 "github.com/evmos/os/crypto/ethsecp256k1"
-	srvflags "github.com/evmos/os/server/flags"
-	ostypes "github.com/evmos/os/types"
-	evmosvm "github.com/evmos/os/x/evm/core/vm"
+	evmosante "github.com/cosmos/evm/ante"
+	evmosanteevm "github.com/cosmos/evm/ante/evm"
+	osecp256k1 "github.com/cosmos/evm/crypto/ethsecp256k1"
+	srvflags "github.com/cosmos/evm/server/flags"
+	ostypes "github.com/cosmos/evm/types"
+	evmosvm "github.com/ethereum/go-ethereum/core/vm"
 
-	"github.com/evmos/os/x/evm"
-	evmkeeper "github.com/evmos/os/x/evm/keeper"
-	evmtypes "github.com/evmos/os/x/evm/types"
-	"github.com/evmos/os/x/feemarket"
-	feemarketkeeper "github.com/evmos/os/x/feemarket/keeper"
-	feemarkettypes "github.com/evmos/os/x/feemarket/types"
+	"github.com/cosmos/evm/x/feemarket"
+	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
+	"github.com/cosmos/evm/x/vm"
+	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	"github.com/gorilla/mux"
 
@@ -125,18 +126,17 @@ import (
 	"github.com/cosmos/ibc-go/modules/capability"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	"github.com/cosmos/ibc-go/v8/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v8/modules/apps/transfer/keeper"
-	ibctransfertypes "github.com/cosmos/ibc-go/v8/modules/apps/transfer/types"
-	ibc "github.com/cosmos/ibc-go/v8/modules/core"
-	ibcclienttypes "github.com/cosmos/ibc-go/v8/modules/core/02-client/types"
-	ibcconnectiontypes "github.com/cosmos/ibc-go/v8/modules/core/03-connection/types"
-	porttypes "github.com/cosmos/ibc-go/v8/modules/core/05-port/types"
-	ibcexported "github.com/cosmos/ibc-go/v8/modules/core/exported"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-	ibctm "github.com/cosmos/ibc-go/v8/modules/light-clients/07-tendermint"
-	ibctesting "github.com/cosmos/ibc-go/v8/testing"
-	ibctestingtypes "github.com/cosmos/ibc-go/v8/testing/types"
+	"github.com/cosmos/ibc-go/v10/modules/apps/transfer"
+	ibctransferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
+	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
+	ibc "github.com/cosmos/ibc-go/v10/modules/core"
+	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
+	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
+	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
+	ibcexported "github.com/cosmos/ibc-go/v10/modules/core/exported"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	ibctm "github.com/cosmos/ibc-go/v10/modules/light-clients/07-tendermint"
+	ibctesting "github.com/cosmos/ibc-go/v10/testing"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmjson "github.com/cometbft/cometbft/libs/json"
@@ -159,8 +159,8 @@ import (
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
-	_ "github.com/evmos/os/x/evm/core/tracers/js"
-	_ "github.com/evmos/os/x/evm/core/tracers/native"
+	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
+	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 )
 
 const (
@@ -204,7 +204,7 @@ var (
 		evidence.AppModuleBasic{},
 		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
-		evm.AppModuleBasic{},
+		vm.AppModuleBasic{},
 		feemarket.AppModuleBasic{},
 		assetmodule.AppModuleBasic{},
 		bridgemodule.AppModuleBasic{},
@@ -318,6 +318,7 @@ func New(
 	invCheckPeriod uint,
 	encodingConfig simappparams.EncodingConfig,
 	appOpts servertypes.AppOptions,
+	evmAppOptions EVMOptionsFn,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *RealioNetwork {
 	appCodec := encodingConfig.Codec
@@ -329,6 +330,11 @@ func New(
 	bApp.SetVersion(version.Version)
 	bApp.SetTxEncoder(encodingConfig.TxConfig.TxEncoder())
 	bApp.SetInterfaceRegistry(interfaceRegistry)
+
+	// initialize the Cosmos EVM application configuration
+	if err := evmAppOptions(bApp.ChainID()); err != nil {
+		panic(err)
+	}
 
 	keys := storetypes.NewKVStoreKeys(
 		// sdk keys
@@ -476,13 +482,13 @@ func New(
 
 	app.FeeMarketKeeper = feemarketkeeper.NewKeeper(
 		appCodec, authtypes.NewModuleAddress(govtypes.ModuleName),
-		keys[feemarkettypes.StoreKey], tkeys[feemarkettypes.TransientKey], app.GetSubspace(feemarkettypes.ModuleName),
+		keys[feemarkettypes.StoreKey], tkeys[feemarkettypes.TransientKey],
 	)
 
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey], authtypes.NewModuleAddress(govtypes.ModuleName),
 		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper, MockErc20Keeper{},
-		tracer, app.GetSubspace(evmtypes.ModuleName),
+		tracer,
 	)
 
 	app.EvmKeeper.WithStaticPrecompiles(evmosvm.PrecompiledContractsBerlin)
@@ -516,7 +522,11 @@ func New(
 
 	// IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
-		appCodec, keys[ibcexported.StoreKey], app.GetSubspace(ibcexported.ModuleName), app.StakingKeeper, app.UpgradeKeeper, scopedIBCKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		appCodec,
+		runtime.NewKVStoreService(keys[ibcexported.StoreKey]),
+		app.GetSubspace(ibcexported.ModuleName), 
+		app.UpgradeKeeper, 
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	// Create evidence Keeper for to register the IBC light client misbehaviour evidence route
@@ -546,10 +556,11 @@ func New(
 
 	// Create Transfer Keepers
 	app.TransferKeeper = ibctransferkeeper.NewKeeper(
-		appCodec, keys[ibctransfertypes.StoreKey], app.GetSubspace(ibctransfertypes.ModuleName),
+		appCodec, runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]), app.GetSubspace(ibctransfertypes.ModuleName),
 		app.IBCKeeper.ChannelKeeper, // ISC4 Wrapper: fee IBC middleware
-		app.IBCKeeper.ChannelKeeper, app.IBCKeeper.PortKeeper,
-		app.AccountKeeper, app.BankKeeper, scopedTransferKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		app.MsgServiceRouter(),
+		app.AccountKeeper, app.BankKeeper,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
@@ -562,6 +573,12 @@ func New(
 	ibcRouter := porttypes.NewRouter()
 	ibcRouter.AddRoute(ibctransfertypes.ModuleName, transferStack)
 	app.IBCKeeper.SetRouter(ibcRouter)
+
+	clientKeeper := app.IBCKeeper.ClientKeeper
+	storeProvider := clientKeeper.GetStoreProvider()
+
+	tmLightClientModule := ibctm.NewLightClientModule(appCodec, storeProvider)
+	clientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
 
 	/****  Module Options ****/
 
@@ -598,11 +615,11 @@ func New(
 		// ibc
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
-		ibctm.NewAppModule(),
+		ibctm.NewAppModule(tmLightClientModule),
 
 		// ethermint
-		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper, app.GetSubspace(evmtypes.ModuleName)),
-		feemarket.NewAppModule(app.FeeMarketKeeper, app.GetSubspace(feemarkettypes.ModuleName)),
+		vm.NewAppModule(app.EvmKeeper, app.AccountKeeper),
+		feemarket.NewAppModule(app.FeeMarketKeeper),
 
 		// realio network
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper, app.GetSubspace(assetmoduletypes.ModuleName)),
@@ -773,8 +790,8 @@ func New(
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		ibc.NewAppModule(app.IBCKeeper),
 		transferModule,
-		evm.NewAppModule(app.EvmKeeper, app.AccountKeeper, app.GetSubspace(evmtypes.ModuleName)),
-		feemarket.NewAppModule(app.FeeMarketKeeper, app.GetSubspace(feemarkettypes.ModuleName)),
+		vm.NewAppModule(app.EvmKeeper, app.AccountKeeper),
+		feemarket.NewAppModule(app.FeeMarketKeeper),
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper, app.GetSubspace(assetmoduletypes.ModuleName)),
 		bridgemodule.NewAppModule(appCodec, app.BridgeKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
@@ -810,7 +827,7 @@ func New(
 		FeeMarketKeeper:        app.FeeMarketKeeper,
 		MaxTxGasWanted:         maxGasWanted,
 		ExtensionOptionChecker: ostypes.HasDynamicFeeExtensionOption,
-		TxFeeChecker:           evmosanteevm.NewDynamicFeeChecker(app.EvmKeeper),
+		TxFeeChecker:           evmosanteevm.NewDynamicFeeChecker(app.FeeMarketKeeper),
 	}
 
 	if err := options.Validate(); err != nil {
@@ -996,8 +1013,12 @@ func (app *RealioNetwork) GetBaseApp() *baseapp.BaseApp {
 	return app.BaseApp
 }
 
+type StakingKeeper interface {
+	GetHistoricalInfo(ctx context.Context, height int64) (stakingtypes.HistoricalInfo, error)
+}
+
 // GetStakingKeeper implements the TestingApp interface.
-func (app *RealioNetwork) GetStakingKeeper() ibctestingtypes.StakingKeeper {
+func (app *RealioNetwork) GetStakingKeeper() StakingKeeper {
 	return app.StakingKeeper
 }
 
