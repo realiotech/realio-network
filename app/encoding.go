@@ -14,11 +14,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 
-	evmcryptocodec "github.com/evmos/os/crypto/codec"
-	"github.com/evmos/os/ethereum/eip712"
-	evmostypes "github.com/evmos/os/types"
-	erc20types "github.com/evmos/os/x/erc20/types"
-	evmtypes "github.com/evmos/os/x/evm/types"
+	evmcryptocodec "github.com/cosmos/evm/crypto/codec"
+	"github.com/cosmos/evm/ethereum/eip712"
+	evmostypes "github.com/cosmos/evm/types"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ethcryptocodec "github.com/realiotech/realio-network/crypto/codec"
 )
 
