@@ -269,7 +269,7 @@ func NewDefaultGenesisState(cdc codec.JSONCodec) simapp.GenesisState {
 func SetupTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	db := dbm.NewMemDB()
 	cfg := MakeEncodingConfig()
-	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, cfg,  simtestutil.EmptyAppOptions{}, NoOpEVMOptions)
+	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, cfg, simtestutil.EmptyAppOptions{}, NoOpEVMOptions)
 	return app, NewDefaultGenesisState(cfg.Codec)
 }
 
