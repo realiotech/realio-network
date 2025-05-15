@@ -204,6 +204,8 @@ cosmossdk.io/math v1.5.0 h1:sbOASxee9Zxdjd6OkzogvBZ25/hP929vdcYcBJQbkLc=
 cosmossdk.io/math v1.5.0/go.mod h1:AAwwBmUhqtk2nlku174JwSll+/DepUXW3rWIXN5q+Nw=
 cosmossdk.io/simapp v0.0.0-20240805084742-3fc80745eef2 h1:f2zS+kpAqxGEbY1xHUK7ytfKeCVkmu89FMYGAK+FbYA=
 cosmossdk.io/simapp v0.0.0-20240805084742-3fc80745eef2/go.mod h1:prWoljZuPhMPxw7Xtc7FhceNtg6hSbla9S5GreyfM58=
+cosmossdk.io/store v1.1.1 h1:NA3PioJtWDVU7cHHeyvdva5J/ggyLDkyH0hGHl2804Y=
+cosmossdk.io/store v1.1.1/go.mod h1:8DwVTz83/2PSI366FERGbWSH7hL6sB7HbYp8bqksNwM=
 cosmossdk.io/tools/confix v0.1.2 h1:2hoM1oFCNisd0ltSAAZw2i4ponARPmlhuNu3yy0VwI4=
 cosmossdk.io/tools/confix v0.1.2/go.mod h1:7XfcbK9sC/KNgVGxgLM0BrFbVcR/+6Dg7MFfpx7duYo=
 cosmossdk.io/x/circuit v0.1.1 h1:KPJCnLChWrxD4jLwUiuQaf5mFD/1m7Omyo7oooefBVQ=
@@ -503,8 +505,6 @@ github.com/envoyproxy/go-control-plane v0.9.9-0.20210512163311-63b5d3c536b0/go.m
 github.com/envoyproxy/go-control-plane v0.9.10-0.20210907150352-cf90f659a021/go.mod h1:AFq3mo9L8Lqqiid3OhADV3RfLJnjiw63cSpi+fDTRC0=
 github.com/envoyproxy/go-control-plane v0.10.2-0.20220325020618-49ff273808a1/go.mod h1:KJwIaB5Mv44NWtYuAOFCVOjcI94vtpEz2JU/D2v6IjE=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
-github.com/evmos/cosmos-sdk/store v0.0.0-20240718141609-414cbd051fbe h1:CKvjP3CcWckOiwffAARb9qe+t0+VWoVDiicYkQMvZfQ=
-github.com/evmos/cosmos-sdk/store v0.0.0-20240718141609-414cbd051fbe/go.mod h1:Bm6h8ZkYgVTytHK5vhHOMKw9OHyiumm3b1UbkYIJ/Ug=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.13.0/go.mod h1:kLAiJbzzSOZDVNGyDpeOxJ47H46qBXwg5ILebYFFOfk=
 github.com/fatih/color v1.17.0 h1:GlRw1BRJxkpqUCBKzKOw098ed57fEsKeNjpTe3cSjK4=

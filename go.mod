@@ -255,8 +255,6 @@ require (
 )
 
 replace (
-	// need this replace to pick up the store changes (Copy func) in our cosmos-sdk fork
-	cosmossdk.io/store => github.com/evmos/cosmos-sdk/store v0.0.0-20240718141609-414cbd051fbe
 	// use Cosmos-SDK fork to enable Ledger functionality
 	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.50.13-0.20250319183239-53dea340efc7
 	// use Cosmos geth fork
