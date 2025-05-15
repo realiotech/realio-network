@@ -96,19 +96,19 @@ func (k Keeper) MintCoins(ctx context.Context, newCoins sdk.Coins) error {
 	return k.bankKeeper.MintCoins(ctx, types.ModuleName, newCoins)
 }
 
-// BurnDeadAccount take all balances from dead account then burn.
+// BurnDeadAccount burns all RIO in dead account.
 func (k Keeper) BurnDeadAccount(ctx context.Context) error {
 	deadBalance := k.bankKeeper.GetBalance(ctx, types.EvmDeadAddr, realiotypes.BaseDenom)
 	if deadBalance.Amount.IsZero() {
 		return nil
 	}
 	burnCoins := sdk.NewCoins(deadBalance)
-	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, types.EvmDeadAddr, "gov", burnCoins)
+	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, types.EvmDeadAddr, types.ModuleName, burnCoins)
 	if err != nil {
 		return err
 	}
 
-	err = k.bankKeeper.BurnCoins(ctx, "gov", burnCoins)
+	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, burnCoins)
 	if err != nil {
 		return err
 	}
