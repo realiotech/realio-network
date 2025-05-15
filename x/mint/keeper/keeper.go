@@ -12,6 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/realiotech/realio-network/x/mint/types"
+	realiotypes "github.com/realiotech/realio-network/types"
 )
 
 // Keeper of the mint store
@@ -97,16 +98,17 @@ func (k Keeper) MintCoins(ctx context.Context, newCoins sdk.Coins) error {
 
 // BurnDeadAccount take all balances from dead account then burn.
 func (k Keeper) BurnDeadAccount(ctx context.Context) error {
-	deadBalances := k.bankKeeper.GetAllBalances(ctx, types.EvmDeadAddr)
-	if deadBalances.Empty() {
+	deadBalance := k.bankKeeper.GetBalance(ctx, types.EvmDeadAddr, realiotypes.BaseDenom)
+	if deadBalance.Amount.IsZero() {
 		return nil
 	}
-	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, types.EvmDeadAddr, "gov", deadBalances)
+	burnCoins := sdk.NewCoins(deadBalance)
+	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, types.EvmDeadAddr, "gov", burnCoins)
 	if err != nil {
 		return err
 	}
 
-	err = k.bankKeeper.BurnCoins(ctx, "gov", deadBalances)
+	err = k.bankKeeper.BurnCoins(ctx, "gov", burnCoins)
 	if err != nil {
 		return err
 	}
