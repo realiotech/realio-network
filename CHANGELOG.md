@@ -37,6 +37,11 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
+# Unreleased
+
+### State Machine Breaking
+- (mint) [#232](https://github.com/realiotech/realio-network/pull/232): Add mint end blocker.
+
 ## [v1.2.0](https://github.com/realiotech/realio-network/releases/tag/v1.2.0) - 2025-04-25
 
 ### Bug Fixes
