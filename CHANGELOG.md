@@ -37,6 +37,11 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
+## Unreleased
+
+### State Machine Breaking
+- (evm) [#238](https://github.com/realiotech/realio-network/pull/238): Migrate to cosmos/evm and bump ibc v10.
+
 ## [v1.2.0](https://github.com/realiotech/realio-network/releases/tag/v1.2.0) - 2025-04-30
 
 ### Bug Fixes
