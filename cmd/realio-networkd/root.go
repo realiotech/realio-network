@@ -14,7 +14,6 @@ import (
 
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
-	"github.com/spf13/pflag"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/simapp/params"
@@ -77,7 +76,18 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	tempDir := tempDir()
 	initAppOptions.Set(flags.FlagHome, tempDir)
 	// opt := baseapp.SetChainID(types.MainnetChainID)
-	tempApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), nil, true, map[int64]bool{}, tempDir, 5, app.MakeEncodingConfig(), initAppOptions, app.EvmAppOptions)
+	tempApp := app.New(
+		log.NewNopLogger(),
+		dbm.NewMemDB(),
+		nil,
+		true,
+		map[int64]bool{},
+		tempDir,
+		5,
+		app.MakeEncodingConfig(),
+		initAppOptions,
+		app.NoOpEVMOptions,
+	)
 	encodingConfig := app.MakeEncodingConfig()
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Codec).
@@ -128,10 +138,8 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
 		panic(err)
 	}
-	overwriteFlagDefaults(rootCmd, map[string]string{
-		flags.FlagChainID:        ChainID,
-		flags.FlagKeyringBackend: "os",
-	})
+
+	setPersistentFlags(rootCmd)
 
 	return rootCmd, encodingConfig
 }
@@ -386,23 +394,8 @@ func (a appCreator) appExport(
 	return anApp.ExportAppStateAndValidators(forZeroHeight, jailAllowedAddrs, moduleToExport)
 }
 
-func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {
-	set := func(s *pflag.FlagSet, key, val string) {
-		if f := s.Lookup(key); f != nil {
-			f.DefValue = val
-			err := f.Value.Set(val)
-			if err != nil {
-				panic(err)
-			}
-		}
-	}
-	for key, val := range defaults {
-		set(c.Flags(), key, val)
-		set(c.PersistentFlags(), key, val)
-	}
-	for _, c := range c.Commands() {
-		overwriteFlagDefaults(c, defaults)
-	}
+func setPersistentFlags(cmd *cobra.Command) {
+	cmd.PersistentFlags().String(flags.FlagChainID, "", "Specify Chain ID for sending Tx")
 }
 
 // initTendermintConfig helps to override default Tendermint Config values.
