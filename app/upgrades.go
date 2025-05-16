@@ -13,7 +13,7 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	evmtypes "github.com/evmos/os/x/evm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // BaseAppParamManager defines an interrace that BaseApp is expected to fullfil

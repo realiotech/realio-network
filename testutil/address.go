@@ -2,7 +2,7 @@ package testutil
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/evmos/os/crypto/ethsecp256k1"
+	"github.com/cosmos/evm/crypto/ethsecp256k1"
 )
 
 func GenAddress() sdk.AccAddress {

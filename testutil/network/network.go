@@ -54,9 +54,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/evmos/os/crypto/hd"
-	"github.com/evmos/os/server/config"
-	ethermint "github.com/evmos/os/types"
+	"github.com/cosmos/evm/crypto/hd"
+	"github.com/cosmos/evm/server/config"
+	ethermint "github.com/cosmos/evm/types"
 
 	"github.com/realiotech/realio-network/app"
 )
@@ -136,6 +136,7 @@ func NewAppConstructor(encodingCfg params.EncodingConfig) AppConstructor {
 			val.Ctx.Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.Ctx.Config.RootDir, 0,
 			encodingCfg,
 			simtestutil.EmptyAppOptions{},
+			app.NoOpEVMOptions,
 			baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.AppConfig.Pruning)),
 			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
 		)

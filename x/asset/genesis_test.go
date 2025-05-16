@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	feemarkettypes "github.com/evmos/os/x/feemarket/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 
 	"github.com/cometbft/cometbft/crypto/tmhash"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"

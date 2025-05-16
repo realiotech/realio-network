@@ -10,7 +10,7 @@ import (
 	"github.com/cometbft/cometbft/version"
 	"github.com/ethereum/go-ethereum/common"
 
-	"github.com/evmos/os/crypto/ethsecp256k1"
+	"github.com/cosmos/evm/crypto/ethsecp256k1"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 

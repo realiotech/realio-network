@@ -45,11 +45,11 @@ import (
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 
-	ethermintclient "github.com/evmos/os/client"
+	ethermintclient "github.com/cosmos/evm/client"
 
-	"github.com/evmos/os/crypto/hd"
-	ethermintserver "github.com/evmos/os/server"
-	servercfg "github.com/evmos/os/server/config"
+	"github.com/cosmos/evm/crypto/hd"
+	ethermintserver "github.com/cosmos/evm/server"
+	servercfg "github.com/cosmos/evm/server/config"
 
 	"github.com/realiotech/realio-network/app"
 	cmdcfg "github.com/realiotech/realio-network/cmd/config"
@@ -77,7 +77,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	tempDir := tempDir()
 	initAppOptions.Set(flags.FlagHome, tempDir)
 	// opt := baseapp.SetChainID(types.MainnetChainID)
-	tempApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), nil, true, map[int64]bool{}, tempDir, 5, app.MakeEncodingConfig(), initAppOptions)
+	tempApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), nil, true, map[int64]bool{}, tempDir, 5, app.MakeEncodingConfig(), initAppOptions, app.NoOpEVMOptions)
 	encodingConfig := app.MakeEncodingConfig()
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Codec).
@@ -125,9 +125,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	autoCliOpts := tempApp.AutoCliOpts()
 	autoCliOpts.ClientCtx = initClientCtx
 
-	if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
-		panic(err)
-	}
+	setPersistentFlags(rootCmd)
 	overwriteFlagDefaults(rootCmd, map[string]string{
 		flags.FlagChainID:        ChainID,
 		flags.FlagKeyringBackend: "os",
@@ -163,7 +161,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		server.StatusCommand(),
 		queryCommand(),
 		txCommand(),
-		ethermintclient.KeyCommands(app.DefaultNodeHome),
+		ethermintclient.KeyCommands(app.DefaultNodeHome, false),
 	)
 
 	// add rosetta
@@ -321,6 +319,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		a.encCfg,
 		// this line is used by starport scaffolding # stargate/root/appArgument
 		appOpts,
+		app.EvmAppOptions,
 		baseapp.SetChainID(chainID),
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
@@ -360,6 +359,7 @@ func (a appCreator) appExport(
 			a.encCfg,
 			// this line is used by starport scaffolding # stargate/root/exportArgument
 			appOpts,
+			app.EvmAppOptions,
 		)
 
 		if err := anApp.LoadHeight(height); err != nil {
@@ -377,6 +377,7 @@ func (a appCreator) appExport(
 			a.encCfg,
 			// this line is used by starport scaffolding # stargate/root/noHeightExportArgument
 			appOpts,
+			app.EvmAppOptions,
 		)
 	}
 
@@ -407,4 +408,8 @@ func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {
 func initTendermintConfig() *tmcfg.Config {
 	cfg := tmcfg.DefaultConfig()
 	return cfg
+}
+
+func setPersistentFlags(cmd *cobra.Command) {
+	cmd.PersistentFlags().String(flags.FlagChainID, "", "Specify Chain ID for sending Tx")
 }

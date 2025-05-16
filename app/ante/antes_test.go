@@ -10,7 +10,7 @@ import (
 	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	evmtypes "github.com/evmos/os/x/evm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 func (suite *AnteTestSuite) TestRejectMsgsInAuthz() {
