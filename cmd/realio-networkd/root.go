@@ -77,7 +77,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	tempDir := tempDir()
 	initAppOptions.Set(flags.FlagHome, tempDir)
 	// opt := baseapp.SetChainID(types.MainnetChainID)
-	tempApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), nil, true, map[int64]bool{}, tempDir, 5, app.MakeEncodingConfig(), initAppOptions, app.EvmAppOptions)
+	tempApp := app.New(log.NewNopLogger(), dbm.NewMemDB(), nil, true, map[int64]bool{}, tempDir, 5, app.MakeEncodingConfig(), initAppOptions, app.NoOpEVMOptions)
 	encodingConfig := app.MakeEncodingConfig()
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Codec).

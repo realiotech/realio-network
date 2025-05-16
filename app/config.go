@@ -1,9 +1,6 @@
 package app
 
 import (
-	"fmt"
-	"strings"
-
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	realionetworktypes "github.com/realiotech/realio-network/types"
@@ -22,16 +19,11 @@ func NoOpEVMOptions(_ string) error {
 
 var sealed = false
 
-// ChainsCoinInfo is a map of the chain id and its corresponding EvmCoinInfo
-// that allows initializing the app with different coin info based on the
-// chain id
-var ChainsCoinInfo = map[string]evmtypes.EvmCoinInfo{
-	"realionetwork_3301": {
-		Denom:         realionetworktypes.BaseDenom,
-		ExtendedDenom: realionetworktypes.BaseDenom,
-		DisplayDenom:  realionetworktypes.BaseDenom,
-		Decimals:      18,
-	},
+var ChainsCoinInfo = evmtypes.EvmCoinInfo{
+	Denom:         realionetworktypes.BaseDenom,
+	ExtendedDenom: realionetworktypes.BaseDenom,
+	DisplayDenom:  realionetworktypes.BaseDenom,
+	Decimals:      18,
 }
 
 // EvmAppOptions allows to setup the global configuration
@@ -41,19 +33,13 @@ func EvmAppOptions(chainID string) error {
 		return nil
 	}
 
-	id := strings.Split(chainID, "-")[0]
-	coinInfo, found := ChainsCoinInfo[id]
-	if !found {
-		return fmt.Errorf("unknown chain id: %s", id)
-	}
-
 	ethCfg := evmtypes.DefaultChainConfig(chainID)
 
 	err := evmtypes.NewEVMConfigurator().
 		WithExtendedEips(cosmosEVMActivators).
 		WithChainConfig(ethCfg).
 		// NOTE: we're using the 18 decimals default for the example chain
-		WithEVMCoinInfo(coinInfo).
+		WithEVMCoinInfo(ChainsCoinInfo).
 		Configure()
 	if err != nil {
 		return err
