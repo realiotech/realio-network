@@ -125,9 +125,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 	autoCliOpts := tempApp.AutoCliOpts()
 	autoCliOpts.ClientCtx = initClientCtx
 
-	if err := autoCliOpts.EnhanceRootCommand(rootCmd); err != nil {
-		panic(err)
-	}
+	setPersistentFlags(rootCmd)
 	overwriteFlagDefaults(rootCmd, map[string]string{
 		flags.FlagChainID:        ChainID,
 		flags.FlagKeyringBackend: "os",
@@ -410,4 +408,8 @@ func overwriteFlagDefaults(c *cobra.Command, defaults map[string]string) {
 func initTendermintConfig() *tmcfg.Config {
 	cfg := tmcfg.DefaultConfig()
 	return cfg
+}
+
+func setPersistentFlags(cmd *cobra.Command) {
+	cmd.PersistentFlags().String(flags.FlagChainID, "", "Specify Chain ID for sending Tx")
 }
