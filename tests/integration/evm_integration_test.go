@@ -25,7 +25,7 @@ import (
 // returns the current testing context
 type EVMTestSuite struct {
 	suite.Suite
-	network     *network.UnitTestNetwork
+	network     network.Network
 	grpcHandler grpc.Handler
 	factory     factory.TxFactory
 	keyring     testkeyring.Keyring
@@ -35,7 +35,7 @@ type EVMTestSuite struct {
 // before each test
 func (suite *EVMTestSuite) SetupTest() {
 	keyring := testkeyring.New(4)
-	integrationNetwork := network.NewUnitTestNetwork(
+	integrationNetwork := network.New(
 		network.WithPreFundedAccounts(keyring.GetAllAccAddrs()...),
 	)
 	grpcHandler := grpc.NewIntegrationHandler(integrationNetwork)
