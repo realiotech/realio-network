@@ -4,10 +4,10 @@ import (
 	"fmt"
 
 	"github.com/cosmos/evm/testutil/integration/os/factory"
-	"github.com/realiotech/realio-network/testutil/integration/network"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/realiotech/realio-network/testutil/integration/network"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"

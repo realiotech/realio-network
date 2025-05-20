@@ -544,7 +544,6 @@ func newDefaultGenesisState(cosmosEVMApp *app.RealioNetwork, params defaultGenes
 }
 
 func defaultGenesis(app *app.RealioNetwork) {
-
 }
 
 // customizeGenesis modifies genesis state if there are any custom genesis state

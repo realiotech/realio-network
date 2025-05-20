@@ -200,7 +200,6 @@ func (suite *EVMTestSuite) TestContractDeployment() {
 }
 
 func (suite *EVMTestSuite) TestContractCall() {
-
 	var preDeploy func() common.Address
 	preDeploy = func() common.Address {
 		// Deploy contract

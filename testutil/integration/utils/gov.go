@@ -9,8 +9,8 @@ import (
 
 	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
 	"github.com/cosmos/evm/testutil/integration/os/factory"
-	"github.com/realiotech/realio-network/testutil/integration/network"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/realiotech/realio-network/testutil/integration/network"
 
 	errorsmod "cosmossdk.io/errors"
 	"cosmossdk.io/math"
