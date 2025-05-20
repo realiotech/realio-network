@@ -137,16 +137,16 @@ func (suite *EVMTestSuite) TestNativeTransfers() {
 	}
 }
 
-func (suite *EVMTestSuite) TestContractDeployment() {
+func (suite *EVMTestSuite) TestContractDeploymentPermissionless() {
 	testCases := []evmTestCase{
 		{
-			name: "Without permission - DynamicFeeTx",
+			name: "DynamicFeeTx",
 			getTxArgs: func() evmtypes.EvmTxArgs {
 				return evmtypes.EvmTxArgs{}
 			},
 		},
 		{
-			name: "Without permission - AccessListTx",
+			name: "AccessListTx",
 			getTxArgs: func() evmtypes.EvmTxArgs {
 				return evmtypes.EvmTxArgs{
 					Accesses: &ethtypes.AccessList{{
@@ -157,7 +157,7 @@ func (suite *EVMTestSuite) TestContractDeployment() {
 			},
 		},
 		{
-			name: "Without permission - LegacyTx",
+			name: "LegacyTx",
 			getTxArgs: func() evmtypes.EvmTxArgs {
 				return evmtypes.EvmTxArgs{
 					GasPrice: big.NewInt(1e9),
