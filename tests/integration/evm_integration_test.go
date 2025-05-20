@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
