@@ -96,7 +96,6 @@ func (suite *EVMTestSuite) TestNativeTransfers() {
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
-			fmt.Println(tc.name)
 			senderKey := suite.keyring.GetKey(0)
 			receiverKey := suite.keyring.GetKey(1)
 			denom := suite.network.GetBaseDenom()
@@ -104,7 +103,6 @@ func (suite *EVMTestSuite) TestNativeTransfers() {
 			txArgs := tc.getTxArgs()
 
 			senderPrevBalanceResponse, err := suite.grpcHandler.GetBalanceFromBank(senderKey.AccAddr, denom)
-			fmt.Println("sendder before", senderPrevBalanceResponse)
 			suite.NoError(err, "Error should not exists")
 
 			senderPrevBalance := senderPrevBalanceResponse.GetBalance().Amount
@@ -112,7 +110,6 @@ func (suite *EVMTestSuite) TestNativeTransfers() {
 			receiverPrevBalanceResponse, err := suite.grpcHandler.GetBalanceFromBank(receiverKey.AccAddr, denom)
 			suite.Require().NoError(err)
 			receiverPrevBalance := receiverPrevBalanceResponse.GetBalance().Amount
-			fmt.Println("receuiver before", receiverPrevBalanceResponse)
 
 			transferAmount := int64(1000)
 
@@ -172,7 +169,6 @@ func (suite *EVMTestSuite) TestContractDeployment() {
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
-			fmt.Println("name", tc.name)
 			senderPriv := suite.keyring.GetPrivKey(0)
 			constructorArgs := []interface{}{"coin", "token", uint8(18)}
 			compiledContract := contracts.ERC20MinterBurnerDecimalsContract
@@ -194,14 +190,12 @@ func (suite *EVMTestSuite) TestContractDeployment() {
 			// Check contract account got created correctly
 			contractBechAddr := sdk.AccAddress(contractAddr.Bytes()).String()
 			contractAccount, err := suite.grpcHandler.GetAccount(contractBechAddr)
-			fmt.Println("contract account", contractAccount)
 			suite.Require().NoError(err)
 			suite.Require().NotNil(contractAccount, "expected account to be retrievable via auth query")
 
 			ethAccountRes, err := suite.grpcHandler.GetEvmAccount(contractAddr)
 			suite.Require().NoError(err)
 			suite.NotEqual(ethAccountRes.CodeHash, common.BytesToHash(evmtypes.EmptyCodeHash).Hex())
-			fmt.Println("eth account", ethAccountRes)
 		})
 	}
 }
@@ -262,8 +256,6 @@ func (suite *EVMTestSuite) TestContractCall() {
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
-			fmt.Println("name", tc.name)
-			// Waiting for avoid nonce mismatch
 			suite.SetupTest()
 			contractAddr := preDeploy()
 			senderPriv := suite.keyring.GetPrivKey(0)
@@ -494,14 +486,8 @@ func (suite *EVMTestSuite) TestContractDeploymentAndCallWithPermissions() {
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
-			fmt.Println("name", tc.name)
 			suite.SetupTest()
 			params := tc.updateParams()
-			// response, err := suite.network.App.EvmKeeper.UpdateParams(suite.network.GetContext(), &evmtypes.MsgUpdateParams{
-			// 	Authority: authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-			// 	Params:    params,
-			// })
-			// fmt.Println("response", response, err)
 
 			err := integrationutils.UpdateEvmParams(
 				integrationutils.UpdateParamsInput{
@@ -527,7 +513,6 @@ func (suite *EVMTestSuite) TestContractDeploymentAndCallWithPermissions() {
 					ConstructorArgs: constructorArgs,
 				},
 			)
-			fmt.Println("Errorrrrr", err)
 			if tc.createParams.ExpFail {
 				suite.Require().Error(err)
 				suite.Require().Contains(err.Error(), "does not have permission to deploy contracts")
