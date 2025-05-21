@@ -38,11 +38,11 @@ import (
 	govv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/evmos/os/crypto/hd"
-	"github.com/evmos/os/server/config"
-	srvflags "github.com/evmos/os/server/flags"
+	"github.com/cosmos/evm/crypto/hd"
+	"github.com/cosmos/evm/server/config"
+	srvflags "github.com/cosmos/evm/server/flags"
 
-	evmtypes "github.com/evmos/os/x/evm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	cmdcfg "github.com/realiotech/realio-network/cmd/config"
 	"github.com/realiotech/realio-network/testutil/network"
