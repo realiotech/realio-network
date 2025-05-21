@@ -28,17 +28,17 @@ import (
 	"github.com/ethereum/go-ethereum/signer/core/apitypes"
 	protov2 "google.golang.org/protobuf/proto"
 
-	cryptocodec "github.com/evmos/os/crypto/codec"
-	osecp256k1 "github.com/evmos/os/crypto/ethsecp256k1"
+	cryptocodec "github.com/cosmos/evm/crypto/codec"
+	osecp256k1 "github.com/cosmos/evm/crypto/ethsecp256k1"
 	ethcryptocodec "github.com/realiotech/realio-network/crypto/codec"
 
-	"github.com/evmos/os/encoding"
-	"github.com/evmos/os/ethereum/eip712"
-	tests "github.com/evmos/os/testutil/tx"
-	"github.com/evmos/os/types"
-	evmtypes "github.com/evmos/os/x/evm/types"
+	"github.com/cosmos/evm/encoding"
+	"github.com/cosmos/evm/ethereum/eip712"
+	tests "github.com/cosmos/evm/testutil/tx"
+	"github.com/cosmos/evm/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 
-	feemarkettypes "github.com/evmos/os/x/feemarket/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 
 	"github.com/realiotech/realio-network/app"
 	realionetworktypes "github.com/realiotech/realio-network/types"
@@ -185,7 +185,7 @@ func (suite *AnteTestSuite) BuildTestEthTx(
 	gasTipCap *big.Int,
 	accesses *ethtypes.AccessList,
 ) *evmtypes.MsgEthereumTx {
-	chainID := suite.app.EvmKeeper.ChainID()
+	chainID := evmtypes.GetEthChainConfig().ChainID
 	nonce := suite.app.EvmKeeper.GetNonce(
 		suite.ctx,
 		common.BytesToAddress(from.Bytes()),
