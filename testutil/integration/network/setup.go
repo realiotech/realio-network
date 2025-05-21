@@ -23,7 +23,6 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/simapp"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -189,7 +188,7 @@ func createTestingApp(chainID string, customBaseAppOptions ...func(*baseapp.Base
 }
 
 // createStakingValidator creates a staking validator from the given tm validator and bonded
-func createStakingValidator(val *cmttypes.Validator, bondedAmt sdkmath.Int, operatorAddr *sdktypes.AccAddress) (stakingtypes.Validator, error) {
+func createStakingValidator(val *cmttypes.Validator, bondedAmt math.Int, operatorAddr *sdktypes.AccAddress) (stakingtypes.Validator, error) {
 	pk, err := cryptocodec.FromTmPubKeyInterface(val.PubKey) //nolint:staticcheck
 	if err != nil {
 		return stakingtypes.Validator{}, err
@@ -206,26 +205,26 @@ func createStakingValidator(val *cmttypes.Validator, bondedAmt sdkmath.Int, oper
 	}
 
 	// Default to 5% commission
-	commission := stakingtypes.NewCommission(sdkmath.LegacyNewDecWithPrec(5, 2), sdkmath.LegacyNewDecWithPrec(2, 1), sdkmath.LegacyNewDecWithPrec(5, 2))
+	commission := stakingtypes.NewCommission(math.LegacyNewDecWithPrec(5, 2), math.LegacyNewDecWithPrec(2, 1), math.LegacyNewDecWithPrec(5, 2))
 	validator := stakingtypes.Validator{
 		OperatorAddress:   opAddr,
 		ConsensusPubkey:   pkAny,
 		Jailed:            false,
 		Status:            stakingtypes.Bonded,
 		Tokens:            bondedAmt,
-		DelegatorShares:   sdkmath.LegacyOneDec(),
+		DelegatorShares:   math.LegacyOneDec(),
 		Description:       stakingtypes.Description{},
 		UnbondingHeight:   int64(0),
 		UnbondingTime:     time.Unix(0, 0).UTC(),
 		Commission:        commission,
-		MinSelfDelegation: sdkmath.ZeroInt(),
+		MinSelfDelegation: math.ZeroInt(),
 	}
 	return validator, nil
 }
 
 // createStakingValidators creates staking validators from the given tm validators and bonded
 // amounts
-func createStakingValidators(tmValidators []*cmttypes.Validator, bondedAmt sdkmath.Int, operatorsAddresses []sdktypes.AccAddress) ([]stakingtypes.Validator, error) {
+func createStakingValidators(tmValidators []*cmttypes.Validator, bondedAmt math.Int, operatorsAddresses []sdktypes.AccAddress) ([]stakingtypes.Validator, error) {
 	if len(operatorsAddresses) == 0 {
 		return createStakingValidatorsWithRandomOperator(tmValidators, bondedAmt)
 	}
@@ -233,7 +232,7 @@ func createStakingValidators(tmValidators []*cmttypes.Validator, bondedAmt sdkma
 }
 
 // createStakingValidatorsWithRandomOperator creates staking validators with non-specified operator addresses.
-func createStakingValidatorsWithRandomOperator(tmValidators []*cmttypes.Validator, bondedAmt sdkmath.Int) ([]stakingtypes.Validator, error) {
+func createStakingValidatorsWithRandomOperator(tmValidators []*cmttypes.Validator, bondedAmt math.Int) ([]stakingtypes.Validator, error) {
 	amountOfValidators := len(tmValidators)
 	stakingValidators := make([]stakingtypes.Validator, 0, amountOfValidators)
 	for _, val := range tmValidators {
@@ -247,7 +246,7 @@ func createStakingValidatorsWithRandomOperator(tmValidators []*cmttypes.Validato
 }
 
 // createStakingValidatorsWithSpecificOperator creates staking validators with the given operator addresses.
-func createStakingValidatorsWithSpecificOperator(tmValidators []*cmttypes.Validator, bondedAmt sdkmath.Int, operatorsAddresses []sdktypes.AccAddress) ([]stakingtypes.Validator, error) {
+func createStakingValidatorsWithSpecificOperator(tmValidators []*cmttypes.Validator, bondedAmt math.Int, operatorsAddresses []sdktypes.AccAddress) ([]stakingtypes.Validator, error) {
 	amountOfValidators := len(tmValidators)
 	stakingValidators := make([]stakingtypes.Validator, 0, amountOfValidators)
 	operatorsCount := len(operatorsAddresses)
@@ -269,7 +268,7 @@ func createDelegations(validators []stakingtypes.Validator, fromAccount sdktypes
 	amountOfValidators := len(validators)
 	delegations := make([]stakingtypes.Delegation, 0, amountOfValidators)
 	for _, val := range validators {
-		delegation := stakingtypes.NewDelegation(fromAccount.String(), val.OperatorAddress, sdkmath.LegacyOneDec())
+		delegation := stakingtypes.NewDelegation(fromAccount.String(), val.OperatorAddress, math.LegacyOneDec())
 		delegations = append(delegations, delegation)
 	}
 	return delegations
@@ -463,7 +462,7 @@ type GovCustomGenesisState struct {
 func setDefaultGovGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState simapp.GenesisState, overwriteParams GovCustomGenesisState) simapp.GenesisState {
 	govGen := govtypesv1.DefaultGenesisState()
 	updatedParams := govGen.Params
-	minDepositAmt := sdkmath.NewInt(1e18).Quo(evmtypes.GetEVMCoinDecimals().ConversionFactor())
+	minDepositAmt := math.NewInt(1e18).Quo(evmtypes.GetEVMCoinDecimals().ConversionFactor())
 	updatedParams.MinDeposit = sdktypes.NewCoins(sdktypes.NewCoin(overwriteParams.denom, minDepositAmt))
 	updatedParams.ExpeditedMinDeposit = sdktypes.NewCoins(sdktypes.NewCoin(overwriteParams.denom, minDepositAmt))
 	govGen.Params = updatedParams
@@ -473,7 +472,7 @@ func setDefaultGovGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState sim
 
 // FeeMarketCustomGenesisState defines the fee market genesis state
 type FeeMarketCustomGenesisState struct {
-	baseFee sdkmath.LegacyDec
+	baseFee math.LegacyDec
 }
 
 // setDefaultFeeMarketGenesisState sets the default fee market genesis state
@@ -487,8 +486,8 @@ func setDefaultFeeMarketGenesisState(cosmosEVMApp *app.RealioNetwork, genesisSta
 // MintCustomGenesisState defines the gov genesis state
 type MintCustomGenesisState struct {
 	denom        string
-	inflationMin sdkmath.LegacyDec
-	inflationMax sdkmath.LegacyDec
+	inflationMin math.LegacyDec
+	inflationMax math.LegacyDec
 }
 
 // setDefaultGovGenesisState sets the default gov genesis state
@@ -541,9 +540,6 @@ func newDefaultGenesisState(cosmosEVMApp *app.RealioNetwork, params defaultGenes
 	genesisState = setDefaultMintGenesisState(cosmosEVMApp, genesisState, params.mint)
 	genesisState = setDefaultErc20GenesisState(cosmosEVMApp, genesisState)
 	return genesisState
-}
-
-func defaultGenesis(app *app.RealioNetwork) {
 }
 
 // customizeGenesis modifies genesis state if there are any custom genesis state

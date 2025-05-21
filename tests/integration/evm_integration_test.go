@@ -200,8 +200,7 @@ func (suite *EVMTestSuite) TestContractDeploymentPermissionless() {
 }
 
 func (suite *EVMTestSuite) TestContractCall() {
-	var preDeploy func() common.Address
-	preDeploy = func() common.Address {
+	preDeploy := func() common.Address {
 		// Deploy contract
 		senderPriv := suite.keyring.GetPrivKey(0)
 		constructorArgs := []interface{}{"coin", "token", uint8(18)}
@@ -274,7 +273,7 @@ func (suite *EVMTestSuite) TestContractCall() {
 			suite.Require().NoError(err)
 			suite.Require().True(mintResponse.IsOK(), "transaction should have succeeded", mintResponse.GetLog())
 
-			// err = checkMintTopics(mintResponse)
+			err = checkMintTopics(mintResponse)
 			suite.Require().NoError(err)
 
 			err = suite.network.NextBlock()
