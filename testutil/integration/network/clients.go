@@ -31,7 +31,9 @@ func getQueryHelper(ctx sdktypes.Context, encCfg testutil.TestEncodingConfig) *b
 }
 
 func (n *IntegrationNetwork) GetERC20Client() erc20types.QueryClient {
-	panic("ERC20 client not implemented")
+	queryHelper := getQueryHelper(n.GetContext(), n.GetEncodingConfig())
+	erc20types.RegisterQueryServer(queryHelper, n.app.Erc20Keeper)
+	return erc20types.NewQueryClient(queryHelper)
 }
 
 func (n *IntegrationNetwork) GetEvmClient() evmtypes.QueryClient {
