@@ -10,12 +10,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	ibcante "github.com/cosmos/ibc-go/v8/modules/core/ante"
-	ibckeeper "github.com/cosmos/ibc-go/v8/modules/core/keeper"
-	evmosantecosmos "github.com/evmos/os/ante/cosmos"
-	evmosanteevm "github.com/evmos/os/ante/evm"
-	evmosanteinterfaces "github.com/evmos/os/ante/interfaces"
-	evmtypes "github.com/evmos/os/x/evm/types"
+	evmosantecosmos "github.com/cosmos/evm/ante/cosmos"
+	evmosanteevm "github.com/cosmos/evm/ante/evm"
+	evmosanteinterfaces "github.com/cosmos/evm/ante/interfaces"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+	ibcante "github.com/cosmos/ibc-go/v10/modules/core/ante"
+	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
 )
 
 // HandlerOptions defines the list of module keepers required to run the RealioNetwork

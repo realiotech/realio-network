@@ -3,7 +3,7 @@ package config
 import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethermint "github.com/evmos/os/types"
+	ethermint "github.com/cosmos/evm/types"
 )
 
 const (

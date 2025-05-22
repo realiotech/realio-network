@@ -1,10 +1,10 @@
 package ante_test
 
 import (
-	evmosante "github.com/evmos/os/ante"
-	evmosanteevm "github.com/evmos/os/ante/evm"
-	"github.com/evmos/os/encoding"
-	"github.com/evmos/os/types"
+	evmosante "github.com/cosmos/evm/ante"
+	evmosanteevm "github.com/cosmos/evm/ante/evm"
+	"github.com/cosmos/evm/encoding"
+	"github.com/cosmos/evm/types"
 	"github.com/realiotech/realio-network/app/ante"
 )
 
