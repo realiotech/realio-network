@@ -9,6 +9,7 @@ import (
 	"github.com/realiotech/realio-network/app/upgrades/commission"
 	v1 "github.com/realiotech/realio-network/app/upgrades/v1"
 	v2 "github.com/realiotech/realio-network/app/upgrades/v1.2"
+	v3 "github.com/realiotech/realio-network/app/upgrades/v1.3"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -70,6 +71,15 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 		v2.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
+		),
+	)
+
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v3.UpgradeName,
+		v3.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.AccountKeeper,
 		),
 	)
 

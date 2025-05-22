@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	realiotypes "github.com/realiotech/realio-network/types"
 	"github.com/realiotech/realio-network/x/mint/types"
 )
 
@@ -93,6 +94,25 @@ func (k Keeper) MintCoins(ctx context.Context, newCoins sdk.Coins) error {
 	}
 
 	return k.bankKeeper.MintCoins(ctx, types.ModuleName, newCoins)
+}
+
+// BurnDeadAccount burns all RIO in dead account.
+func (k Keeper) BurnDeadAccount(ctx context.Context) error {
+	deadBalance := k.bankKeeper.GetBalance(ctx, types.EvmDeadAddr, realiotypes.BaseDenom)
+	if deadBalance.Amount.IsZero() {
+		return nil
+	}
+	burnCoins := sdk.NewCoins(deadBalance)
+	err := k.bankKeeper.SendCoinsFromAccountToModule(ctx, types.EvmDeadAddr, types.ModuleName, burnCoins)
+	if err != nil {
+		return err
+	}
+
+	err = k.bankKeeper.BurnCoins(ctx, types.ModuleName, burnCoins)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // AddCollectedFees implements an alias call to the underlying supply keeper's

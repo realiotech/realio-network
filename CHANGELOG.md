@@ -37,6 +37,11 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
+# Unreleased
+
+### State Machine Breaking
+- (mint) [#232](https://github.com/realiotech/realio-network/pull/232): Add mint end blocker.
+
 ## [v1.2.0](https://github.com/realiotech/realio-network/releases/tag/v1.2.0) - 2025-04-30
 
 ### Bug Fixes
@@ -46,6 +51,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### Improvements
 
 - (chore) [#211](https://github.com/realiotech/realio-network/pull/211): Update changelog from v1.0.1
+- (feat) [#232](https://github.com/realiotech/realio-network/pull/232): Add mint end blocker
 - (chore) [#233](https://github.com/realiotech/realio-network/pull/233): Clean up upgrade handler
 
 ## [v1.0.5](https://github.com/realiotech/realio-network/releases/tag/v1.0.5)
