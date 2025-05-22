@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/realiotech/realio-network/x/mint/types"
 	realiotypes "github.com/realiotech/realio-network/types"
+	"github.com/realiotech/realio-network/x/mint/types"
 )
 
 // Keeper of the mint store

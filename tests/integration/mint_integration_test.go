@@ -16,7 +16,6 @@ import (
 type endBlockTestCase struct {
 	name        string
 	preFundFunc func() error
-	coins       sdk.Coins
 	expBalances sdk.Coins
 	shouldBurn  bool
 }
@@ -49,7 +48,6 @@ func (suite *EVMTestSuite) TestMintEndBlock() {
 				suite.Require().True(res.IsOK(), "transaction should have succeeded: %s", res.GetLog())
 
 				return nil
-
 			},
 			shouldBurn:  true,
 			expBalances: nil,
@@ -67,7 +65,6 @@ func (suite *EVMTestSuite) TestMintEndBlock() {
 				suite.Require().NoError(err)
 				suite.Require().True(res.IsOK(), "transaction should have succeeded: %s", res.GetLog())
 				return nil
-
 			},
 			shouldBurn:  false,
 			expBalances: sdk.NewCoins(sdk.NewCoin("test", math.NewInt(sendAmount))),
@@ -85,7 +82,6 @@ func (suite *EVMTestSuite) TestMintEndBlock() {
 				suite.Require().NoError(err)
 				suite.Require().True(res.IsOK(), "transaction should have succeeded: %s", res.GetLog())
 				return nil
-
 			},
 			shouldBurn:  true,
 			expBalances: sdk.NewCoins(sdk.NewCoin("test", math.NewInt(sendAmount*2))),
@@ -101,6 +97,7 @@ func (suite *EVMTestSuite) TestMintEndBlock() {
 			suite.Require().NoError(err)
 
 			balances, err := suite.grpcHandler.GetAllBalances(EvmDeadAddr.Bytes())
+			suite.Require().NoError(err)
 			suite.Require().Equal(balances.Balances, tc.expBalances)
 		})
 	}

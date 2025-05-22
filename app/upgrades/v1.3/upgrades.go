@@ -30,7 +30,7 @@ func CreateUpgradeHandler(
 		}
 		mintModule = authtypes.NewModuleAccount(mintAcc.BaseAccount, minttypes.ModuleName, authtypes.Minter, authtypes.Burner)
 
-		//Overwrite
+		// Overwrite
 		accountKeeper.SetModuleAccount(ctx, mintModule)
 
 		return mm.RunMigrations(ctx, configurator, vm)

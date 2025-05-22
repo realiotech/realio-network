@@ -72,8 +72,8 @@ func BeginBlocker(ctx context.Context, k keeper.Keeper) error {
 }
 
 // EndBlocker called every block, process burn RIO from dead account.
-// Our Districts protocol (https://districts.xyz/) introduces the token `DSTRX` 
-// minted by sending RIO to the EVM "dead" address: `0x000000000000000000000000000000000000dEaD`. 
+// Our Districts protocol (https://districts.xyz/) introduces the token `DSTRX`
+// minted by sending RIO to the EVM "dead" address: `0x000000000000000000000000000000000000dEaD`.
 // This design choice sending tokens to the `dead` address as burning.
 // In cosmos-sdk context, RIO still available in the account so we need to burn it.
 func EndBlocker(ctx context.Context, keeper keeper.Keeper) error {
