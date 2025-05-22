@@ -16,7 +16,7 @@ import (
 )
 
 var (
-	mintAmount int64 = 1_000_000
+	mintAmount     int64 = 1_000_000
 	transferAmount int64 = 1000
 )
 
@@ -99,8 +99,8 @@ func (suite *EVMTestSuite) TestERC20RegisterAndConverting() {
 	// Register ERC20 token as native token
 	res, err := suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
 		Msgs: []sdk.Msg{&erc20types.MsgRegisterERC20{
-			Signer: suite.keyring.GetAccAddr(0).String(),
-			Erc20Addresses:   []string{contractAddr.Hex()},
+			Signer:         suite.keyring.GetAccAddr(0).String(),
+			Erc20Addresses: []string{contractAddr.Hex()},
 		}},
 	})
 	suite.Require().NoError(err)
@@ -119,9 +119,9 @@ func (suite *EVMTestSuite) TestERC20RegisterAndConverting() {
 	res, err = suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
 		Msgs: []sdk.Msg{&erc20types.MsgConvertERC20{
 			ContractAddress: contractAddr.Hex(),
-			Amount: math.NewInt(transferAmount),
-			Receiver: recipientKey.AccAddr.String(),
-			Sender: senderKey.Addr.Hex(),
+			Amount:          math.NewInt(transferAmount),
+			Receiver:        recipientKey.AccAddr.String(),
+			Sender:          senderKey.Addr.Hex(),
 		}},
 	})
 	suite.Require().NoError(err)
@@ -150,12 +150,11 @@ func (suite *EVMTestSuite) TestERC20RegisterAndConverting() {
 
 	suite.Require().NoError(suite.network.NextBlock())
 
-
 	// Convert native token back to ERC20
 	res, err = suite.factory.ExecuteCosmosTx(recipientPriv, commonfactory.CosmosTxArgs{
 		Msgs: []sdk.Msg{&erc20types.MsgConvertCoin{
-			Coin: sdk.NewCoin(contractDenom, math.NewInt(transferAmount)),
-			Sender: recipientKey.AccAddr.String(),
+			Coin:     sdk.NewCoin(contractDenom, math.NewInt(transferAmount)),
+			Sender:   recipientKey.AccAddr.String(),
 			Receiver: senderKey.Addr.Hex(),
 		}},
 	})

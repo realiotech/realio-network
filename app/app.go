@@ -43,15 +43,15 @@ import (
 	ostypes "github.com/cosmos/evm/types"
 	evmosvm "github.com/ethereum/go-ethereum/core/vm"
 
+	"github.com/cosmos/evm/x/erc20"
+	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 	"github.com/cosmos/evm/x/feemarket"
 	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	"github.com/cosmos/evm/x/vm"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	"github.com/cosmos/evm/x/erc20"
-	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
 	// NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens
 	"github.com/cosmos/evm/x/ibc/transfer"
 
@@ -164,9 +164,9 @@ import (
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
+	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
-	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
 )
 
 const (
