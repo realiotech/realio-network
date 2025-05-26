@@ -27,6 +27,8 @@ import (
 	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
+
 )
 
 // Network is the interface that wraps the methods to interact with integration test network.
@@ -35,6 +37,7 @@ import (
 // to be closer to the real user's behavior.
 type Network interface {
 	network.Network
+	GetMultistakingClient() multistakingtypes.QueryClient
 }
 
 var _ Network = (*IntegrationNetwork)(nil)

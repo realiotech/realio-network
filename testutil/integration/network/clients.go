@@ -20,6 +20,8 @@ import (
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
+	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 )
 
 func getQueryHelper(ctx sdktypes.Context, encCfg testutil.TestEncodingConfig) *baseapp.QueryServiceTestHelper {
@@ -76,6 +78,12 @@ func (n *IntegrationNetwork) GetStakingClient() stakingtypes.QueryClient {
 	queryHelper := getQueryHelper(n.GetContext(), n.GetEncodingConfig())
 	stakingtypes.RegisterQueryServer(queryHelper, stakingkeeper.Querier{Keeper: n.app.StakingKeeper})
 	return stakingtypes.NewQueryClient(queryHelper)
+}
+
+func (n *IntegrationNetwork) GetMultistakingClient() multistakingtypes.QueryClient {
+	queryHelper := getQueryHelper(n.GetContext(), n.GetEncodingConfig())
+	multistakingtypes.RegisterQueryServer(queryHelper, multistakingkeeper.NewQueryServerImpl(n.app.MultiStakingKeeper))
+	return multistakingtypes.NewQueryClient(queryHelper)
 }
 
 func (n *IntegrationNetwork) GetDistrClient() distrtypes.QueryClient {

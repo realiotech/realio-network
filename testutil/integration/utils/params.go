@@ -9,11 +9,15 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/realiotech/realio-network/testutil/integration/network"
 
+	"cosmossdk.io/math"
+	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 )
 
 type UpdateParamsInput struct {
@@ -29,6 +33,30 @@ var authority = authtypes.NewModuleAddress("gov").String()
 // It submits an update params proposal, votes for it, and waits till it passes
 func UpdateEvmParams(input UpdateParamsInput) error {
 	return updateModuleParams[evmtypes.Params](input, evmtypes.ModuleName)
+}
+
+func RegisterMultistakingBondDenom(input UpdateParamsInput, denom string, weight math.LegacyDec, proposer sdk.AccAddress) error {
+	addMultiStakingProposal := multistakingtypes.NewAddMultiStakingCoinProposal("tittle", "des", denom, weight)
+
+	// Submit governance proposal
+	govMsg, err := govv1beta1.NewMsgSubmitProposal(
+		addMultiStakingProposal,
+		sdk.NewCoins(sdk.NewCoin(input.Network.GetBaseDenom(), math.NewInt(1e18).Quo(evmtypes.GetEVMCoinDecimals().ConversionFactor()))),
+		proposer,
+	)
+	if err != nil {
+		return err
+	}
+
+	txArgs := commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{govMsg},
+	}
+	proposalId, err := submitProposal(input.Tf, input.Network, input.Pk, txArgs)
+	if err != nil {
+		return err
+	}
+	return ApproveProposal(input.Tf, input.Network, input.Pk, proposalId)
+
 }
 
 // updateModuleParams helper function to update module parameters
