@@ -11,6 +11,7 @@ import (
 	"path/filepath"
 
 	"github.com/realiotech/realio-network/app/ante"
+	multistakingprecompile "github.com/realiotech/realio-network/precompiles/multistaking"
 	"github.com/realiotech/realio-network/client/docs"
 	"github.com/realiotech/realio-network/crypto/ethsecp256k1"
 
@@ -514,7 +515,19 @@ func New(
 		&app.TransferKeeper,
 	)
 
-	app.EvmKeeper.WithStaticPrecompiles(evmosvm.PrecompiledContractsBerlin)
+	precompiles := evmosvm.PrecompiledContractsBerlin
+	multistakingPrecompile, err := multistakingprecompile.NewPrecompile(
+		app.appCodec,
+		app.MultiStakingKeeper,
+		app.BankKeeper,
+		app.Erc20Keeper,
+	)
+	if err != nil {
+		panic(err)
+	}
+	precompiles[multistakingPrecompile.Address()] = multistakingPrecompile
+
+	app.EvmKeeper.WithStaticPrecompiles(precompiles)
 
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
@@ -798,7 +811,7 @@ func New(
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	err := app.mm.RegisterServices(app.configurator)
+	err = app.mm.RegisterServices(app.configurator)
 	if err != nil {
 		panic(err)
 	}
