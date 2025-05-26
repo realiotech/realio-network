@@ -1,0 +1,262 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IMultiStaking",
+  "sourceName": "solidity/precompiles/multistaking/IMultiStaking.sol",
+  "abi": [
+    {
+      "name": "delegate",
+      "type": "function",
+      "stateMutability": "nonpayable",
+      "inputs": [
+        { "name": "erc20Token", "type": "string" },
+        { "name": "validatorAddress", "type": "string" },
+        { "name": "amount", "type": "string" }
+      ],
+      "outputs": [{ "name": "success", "type": "bool" }]
+    },
+    {
+      "name": "undelegate",
+      "type": "function",
+      "stateMutability": "nonpayable",
+      "inputs": [
+        { "name": "erc20Token", "type": "address" },
+        { "name": "validatorAddress", "type": "string" },
+        { "name": "amount", "type": "uint256" }
+      ],
+      "outputs": [{ "name": "completionTime", "type": "int64" }]
+    },
+    {
+      "name": "redelegate",
+      "type": "function",
+      "stateMutability": "nonpayable",
+      "inputs": [
+        { "name": "erc20Token", "type": "address" },
+        { "name": "srcValidatorAddress", "type": "string" },
+        { "name": "dstValidatorAddress", "type": "string" },
+        { "name": "amount", "type": "uint256" }
+      ],
+      "outputs": [{ "name": "completionTime", "type": "int64" }]
+    },
+    {
+      "name": "cancelUnbondingDelegation",
+      "type": "function",
+      "stateMutability": "nonpayable",
+      "inputs": [
+        { "name": "erc20Token", "type": "address" },
+        { "name": "validatorAddress", "type": "string" },
+        { "name": "amount", "type": "uint256" },
+        { "name": "creationHeight", "type": "int64" }
+      ],
+      "outputs": [{ "name": "success", "type": "bool" }]
+    },
+    {
+      "name": "delegation",
+      "type": "function",
+      "stateMutability": "view",
+      "inputs": [
+        { "name": "delegatorAddress", "type": "string" },
+        { "name": "validatorAddress", "type": "string" }
+      ],
+      "outputs": [
+        { "name": "shares", "type": "uint256" },
+        { "name": "balance", "type": "uint256" }
+      ]
+    },
+    {
+      "name": "unbondingDelegation",
+      "type": "function",
+      "stateMutability": "view",
+      "inputs": [
+        { "name": "delegatorAddress", "type": "string" },
+        { "name": "validatorAddress", "type": "string" }
+      ],
+      "outputs": [
+        { "name": "balance", "type": "uint256" },
+        { "name": "completionTime", "type": "int64" }
+      ]
+    },
+    {
+      "name": "validator",
+      "type": "function",
+      "stateMutability": "view",
+      "inputs": [{ "name": "validatorAddress", "type": "string" }],
+      "outputs": [
+        { "name": "operatorAddress", "type": "string" },
+        { "name": "jailed", "type": "bool" },
+        { "name": "status", "type": "int32" },
+        { "name": "tokens", "type": "uint256" },
+        { "name": "delegatorShares", "type": "uint256" },
+        { "name": "moniker", "type": "string" },
+        { "name": "identity", "type": "string" },
+        { "name": "website", "type": "string" },
+        { "name": "securityContact", "type": "string" },
+        { "name": "details", "type": "string" }
+      ]
+    },
+    {
+      "name": "validators",
+      "type": "function",
+      "stateMutability": "view",
+      "inputs": [
+        { "name": "status", "type": "string" },
+        {
+          "name": "pagination",
+          "type": "tuple",
+          "components": [
+            { "name": "key", "type": "bytes" },
+            { "name": "offset", "type": "uint64" },
+            { "name": "limit", "type": "uint64" },
+            { "name": "countTotal", "type": "bool" },
+            { "name": "reverse", "type": "bool" }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "validators",
+          "type": "tuple[]",
+          "components": [
+            { "name": "operatorAddress", "type": "string" },
+            { "name": "jailed", "type": "bool" },
+            { "name": "status", "type": "int32" },
+            { "name": "tokens", "type": "uint256" },
+            { "name": "delegatorShares", "type": "uint256" },
+            { "name": "moniker", "type": "string" },
+            { "name": "identity", "type": "string" },
+            { "name": "website", "type": "string" },
+            { "name": "securityContact", "type": "string" },
+            { "name": "details", "type": "string" }
+          ]
+        },
+        {
+          "name": "pageResponse",
+          "type": "tuple",
+          "components": [
+            { "name": "nextKey", "type": "bytes" },
+            { "name": "total", "type": "uint64" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "delegatorDelegations",
+      "type": "function",
+      "stateMutability": "view",
+      "inputs": [
+        { "name": "delegatorAddress", "type": "string" },
+        {
+          "name": "pagination",
+          "type": "tuple",
+          "components": [
+            { "name": "key", "type": "bytes" },
+            { "name": "offset", "type": "uint64" },
+            { "name": "limit", "type": "uint64" },
+            { "name": "countTotal", "type": "bool" },
+            { "name": "reverse", "type": "bool" }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "delegations",
+          "type": "tuple[]",
+          "components": [
+            { "name": "delegatorAddress", "type": "string" },
+            { "name": "validatorAddress", "type": "string" },
+            { "name": "shares", "type": "uint256" },
+            { "name": "balance", "type": "uint256" }
+          ]
+        },
+        {
+          "name": "pageResponse",
+          "type": "tuple",
+          "components": [
+            { "name": "nextKey", "type": "bytes" },
+            { "name": "total", "type": "uint64" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "delegatorUnbondingDelegations",
+      "type": "function",
+      "stateMutability": "view",
+      "inputs": [
+        { "name": "delegatorAddress", "type": "string" },
+        {
+          "name": "pagination",
+          "type": "tuple",
+          "components": [
+            { "name": "key", "type": "bytes" },
+            { "name": "offset", "type": "uint64" },
+            { "name": "limit", "type": "uint64" },
+            { "name": "countTotal", "type": "bool" },
+            { "name": "reverse", "type": "bool" }
+          ]
+        }
+      ],
+      "outputs": [
+        {
+          "name": "unbondingDelegations",
+          "type": "tuple[]",
+          "components": [
+            { "name": "delegatorAddress", "type": "string" },
+            { "name": "validatorAddress", "type": "string" },
+            { "name": "balance", "type": "uint256" },
+            { "name": "completionTime", "type": "int64" },
+            { "name": "creationHeight", "type": "int64" }
+          ]
+        },
+        {
+          "name": "pageResponse",
+          "type": "tuple",
+          "components": [
+            { "name": "nextKey", "type": "bytes" },
+            { "name": "total", "type": "uint64" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "createValidator",
+      "type": "function",
+      "stateMutability": "nonpayable",
+      "inputs": [
+        { "name": "validatorAddress", "type": "string" },
+        { "name": "pubkey", "type": "string" },
+        { "name": "contractAddress", "type": "string" },
+        { "name": "amount", "type": "string" },
+        { "name": "moniker", "type": "string" },
+        { "name": "identity", "type": "string" },
+        { "name": "website", "type": "string" },
+        { "name": "security", "type": "string" },
+        { "name": "details", "type": "string" },
+        { "name": "commission-rate", "type": "string" },
+        { "name": "commission-max-rate", "type": "string" },
+        { "name": "commission-max-change-rate", "type": "string" },
+        { "name": "min-self-delegation", "type": "string" }
+      ],
+      "outputs": [{ "name": "success", "type": "bool" }]
+    },
+    {
+      "name": "editValidator",
+      "type": "function",
+      "stateMutability": "nonpayable",
+      "inputs": [
+        { "name": "validatorAddress", "type": "string" },
+        { "name": "moniker", "type": "string" },
+        { "name": "identity", "type": "string" },
+        { "name": "website", "type": "string" },
+        { "name": "security", "type": "string" },
+        { "name": "details", "type": "string" },
+        { "name": "commission-rate", "type": "string" },
+        { "name": "min-self-delegation", "type": "string" }
+      ],
+      "outputs": [{ "name": "success", "type": "bool" }]
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
