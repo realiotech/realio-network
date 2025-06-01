@@ -37,7 +37,6 @@ func (suite *EVMTestSuite) SetupTest() {
 	keyring := testkeyring.New(4)
 	integrationNetwork := network.New(
 		network.WithPreFundedAccounts(keyring.GetAllAccAddrs()...),
-		network.WithOtherDenoms([]string{testTokenDenom}),
 	)
 	grpcHandler := grpc.NewIntegrationHandler(integrationNetwork)
 	factory := factory.New(integrationNetwork, grpcHandler)

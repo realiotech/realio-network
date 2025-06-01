@@ -11,7 +11,42 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/ethereum/go-ethereum/common"
 	realiotypes "github.com/realiotech/realio-network/types"
+
+	"github.com/cosmos/evm/testutil/integration/os/factory"
+	"github.com/cosmos/evm/testutil/integration/os/grpc"
+	testkeyring "github.com/cosmos/evm/testutil/integration/os/keyring"
+	"github.com/realiotech/realio-network/testutil/integration/network"
+
+	"github.com/stretchr/testify/suite"
 )
+
+// Define the suite, and absorb the built-in basic suite
+// functionality from testify - including a T() method which
+// returns the current testing context
+type MintTestSuite struct {
+	suite.Suite
+	network     network.Network
+	grpcHandler grpc.Handler
+	factory     factory.TxFactory
+	keyring     testkeyring.Keyring
+}
+
+// Make sure that VariableThatShouldStartAtFive is set to five
+// before each test
+func (suite *MintTestSuite) SetupTest() {
+	keyring := testkeyring.New(4)
+	integrationNetwork := network.New(
+		network.WithPreFundedAccounts(keyring.GetAllAccAddrs()...),
+		network.WithOtherDenoms([]string{testTokenDenom}),
+	)
+	grpcHandler := grpc.NewIntegrationHandler(integrationNetwork)
+	factory := factory.New(integrationNetwork, grpcHandler)
+
+	suite.grpcHandler = grpcHandler
+	suite.factory = factory
+	suite.network = integrationNetwork
+	suite.keyring = keyring
+}
 
 type endBlockTestCase struct {
 	name        string
@@ -26,7 +61,7 @@ var (
 	sendAmount     int64 = 1000000
 )
 
-func (suite *EVMTestSuite) TestMintEndBlock() {
+func (suite *MintTestSuite) TestMintEndBlock() {
 	senderKey := suite.keyring.GetKey(0)
 	testCases := []endBlockTestCase{
 		{
