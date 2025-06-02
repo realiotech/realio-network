@@ -2,6 +2,7 @@ package integration
 
 import (
 	"math/big"
+	"testing"
 
 	"cosmossdk.io/math"
 	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
@@ -17,6 +18,8 @@ import (
 	testkeyring "github.com/cosmos/evm/testutil/integration/os/keyring"
 	"github.com/realiotech/realio-network/testutil/integration/network"
 
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/realiotech/realio-network/x/mint/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -58,7 +61,7 @@ type endBlockTestCase struct {
 var (
 	testTokenDenom       = "test"
 	EvmDeadAddr          = common.HexToAddress("0x000000000000000000000000000000000000dEaD")
-	sendAmount     int64 = 1000000
+	sendAmount     int64 = 4000000000000000000
 )
 
 func (suite *MintTestSuite) TestMintEndBlock() {
@@ -134,6 +137,14 @@ func (suite *MintTestSuite) TestMintEndBlock() {
 			balances, err := suite.grpcHandler.GetAllBalances(EvmDeadAddr.Bytes())
 			suite.Require().NoError(err)
 			suite.Require().Equal(balances.Balances, tc.expBalances)
+
+			moduleBalance, err := suite.grpcHandler.GetAllBalances(authtypes.NewModuleAddress(types.ModuleName))
+			suite.Require().Empty(moduleBalance.Balances)
+
 		})
 	}
+}
+
+func TestMintestSuite(t *testing.T) {
+	suite.Run(t, new(MintTestSuite))
 }
