@@ -53,7 +53,7 @@ func GetInitialBondedAmount(decimals evmtypes.Decimals) math.Int {
 
 	// initialBondedAmount represents the amount of tokens that each validator will
 	// have initially bonded expressed in the 18 decimals representation.
-	sdk.DefaultPowerReduction = math.NewIntFromBigInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(int64(decimals)), nil))
+	sdk.DefaultPowerReduction = math.NewIntFromBigInt(new(big.Int).Exp(big.NewInt(10), big.NewInt(decimals.ConversionFactor().Int64()), nil))
 	initialBondedAmount := sdk.TokensFromConsensusPower(1, types.AttoPowerReduction)
 
 	return initialBondedAmount.Quo(decimals.ConversionFactor())

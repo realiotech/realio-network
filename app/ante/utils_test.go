@@ -147,7 +147,7 @@ func (suite *AnteTestSuite) CreateTestTxBuilder(gasPrice sdkmath.Int, denom stri
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 
 	txBuilder.SetGasLimit(gasLimit)
-	fees := &sdk.Coins{{Denom: denom, Amount: gasPrice.MulRaw(int64(gasLimit))}}
+	fees := &sdk.Coins{{Denom: denom, Amount: gasPrice.Mul(sdkmath.NewIntFromUint64(gasLimit))}}
 	txBuilder.SetFeeAmount(*fees)
 	err := txBuilder.SetMsgs(msgs...)
 	suite.Require().NoError(err)
