@@ -27,6 +27,7 @@ import (
 	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	minttypes "github.com/realiotech/realio-network/x/mint/types"
 )
 
 // Network is the interface that wraps the methods to interact with integration test network.
@@ -35,6 +36,7 @@ import (
 // to be closer to the real user's behavior.
 type Network interface {
 	network.Network
+	GetMintModuleClient() minttypes.QueryClient // conflict types with current GetMintClient()
 }
 
 var _ Network = (*IntegrationNetwork)(nil)
