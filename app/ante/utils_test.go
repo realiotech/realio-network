@@ -40,6 +40,7 @@ import (
 
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 
+	"cosmossdk.io/math"
 	"github.com/realiotech/realio-network/app"
 	realionetworktypes "github.com/realiotech/realio-network/types"
 	"github.com/stretchr/testify/require"
@@ -147,7 +148,7 @@ func (suite *AnteTestSuite) CreateTestTxBuilder(gasPrice sdkmath.Int, denom stri
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 
 	txBuilder.SetGasLimit(gasLimit)
-	fees := &sdk.Coins{{Denom: denom, Amount: gasPrice.MulRaw(int64(gasLimit))}}
+	fees := &sdk.Coins{{Denom: denom, Amount: gasPrice.Mul(math.NewIntFromUint64(gasLimit))}}
 	txBuilder.SetFeeAmount(*fees)
 	err := txBuilder.SetMsgs(msgs...)
 	suite.Require().NoError(err)
