@@ -431,8 +431,11 @@ func New(
 		app.AccountKeeper,
 		app.StakingKeeper,
 		app.BankKeeper,
-		keys[multistakingtypes.StoreKey],
+		app.Erc20Keeper,
+		runtime.NewKVStoreService(keys[multistakingtypes.StoreKey]),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)
 	app.MintKeeper = mintkeeper.NewKeeper(
 		appCodec,
