@@ -152,7 +152,9 @@ func (suite *MintTestSuite) TestMintEndBlock() {
 			// supplyAfter = supplyBefore + mint - burn
 			if tc.shouldBurn {
 				burnedAmount := sendAmount
-				suite.Require().Equal(totalSupplyAfter.Supply.AmountOf(realiotypes.BaseDenom), totalSupplyBefore.Supply.AmountOf(realiotypes.BaseDenom).Add(mintedAmount).Sub(math.NewInt(burnedAmount)))
+				expectedSupply := totalSupplyBefore.Supply.AmountOf(realiotypes.BaseDenom).Add(mintedAmount).Sub(math.NewInt(burnedAmount))
+				actualSupply := totalSupplyAfter.Supply.AmountOf(realiotypes.BaseDenom)
+				suite.Require().Equal(expectedSupply, actualSupply)
 			}
 
 			suite.network.NextBlock()
