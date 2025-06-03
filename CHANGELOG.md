@@ -37,10 +37,12 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
-# Unreleased
+# [v1.3.0]
 
 ### State Machine Breaking
+
 - (mint) [#232](https://github.com/realiotech/realio-network/pull/232): Add mint end blocker.
+- (evm) [#242](https://github.com/realiotech/realio-network/pull/242): Migrate to cosmos/evm and bump ibc v10
 
 ## [v1.2.0](https://github.com/realiotech/realio-network/releases/tag/v1.2.0) - 2025-04-30
 
