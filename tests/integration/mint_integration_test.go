@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -130,7 +129,6 @@ func (suite *MintTestSuite) TestMintEndBlock() {
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
-			fmt.Println(tc.name)
 			totalSupplyBefore, err := suite.grpcHandler.GetTotalSupply()
 			suite.Require().NoError(err)
 
