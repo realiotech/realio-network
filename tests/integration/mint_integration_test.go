@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -18,7 +19,7 @@ import (
 	testkeyring "github.com/cosmos/evm/testutil/integration/os/keyring"
 	"github.com/realiotech/realio-network/testutil/integration/network"
 
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	// authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/realiotech/realio-network/x/mint/types"
 	"github.com/stretchr/testify/suite"
 )
@@ -59,9 +60,10 @@ type endBlockTestCase struct {
 }
 
 var (
-	testTokenDenom       = "test"
-	EvmDeadAddr          = common.HexToAddress("0x000000000000000000000000000000000000dEaD")
-	sendAmount     int64 = 4000000000000000000
+	testTokenDenom        = "test"
+	EvmDeadAddr           = common.HexToAddress("0x000000000000000000000000000000000000dEaD")
+	sendAmount      int64 = 4000000000000000000
+	rioSupplyCap, _       = math.NewIntFromString("175000000000000000000000000")
 )
 
 func (suite *MintTestSuite) TestMintEndBlock() {
@@ -128,19 +130,34 @@ func (suite *MintTestSuite) TestMintEndBlock() {
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
-			err := tc.preFundFunc()
+			fmt.Println(tc.name)
+			totalSupplyBefore, err := suite.grpcHandler.GetTotalSupply()
 			suite.Require().NoError(err)
 
-			err = suite.network.NextBlock()
+			err = tc.preFundFunc()
 			suite.Require().NoError(err)
+
+			// Recalculate minted amount in BeginBlocker
+			mintClient := suite.network.GetMintModuleClient()
+			params, err := mintClient.Params(suite.network.GetContext(), &types.QueryParamsRequest{})
+			suite.Require().NoError(err)
+			annualProvisions := params.Params.InflationRate.MulInt(rioSupplyCap.Sub(totalSupplyBefore.Supply.AmountOf(realiotypes.BaseDenom)))
+			mintedAmount := annualProvisions.QuoInt(math.NewInt(int64(params.Params.BlocksPerYear))).TruncateInt()
 
 			balances, err := suite.grpcHandler.GetAllBalances(EvmDeadAddr.Bytes())
 			suite.Require().NoError(err)
 			suite.Require().Equal(balances.Balances, tc.expBalances)
 
-			moduleBalance, err := suite.grpcHandler.GetAllBalances(authtypes.NewModuleAddress(types.ModuleName))
-			suite.Require().Empty(moduleBalance.Balances)
+			totalSupplyAfter, err := suite.grpcHandler.GetTotalSupply()
+			suite.Require().NoError(err)
 
+			// supplyAfter = supplyBefore + mint - burn
+			if tc.shouldBurn {
+				burnedAmount := sendAmount
+				suite.Require().Equal(totalSupplyAfter.Supply.AmountOf(realiotypes.BaseDenom), totalSupplyBefore.Supply.AmountOf(realiotypes.BaseDenom).Add(mintedAmount).Sub(math.NewInt(burnedAmount)))
+			}
+
+			suite.network.NextBlock()
 		})
 	}
 }
