@@ -140,7 +140,7 @@ func (suite *MintTestSuite) TestMintEndBlock() {
 			params, err := mintClient.Params(suite.network.GetContext(), &types.QueryParamsRequest{})
 			suite.Require().NoError(err)
 			annualProvisions := params.Params.InflationRate.MulInt(rioSupplyCap.Sub(totalSupplyBefore.Supply.AmountOf(realiotypes.BaseDenom)))
-			mintedAmount := annualProvisions.QuoInt(math.NewInt(int64(params.Params.BlocksPerYear))).TruncateInt()
+			mintedAmount := annualProvisions.QuoInt(math.NewIntFromUint64(params.Params.BlocksPerYear)).TruncateInt()
 
 			balances, err := suite.grpcHandler.GetAllBalances(EvmDeadAddr.Bytes())
 			suite.Require().NoError(err)
@@ -157,7 +157,7 @@ func (suite *MintTestSuite) TestMintEndBlock() {
 				suite.Require().Equal(expectedSupply, actualSupply)
 			}
 
-			suite.network.NextBlock()
+			suite.Require().NoError(suite.network.NextBlock())
 		})
 	}
 }

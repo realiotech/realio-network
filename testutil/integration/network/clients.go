@@ -15,13 +15,13 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	sdkminttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	minttypes "github.com/realiotech/realio-network/x/mint/types"
-	mintkeeper "github.com/realiotech/realio-network/x/mint/keeper"
+	sdkminttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	mintkeeper "github.com/realiotech/realio-network/x/mint/keeper"
+	minttypes "github.com/realiotech/realio-network/x/mint/types"
 )
 
 func getQueryHelper(ctx sdktypes.Context, encCfg testutil.TestEncodingConfig) *baseapp.QueryServiceTestHelper {
