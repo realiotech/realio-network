@@ -425,18 +425,6 @@ func New(
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
 	)
-	// multi-staking keeper
-	app.MultiStakingKeeper = *multistakingkeeper.NewKeeper(
-		appCodec,
-		app.AccountKeeper,
-		app.StakingKeeper,
-		app.BankKeeper,
-		app.Erc20Keeper,
-		runtime.NewKVStoreService(keys[multistakingtypes.StoreKey]),
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
-		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
-	)
 	app.MintKeeper = mintkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[minttypes.StoreKey]),
@@ -518,6 +506,19 @@ func New(
 	)
 
 	app.EvmKeeper.WithStaticPrecompiles(evmosvm.PrecompiledContractsBerlin)
+
+	// multi-staking keeper
+	app.MultiStakingKeeper = *multistakingkeeper.NewKeeper(
+		appCodec,
+		app.AccountKeeper,
+		app.StakingKeeper,
+		app.BankKeeper,
+		app.Erc20Keeper,
+		runtime.NewKVStoreService(keys[multistakingtypes.StoreKey]),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
+	)
 
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks

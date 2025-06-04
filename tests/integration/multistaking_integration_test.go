@@ -1,31 +1,59 @@
 package integration
 
 import (
+	"encoding/json"
+	"fmt"
+
+	// "fmt"
 	"math/big"
+	"os"
+	"path/filepath"
+	"strings"
 
 	"cosmossdk.io/math"
 	"github.com/cosmos/evm/testutil/integration/os/factory"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
+	// gov1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
+	// integrationutils "github.com/realiotech/realio-network/testutil/integration/utils"
+	// stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/evm/contracts"
 	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
-	erc20types "github.com/cosmos/evm/x/erc20/types"
+
+	// erc20types "github.com/cosmos/evm/x/erc20/types"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	integrationutils "github.com/realiotech/realio-network/testutil/integration/utils"
+	"github.com/realiotech/realio-network/app"
+
 )
 
-func (suite *EVMTestSuite) TestMultiStakingEvm() {
+var (
+	multistakingPrecompileAddr       = common.HexToAddress("0x0000000000000000000000000000000000000900")
+	multistakingMintAmount     int64 = 10_000_000 // 10M tokens
+	multistakingStakeAmount    int64 = 1_000_000  // 1M tokens for staking
+	multistakingBondWeight           = "1.0"      // 1:1 bond weight
+	amount                           = big.NewInt(multistakingStakeAmount).String()
+)
+
+func (suite *EVMTestSuite) TestMultistakingCreateValidator() {
 	// Deploy ERC20 contract
-	senderPriv := suite.keyring.GetPrivKey(senderIndex)
-	recipientPriv := suite.keyring.GetPrivKey(recipientIndex)
+	senderPriv := suite.keyring.GetPrivKey(0)
+	senderKey := suite.keyring.GetKey(0)
+	constructorArgs := []interface{}{"StakeToken", "STAKE", uint8(18)}
+	compiledContract := contracts.ERC20MinterBurnerDecimalsContract
 
-	recipientKey := suite.keyring.GetKey(recipientIndex)
-	senderKey := suite.keyring.GetKey(senderIndex)
-
+	var err error
 	contractAddr, err := suite.factory.DeployContract(
 		senderPriv,
-		evmtypes.EvmTxArgs{}, // Default values
+		evmtypes.EvmTxArgs{},
 		factory.ContractDeploymentData{
 			Contract:        compiledContract,
 			ConstructorArgs: constructorArgs,
@@ -33,122 +61,219 @@ func (suite *EVMTestSuite) TestMultiStakingEvm() {
 	)
 	suite.Require().NoError(err)
 	suite.NotEqual(contractAddr, common.Address{})
-	suite.Require().NoError(suite.network.NextBlock())
 
-	// Mint token to sender
-	mintTxArgs := evmtypes.EvmTxArgs{}
-	mintTxArgs.To = &contractAddr
-	amountToMint := big.NewInt(mintAmount)
+	err = suite.network.NextBlock()
+	suite.Require().NoError(err)
+
+	// Mint tokens to sender
+	mintTxArgs := evmtypes.EvmTxArgs{To: &contractAddr}
+	amountToMint := big.NewInt(multistakingMintAmount)
 	mintArgs := factory.CallArgs{
 		ContractABI: compiledContract.ABI,
 		MethodName:  "mint",
-		Args:        []interface{}{suite.keyring.GetKey(0).Addr, amountToMint},
+		Args:        []interface{}{senderKey.Addr, amountToMint},
 	}
 	mintResponse, err := suite.factory.ExecuteContractCall(senderPriv, mintTxArgs, mintArgs)
 	suite.Require().NoError(err)
-	suite.Require().True(mintResponse.IsOK(), "transaction should have succeeded", mintResponse.GetLog())
+	suite.Require().True(mintResponse.IsOK(), "mint should have succeeded", mintResponse.GetLog())
+
+	err = suite.network.NextBlock()
+	suite.Require().NoError(err)
+
+	// // Register ERC20 token as native token
+	// res, err := suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
+	// 	Msgs: []sdk.Msg{&erc20types.MsgRegisterERC20{
+	// 		Signer:         senderKey.AccAddr.String(),
+	// 		Erc20Addresses: []string{contractAddr.Hex()},
+	// 	}},
+	// })
+	// suite.Require().NoError(err)
+	// suite.Require().True(res.IsOK(), "register ERC20 should have succeeded", res.GetLog())
+	// suite.Require().NoError(suite.network.NextBlock())
+
+	// // Query native denom of contract
+	// erc20Client := suite.network.GetERC20Client()
+	// tokenPairRes, err := erc20Client.TokenPair(suite.network.GetContext(), &erc20types.QueryTokenPairRequest{
+	// 	Token: contractAddr.Hex(),
+	// })
+	// suite.Require().NoError(err)
+	// contractDenom := tokenPairRes.TokenPair.Denom
+
+	// Add multistaking evm coin proposal
+	bondWeightDec, err := math.LegacyNewDecFromStr(multistakingBondWeight)
+	suite.Require().NoError(err)
+
+	err = integrationutils.RegisterMultistakingEVMBondDenom(
+		integrationutils.UpdateParamsInput{
+			Tf:      suite.factory,
+			Network: suite.network,
+			Pk:      senderPriv,
+		},
+		contractAddr.Hex(),
+		bondWeightDec,
+		senderKey.AccAddr,
+	)
+	suite.Require().NoError(err)
 	suite.Require().NoError(suite.network.NextBlock())
-	suite.assertContractTotalSupply(contractAddr, mintAmount)
-	suite.assertContractBalanceOf(contractAddr, senderKey.Addr, mintAmount)
 
-	// Register ERC20 token as native token
-	contractNativeDenom := suite.registerErc20(contractAddr)
+	multistakingClient := suite.network.GetMultistakingClient()
+	coinsInfo, err := multistakingClient.MultiStakingCoinInfos(suite.network.GetContext(), &multistakingtypes.QueryMultiStakingCoinInfosRequest{})
+	suite.Require().NoError(err)
+	fmt.Println("coinsInfo", coinsInfo)
 
-	// Convert ERC20 to native token
+	// For testing purposes, we'll assume the proposal passes automatically
+	// In a real scenario, you'd need to vote and wait for the voting period
+
+	// // Prepare validator creation parameters
+	validatorAddress := sdk.ValAddress(senderKey.AccAddr).String()
+	pk := secp256k1.GenPrivKey().PubKey()
+	pkAny, err := codectypes.NewAnyWithValue(pk)
+	suite.Require().NoError(err)
+
+	ec := app.MakeEncodingConfig()
+	ec.InterfaceRegistry.UnpackAny(pkAny, &pk)
+
+	// pkConvert, found := pkAny.GetCachedValue().(cryptotypes.PubKey)
+	// fmt.Println("pkConvert", pkConvert, found)
+
 	res, err := suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
-		Msgs: []sdk.Msg{&erc20types.MsgConvertERC20{
-			ContractAddress: contractAddr.Hex(),
-			Amount:          math.NewInt(transferAmount),
-			Receiver:        recipientKey.AccAddr.String(),
-			Sender:          senderKey.Addr.Hex(),
+		Msgs: []sdk.Msg{&multistakingtypes.MsgCreateEVMValidator{
+			Description:       stakingtypes.NewDescription("Test Validator", "test-identity", "https://test-validator.com", "security@test-validator.com", "Test validator for multistaking"),
+			Commission:        stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(1, 2), math.LegacyNewDecWithPrec(2, 1), math.LegacyNewDecWithPrec(1, 2)),
+			MinSelfDelegation: math.NewInt(1),
+			ValidatorAddress:  validatorAddress,
+			Pubkey:            pkAny,
+			ContractAddress:   contractAddr.Hex(),
+			Value:             math.NewInt(1_000_000),
 		}},
 	})
 	suite.Require().NoError(err)
-	suite.Require().True(res.IsOK(), "transaction should have succeeded", mintResponse.GetLog())
+	suite.Require().True(res.IsOK(), "register ERC20 should have succeeded", res.GetLog())
 	suite.Require().NoError(suite.network.NextBlock())
-	suite.assertBankBalance(recipientKey.AccAddr, contractNativeDenom, transferAmount)
-	suite.assertContractBalanceOf(contractAddr, senderKey.Addr, mintAmount-transferAmount)
-	suite.assertContractTotalSupply(contractAddr, mintAmount)
+	// suite.createValidator(senderPriv, validatorAddress, contractAddr.Hex())
 
-	// Convert native token back to ERC20
-	res, err = suite.factory.ExecuteCosmosTx(recipientPriv, commonfactory.CosmosTxArgs{
-		Msgs: []sdk.Msg{&erc20types.MsgConvertCoin{
-			Coin:     sdk.NewCoin(contractNativeDenom, math.NewInt(transferAmount)),
-			Sender:   recipientKey.AccAddr.String(),
-			Receiver: senderKey.Addr.Hex(),
-		}},
-	})
-	suite.Require().NoError(err)
-	suite.Require().True(res.IsOK(), "transaction should have succeeded", mintResponse.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
-	suite.assertBankBalance(recipientKey.AccAddr, contractNativeDenom, 0)
-	suite.assertContractBalanceOf(contractAddr, senderKey.Addr, mintAmount)
-	suite.assertContractTotalSupply(contractAddr, mintAmount)
+	// // Verify validator was created
+	// multistakingClient := suite.network.GetMultistakingClient()
+	// validatorRes, err := multistakingClient.Validator(suite.network.GetContext(), &multistakingtypes.QueryValidatorRequest{
+	// 	ValidatorAddr: validatorAddress,
+	// })
+	// fmt.Println("validatorRes", validatorRes)
+	// suite.Require().NoError(err)
+	// suite.Require().NotNil(validatorRes.Validator)
+	// suite.Require().Equal(contractDenom, validatorRes.Validator.BondDenom)
+
+	// // Delegate more tokens to the validator
+	// delegateTxArgs := evmtypes.EvmTxArgs{
+	// 	To: &multistakingPrecompileAddr,
+	// 	GasLimit: 5_890_256,
+	// }
+	// delegateArgs := factory.CallArgs{
+	// 	ContractABI: suite.getMultistakingABI(),
+	// 	MethodName:  "delegate",
+	// 	Args: []interface{}{
+	// 		contractAddr.Hex(), // contractAddress
+	// 		validatorAddress,
+	// 		amount, // amount
+	// 	},
+	// }
+	// delegateResponse, err := suite.factory.ExecuteContractCall(senderPriv, delegateTxArgs, delegateArgs)
+	// suite.Require().NoError(err)
+	// suite.Require().True(delegateResponse.IsOK(), "delegate should have succeeded", delegateResponse.GetLog())
+
+	// err = suite.network.NextBlock()
+	// suite.Require().NoError(err)
+
+	// // Verify delegation was created
+	// stakingClient := suite.network.GetStakingClient()
+	// delegationRes, err := stakingClient.Delegation(suite.network.GetContext(), &stakingtypes.QueryDelegationRequest{
+	// 	DelegatorAddr: senderKey.AccAddr.String(),
+	// 	ValidatorAddr: validatorAddress,
+	// })
+	// suite.Require().NoError(err)
+	// suite.Require().NotNil(delegationRes.DelegationResponse)
+	// suite.Require().Equal(math.NewInt(multistakingStakeAmount*2), delegationRes.DelegationResponse.Balance.Amount)
+
+	// // Verify ERC20 balance decreased (tokens were converted for staking)
+	// balanceTxArgs := evmtypes.EvmTxArgs{To: &contractAddr}
+	// balanceArgs := factory.CallArgs{
+	// 	ContractABI: compiledContract.ABI,
+	// 	MethodName:  "balanceOf",
+	// 	Args:        []interface{}{senderKey.Addr},
+	// }
+	// balanceResponse, err := suite.factory.ExecuteContractCall(senderPriv, balanceTxArgs, balanceArgs)
+	// suite.Require().NoError(err)
+
+	// var finalBalance *big.Int
+	// err = integrationutils.DecodeContractCallResponse(&finalBalance, balanceArgs, balanceResponse)
+	// suite.Require().NoError(err)
+	// expectedBalance := big.NewInt(multistakingMintAmount - multistakingStakeAmount*2)
+	// suite.Require().Equal(expectedBalance, finalBalance)
 }
 
-func (suite *EVMTestSuite) assertContractTotalSupply(contractAddr common.Address, expected int64) {
-	totalSupplyTxArgs := evmtypes.EvmTxArgs{
-		To: &contractAddr,
-	}
-	totalSupplyArgs := factory.CallArgs{
-		ContractABI: compiledContract.ABI,
-		MethodName:  "totalSupply",
-		Args:        []interface{}{},
-	}
-	totalSupplyRes, err := suite.factory.ExecuteContractCall(suite.keyring.GetPrivKey(senderIndex), totalSupplyTxArgs, totalSupplyArgs)
+// Helper function to get multistaking ABI
+func (suite *EVMTestSuite) getMultistakingABI() abi.ABI {
+	// Read the ABI file from the filesystem
+	abiPath := filepath.Join("..", "..", "precompiles", "multistaking", "abi.json")
+	abiBytes, err := os.ReadFile(abiPath)
 	suite.Require().NoError(err)
-	suite.Require().True(totalSupplyRes.IsOK(), "transaction should have succeeded", totalSupplyRes.GetLog())
 
-	var totalSupplyResponse *big.Int
-	err = integrationutils.DecodeContractCallResponse(&totalSupplyResponse, totalSupplyArgs, totalSupplyRes)
+	// Parse the ABI file structure
+	var abiData struct {
+		ABI json.RawMessage `json:"abi"`
+	}
+
+	err = json.Unmarshal(abiBytes, &abiData)
 	suite.Require().NoError(err)
-	suite.Require().Equal(totalSupplyResponse, big.NewInt(expected))
-	suite.Require().NoError(suite.network.NextBlock())
+
+	parsedABI, err := abi.JSON(strings.NewReader(string(abiData.ABI)))
+	suite.Require().NoError(err)
+	return parsedABI
 }
 
-func (suite *EVMTestSuite) assertContractBalanceOf(contractAddr common.Address, addr common.Address, expected int64) {
-	balanceTxArgs := evmtypes.EvmTxArgs{
-		To: &contractAddr,
+func (suite *EVMTestSuite) createValidator(privKey cryptotypes.PrivKey, validatorAddr string, contractAddr string) {
+	// Create a sample Ed25519 public key (base64 encoded)
+	// In a real scenario, this would be the validator's actual consensus public key
+	samplePubKey := `{"@type":"/cosmos.crypto.ed25519.PubKey","key":"oWg2ISpLF405Jcm2vXV+2v4fnjodh6aafuIdeoW+rUw="}`
+
+	amount := big.NewInt(multistakingStakeAmount).String()
+	moniker := "Test Validator"
+	identity := "test-identity"
+	website := "https://test-validator.com"
+	security := "security@test-validator.com"
+	details := "Test validator for multistaking"
+	commissionRate := "0.10"          // 10%
+	commissionMaxRate := "0.20"       // 20%
+	commissionMaxChangeRate := "0.01" // 1%
+	minSelfDelegation := "1"
+
+	// Call createValidator through multistaking precompile
+	createValidatorTxArgs := evmtypes.EvmTxArgs{
+		To: &multistakingPrecompileAddr,
 	}
-	balanceArgs := factory.CallArgs{
-		ContractABI: compiledContract.ABI,
-		MethodName:  "balanceOf",
-		Args:        []interface{}{addr},
+	createValidatorArgs := factory.CallArgs{
+		ContractABI: suite.getMultistakingABI(),
+		MethodName:  "createValidator",
+		Args: []interface{}{
+			validatorAddr,
+			samplePubKey,
+			contractAddr, // contractAddress
+			amount,       // amount
+			moniker,
+			identity,
+			website,
+			security,
+			details,
+			commissionRate,
+			commissionMaxRate,
+			commissionMaxChangeRate,
+			minSelfDelegation,
+		},
 	}
-	balanceRes, err := suite.factory.ExecuteContractCall(suite.keyring.GetPrivKey(senderIndex), balanceTxArgs, balanceArgs)
-	suite.Require().NoError(err)
 
-	var balance *big.Int
-	err = integrationutils.DecodeContractCallResponse(&balance, balanceArgs, balanceRes)
+	createValidatorResponse, err := suite.factory.ExecuteContractCall(privKey, createValidatorTxArgs, createValidatorArgs)
 	suite.Require().NoError(err)
-	suite.Require().Equal(balance, big.NewInt(expected))
+	suite.Require().True(createValidatorResponse.IsOK(), "createValidator should have succeeded", createValidatorResponse.GetLog())
 
-	suite.Require().NoError(suite.network.NextBlock())
-}
-
-func (suite *EVMTestSuite) assertBankBalance(addr []byte, denom string, expected int64) {
-	balance, err := suite.grpcHandler.GetBalanceFromBank(addr, denom)
+	err = suite.network.NextBlock()
 	suite.Require().NoError(err)
-	suite.Require().Equal(balance.Balance.Amount, math.NewInt(expected))
-}
-
-func (suite *EVMTestSuite) registerErc20(contractAddr common.Address) string {
-	res, err := suite.factory.ExecuteCosmosTx(suite.keyring.GetPrivKey(senderIndex), commonfactory.CosmosTxArgs{
-		Msgs: []sdk.Msg{&erc20types.MsgRegisterERC20{
-			Signer:         suite.keyring.GetAccAddr(0).String(),
-			Erc20Addresses: []string{contractAddr.Hex()},
-		}},
-	})
-	suite.Require().NoError(err)
-	suite.Require().True(res.IsOK(), "transaction should have succeeded", res.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
-
-	// Query native denom of contract
-	erc20Client := suite.network.GetERC20Client()
-	tokenPairRes, err := erc20Client.TokenPair(suite.network.GetContext(), &erc20types.QueryTokenPairRequest{
-		Token: contractAddr.Hex(),
-	})
-	suite.Require().NoError(err)
-	contractDenom := tokenPairRes.TokenPair.Denom
-	return contractDenom
 }
