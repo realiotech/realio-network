@@ -14,8 +14,8 @@ import (
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v1.3.0
 func CreateUpgradeHandler(
-	mm *module.Manager,
-	configurator module.Configurator,
+	_ *module.Manager,
+	_ module.Configurator,
 	accountKeeper authkeeper.AccountKeeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
