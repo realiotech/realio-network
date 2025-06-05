@@ -16,7 +16,6 @@ import (
 )
 
 var (
-	mintAmount       int64 = 1_000_000
 	transferAmount   int64 = 1000
 	compiledContract       = contracts.ERC20MinterBurnerDecimalsContract
 	senderIndex            = 0

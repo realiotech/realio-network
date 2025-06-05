@@ -1,19 +1,13 @@
 package integration
 
 import (
-	"encoding/json"
-	"fmt"
 
 	// "fmt"
 	"math/big"
-	"os"
-	"path/filepath"
-	"strings"
 
 	"cosmossdk.io/math"
 	"github.com/cosmos/evm/testutil/integration/os/factory"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 
 	// cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -31,16 +25,19 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	integrationutils "github.com/realiotech/realio-network/testutil/integration/utils"
+
 	// "github.com/realiotech/realio-network/app"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/evm/testutil/integration/os/grpc"
 )
 
 var (
 	multistakingPrecompileAddr       = common.HexToAddress("0x0000000000000000000000000000000000000900")
-	multistakingMintAmount     int64 = 10_000_000 // 10M tokens
-	multistakingStakeAmount    int64 = 1_000_000  // 1M tokens for staking
-	multistakingBondWeight           = "1.0"      // 1:1 bond weight
-	amount                           = big.NewInt(multistakingStakeAmount).String()
+	mintAmount                 int64 = 1_000_000
+	delegateAmount             int64 = 500_000
+	redelegateAmount           int64 = 200_000
+	undelegateAmount           int64 = 200_000
+	multistakingBondWeight           = "1.0" // 1:1 bond weight
 )
 
 func (suite *EVMTestSuite) TestMultistakingCreateValidator() {
@@ -70,48 +67,10 @@ func (suite *EVMTestSuite) TestMultistakingCreateValidator() {
 	err = suite.network.NextBlock()
 	suite.Require().NoError(err)
 
-	// Mint tokens to sender and delegator
-	mintTxArgs := evmtypes.EvmTxArgs{To: &contractAddr}
-	amountToMint := big.NewInt(multistakingMintAmount)
-	mintArgs := factory.CallArgs{
-		ContractABI: compiledContract.ABI,
-		MethodName:  "mint",
-		Args:        []interface{}{senderKey.Addr, amountToMint},
-	}
-	factoryy = factory.New(suite.network, grpc.NewIntegrationHandler(suite.network))
-	mintResponse, err := factoryy.ExecuteContractCall(senderPriv, mintTxArgs, mintArgs)
-	suite.Require().NoError(err)
-	suite.Require().True(mintResponse.IsOK(), "mint should have succeeded", mintResponse.GetLog())
-
-	err = suite.network.NextBlock()
-	suite.Require().NoError(err)
-
-	mintArgs = factory.CallArgs{
-		ContractABI: compiledContract.ABI,
-		MethodName:  "mint",
-		Args:        []interface{}{delKey.Addr, amountToMint},
-	}
-
-	factoryy = factory.New(suite.network, grpc.NewIntegrationHandler(suite.network))
-	mintResponse, err = factoryy.ExecuteContractCall(senderPriv, mintTxArgs, mintArgs)
-	suite.Require().NoError(err)
-	suite.Require().True(mintResponse.IsOK(), "mint should have succeeded", mintResponse.GetLog())
-
-	err = suite.network.NextBlock()
-	suite.Require().NoError(err)
-
-	mintArgs = factory.CallArgs{
-		ContractABI: compiledContract.ABI,
-		MethodName:  "mint",
-		Args:        []interface{}{val2Key.Addr, amountToMint},
-	}
-	factoryy = factory.New(suite.network, grpc.NewIntegrationHandler(suite.network))
-	mintResponse, err = factoryy.ExecuteContractCall(senderPriv, mintTxArgs, mintArgs)
-	suite.Require().NoError(err)
-	suite.Require().True(mintResponse.IsOK(), "mint should have succeeded", mintResponse.GetLog())
-
-	err = suite.network.NextBlock()
-	suite.Require().NoError(err)
+	// Mint tokens to sender, delegator and validator
+	suite.mintERC20(contractAddr, senderKey.Addr, mintAmount, senderPriv)
+	suite.mintERC20(contractAddr, delKey.Addr, mintAmount, senderPriv)
+	suite.mintERC20(contractAddr, val2Key.Addr, mintAmount, senderPriv)
 
 	// Add multistaking evm coin proposal
 	bondWeightDec, err := math.LegacyNewDecFromStr(multistakingBondWeight)
@@ -130,103 +89,39 @@ func (suite *EVMTestSuite) TestMultistakingCreateValidator() {
 	suite.Require().NoError(suite.network.NextBlock())
 
 	multistakingClient := suite.network.GetMultistakingClient()
-	// stakingClient := suite.network.GetStakingClient()
 	coinsInf, err := multistakingClient.MultiStakingCoinInfos(suite.network.GetContext(), &multistakingtypes.QueryMultiStakingCoinInfosRequest{})
 	suite.Require().NoError(err)
 
-	validatorAddress := sdk.ValAddress(senderKey.AccAddr).String()
-	pk := secp256k1.GenPrivKey().PubKey()
-	pkAny, err := codectypes.NewAnyWithValue(pk)
-	suite.Require().NoError(err)
-
-	// Create validator
-	factoryy = factory.New(suite.network, grpc.NewIntegrationHandler(suite.network))
-	res, err := factoryy.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
-		Msgs: []sdk.Msg{&multistakingtypes.MsgCreateEVMValidator{
-			Description:       stakingtypes.NewDescription("Test Validator", "test-identity", "https://test-validator.com", "security@test-validator.com", "Test validator for multistaking"),
-			Commission:        stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(1, 2), math.LegacyNewDecWithPrec(2, 1), math.LegacyNewDecWithPrec(1, 2)),
-			MinSelfDelegation: math.NewInt(1),
-			ValidatorAddress:  validatorAddress,
-			Pubkey:            pkAny,
-			ContractAddress:   contractAddr.Hex(),
-			Value:             math.NewInt(1_000_000),
-		}},
-	})
-	suite.Require().NoError(err)
-	suite.Require().True(res.IsOK(), "register ERC20 should have succeeded", res.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
+	// Create 1st validator
+	validator1Address := sdk.ValAddress(senderKey.AccAddr).String()
+	suite.createEVMValidator(contractAddr, senderPriv, validator1Address)
 
 	// Verify validator was created
 	validatorRes, err := multistakingClient.Validator(suite.network.GetContext(), &multistakingtypes.QueryValidatorRequest{
-		ValidatorAddr: validatorAddress,
+		ValidatorAddr: validator1Address,
 	})
 	suite.Require().NoError(err)
 	suite.Require().NotNil(validatorRes.Validator)
 	suite.Require().Equal(coinsInf.Infos[2].Denom, validatorRes.Validator.BondDenom)
 
-	// Delegate more tokens to the validator
-	delegateAmount := math.NewInt(500_000) // 500K tokens
-	factoryy = factory.New(suite.network, grpc.NewIntegrationHandler(suite.network))
-	delegateResponse, err := factoryy.ExecuteCosmosTx(delPriv, commonfactory.CosmosTxArgs{
-		Msgs: []sdk.Msg{&multistakingtypes.MsgDelegateEVM{
-			DelegatorAddress: delKey.AccAddr.String(),
-			ValidatorAddress: validatorAddress,
-			ContractAddress:  contractAddr.Hex(),
-			Amount:           delegateAmount,
-		}},
-	})
-	suite.Require().NoError(err)
-	suite.Require().True(delegateResponse.IsOK(), "delegate should have succeeded", delegateResponse.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
+	suite.delegateEVM(contractAddr, delPriv, delKey.AccAddr.String(), validator1Address)
 
 	// Verify delegation
 	delRes, err := suite.network.GetStakingClient().Delegation(suite.network.GetContext(), &stakingtypes.QueryDelegationRequest{
 		DelegatorAddr: delKey.AccAddr.String(),
-		ValidatorAddr: validatorAddress,
+		ValidatorAddr: validator1Address,
 	})
 	suite.Require().NoError(err)
 	suite.Require().NotNil(delRes.DelegationResponse)
 
 	// Create a new validator then BeginRedelegate
-	pk2 := secp256k1.GenPrivKey().PubKey()
-	pkAny2, err := codectypes.NewAnyWithValue(pk2)
-	suite.Require().NoError(err)
-
-	suite.Require().NoError(suite.network.NextBlock())
 
 	// Create second validator
 	validator2Address := sdk.ValAddress(val2Key.AccAddr).String()
-	factoryy = factory.New(suite.network, grpc.NewIntegrationHandler(suite.network))
-	res2, err := factoryy.ExecuteCosmosTx(val2Priv, commonfactory.CosmosTxArgs{
-		Msgs: []sdk.Msg{&multistakingtypes.MsgCreateEVMValidator{
-			Description:       stakingtypes.NewDescription("Test Validator 2", "test-identity-2", "https://test-validator-2.com", "security@test-validator-2.com", "Second test validator for multistaking"),
-			Commission:        stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(15, 3), math.LegacyNewDecWithPrec(25, 2), math.LegacyNewDecWithPrec(15, 3)),
-			MinSelfDelegation: math.NewInt(1),
-			ValidatorAddress:  validator2Address,
-			Pubkey:            pkAny2,
-			ContractAddress:   contractAddr.Hex(),
-			Value:             math.NewInt(1_000_000),
-		}},
-	})
-	suite.Require().NoError(err)
-	suite.Require().True(res2.IsOK(), "create second validator should have succeeded", res2.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
+	suite.createEVMValidator(contractAddr, val2Priv, validator2Address)
 
 	// Redelegate tokens from first validator to second validator
-	redelegateAmount := math.NewInt(200_000) // 200K tokens
-	factoryy = factory.New(suite.network, grpc.NewIntegrationHandler(suite.network))
-	reDelegateResponse, err := factoryy.ExecuteCosmosTx(delPriv, commonfactory.CosmosTxArgs{
-		Msgs: []sdk.Msg{&multistakingtypes.MsgBeginRedelegateEVM{
-			DelegatorAddress:    delKey.AccAddr.String(),
-			ValidatorSrcAddress: validatorAddress,
-			ValidatorDstAddress: validator2Address,
-			ContractAddress:     contractAddr.Hex(),
-			Amount:              redelegateAmount,
-		}},
-	})
-	suite.Require().NoError(err)
-	suite.Require().True(reDelegateResponse.IsOK(), "redelegate should have succeeded", reDelegateResponse.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
+	suite.redelegateEVM(contractAddr, delPriv, delKey.AccAddr.String(), validator1Address, validator2Address)
 
 	// Verify delegation
 	delRes, err = suite.network.GetStakingClient().Delegation(suite.network.GetContext(), &stakingtypes.QueryDelegationRequest{
@@ -236,20 +131,8 @@ func (suite *EVMTestSuite) TestMultistakingCreateValidator() {
 	suite.Require().NoError(err)
 	suite.Require().NotNil(delRes.DelegationResponse)
 
-	// Unbond token from the validator
-	unbondAmount := math.NewInt(200_000)
-	factoryy = factory.New(suite.network, grpc.NewIntegrationHandler(suite.network))
-	undelResponse, err := factoryy.ExecuteCosmosTx(delPriv, commonfactory.CosmosTxArgs{
-		Msgs: []sdk.Msg{&multistakingtypes.MsgUndelegateEVM{
-			DelegatorAddress: delKey.AccAddr.String(),
-			ValidatorAddress: validator2Address,
-			ContractAddress:  contractAddr.Hex(),
-			Amount:           unbondAmount,
-		}},
-	})
-	suite.Require().NoError(err)
-	suite.Require().True(undelResponse.IsOK(), "undelegate should have succeeded", undelResponse.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
+	// Unbond token from the validator 2
+	suite.undelegateEVM(contractAddr, delPriv, delKey.AccAddr.String(), validator2Address)
 
 	// Get unbonding delegation info to get creation height
 	ubdRes, err := suite.network.GetStakingClient().UnbondingDelegation(suite.network.GetContext(), &stakingtypes.QueryUnbondingDelegationRequest{
@@ -261,120 +144,120 @@ func (suite *EVMTestSuite) TestMultistakingCreateValidator() {
 	suite.Require().NoError(suite.network.NextBlock())
 
 	// CancelUnbondingDelegation
-	currentHeight := ubdRes.Unbond.Entries[0].CreationHeight
-	factoryy = factory.New(suite.network, grpc.NewIntegrationHandler(suite.network))
-	cancelResponse, err := factoryy.ExecuteCosmosTx(delPriv, commonfactory.CosmosTxArgs{
-		Msgs: []sdk.Msg{&multistakingtypes.MsgCancelUnbondingEVMDelegation{
-			DelegatorAddress: delKey.AccAddr.String(),
-			ValidatorAddress: validator2Address,
-			ContractAddress:  contractAddr.Hex(),
-			Amount:           unbondAmount,
-			CreationHeight:   currentHeight,
-		}},
-	})
-	suite.Require().NoError(err)
-	suite.Require().True(cancelResponse.IsOK(), "cancelUnbondingDelegation should have succeeded", cancelResponse.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
+	creationHeight := ubdRes.Unbond.Entries[0].CreationHeight
+	suite.cancelUndelegateEvm(contractAddr, delPriv, delKey.AccAddr.String(), validator2Address, creationHeight)
 
 	_, err = suite.network.GetStakingClient().UnbondingDelegation(suite.network.GetContext(), &stakingtypes.QueryUnbondingDelegationRequest{
 		DelegatorAddr: delKey.AccAddr.String(),
 		ValidatorAddr: validator2Address,
 	})
-	suite.Require().Error(err)
+	suite.Require().Error(err) // empty
 
-	factoryy = factory.New(suite.network, grpc.NewIntegrationHandler(suite.network))
-	undelResponse, err = factoryy.ExecuteCosmosTx(delPriv, commonfactory.CosmosTxArgs{
-		Msgs: []sdk.Msg{&multistakingtypes.MsgUndelegateEVM{
-			DelegatorAddress: delKey.AccAddr.String(),
-			ValidatorAddress: validator2Address,
+	suite.undelegateEVM(contractAddr, delPriv, delKey.AccAddr.String(), validator2Address)
+
+	paramsRes, err := suite.network.GetStakingClient().Params(suite.network.GetContext(), &stakingtypes.QueryParamsRequest{})
+	suite.Require().NoError(err)
+
+	// User should get back their unbond tokens after unbonding period
+	expectedBalanceBefore := mintAmount - delegateAmount
+	suite.assertContractBalanceOf(contractAddr, delKey.Addr, expectedBalanceBefore)
+
+	suite.Require().NoError(suite.network.NextBlockAfter(paramsRes.Params.UnbondingTime))
+	suite.assertContractBalanceOf(contractAddr, delKey.Addr, expectedBalanceBefore+undelegateAmount)
+}
+
+func (suite *EVMTestSuite) mintERC20(contractAddr common.Address, to common.Address, amount int64, privKey cryptotypes.PrivKey) {
+	mintTxArgs := evmtypes.EvmTxArgs{To: &contractAddr}
+	mintArgs := factory.CallArgs{
+		ContractABI: compiledContract.ABI,
+		MethodName:  "mint",
+		Args:        []interface{}{to, big.NewInt(amount)},
+	}
+	mintResponse, err := suite.factory.ExecuteContractCall(privKey, mintTxArgs, mintArgs)
+	suite.Require().NoError(err)
+	suite.Require().True(mintResponse.IsOK(), "mint should have succeeded", mintResponse.GetLog())
+
+	err = suite.network.NextBlock()
+	suite.Require().NoError(err)
+}
+
+func (suite *EVMTestSuite) createEVMValidator(contractAddr common.Address, senderPriv cryptotypes.PrivKey, valAddr string) {
+	pk := secp256k1.GenPrivKey().PubKey()
+	pkAny, err := codectypes.NewAnyWithValue(pk)
+	suite.Require().NoError(err)
+
+	// Create validator
+	res, err := suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&multistakingtypes.MsgCreateEVMValidator{
+			Description:       stakingtypes.NewDescription("Test Validator", "test-identity", "https://test-validator.com", "security@test-validator.com", "Test validator for multistaking"),
+			Commission:        stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(1, 2), math.LegacyNewDecWithPrec(2, 1), math.LegacyNewDecWithPrec(1, 2)),
+			MinSelfDelegation: math.NewInt(1),
+			ValidatorAddress:  valAddr,
+			Pubkey:            pkAny,
+			ContractAddress:   contractAddr.Hex(),
+			Value:             math.NewInt(1_000_000),
+		}},
+	})
+	suite.Require().NoError(err)
+	suite.Require().True(res.IsOK(), "register ERC20 should have succeeded", res.GetLog())
+	suite.Require().NoError(suite.network.NextBlock())
+}
+
+func (suite *EVMTestSuite) delegateEVM(contractAddr common.Address, senderPriv cryptotypes.PrivKey, delAddr, valAddr string) {
+	// delegateAmount := math.NewInt(500_000) // 500K tokens
+	delegateResponse, err := suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&multistakingtypes.MsgDelegateEVM{
+			DelegatorAddress: delAddr,
+			ValidatorAddress: valAddr,
 			ContractAddress:  contractAddr.Hex(),
-			Amount:           unbondAmount,
+			Amount:           math.NewInt(delegateAmount),
+		}},
+	})
+	suite.Require().NoError(err)
+	suite.Require().True(delegateResponse.IsOK(), "delegate should have succeeded", delegateResponse.GetLog())
+	suite.Require().NoError(suite.network.NextBlock())
+}
+
+func (suite *EVMTestSuite) redelegateEVM(contractAddr common.Address, senderPriv cryptotypes.PrivKey, delAddr, oldValAddr, newValAddr string) {
+	reDelegateResponse, err := suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&multistakingtypes.MsgBeginRedelegateEVM{
+			DelegatorAddress:    delAddr,
+			ValidatorSrcAddress: oldValAddr,
+			ValidatorDstAddress: newValAddr,
+			ContractAddress:     contractAddr.Hex(),
+			Amount:              math.NewInt(redelegateAmount),
+		}},
+	})
+	suite.Require().NoError(err)
+	suite.Require().True(reDelegateResponse.IsOK(), "redelegate should have succeeded", reDelegateResponse.GetLog())
+	suite.Require().NoError(suite.network.NextBlock())
+}
+
+func (suite *EVMTestSuite) undelegateEVM(contractAddr common.Address, senderPriv cryptotypes.PrivKey, delAddr, valAddr string) {
+	undelResponse, err := suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&multistakingtypes.MsgUndelegateEVM{
+			DelegatorAddress: delAddr,
+			ValidatorAddress: valAddr,
+			ContractAddress:  contractAddr.Hex(),
+			Amount:           math.NewInt(undelegateAmount),
 		}},
 	})
 	suite.Require().NoError(err)
 	suite.Require().True(undelResponse.IsOK(), "undelegate should have succeeded", undelResponse.GetLog())
 	suite.Require().NoError(suite.network.NextBlock())
+}
 
-	paramsRes, err := suite.network.GetStakingClient().Params(suite.network.GetContext(), &stakingtypes.QueryParamsRequest{})
-	suite.Require().NoError(err)
-
-	fmt.Println("before", suite.network.GetContext().BlockHeight())
-	suite.network.NextBlock()
-	fmt.Println("after", suite.network.GetContext().BlockHeight())
-
-	suite.Require().NoError(suite.network.NextBlockAfter(paramsRes.Params.UnbondingTime))
-	ubdResNew, err := suite.network.GetStakingClient().UnbondingDelegation(suite.network.GetContext(), &stakingtypes.QueryUnbondingDelegationRequest{
-		DelegatorAddr: delKey.AccAddr.String(),
-		ValidatorAddr: validator2Address,
+func (suite *EVMTestSuite) cancelUndelegateEvm(contractAddr common.Address, senderPriv cryptotypes.PrivKey, delAddr, valAddr string, creationHeight int64) {
+	cancelResponse, err := suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&multistakingtypes.MsgCancelUnbondingEVMDelegation{
+			DelegatorAddress: delAddr,
+			ValidatorAddress: valAddr,
+			ContractAddress:  contractAddr.Hex(),
+			Amount:           math.NewInt(undelegateAmount),
+			CreationHeight:   creationHeight,
+		}},
 	})
-	fmt.Println("ubdResNew", ubdResNew)
-	suite.Require().Error(err)
+	suite.Require().NoError(err)
+	suite.Require().True(cancelResponse.IsOK(), "cancelUnbondingDelegation should have succeeded", cancelResponse.GetLog())
+	suite.Require().NoError(suite.network.NextBlock())
 }
-
-// Helper function to get multistaking ABI
-func (suite *EVMTestSuite) getMultistakingABI() abi.ABI {
-	// Read the ABI file from the filesystem
-	abiPath := filepath.Join("..", "..", "precompiles", "multistaking", "abi.json")
-	abiBytes, err := os.ReadFile(abiPath)
-	suite.Require().NoError(err)
-
-	// Parse the ABI file structure
-	var abiData struct {
-		ABI json.RawMessage `json:"abi"`
-	}
-
-	err = json.Unmarshal(abiBytes, &abiData)
-	suite.Require().NoError(err)
-
-	parsedABI, err := abi.JSON(strings.NewReader(string(abiData.ABI)))
-	suite.Require().NoError(err)
-	return parsedABI
-}
-
-// func (suite *EVMTestSuite) createValidator(privKey cryptotypes.PrivKey, validatorAddr string, contractAddr string) {
-// 	// Create a sample Ed25519 public key (base64 encoded)
-// 	// In a real scenario, this would be the validator's actual consensus public key
-// 	samplePubKey := `{"@type":"/cosmos.crypto.ed25519.PubKey","key":"oWg2ISpLF405Jcm2vXV+2v4fnjodh6aafuIdeoW+rUw="}`
-
-// 	amount := big.NewInt(multistakingStakeAmount).String()
-// 	moniker := "Test Validator"
-// 	identity := "test-identity"
-// 	website := "https://test-validator.com"
-// 	security := "security@test-validator.com"
-// 	details := "Test validator for multistaking"
-// 	commissionRate := "0.10"          // 10%
-// 	commissionMaxRate := "0.20"       // 20%
-// 	commissionMaxChangeRate := "0.01" // 1%
-// 	minSelfDelegation := "1"
-
-// 	// Call createValidator through multistaking precompile
-// 	createValidatorTxArgs := evmtypes.EvmTxArgs{
-// 		To: &multistakingPrecompileAddr,
-// 	}
-// 	createValidatorArgs := factory.CallArgs{
-// 		ContractABI: suite.getMultistakingABI(),
-// 		MethodName:  "createValidator",
-// 		Args: []interface{}{
-// 			validatorAddr,
-// 			samplePubKey,
-// 			contractAddr, // contractAddress
-// 			amount,       // amount
-// 			moniker,
-// 			identity,
-// 			website,
-// 			security,
-// 			details,
-// 			commissionRate,
-// 			commissionMaxRate,
-// 			commissionMaxChangeRate,
-// 			minSelfDelegation,
-// 		},
-// 	}
-
-// 	createValidatorResponse, err := factoryy.ExecuteContractCall(privKey, createValidatorTxArgs, createValidatorArgs)
-// 	suite.Require().NoError(err)
-// 	suite.Require().True(createValidatorResponse.IsOK(), "createValidator should have succeeded", createValidatorResponse.GetLog())
-
-// 	err = suite.network.NextBlock()
-// 	suite.Require().NoError(err)
-// }
