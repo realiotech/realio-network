@@ -29,6 +29,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	cmtypes "github.com/cometbft/cometbft/types"
+	minttypes "github.com/realiotech/realio-network/x/mint/types"
 )
 
 // Network is the interface that wraps the methods to interact with integration test network.
@@ -38,6 +39,7 @@ import (
 type Network interface {
 	network.Network
 	GetMultistakingClient() multistakingtypes.QueryClient
+	GetMintModuleClient() minttypes.QueryClient // conflict types with current GetMintClient()
 }
 
 var _ Network = (*IntegrationNetwork)(nil)

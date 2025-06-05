@@ -17,11 +17,13 @@ import (
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	sdkminttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
+	mintkeeper "github.com/realiotech/realio-network/x/mint/keeper"
+	minttypes "github.com/realiotech/realio-network/x/mint/types"
 )
 
 func getQueryHelper(ctx sdktypes.Context, encCfg testutil.TestEncodingConfig) *baseapp.QueryServiceTestHelper {
@@ -86,8 +88,14 @@ func (n *IntegrationNetwork) GetDistrClient() distrtypes.QueryClient {
 	return distrtypes.NewQueryClient(queryHelper)
 }
 
-func (n *IntegrationNetwork) GetMintClient() minttypes.QueryClient {
-	panic("Mint client not implemented")
+func (n *IntegrationNetwork) GetMintClient() sdkminttypes.QueryClient {
+	panic("Precise bank client not implemented")
+}
+
+func (n *IntegrationNetwork) GetMintModuleClient() minttypes.QueryClient {
+	queryHelper := getQueryHelper(n.GetContext(), n.GetEncodingConfig())
+	minttypes.RegisterQueryServer(queryHelper, mintkeeper.NewQueryServerImpl(n.app.MintKeeper))
+	return minttypes.NewQueryClient(queryHelper)
 }
 
 func (n *IntegrationNetwork) GetPreciseBankClient() precisebanktypes.QueryClient {
