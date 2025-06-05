@@ -20,6 +20,8 @@ import (
 	sdkminttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
+	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	mintkeeper "github.com/realiotech/realio-network/x/mint/keeper"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
 )
@@ -33,7 +35,9 @@ func getQueryHelper(ctx sdktypes.Context, encCfg testutil.TestEncodingConfig) *b
 }
 
 func (n *IntegrationNetwork) GetERC20Client() erc20types.QueryClient {
-	panic("ERC20 client not implemented")
+	queryHelper := getQueryHelper(n.GetContext(), n.GetEncodingConfig())
+	erc20types.RegisterQueryServer(queryHelper, n.app.Erc20Keeper)
+	return erc20types.NewQueryClient(queryHelper)
 }
 
 func (n *IntegrationNetwork) GetEvmClient() evmtypes.QueryClient {
@@ -96,4 +100,10 @@ func (n *IntegrationNetwork) GetMintModuleClient() minttypes.QueryClient {
 
 func (n *IntegrationNetwork) GetPreciseBankClient() precisebanktypes.QueryClient {
 	panic("Precise bank client not implemented")
+}
+
+func (n *IntegrationNetwork) GetMultistakingClient() multistakingtypes.QueryClient {
+	queryHelper := getQueryHelper(n.GetContext(), n.GetEncodingConfig())
+	multistakingtypes.RegisterQueryServer(queryHelper, multistakingkeeper.NewQueryServerImpl(n.app.MultiStakingKeeper))
+	return multistakingtypes.NewQueryClient(queryHelper)
 }
