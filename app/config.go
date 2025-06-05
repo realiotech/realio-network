@@ -26,7 +26,22 @@ var sealed = false
 // that allows initializing the app with different coin info based on the
 // chain id
 var ChainsCoinInfo = map[string]evmtypes.EvmCoinInfo{
+	// mainnet
 	"realionetwork_3301": {
+		Denom:         realionetworktypes.BaseDenom,
+		ExtendedDenom: realionetworktypes.BaseDenom,
+		DisplayDenom:  realionetworktypes.BaseDenom,
+		Decimals:      18,
+	},
+	// testnet
+	"realionetwork_3300": {
+		Denom:         realionetworktypes.BaseDenom,
+		ExtendedDenom: realionetworktypes.BaseDenom,
+		DisplayDenom:  realionetworktypes.BaseDenom,
+		Decimals:      18,
+	},
+	// local net
+	"realionetworklocal_7777": {
 		Denom:         realionetworktypes.BaseDenom,
 		ExtendedDenom: realionetworktypes.BaseDenom,
 		DisplayDenom:  realionetworktypes.BaseDenom,
