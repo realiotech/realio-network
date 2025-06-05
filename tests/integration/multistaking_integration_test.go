@@ -32,12 +32,11 @@ import (
 )
 
 var (
-	multistakingPrecompileAddr       = common.HexToAddress("0x0000000000000000000000000000000000000900")
-	mintAmount                 int64 = 1_000_000
-	delegateAmount             int64 = 500_000
-	redelegateAmount           int64 = 200_000
-	undelegateAmount           int64 = 200_000
-	multistakingBondWeight           = "1.0" // 1:1 bond weight
+	mintAmount             int64 = 1_000_000
+	delegateAmount         int64 = 500_000
+	redelegateAmount       int64 = 200_000
+	undelegateAmount       int64 = 200_000
+	multistakingBondWeight       = "1.0" // 1:1 bond weight
 )
 
 func (suite *EVMTestSuite) TestMultistakingCreateValidator() {

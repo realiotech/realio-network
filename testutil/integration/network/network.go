@@ -28,7 +28,6 @@ import (
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
-	cmtypes "github.com/cometbft/cometbft/types"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
 )
 
@@ -185,7 +184,7 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 	}
 
 	consensusParams := chainutil.DefaultConsensusParams
-	consensusParams.Validator.PubKeyTypes = append(consensusParams.Validator.PubKeyTypes, cmtypes.ABCIPubKeyTypeSecp256k1)
+	consensusParams.Validator.PubKeyTypes = append(consensusParams.Validator.PubKeyTypes, cmttypes.ABCIPubKeyTypeSecp256k1)
 	now := time.Now()
 
 	if _, err = exampleApp.InitChain(
@@ -317,7 +316,6 @@ func (n *IntegrationNetwork) BroadcastTxSync(txBytes []byte) (abcitypes.ExecTxRe
 	// NextBlock or NextBlockAfter functions
 	req.DecidedLastCommit = abcitypes.CommitInfo{}
 
-	fmt.Println("Before FinalizeBlock")
 	blockRes, err := n.app.BaseApp.FinalizeBlock(req)
 	if err != nil {
 		return abcitypes.ExecTxResult{}, err
@@ -335,7 +333,6 @@ func (n *IntegrationNetwork) Simulate(txBytes []byte) (*txtypes.SimulateResponse
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("after simulate")
 	return &txtypes.SimulateResponse{
 		GasInfo: &gas,
 		Result:  result,

@@ -9,14 +9,14 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/realiotech/realio-network/testutil/integration/network"
 
+	"cosmossdk.io/math"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	"cosmossdk.io/math"
-	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
+	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 )
 
@@ -86,10 +86,9 @@ func RegisterMultistakingEVMBondDenom(input UpdateParamsInput, contractAddr stri
 	txArgs := commonfactory.CosmosTxArgs{
 		Msgs: []sdk.Msg{govMsg},
 	}
-	proposalId, err := submitProposal(input.Tf, input.Network, input.Pk, txArgs)
+	proposalID, err := submitProposal(input.Tf, input.Network, input.Pk, txArgs)
 	if err != nil {
 		return err
 	}
-	return ApproveProposal(input.Tf, input.Network, input.Pk, proposalId)
-
+	return ApproveProposal(input.Tf, input.Network, input.Pk, proposalID)
 }
