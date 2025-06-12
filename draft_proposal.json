@@ -1,0 +1,54 @@
+{
+ "messages": [
+  {
+   "@type": "/cosmos.evm.vm.v1.MsgUpdateParams",
+   "authority": "realio10d07y265gmmuvt4z0w9aw880jnsr700jnhh02f",
+   "params": {
+    "evm_denom": "",
+    "extra_eips": [],
+    "chain_config": {
+     "homestead_block": null,
+     "dao_fork_block": null,
+     "dao_fork_support": false,
+     "eip150_block": null,
+     "eip150_hash": "",
+     "eip155_block": null,
+     "eip158_block": null,
+     "byzantium_block": null,
+     "constantinople_block": null,
+     "petersburg_block": null,
+     "istanbul_block": null,
+     "muir_glacier_block": null,
+     "berlin_block": null,
+     "london_block": null,
+     "arrow_glacier_block": null,
+     "gray_glacier_block": null,
+     "merge_netsplit_block": null,
+     "shanghai_block": null,
+     "cancun_block": null,
+     "chain_id": "0",
+     "denom": "",
+     "decimals": "0"
+    },
+    "allow_unprotected_txs": false,
+    "evm_channels": [],
+    "access_control": {
+     "create": {
+      "access_type": "ACCESS_TYPE_PERMISSIONLESS",
+      "access_control_list": []
+     },
+     "call": {
+      "access_type": "ACCESS_TYPE_PERMISSIONLESS",
+      "access_control_list": []
+     }
+    },
+    "active_static_precompiles": []
+   }
+  }
+ ],
+ "metadata": "ipfs://CID",
+ "deposit": "1000000ario",
+ "title": "test",
+ "summary": "test",
+ "expedited": false
+}

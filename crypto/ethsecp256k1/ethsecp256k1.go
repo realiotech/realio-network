@@ -212,6 +212,7 @@ func (pubKey *PubKey) UnmarshalAminoJSON(bz []byte) error {
 //
 // CONTRACT: The signature should be in [R || S] format.
 func (pubKey PubKey) VerifySignature(msg, sig []byte) bool {
+	fmt.Println("VerifySignature realio")
 	return pubKey.verifySignatureECDSA(msg, sig) || pubKey.verifySignatureAsEIP712(msg, sig)
 }
 
