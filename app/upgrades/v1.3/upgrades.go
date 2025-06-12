@@ -33,8 +33,6 @@ func CreateUpgradeHandler(
 		// Overwrite
 		accountKeeper.SetModuleAccount(ctx, mintModule)
 
-		
-
 		// We have no version map changes so keep current vm
 		return vm, nil
 	}
