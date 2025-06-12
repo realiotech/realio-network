@@ -7,14 +7,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
+	vmtypes "github.com/cosmos/evm/x/vm/types"
+	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v1.3.0
 func CreateUpgradeHandler(
-	_ *module.Manager,
-	_ module.Configurator,
+	mm *module.Manager,
+	cfg module.Configurator,
 	evmKeeper evmkeeper.Keeper,
-
 ) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
@@ -27,7 +28,10 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
+		vm[vmtypes.ModuleName] = 8
+		vm[feemarkettypes.ModuleName] = 5
+
 		// We have no version map changes so keep current vm
-		return vm, nil
+		return mm.RunMigrations(ctx, cfg, vm)
 	}
 }
