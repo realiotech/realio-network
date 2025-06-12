@@ -10,7 +10,6 @@ import (
 
 	"github.com/realiotech/realio-network/crypto/account"
 	"github.com/realiotech/realio-network/crypto/ethsecp256k1"
-	osethsecp256k1 "github.com/evmos/os/crypto/ethsecp256k1"
 )
 
 // RegisterInterfaces register the evmOS key concrete types.
@@ -25,6 +24,4 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	)
 	registry.RegisterImplementations((*cryptotypes.PubKey)(nil), &ethsecp256k1.PubKey{})
 	registry.RegisterImplementations((*cryptotypes.PrivKey)(nil), &ethsecp256k1.PrivKey{})
-	registry.RegisterImplementations((*cryptotypes.PubKey)(nil), &osethsecp256k1.PubKey{})
-	registry.RegisterImplementations((*cryptotypes.PrivKey)(nil), &osethsecp256k1.PrivKey{})
 }

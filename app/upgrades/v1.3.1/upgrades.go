@@ -6,9 +6,6 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	// authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	// "github.com/cosmos/evm/crypto/ethsecp256k1"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 )
 
@@ -16,13 +13,12 @@ import (
 func CreateUpgradeHandler(
 	_ *module.Manager,
 	_ module.Configurator,
-	accountKeeper authkeeper.AccountKeeper,
 	evmKeeper evmkeeper.Keeper,
 
 ) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
-		sdkCtx.Logger().Info("Starting upgrade for v1.3.0...")
+		sdkCtx.Logger().Info("Starting upgrade for v1.3.1...")
 
 		params := evmKeeper.GetParams(sdkCtx)
 		params.ExtraEIPs = []int64{3855}
