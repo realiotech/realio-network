@@ -53,6 +53,7 @@ func MakeEncodingConfig() params.EncodingConfig {
 	evmcryptocodec.RegisterInterfaces(interfaceRegistry)
 	ethcryptocodec.RegisterCrypto(legacyAmino)
 	ethcryptocodec.RegisterInterfaces(interfaceRegistry)
+	ossecp256k1.RegisterCrypto(legacyAmino)
 	ossecp256k1.RegisterInterfaces(interfaceRegistry)
 
 	// This is needed for the EIP712 txs because currently is using
