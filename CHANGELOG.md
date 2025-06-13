@@ -37,6 +37,12 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
+## [Unreleased]
+
+### State Machine Breaking
+
+- (fix) [#258](https://github.com/realiotech/realio-network/pull/258): Add missing items and fix upgrade v1.3.0
+
 # [v1.3.0]
 
 ### State Machine Breaking
