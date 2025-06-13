@@ -212,11 +212,7 @@ func (pubKey *PubKey) UnmarshalAminoJSON(bz []byte) error {
 //
 // CONTRACT: The signature should be in [R || S] format.
 func (pubKey PubKey) VerifySignature(msg, sig []byte) bool {
-	fmt.Println("Go VerifySignature evm")
-	first := pubKey.verifySignatureECDSA(msg, sig)
-	second := pubKey.verifySignatureAsEIP712(msg, sig)
-	fmt.Println("first", first, "second", second)
-	return first || second
+	return pubKey.verifySignatureECDSA(msg, sig) || pubKey.verifySignatureAsEIP712(msg, sig)
 }
 
 // Verifies the signature as an EIP-712 signature by first converting the message payload
