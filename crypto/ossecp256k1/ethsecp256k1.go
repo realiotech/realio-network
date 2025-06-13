@@ -30,9 +30,9 @@ const (
 // Amino encoding names
 const (
 	// PrivKeyName defines the amino encoding name for the EthSecp256k1 private key
-	PrivKeyName = "os/PrivKeyEthSecp256k1"
+	PrivKeyName = "os/PrivKeyEthSecp256k1_os"
 	// PubKeyName defines the amino encoding name for the EthSecp256k1 public key
-	PubKeyName = "os/PubKeyEthSecp256k1"
+	PubKeyName = "os/PubKeyEthSecp256k1_os"
 )
 
 // ----------------------------------------------------------------------------

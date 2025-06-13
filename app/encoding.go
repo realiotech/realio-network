@@ -48,7 +48,7 @@ func MakeEncodingConfig() params.EncodingConfig {
 	txConfig := tx.NewTxConfig(codec, tx.DefaultSignModes)
 
 	std.RegisterInterfaces(interfaceRegistry)
-	// ossecp256k1.RegisterCrypto(legacyAmino)
+	ossecp256k1.RegisterCrypto(legacyAmino)
 	ossecp256k1.RegisterInterfaces(interfaceRegistry)
 	evmostypes.RegisterInterfaces(interfaceRegistry)
 	evmcryptocodec.RegisterCrypto(legacyAmino)
