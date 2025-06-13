@@ -48,12 +48,13 @@ func MakeEncodingConfig() params.EncodingConfig {
 	txConfig := tx.NewTxConfig(codec, tx.DefaultSignModes)
 
 	std.RegisterInterfaces(interfaceRegistry)
+	// ossecp256k1.RegisterCrypto(legacyAmino)
+	ossecp256k1.RegisterInterfaces(interfaceRegistry)
 	evmostypes.RegisterInterfaces(interfaceRegistry)
 	evmcryptocodec.RegisterCrypto(legacyAmino)
 	evmcryptocodec.RegisterInterfaces(interfaceRegistry)
 	ethcryptocodec.RegisterCrypto(legacyAmino)
 	ethcryptocodec.RegisterInterfaces(interfaceRegistry)
-	ossecp256k1.RegisterInterfaces(interfaceRegistry)
 
 	// This is needed for the EIP712 txs because currently is using
 	// the deprecated method legacytx.StdSignBytes

@@ -10,7 +10,7 @@ KEYRING="test"
 KEYALGO="eth_secp256k1"
 
 LOGLEVEL="info"
-# Set dedicated home directory for the realio-networkd instance
+# Set dedicated home directory for the ./build/realio-networkd instance
 HOMEDIR="$HOME/.realio-network"
 
 BASEFEE=10000000
@@ -49,7 +49,7 @@ while [[ $# -gt 0 ]]; do
 		shift # Move past the argument
 		;;
 	--no-install)
-		echo "Flag --no-install passed -> Skipping installation of the realio-networkd binary."
+		echo "Flag --no-install passed -> Skipping installation of the ./build/realio-networkd binary."
 		install=false
 		shift # Move past the flag
 		;;
@@ -92,8 +92,8 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	rm -rf "$HOMEDIR"
 
 	# Set client config
-	realio-networkd config set client chain-id "$CHAINID" --home "$HOMEDIR"
-	realio-networkd config set client keyring-backend "$KEYRING" --home "$HOMEDIR"
+	./build/realio-networkd config set client chain-id "$CHAINID" --home "$HOMEDIR"
+	./build/realio-networkd config set client keyring-backend "$KEYRING" --home "$HOMEDIR"
 
 	# myKey address 0x7cb61d4117ae31a12e393a1cfa3bac666481d02e | os10jmp6sgh4cc6zt3e8gw05wavvejgr5pwjnpcky
 	VAL_KEY="mykey"
@@ -116,14 +116,14 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	USER4_MNEMONIC="doll midnight silk carpet brush boring pluck office gown inquiry duck chief aim exit gain never tennis crime fragile ship cloud surface exotic patch"
 
 	# Import keys from mnemonics
-	echo "$VAL_MNEMONIC" | realio-networkd keys add "$VAL_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
-	echo "$USER1_MNEMONIC" | realio-networkd keys add "$USER1_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
-	echo "$USER2_MNEMONIC" | realio-networkd keys add "$USER2_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
-	echo "$USER3_MNEMONIC" | realio-networkd keys add "$USER3_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
-	echo "$USER4_MNEMONIC" | realio-networkd keys add "$USER4_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
+	echo "$VAL_MNEMONIC" | ./build/realio-networkd keys add "$VAL_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
+	echo "$USER1_MNEMONIC" | ./build/realio-networkd keys add "$USER1_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
+	echo "$USER2_MNEMONIC" | ./build/realio-networkd keys add "$USER2_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
+	echo "$USER3_MNEMONIC" | ./build/realio-networkd keys add "$USER3_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
+	echo "$USER4_MNEMONIC" | ./build/realio-networkd keys add "$USER4_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
 
 	# Set moniker and chain-id for the example chain (Moniker can be anything, chain-id must be an integer)
-	realio-networkd init $MONIKER -o --chain-id "$CHAINID" --home "$HOMEDIR"
+	./build/realio-networkd init $MONIKER -o --chain-id "$CHAINID" --home "$HOMEDIR"
 
 	# Change parameter token denominations to desired value
 	jq '.app_state["staking"]["params"]["bond_denom"]="ario"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -196,26 +196,26 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	sed -i.bak 's/pruning-interval = "0"/pruning-interval = "10"/g' "$APP_TOML"
 
 	# Allocate genesis accounts (cosmos formatted addresses)
-	realio-networkd genesis add-genesis-account "$VAL_KEY" 100000000000000000000000000ario --keyring-backend "$KEYRING" --home "$HOMEDIR"
-	realio-networkd genesis add-genesis-account "$USER1_KEY" 1000000000000000000000ario --keyring-backend "$KEYRING" --home "$HOMEDIR"
-	realio-networkd genesis add-genesis-account "$USER2_KEY" 1000000000000000000000ario --keyring-backend "$KEYRING" --home "$HOMEDIR"
-	realio-networkd genesis add-genesis-account "$USER3_KEY" 1000000000000000000000ario --keyring-backend "$KEYRING" --home "$HOMEDIR"
-	realio-networkd genesis add-genesis-account "$USER4_KEY" 1000000000000000000000ario --keyring-backend "$KEYRING" --home "$HOMEDIR"
+	./build/realio-networkd genesis add-genesis-account "$VAL_KEY" 100000000000000000000000000ario --keyring-backend "$KEYRING" --home "$HOMEDIR"
+	./build/realio-networkd genesis add-genesis-account "$USER1_KEY" 1000000000000000000000ario --keyring-backend "$KEYRING" --home "$HOMEDIR"
+	./build/realio-networkd genesis add-genesis-account "$USER2_KEY" 1000000000000000000000ario --keyring-backend "$KEYRING" --home "$HOMEDIR"
+	./build/realio-networkd genesis add-genesis-account "$USER3_KEY" 1000000000000000000000ario --keyring-backend "$KEYRING" --home "$HOMEDIR"
+	./build/realio-networkd genesis add-genesis-account "$USER4_KEY" 1000000000000000000000ario --keyring-backend "$KEYRING" --home "$HOMEDIR"
 
 	# Sign genesis transaction
-	realio-networkd genesis gentx "$VAL_KEY" 1000000000000000000000ario --gas-prices ${BASEFEE}ario --keyring-backend "$KEYRING" --chain-id "$CHAINID" --home "$HOMEDIR"
+	./build/realio-networkd genesis gentx "$VAL_KEY" 1000000000000000000000ario --gas-prices ${BASEFEE}ario --keyring-backend "$KEYRING" --chain-id "$CHAINID" --home "$HOMEDIR"
 	## In case you want to create multiple validators at genesis
-	## 1. Back to `realio-networkd keys add` step, init more keys
-	## 2. Back to `realio-networkd add-genesis-account` step, add balance for those
-	## 3. Clone this ~/.realio-networkd home directory into some others, let's say `~/.clonedOsd`
+	## 1. Back to `./build/realio-networkd keys add` step, init more keys
+	## 2. Back to `./build/realio-networkd add-genesis-account` step, add balance for those
+	## 3. Clone this ~/../build/realio-networkd home directory into some others, let's say `~/.clonedOsd`
 	## 4. Run `gentx` in each of those folders
 	## 5. Copy the `gentx-*` folders under `~/.clonedOsd/config/gentx/` folders into the original `~/.realio-networkd/config/gentx`
 
 	# Collect genesis tx
-	realio-networkd genesis collect-gentxs --home "$HOMEDIR"
+	./build/realio-networkd genesis collect-gentxs --home "$HOMEDIR"
 
 	# Run this to ensure everything worked and that the genesis file is setup correctly
-	realio-networkd genesis validate-genesis --home "$HOMEDIR"
+	./build/realio-networkd genesis validate-genesis --home "$HOMEDIR"
 
 	if [[ $1 == "pending" ]]; then
 		echo "pending mode is on, please wait for the first block committed."
@@ -223,7 +223,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 fi
 
 # Start the node
-realio-networkd start "$TRACE" \
+./build/realio-networkd start "$TRACE" \
 	--log_level $LOGLEVEL \
 	--minimum-gas-prices=0.0001ario \
 	--home "$HOMEDIR" \

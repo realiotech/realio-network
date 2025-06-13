@@ -1,0 +1,20 @@
+{
+ "messages": [
+  {
+   "@type": "/cosmos.upgrade.v1beta1.MsgSoftwareUpgrade",
+   "authority": "realio10d07y265gmmuvt4z0w9aw880jnsr700jnhh02f",
+   "plan": {
+    "name": "",
+    "time": "0001-01-01T00:00:00Z",
+    "height": "0",
+    "info": "",
+    "upgraded_client_state": null
+   }
+  }
+ ],
+ "metadata": "ipfs://CID",
+ "deposit": "1000000ario",
+ "title": "a",
+ "summary": "a",
+ "expedited": false
+}
