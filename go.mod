@@ -257,7 +257,7 @@ require (
 
 replace (
 	// use Cosmos-SDK fork to enable Ledger functionality
-	github.com/cosmos/cosmos-sdk => github.com/hieuvubk/cosmos-sdk v0.50.13-log
+	github.com/cosmos/cosmos-sdk => github.com/hieuvubk/cosmos-sdk v0.50.13-log-1
 
 	// github.com/realio-tech/multi-staking-module => ../multi-staking
 	// use Cosmos geth fork
