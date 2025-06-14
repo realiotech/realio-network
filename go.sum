@@ -782,8 +782,8 @@ github.com/hashicorp/yamux v0.1.1 h1:yrQxtgseBDrq9Y652vSRDvsKCJKOUD+GzTS4Y0Y8pvE
 github.com/hashicorp/yamux v0.1.1/go.mod h1:CtWFDAQgb7dxtzFs4tWbplKIe2jSi3+5vKbgIO0SLnQ=
 github.com/hdevalence/ed25519consensus v0.2.0 h1:37ICyZqdyj0lAZ8P4D1d1id3HqbbG1N3iBb1Tb4rdcU=
 github.com/hdevalence/ed25519consensus v0.2.0/go.mod h1:w3BHWjwJbFU29IRHL1Iqkw3sus+7FctEyM4RqDxYNzo=
-github.com/hieuvubk/cosmos-sdk v0.50.13-log-2 h1:SkX3ulfu1PWgTTqumiU0geIILSyY4/CnJK9QwbaHWEs=
-github.com/hieuvubk/cosmos-sdk v0.50.13-log-2/go.mod h1:hrWEFMU1eoXqLJeE6VVESpJDQH67FS1nnMrQIjO2daw=
+github.com/hieuvubk/cosmos-sdk v0.50.13-log-3 h1:ewuwrpPErDJWOa1EoZyZYgZx6AzgBQyeGicbqMFj7S0=
+github.com/hieuvubk/cosmos-sdk v0.50.13-log-3/go.mod h1:hrWEFMU1eoXqLJeE6VVESpJDQH67FS1nnMrQIjO2daw=
 github.com/hieuvubk/evm v0.2.0-log1 h1:B/yrQyRUuOccPJWOTnkfPPl7Ss8HCNP8EQBVMe4mx7g=
 github.com/hieuvubk/evm v0.2.0-log1/go.mod h1:/4D24vd1xRnUVaXzfNryxTo5Gn1c/phJG5FvpH9OvLQ=
 github.com/holiman/bloomfilter/v2 v2.0.3 h1:73e0e/V0tCydx14a0SCYS/EWCxgwLZ18CZcZKVu0fao=
