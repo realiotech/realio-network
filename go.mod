@@ -259,6 +259,8 @@ replace (
 	// use Cosmos-SDK fork to enable Ledger functionality
 	github.com/cosmos/cosmos-sdk => github.com/hieuvubk/cosmos-sdk v0.50.13-log-1
 
+	github.com/cosmos/evm => github.com/hieuvubk/evm v0.2.0-log1
+
 	// github.com/realio-tech/multi-staking-module => ../multi-staking
 	// use Cosmos geth fork
 	github.com/ethereum/go-ethereum => github.com/cosmos/go-ethereum v1.10.26-evmos-rc4.0.20250402013457-cf9d288f0147
