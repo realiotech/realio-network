@@ -256,7 +256,7 @@ require (
 )
 
 replace (
-	github.com/cometbft/cometbft => github.com/decentrio/cometbft v0.38.17-log
+	github.com/cometbft/cometbft => github.com/decentrio/cometbft v0.38.17-log-1
 
 	// use Cosmos-SDK fork to enable Ledger functionality
 	github.com/cosmos/cosmos-sdk => github.com/hieuvubk/cosmos-sdk v0.50.13-log-10

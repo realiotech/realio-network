@@ -441,8 +441,8 @@ github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSs
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1VwoXQT9A3Wy9MM3WgvqSxFWenqJduM=
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/decentrio/cometbft v0.38.17-log h1:6HSzWVRvUqDdFLavQJxIFjzYk2oDiW6IFHWDlu4DCgE=
-github.com/decentrio/cometbft v0.38.17-log/go.mod h1:5l0SkgeLRXi6bBfQuevXjKqML1jjfJJlvI1Ulp02/o4=
+github.com/decentrio/cometbft v0.38.17-log-1 h1:daZqOMad8RfHQzWKj/OQ7xXOSaLr4w2X31RMrVNR6bA=
+github.com/decentrio/cometbft v0.38.17-log-1/go.mod h1:5l0SkgeLRXi6bBfQuevXjKqML1jjfJJlvI1Ulp02/o4=
 github.com/decentrio/multi-staking v0.0.0-20241025035539-29cf83199609 h1:1ttWK87XsSBLEXTSkaZo0kcs8nBnCqiIioK55VcvC8I=
 github.com/decentrio/multi-staking v0.0.0-20241025035539-29cf83199609/go.mod h1:88BiAAV1Jp1sM4ZR09VAZimN5X34BO/7XTO7/si1tJE=
 github.com/deckarep/golang-set v1.8.0 h1:sk9/l/KqpunDwP7pSjUg0keiOOLEnOBHzykLrsPppp4=
