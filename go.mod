@@ -257,7 +257,7 @@ require (
 
 replace (
 	// use Cosmos-SDK fork to enable Ledger functionality
-	github.com/cosmos/cosmos-sdk => github.com/hieuvubk/cosmos-sdk v0.50.13-log-7
+	github.com/cosmos/cosmos-sdk => github.com/hieuvubk/cosmos-sdk v0.50.13-log-8
 
 	github.com/cosmos/evm => github.com/hieuvubk/evm v0.2.0-log1
 
