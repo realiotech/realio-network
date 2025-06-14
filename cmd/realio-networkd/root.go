@@ -171,7 +171,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		server.StatusCommand(),
 		queryCommand(),
 		txCommand(),
-		ethermintclient.KeyCommands(app.DefaultNodeHome, false),
+		ethermintclient.KeyCommands(app.DefaultNodeHome, true),
 	)
 
 	// add rosetta
