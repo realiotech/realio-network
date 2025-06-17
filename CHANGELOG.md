@@ -45,6 +45,8 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 - (codec) [#259](https://github.com/realiotech/realio-network/pull/259): evmos/os keys codec
 
+- (fix) [#260](https://github.com/realiotech/realio-network/pull/260): Fix keyring algo, use `eth_secp256k1` default.
+
 # [v1.3.0]
 
 ### State Machine Breaking
