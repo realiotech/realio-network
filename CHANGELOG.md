@@ -41,6 +41,8 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ### State Machine Breaking
 
+- (chore) [#261](https://github.com/realiotech/realio-network/pull/261):  v1.3.0 upgrade handler consolidation
+
 - (fix) [#258](https://github.com/realiotech/realio-network/pull/258): Add missing items and fix upgrade v1.3.0
 
 - (codec) [#259](https://github.com/realiotech/realio-network/pull/259): evmos/os keys codec
