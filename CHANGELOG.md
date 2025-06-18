@@ -39,6 +39,10 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ## [Unreleased]
 
+### Improvements
+
+- (codec) [#262](https://github.com/realiotech/realio-network/pull/262): Refractor evmos/os codec register
+
 ### State Machine Breaking
 
 - (fix) [#258](https://github.com/realiotech/realio-network/pull/258): Add missing items and fix upgrade v1.3.0
