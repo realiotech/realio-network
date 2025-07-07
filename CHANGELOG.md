@@ -37,7 +37,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
-## [v1.3.0](https://github.com/realiotech/realio-network/releases/tag/v1.3.0) - 2025-06-04
+## [v1.3.1](https://github.com/realiotech/realio-network/releases/tag/v1.3.1) - 2025-06-07
 
 ### Improvements
 
