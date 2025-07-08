@@ -30,7 +30,7 @@ type KeeperTestSuite struct {
 	ctx         sdk.Context
 	queryClient types.QueryClient
 	admin       string
-	authority   string	
+	authority   string
 	address     common.Address
 }
 
