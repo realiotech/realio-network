@@ -30,6 +30,7 @@ type KeeperTestSuite struct {
 	ctx         sdk.Context
 	queryClient types.QueryClient
 	admin       string
+	authority   string	
 	address     common.Address
 }
 
@@ -86,6 +87,7 @@ func (suite *KeeperTestSuite) DoSetupTest(t *testing.T) {
 	params, err := suite.app.BridgeKeeper.Params.Get(suite.ctx)
 	suite.Require().NoError(err)
 	suite.admin = params.Authority
+	suite.authority = suite.app.BridgeKeeper.GetAuthority()
 }
 
 func TestKeeperTestSuite(t *testing.T) {
