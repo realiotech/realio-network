@@ -63,6 +63,13 @@ func (suite *KeeperTestSuite) TestRestrictions() {
 			sdk.NewCoins(sdk.NewCoin("arst", math.NewInt(100))),
 			false,
 		},
+		{
+			"unauthorized accounts cannot receive",
+			suite.testUser1Acc,
+			suite.testUser3Acc,
+			sdk.NewCoins(sdk.NewCoin("arst", math.NewInt(100))),
+			false,
+		},
 	}
 
 	for _, tc := range cases {
