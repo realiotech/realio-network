@@ -64,7 +64,14 @@ func (suite *KeeperTestSuite) TestRestrictions() {
 			false,
 		},
 		{
-			"unauthorized accounts cannot receive",
+			"unauthorized accounts can receive from module accounts",
+			suite.app.AccountKeeper.GetModuleAddress(stakingtypes.BondedPoolName),
+			suite.testUser3Acc,
+			sdk.NewCoins(sdk.NewCoin("arst", math.NewInt(100))),
+			true,
+		},
+		{
+			"unauthorized accounts can not receive from user accounts",
 			suite.testUser1Acc,
 			suite.testUser3Acc,
 			sdk.NewCoins(sdk.NewCoin("arst", math.NewInt(100))),
