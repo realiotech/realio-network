@@ -4,11 +4,13 @@ import (
 	"context"
 	"fmt"
 
+	"cosmossdk.io/math"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	vmtypes "github.com/cosmos/evm/x/vm/types"
@@ -21,6 +23,7 @@ func CreateUpgradeHandler(
 	cfg module.Configurator,
 	accountKeeper authkeeper.AccountKeeper,
 	evmKeeper evmkeeper.Keeper,
+	feemarketKeeper feemarketkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
@@ -33,7 +36,7 @@ func CreateUpgradeHandler(
 		}
 
 		// Migrate EVM params
-		err = migrateEVMParams(sdkCtx, vm, evmKeeper)
+		err = migrateEVMParams(sdkCtx, vm, evmKeeper, feemarketKeeper)
 		if err != nil {
 			return nil, fmt.Errorf("failed to migrate EVM params: %w", err)
 		}
@@ -55,10 +58,18 @@ func addBurnerPermission(ctx sdk.Context, accountKeeper authkeeper.AccountKeeper
 	return nil
 }
 
-func migrateEVMParams(sdkCtx sdk.Context, vm module.VersionMap, evmKeeper evmkeeper.Keeper) error {
-	params := evmKeeper.GetParams(sdkCtx)
-	params.ExtraEIPs = []int64{3855}
-	err := evmKeeper.SetParams(sdkCtx, params)
+func migrateEVMParams(sdkCtx sdk.Context, vm module.VersionMap, evmKeeper evmkeeper.Keeper, feemarketKeeper feemarketkeeper.Keeper) error {
+	evmParams := evmKeeper.GetParams(sdkCtx)
+	evmParams.ExtraEIPs = []int64{3855}
+	err := evmKeeper.SetParams(sdkCtx, evmParams)
+	if err != nil {
+		return err
+	}
+
+	feemarketParams := feemarketKeeper.GetParams(sdkCtx)
+	feemarketParams.BaseFee = math.LegacyMustNewDecFromStr("7.000000000000000000")
+	feemarketParams.MinGasPrice = math.LegacyMustNewDecFromStr("7.000000000000000000")
+	err = feemarketKeeper.SetParams(sdkCtx, feemarketParams)
 	if err != nil {
 		return err
 	}

@@ -81,6 +81,7 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 			app.configurator,
 			app.AccountKeeper,
 			*app.EvmKeeper,
+			app.FeeMarketKeeper,
 		),
 	)
 
