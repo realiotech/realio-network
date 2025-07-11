@@ -67,7 +67,6 @@ func migrateEVMParams(sdkCtx sdk.Context, vm module.VersionMap, evmKeeper evmkee
 	}
 
 	feemarketParams := feemarketKeeper.GetParams(sdkCtx)
-	feemarketParams.BaseFee = math.LegacyMustNewDecFromStr("7.000000000000000000")
 	feemarketParams.MinGasPrice = math.LegacyMustNewDecFromStr("7.000000000000000000")
 	err = feemarketKeeper.SetParams(sdkCtx, feemarketParams)
 	if err != nil {
