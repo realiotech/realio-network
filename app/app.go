@@ -166,10 +166,11 @@ import (
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
 	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
+	"github.com/ethereum/go-ethereum/common"
+
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
-	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -949,10 +950,16 @@ func (app *RealioNetwork) InitChainer(ctx sdk.Context, req *abci.RequestInitChai
 
 	var erc20GenState erc20types.GenesisState
 	app.appCodec.MustUnmarshalJSON(genesisState[erc20types.ModuleName], &erc20GenState)
-	app.Erc20Keeper.SetParams(ctx, erc20GenState.Params)
+
+	err = app.Erc20Keeper.SetParams(ctx, erc20GenState.Params)
+	if err != nil {
+		panic(err)
+	}
+
 	for _, pair := range erc20GenState.TokenPairs {
 		app.Erc20Keeper.SetToken(ctx, pair)
 	}
+
 	for _, allowance := range erc20GenState.Allowances {
 		erc20 := common.HexToAddress(allowance.Erc20Address)
 		owner := common.HexToAddress(allowance.Owner)

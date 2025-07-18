@@ -8,12 +8,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
-	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
-	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
-	vmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v1.3.0
@@ -33,35 +29,12 @@ func CreateUpgradeHandler(
 		}
 
 		// Set erc20 module params, mostly EnableErc20 = true to enable Erc20 registration
-		erc20Keeper.SetParams(sdkCtx, erc20types.DefaultParams())
+		err := erc20Keeper.SetParams(sdkCtx, erc20types.DefaultParams())
+		if err != nil {
+			return nil, err
+		}
 
 		// We have no version map changes so keep current vm
 		return mm.RunMigrations(ctx, cfg, vm)
 	}
-}
-
-func addBurnerPermission(ctx sdk.Context, accountKeeper authkeeper.AccountKeeper, moduleName string) error {
-	moduleAccount := accountKeeper.GetModuleAccount(ctx, moduleName)
-	moduleAcc, ok := moduleAccount.(*authtypes.ModuleAccount)
-	if !ok {
-		return fmt.Errorf("not module account")
-	}
-	moduleAccount = authtypes.NewModuleAccount(moduleAcc.BaseAccount, moduleName, authtypes.Minter, authtypes.Burner)
-
-	accountKeeper.SetModuleAccount(ctx, moduleAccount)
-	return nil
-}
-
-func migrateEVMParams(sdkCtx sdk.Context, vm module.VersionMap, evmKeeper evmkeeper.Keeper) error {
-	params := evmKeeper.GetParams(sdkCtx)
-	params.ExtraEIPs = []int64{3855}
-	err := evmKeeper.SetParams(sdkCtx, params)
-	if err != nil {
-		return err
-	}
-
-	vm[vmtypes.ModuleName] = 8
-	vm[feemarkettypes.ModuleName] = 5
-
-	return nil
 }
