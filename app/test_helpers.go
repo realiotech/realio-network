@@ -35,6 +35,7 @@ import (
 	"github.com/realiotech/realio-network/types"
 	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 )
 
 func init() {
@@ -118,6 +119,8 @@ func Setup(
 			}
 			genesisState[feemarkettypes.ModuleName] = app.AppCodec().MustMarshalJSON(feemarketGenesis)
 		}
+
+		genesisState[erc20types.ModuleName] = app.AppCodec().MustMarshalJSON(erc20types.DefaultGenesisState())
 
 		stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 		if err != nil {
