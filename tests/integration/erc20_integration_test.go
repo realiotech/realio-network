@@ -23,7 +23,7 @@ var (
 	constructorArgs        = []interface{}{"coin", "token", uint8(18)}
 )
 
-func (suite *EVMTestSuite) TestERC20RegisterAndConverting() {
+func (suite *EVMTestSuite) TestERC20MsgsTxBuilder() {
 	// Deploy ERC20 contract
 	senderPriv := suite.keyring.GetPrivKey(senderIndex)
 	recipientPriv := suite.keyring.GetPrivKey(recipientIndex)
@@ -59,11 +59,11 @@ func (suite *EVMTestSuite) TestERC20RegisterAndConverting() {
 	suite.assertContractTotalSupply(contractAddr, mintAmount)
 	suite.assertContractBalanceOf(contractAddr, senderKey.Addr, mintAmount)
 
-	// Register ERC20 token as native token
-	contractNativeDenom := suite.registerErc20(contractAddr)
+	// Register ERC20 token as native token, should build tx fail
+	suite.registerErc20(contractAddr)
 
-	// Convert ERC20 to native token
-	res, err := suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
+	// Convert ERC20 to native token, should build tx fail
+	_, err = suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
 		Msgs: []sdk.Msg{&erc20types.MsgConvertERC20{
 			ContractAddress: contractAddr.Hex(),
 			Amount:          math.NewInt(transferAmount),
@@ -71,27 +71,19 @@ func (suite *EVMTestSuite) TestERC20RegisterAndConverting() {
 			Sender:          senderKey.Addr.Hex(),
 		}},
 	})
-	suite.Require().NoError(err)
-	suite.Require().True(res.IsOK(), "transaction should have succeeded", mintResponse.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
-	suite.assertBankBalance(recipientKey.AccAddr, contractNativeDenom, transferAmount)
-	suite.assertContractBalanceOf(contractAddr, senderKey.Addr, mintAmount-transferAmount)
-	suite.assertContractTotalSupply(contractAddr, mintAmount)
+	suite.Require().Error(err)
+	suite.Require().Contains(err.Error(), "failed to build tx")
 
-	// Convert native token back to ERC20
-	res, err = suite.factory.ExecuteCosmosTx(recipientPriv, commonfactory.CosmosTxArgs{
+	// Convert native token back to ERC20, should build tx fail
+	_, err = suite.factory.ExecuteCosmosTx(recipientPriv, commonfactory.CosmosTxArgs{
 		Msgs: []sdk.Msg{&erc20types.MsgConvertCoin{
-			Coin:     sdk.NewCoin(contractNativeDenom, math.NewInt(transferAmount)),
+			Coin:     sdk.NewCoin("erc20/0xb841F365D5221Bed66d60E69094418D8C2aa5A44", math.NewInt(transferAmount)),
 			Sender:   recipientKey.AccAddr.String(),
 			Receiver: senderKey.Addr.Hex(),
 		}},
 	})
-	suite.Require().NoError(err)
-	suite.Require().True(res.IsOK(), "transaction should have succeeded", mintResponse.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
-	suite.assertBankBalance(recipientKey.AccAddr, contractNativeDenom, 0)
-	suite.assertContractBalanceOf(contractAddr, senderKey.Addr, mintAmount)
-	suite.assertContractTotalSupply(contractAddr, mintAmount)
+	suite.Require().Error(err)
+	suite.Require().Contains(err.Error(), "failed to build tx")
 }
 
 func (suite *EVMTestSuite) assertContractTotalSupply(contractAddr common.Address, expected int64) {
@@ -134,29 +126,13 @@ func (suite *EVMTestSuite) assertContractBalanceOf(contractAddr common.Address, 
 	suite.Require().NoError(suite.network.NextBlock())
 }
 
-func (suite *EVMTestSuite) assertBankBalance(addr []byte, denom string, expected int64) {
-	balance, err := suite.grpcHandler.GetBalanceFromBank(addr, denom)
-	suite.Require().NoError(err)
-	suite.Require().Equal(balance.Balance.Amount, math.NewInt(expected))
-}
-
-func (suite *EVMTestSuite) registerErc20(contractAddr common.Address) string {
-	res, err := suite.factory.ExecuteCosmosTx(suite.keyring.GetPrivKey(senderIndex), commonfactory.CosmosTxArgs{
+func (suite *EVMTestSuite) registerErc20(contractAddr common.Address) {
+	_, err := suite.factory.ExecuteCosmosTx(suite.keyring.GetPrivKey(senderIndex), commonfactory.CosmosTxArgs{
 		Msgs: []sdk.Msg{&erc20types.MsgRegisterERC20{
 			Signer:         suite.keyring.GetAccAddr(0).String(),
 			Erc20Addresses: []string{contractAddr.Hex()},
 		}},
 	})
-	suite.Require().NoError(err)
-	suite.Require().True(res.IsOK(), "transaction should have succeeded", res.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
-
-	// Query native denom of contract
-	erc20Client := suite.network.GetERC20Client()
-	tokenPairRes, err := erc20Client.TokenPair(suite.network.GetContext(), &erc20types.QueryTokenPairRequest{
-		Token: contractAddr.Hex(),
-	})
-	suite.Require().NoError(err)
-	contractDenom := tokenPairRes.TokenPair.Denom
-	return contractDenom
+	suite.Require().Error(err)
+	suite.Require().Contains(err.Error(), "failed to build tx")
 }
