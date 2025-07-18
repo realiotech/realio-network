@@ -169,6 +169,7 @@ import (
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 const (
@@ -212,7 +213,6 @@ var (
 		evidence.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		vm.AppModuleBasic{},
-		erc20.AppModuleBasic{},
 		feemarket.AppModuleBasic{},
 		assetmodule.AppModuleBasic{},
 		bridgemodule.AppModuleBasic{},
@@ -655,7 +655,6 @@ func New(
 		// ethermint
 		vm.NewAppModule(app.EvmKeeper, app.AccountKeeper),
 		feemarket.NewAppModule(app.FeeMarketKeeper),
-		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
 
 		// realio network
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper, app.GetSubspace(assetmoduletypes.ModuleName)),
@@ -677,7 +676,6 @@ func New(
 		capabilitytypes.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName,
-		erc20types.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName,
@@ -706,7 +704,6 @@ func New(
 		govtypes.ModuleName,
 		multistakingtypes.ModuleName,
 		evmtypes.ModuleName,
-		erc20types.ModuleName,
 		feemarkettypes.ModuleName,
 		// no-op modules
 		ibcexported.ModuleName,
@@ -749,7 +746,6 @@ func New(
 		// ethermint
 		// evm module denomination is used by the feemarket module, in AnteHandle
 		evmtypes.ModuleName,
-		erc20types.ModuleName,
 		// NOTE: feemarket need to be initialized before genutil module:
 		// gentx transactions use MinGasPriceDecorator.AnteHandle
 		feemarkettypes.ModuleName,
@@ -783,7 +779,6 @@ func New(
 		// ethermint
 		// evm module denomination is used by the feemarket module, in AnteHandle
 		evmtypes.ModuleName,
-		erc20types.ModuleName,
 		// NOTE: feemarket need to be initialized before genutil module:
 		// gentx transactions use MinGasPriceDecorator.AnteHandle
 		feemarkettypes.ModuleName,
@@ -947,7 +942,35 @@ func (app *RealioNetwork) InitChainer(ctx sdk.Context, req *abci.RequestInitChai
 		panic(err)
 	}
 
-	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
+	res, err := app.mm.InitGenesis(ctx, app.appCodec, genesisState)
+	if err != nil {
+		panic(err)
+	}
+
+	var erc20GenState erc20types.GenesisState
+	app.appCodec.MustUnmarshalJSON(genesisState[erc20types.ModuleName], &erc20GenState)
+	app.Erc20Keeper.SetParams(ctx, erc20GenState.Params)
+	for _, pair := range erc20GenState.TokenPairs {
+		app.Erc20Keeper.SetToken(ctx, pair)
+	}
+	for _, allowance := range erc20GenState.Allowances {
+		erc20 := common.HexToAddress(allowance.Erc20Address)
+		owner := common.HexToAddress(allowance.Owner)
+		spender := common.HexToAddress(allowance.Spender)
+		value := allowance.Value.BigInt()
+		err := app.Erc20Keeper.UnsafeSetAllowance(ctx, erc20, owner, spender, value)
+		if err != nil {
+			panic(fmt.Errorf("error setting allowance %s", err))
+		}
+	}
+
+	// ensure erc20 module account is set on genesis
+	if acc := app.AccountKeeper.GetModuleAccount(ctx, erc20types.ModuleName); acc == nil {
+		// NOTE: shouldn't occur
+		panic("the erc20 module account has not been set")
+	}
+
+	return res, nil
 }
 
 // LoadHeight loads a particular height
@@ -1084,7 +1107,10 @@ func (app *RealioNetwork) GetTxConfig() client.TxConfig {
 
 // DefaultGenesis returns a default genesis from the registered AppModuleBasic's.
 func (app *RealioNetwork) DefaultGenesis() map[string]json.RawMessage {
-	return ModuleBasics.DefaultGenesis(app.appCodec)
+	genesis := ModuleBasics.DefaultGenesis(app.appCodec)
+	erc20GenState := erc20types.DefaultGenesisState()
+	genesis[erc20types.ModuleName] = app.appCodec.MustMarshalJSON(erc20GenState)
+	return genesis
 }
 
 // AutoCliOpts returns the autocli options for the app.
