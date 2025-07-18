@@ -210,7 +210,7 @@ func (tx DynamicFeeTx) Cost() *big.Int {
 
 // EffectiveGasPrice returns the effective gas price
 func (tx *DynamicFeeTx) EffectiveGasPrice(baseFee *big.Int) *big.Int {
-	return nil
+	return baseFee
 }
 
 // EffectiveFee returns effective_gasprice * gaslimit.
