@@ -27,6 +27,7 @@ require (
 	github.com/cosmos/ibc-go/v10 v10.1.1
 	github.com/cosmos/rosetta v0.50.10
 	github.com/ethereum/go-ethereum v1.15.5
+	github.com/evmos/os v0.0.0-20250318092432-d14323f1cec6
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -258,6 +259,7 @@ replace (
 	// use Cosmos-SDK fork to enable Ledger functionality
 	github.com/cosmos/cosmos-sdk => github.com/cosmos/cosmos-sdk v0.50.13-0.20250319183239-53dea340efc7
 
+	// github.com/realio-tech/multi-staking-module => ../multi-staking
 	// use Cosmos geth fork
 	github.com/ethereum/go-ethereum => github.com/cosmos/go-ethereum v1.10.26-evmos-rc4.0.20250402013457-cf9d288f0147
 

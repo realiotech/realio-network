@@ -421,6 +421,8 @@ github.com/cosmos/ibc-go/modules/capability v1.0.1 h1:ibwhrpJ3SftEEZRxCRkH0fQZ9s
 github.com/cosmos/ibc-go/modules/capability v1.0.1/go.mod h1:rquyOV262nGJplkumH+/LeYs04P3eV8oB7ZM4Ygqk4E=
 github.com/cosmos/ibc-go/v10 v10.1.1 h1:Mtl0Ydr9dVdOrPqmxCAG49RmX2/VDYeKYdwv3G2y0g8=
 github.com/cosmos/ibc-go/v10 v10.1.1/go.mod h1:0pJCkgEYRMygqkvUcwy6Kuf5wPfIsObRoxFU2DJEil4=
+github.com/cosmos/ibc-go/v8 v8.5.2 h1:27s9oeD2AxLQF3e9BQsYt9doONyZ7FwZi/qkBv6Sdks=
+github.com/cosmos/ibc-go/v8 v8.5.2/go.mod h1:P5hkAvq0Qbg0h18uLxDVA9q1kOJ0l36htMsskiNwXbo=
 github.com/cosmos/ics23/go v0.11.0 h1:jk5skjT0TqX5e5QJbEnwXIS2yI2vnmLOgpQPeM5RtnU=
 github.com/cosmos/ics23/go v0.11.0/go.mod h1:A8OjxPE67hHST4Icw94hOxxFEJMBG031xIGF/JHNIY0=
 github.com/cosmos/ledger-cosmos-go v0.14.0 h1:WfCHricT3rPbkPSVKRH+L4fQGKYHuGOK9Edpel8TYpE=
@@ -505,6 +507,10 @@ github.com/envoyproxy/go-control-plane v0.9.9-0.20210512163311-63b5d3c536b0/go.m
 github.com/envoyproxy/go-control-plane v0.9.10-0.20210907150352-cf90f659a021/go.mod h1:AFq3mo9L8Lqqiid3OhADV3RfLJnjiw63cSpi+fDTRC0=
 github.com/envoyproxy/go-control-plane v0.10.2-0.20220325020618-49ff273808a1/go.mod h1:KJwIaB5Mv44NWtYuAOFCVOjcI94vtpEz2JU/D2v6IjE=
 github.com/envoyproxy/protoc-gen-validate v0.1.0/go.mod h1:iSmxcyjqTsJpI2R4NaDN7+kN2VEUnK/pcBlmesArF7c=
+github.com/evmos/os v0.0.0-20250318092432-d14323f1cec6 h1:zC09sXzlTMUZr6BdGVn8jc7QhAg+TQuDQsROq7LwBC0=
+github.com/evmos/os v0.0.0-20250318092432-d14323f1cec6/go.mod h1:zgs0dJ8M4AQtRDtGNCa6h2XqQDh4a5ar4Za+B80YJwc=
+github.com/evmos/os/example_chain v0.0.0-20240924163020-b2a4187dad50 h1:zWJYHc0WXE5YnuzYJnUzjMwuloxSz5ALCoNSzcuhKsA=
+github.com/evmos/os/example_chain v0.0.0-20240924163020-b2a4187dad50/go.mod h1:+SPMqw9wtbWO3jG02uLbLtVVjMHBldmXTN51kxbWqJ8=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.13.0/go.mod h1:kLAiJbzzSOZDVNGyDpeOxJ47H46qBXwg5ILebYFFOfk=
 github.com/fatih/color v1.17.0 h1:GlRw1BRJxkpqUCBKzKOw098ed57fEsKeNjpTe3cSjK4=

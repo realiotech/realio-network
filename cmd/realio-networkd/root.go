@@ -28,7 +28,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
-	"github.com/cosmos/cosmos-sdk/client/debug"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/pruning"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
@@ -43,6 +42,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/realiotech/realio-network/client/debug"
 
 	ethermintclient "github.com/cosmos/evm/client"
 
@@ -171,7 +171,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		server.StatusCommand(),
 		queryCommand(),
 		txCommand(),
-		ethermintclient.KeyCommands(app.DefaultNodeHome, false),
+		ethermintclient.KeyCommands(app.DefaultNodeHome, true),
 	)
 
 	// add rosetta
@@ -369,7 +369,7 @@ func (a appCreator) appExport(
 			a.encCfg,
 			// this line is used by starport scaffolding # stargate/root/exportArgument
 			appOpts,
-			app.EvmAppOptions,
+			app.NoOpEVMOptions,
 		)
 
 		if err := anApp.LoadHeight(height); err != nil {
@@ -387,7 +387,7 @@ func (a appCreator) appExport(
 			a.encCfg,
 			// this line is used by starport scaffolding # stargate/root/noHeightExportArgument
 			appOpts,
-			app.EvmAppOptions,
+			app.NoOpEVMOptions,
 		)
 	}
 
