@@ -54,11 +54,4 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&ostx.AccessListTx{},
 		&ostx.LegacyTx{},
 	)
-	registry.RegisterInterface(
-		"TxData",
-		(*ostx.TxData)(nil),
-		&ostx.DynamicFeeTx{},
-		&ostx.AccessListTx{},
-		&ostx.LegacyTx{},
-	)
 }

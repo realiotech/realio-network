@@ -1,4 +1,4 @@
-CHAINID="${CHAIN_ID:-realionetwork_3301-1}"
+CHAINID="${CHAIN_ID:-realionetworklocal_7777-1}"
 MONIKER="realionetworklocal"
 
 echo "Starting local node with chain ID: $CHAINID and moniker: $MONIKER"

@@ -4,7 +4,6 @@
 package ostx
 
 import (
-	fmt "fmt"
 	"math/big"
 
 	errorsmod "cosmossdk.io/errors"
@@ -33,11 +32,8 @@ func (msg MsgEthereumTx) GetData() *codectypes.Any {
 }
 
 func (msg MsgEthereumTx) GetTxData() (TxData, error) {
-	fmt.Println("MsgEthereumTx.GetTxData called from mine, msg.Data:", msg.Data)
 	txData, err := UnpackTxData(msg.Data)
-	fmt.Println("MsgEthereumTx.GetTxData called from mine, txData:", txData)
 	if err != nil {
-		fmt.Println("MsgEthereumTx.GetTxData called from mine, err:", err)
 		return nil, err
 	}
 	return txData, nil
