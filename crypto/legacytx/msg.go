@@ -1,4 +1,4 @@
-package ostx
+package legacytx
 
 import (
 	"math/big"

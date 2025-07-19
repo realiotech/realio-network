@@ -12,7 +12,7 @@ import (
 	"github.com/realiotech/realio-network/crypto/account"
 	"github.com/realiotech/realio-network/crypto/ethsecp256k1"
 	"github.com/realiotech/realio-network/crypto/ossecp256k1"
-	"github.com/realiotech/realio-network/crypto/ostx"
+	"github.com/realiotech/realio-network/crypto/legacytx"
 )
 
 // RegisterInterfaces register the evmOS key concrete types.
@@ -33,25 +33,25 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	// Support /os.evm.v1.MsgEthereumTx
 	registry.RegisterImplementations(
 		(*tx.TxExtensionOptionI)(nil),
-		&ostx.ExtensionOptionsEthereumTx{},
+		&legacytx.ExtensionOptionsEthereumTx{},
 	)
 	registry.RegisterImplementations(
 		(*sdk.Msg)(nil),
-		&ostx.MsgEthereumTx{},
-		&ostx.MsgUpdateParams{},
+		&legacytx.MsgEthereumTx{},
+		&legacytx.MsgUpdateParams{},
 	)
 	registry.RegisterInterface(
 		"ethermint.evm.v1.TxData",
-		(*ostx.TxData)(nil),
-		&ostx.DynamicFeeTx{},
-		&ostx.AccessListTx{},
-		&ostx.LegacyTx{},
+		(*legacytx.TxData)(nil),
+		&legacytx.DynamicFeeTx{},
+		&legacytx.AccessListTx{},
+		&legacytx.LegacyTx{},
 	)
 	registry.RegisterInterface(
 		"os.evm.v1.TxData",
-		(*ostx.TxData)(nil),
-		&ostx.DynamicFeeTx{},
-		&ostx.AccessListTx{},
-		&ostx.LegacyTx{},
+		(*legacytx.TxData)(nil),
+		&legacytx.DynamicFeeTx{},
+		&legacytx.AccessListTx{},
+		&legacytx.LegacyTx{},
 	)
 }
