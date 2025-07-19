@@ -11,8 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/realiotech/realio-network/crypto/account"
 	"github.com/realiotech/realio-network/crypto/ethsecp256k1"
-	"github.com/realiotech/realio-network/crypto/ossecp256k1"
 	"github.com/realiotech/realio-network/crypto/legacytx"
+	"github.com/realiotech/realio-network/crypto/ossecp256k1"
 )
 
 // RegisterInterfaces register the evmOS key concrete types.
