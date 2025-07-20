@@ -41,6 +41,12 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ### Improvements
 
+- (chore) [#263](https://github.com/realiotech/realio-network/pull/256): Update debug commands
+
+## [v1.3.0](https://github.com/realiotech/realio-network/releases/tag/v1.3.0) - 2025-06-07
+
+### Improvements
+
 - (codec) [#262](https://github.com/realiotech/realio-network/pull/262): Refractor evmos/os codec register
 
 ### State Machine Breaking
