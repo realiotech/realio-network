@@ -10,7 +10,7 @@ const (
 	UpgradeName = "v1.4.0"
 )
 
-var V1StoreUpgrades = storetypes.StoreUpgrades{
+var V4StoreUpgrades = storetypes.StoreUpgrades{
 	Added: []string{
 		erc20types.ModuleName,
 	},

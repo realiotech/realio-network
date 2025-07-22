@@ -107,4 +107,8 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 	if upgradeInfo.Name == v1.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &v1.V1StoreUpgrades))
 	}
+
+	if upgradeInfo.Name == v4.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &v4.V4StoreUpgrades))
+	}
 }
