@@ -41,7 +41,9 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 ### Improvements
 
-- (chore) [#263](https://github.com/realiotech/realio-network/pull/256): Update debug commands
+- (chore) [#256](https://github.com/realiotech/realio-network/pull/256): Update debug commands
+
+- (chore) [#268](https://github.com/realiotech/realio-network/pull/268): Update `local_node` scripts to comparative with evm
 
 ## [v1.3.0](https://github.com/realiotech/realio-network/releases/tag/v1.3.0) - 2025-06-07
 
