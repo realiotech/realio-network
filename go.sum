@@ -404,8 +404,6 @@ github.com/cosmos/cosmos-proto v1.0.0-beta.5 h1:eNcayDLpip+zVLRLYafhzLvQlSmyab+R
 github.com/cosmos/cosmos-proto v1.0.0-beta.5/go.mod h1:hQGLpiIUloJBMdQMMWb/4wRApmI9hjHH05nefC0Ojec=
 github.com/cosmos/cosmos-sdk v0.50.13-0.20250319183239-53dea340efc7 h1:zoOAawQLQXLg+HuSOfmuwtTMC4Qovc23a60+xfoHKUw=
 github.com/cosmos/cosmos-sdk v0.50.13-0.20250319183239-53dea340efc7/go.mod h1:hrWEFMU1eoXqLJeE6VVESpJDQH67FS1nnMrQIjO2daw=
-github.com/cosmos/evm v0.2.0 h1:wN0kGkj1NGat5Nq/IEDgs+zzlkZorW3ErFgYpvOcebg=
-github.com/cosmos/evm v0.2.0/go.mod h1:/4D24vd1xRnUVaXzfNryxTo5Gn1c/phJG5FvpH9OvLQ=
 github.com/cosmos/go-bip39 v1.0.0 h1:pcomnQdrdH22njcAatO0yWojsUnCO3y2tNoV1cb6hHY=
 github.com/cosmos/go-bip39 v1.0.0/go.mod h1:RNJv0H/pOIVgxw6KS7QeX2a0Uo0aKUlfhZ4xuwvCdJw=
 github.com/cosmos/go-ethereum v1.10.26-evmos-rc4.0.20250402013457-cf9d288f0147 h1:Hm9aFN6PBpc4YV4JZXJu4cLrOsVguDd9QwfnDmb5LGg=
@@ -1037,6 +1035,8 @@ github.com/rakyll/statik v0.1.7/go.mod h1:AlZONWzMtEnMs7W4e/1LURLiI49pIMmp6V9Ung
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:N/ElC8H3+5XpJzTSTfLsJV/mx9Q9g7kxmchpfZyxgzM=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
+github.com/realiotech/evm v0.2.1 h1:XEoLoiWwsZ23Zp6xgFf48bxTm2bQXfsvxN8nQSg/LKA=
+github.com/realiotech/evm v0.2.1/go.mod h1:/4D24vd1xRnUVaXzfNryxTo5Gn1c/phJG5FvpH9OvLQ=
 github.com/regen-network/protobuf v1.3.3-alpha.regen.1 h1:OHEc+q5iIAXpqiqFKeLpu5NwTIkVXUs48vFMwzqpqY4=
 github.com/regen-network/protobuf v1.3.3-alpha.regen.1/go.mod h1:2DjTFR1HhMQhiWC5sZ4OhQ3+NtdbZ6oBDKQwq5Ou+FI=
 github.com/rivo/uniseg v0.2.0 h1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=
