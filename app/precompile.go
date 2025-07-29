@@ -24,16 +24,21 @@ import (
 
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+
+	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
+	precompileMultiStaking "github.com/realiotech/realio-network/precompile/multistaking"
 )
 
 // NewAvailableStaticPrecompiles returns the list of all available static precompiled contracts from Cosmos EVM.
 //
 // NOTE: this should only be used during initialization of the Keeper.
 func NewAvailableStaticPrecompiles(
+	cdc codec.Codec,
 	stakingKeeper stakingkeeper.Keeper,
 	distributionKeeper distributionkeeper.Keeper,
 	bankKeeper cmn.BankKeeper,
@@ -44,6 +49,7 @@ func NewAvailableStaticPrecompiles(
 	govKeeper govkeeper.Keeper,
 	slashingKeeper slashingkeeper.Keeper,
 	evidenceKeeper evidencekeeper.Keeper,
+	multiStakingKeeper multistakingkeeper.Keeper,
 ) map[common.Address]vm.PrecompiledContract {
 	// Clone the mapping from the latest EVM fork.
 	precompiles := maps.Clone(vm.PrecompiledContractsBerlin)
@@ -85,6 +91,11 @@ func NewAvailableStaticPrecompiles(
 		panic(fmt.Errorf("failed to instantiate bank precompile: %w", err))
 	}
 
+	mulStakingPrecompile, err := precompileMultiStaking.NewPrecompile(cdc, stakingKeeper, multiStakingKeeper, erc20Keeper)
+	if err != nil {
+		panic(fmt.Errorf("failed to instantiate bank precompile: %w", err))
+	}
+
 	govPrecompile, err := govprecompile.NewPrecompile(govKeeper)
 	if err != nil {
 		panic(fmt.Errorf("failed to instantiate gov precompile: %w", err))
@@ -109,6 +120,7 @@ func NewAvailableStaticPrecompiles(
 	precompiles[distributionPrecompile.Address()] = distributionPrecompile
 	precompiles[ibcTransferPrecompile.Address()] = ibcTransferPrecompile
 	precompiles[bankPrecompile.Address()] = bankPrecompile
+	precompiles[mulStakingPrecompile.Address()] = mulStakingPrecompile
 	precompiles[govPrecompile.Address()] = govPrecompile
 	precompiles[slashingPrecompile.Address()] = slashingPrecompile
 	precompiles[evidencePrecompile.Address()] = evidencePrecompile
