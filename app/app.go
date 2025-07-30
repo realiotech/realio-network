@@ -956,7 +956,6 @@ func (app *RealioNetwork) InitChainer(ctx sdk.Context, req *abci.RequestInitChai
 	}
 
 	var erc20GenState erc20types.GenesisState
-	// fmt.Println(genesisState)
 	app.appCodec.MustUnmarshalJSON(genesisState[erc20types.ModuleName], &erc20GenState)
 
 	err = app.Erc20Keeper.SetParams(ctx, erc20GenState.Params)
