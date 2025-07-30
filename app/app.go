@@ -219,6 +219,7 @@ var (
 		bridgemodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		transfer.AppModuleBasic{AppModuleBasic: &ibctransfer.AppModuleBasic{}},
+		erc20.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -660,6 +661,7 @@ func New(
 		// realio network
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper, app.GetSubspace(assetmoduletypes.ModuleName)),
 		bridgemodule.NewAppModule(appCodec, app.BridgeKeeper),
+		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
 	)
 
 	// NOTE: upgrade module is required to be prioritized
@@ -696,6 +698,7 @@ func New(
 		vestingtypes.ModuleName,
 		assetmoduletypes.ModuleName,
 		bridgemoduletypes.ModuleName,
+		erc20types.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -725,6 +728,7 @@ func New(
 		// realio modules
 		assetmoduletypes.ModuleName,
 		bridgemoduletypes.ModuleName,
+		erc20types.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -763,6 +767,7 @@ func New(
 		// NOTE: crisis module must go at the end to check for invariants on each module
 		crisistypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		erc20types.ModuleName,
 	)
 
 	app.mm.SetOrderExportGenesis(
@@ -796,6 +801,7 @@ func New(
 		// NOTE: crisis module must go at the end to check for invariants on each module
 		crisistypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		erc20types.ModuleName,
 	)
 
 	app.mm.RegisterInvariants(app.CrisisKeeper)
@@ -830,6 +836,7 @@ func New(
 		feemarket.NewAppModule(app.FeeMarketKeeper),
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper, app.GetSubspace(assetmoduletypes.ModuleName)),
 		bridgemodule.NewAppModule(appCodec, app.BridgeKeeper),
+		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
 		// this line is used by starport scaffolding # stargate/app/appModule
 	)
 
@@ -949,6 +956,7 @@ func (app *RealioNetwork) InitChainer(ctx sdk.Context, req *abci.RequestInitChai
 	}
 
 	var erc20GenState erc20types.GenesisState
+	// fmt.Println(genesisState)
 	app.appCodec.MustUnmarshalJSON(genesisState[erc20types.ModuleName], &erc20GenState)
 
 	err = app.Erc20Keeper.SetParams(ctx, erc20GenState.Params)
