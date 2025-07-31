@@ -96,17 +96,17 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	switch method.Name {
 	// Transactions
 	case DelegateMethod:
-		bz, err = p.Delegate(ctx, evm.Origin, stateDB, method, args)
+		bz, err = p.Delegate(ctx, contract, evm.Origin, stateDB, method, args)
 	case UndelegateMethod:
-		bz, err = p.Undelegate(ctx, evm.Origin, stateDB, method, args)
+		bz, err = p.Undelegate(ctx, contract, evm.Origin, stateDB, method, args)
 	case RedelegateMethod:
-		bz, err = p.Redelegate(ctx, evm.Origin, stateDB, method, args)
+		bz, err = p.Redelegate(ctx, contract, evm.Origin, stateDB, method, args)
 	case CancelUnbondingDelegationMethod:
-		bz, err = p.CancelUnbondingDelegation(ctx, evm.Origin, stateDB, method, args)
+		bz, err = p.CancelUnbondingDelegation(ctx, contract, evm.Origin, stateDB, method, args)
 	case CreateValidatorMethod:
-		bz, err = p.CreateValidator(ctx, evm.Origin, stateDB, method, args)
+		bz, err = p.CreateValidator(ctx, contract, evm.Origin, stateDB, method, args)
 	case EditValidatorMethod:
-		bz, err = p.EditValidator(ctx, evm.Origin, stateDB, method, args)
+		bz, err = p.EditValidator(ctx, contract, evm.Origin, stateDB, method, args)
 
 	// Queries
 	case DelegationMethod:

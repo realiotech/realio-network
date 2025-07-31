@@ -15,15 +15,18 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
+	mstypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 )
 
 // Delegate handles the delegation of ERC20 tokens to a validator.
 // This method converts ERC20 tokens to SDK coins and delegates them.
 func (p Precompile) Delegate(
 	ctx sdk.Context,
+	contract *vm.Contract,
 	sender common.Address,
 	stateDB vm.StateDB,
 	method *abi.Method,
@@ -42,15 +45,16 @@ func (p Precompile) Delegate(
 	}
 
 	// Create multistaking delegation message
-	msg := &stakingtypes.MsgDelegate{
+	msg := &mstypes.MsgDelegateEVM{
 		DelegatorAddress: sdk.AccAddress(sender.Bytes()).String(),
 		ValidatorAddress: validatorAddress,
-		Amount:           coin,
+		Amount:           coin.Amount,
+		ContractAddress:  contract.Address().String(),
 	}
 
 	// Execute delegation using multistaking msgServer
 	msgServer := multistakingkeeper.NewMsgServerImpl(p.multiStakingKeeper)
-	_, err = msgServer.Delegate(ctx, msg)
+	_, err = msgServer.DelegateEVM(ctx, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -63,6 +67,7 @@ func (p Precompile) Delegate(
 // This method undelegates SDK coins and converts them back to ERC20 tokens.
 func (p Precompile) Undelegate(
 	ctx sdk.Context,
+	contract *vm.Contract,
 	origin common.Address,
 	stateDB vm.StateDB,
 	method *abi.Method,
@@ -87,15 +92,16 @@ func (p Precompile) Undelegate(
 	coin := sdk.NewCoin(denom, math.NewIntFromBigInt(amount))
 
 	// Create multistaking undelegation message
-	msg := &stakingtypes.MsgUndelegate{
+	msg := &mstypes.MsgUndelegateEVM{
 		DelegatorAddress: delegatorAddr.String(),
 		ValidatorAddress: validatorAddress,
-		Amount:           coin,
+		Amount:           coin.Amount,
+		ContractAddress:  contract.Address().String(),
 	}
 
 	// Execute undelegation using multistaking msgServer
 	msgServer := multistakingkeeper.NewMsgServerImpl(p.multiStakingKeeper)
-	resp, err := msgServer.Undelegate(ctx, msg)
+	resp, err := msgServer.UndelegateEVM(ctx, msg)
 	if err != nil {
 		return nil, fmt.Errorf("multistaking undelegation failed: %v", err)
 	}
@@ -113,6 +119,7 @@ func (p Precompile) Undelegate(
 // Redelegate handles the redelegation of tokens from one validator to another.
 func (p Precompile) Redelegate(
 	ctx sdk.Context,
+	contract *vm.Contract,
 	origin common.Address,
 	stateDB vm.StateDB,
 	method *abi.Method,
@@ -137,16 +144,17 @@ func (p Precompile) Redelegate(
 	coin := sdk.NewCoin(denom, math.NewIntFromBigInt(amount))
 
 	// Create multistaking redelegation message
-	msg := &stakingtypes.MsgBeginRedelegate{
+	msg := &mstypes.MsgBeginRedelegateEVM{
 		DelegatorAddress:    delegatorAddr.String(),
 		ValidatorSrcAddress: srcValidatorAddress,
 		ValidatorDstAddress: dstValidatorAddress,
-		Amount:              coin,
+		Amount:              coin.Amount,
+		ContractAddress:     contract.CallerAddress.String(),
 	}
 
 	// Execute redelegation using multistaking msgServer
 	msgServer := multistakingkeeper.NewMsgServerImpl(p.multiStakingKeeper)
-	resp, err := msgServer.BeginRedelegate(ctx, msg)
+	resp, err := msgServer.BeginRedelegateEVM(ctx, msg)
 	if err != nil {
 		return nil, fmt.Errorf("multistaking redelegation failed: %v", err)
 	}
@@ -158,6 +166,7 @@ func (p Precompile) Redelegate(
 // CancelUnbondingDelegation handles the cancellation of an unbonding delegation.
 func (p Precompile) CancelUnbondingDelegation(
 	ctx sdk.Context,
+	contract *vm.Contract,
 	origin common.Address,
 	stateDB vm.StateDB,
 	method *abi.Method,
@@ -182,16 +191,17 @@ func (p Precompile) CancelUnbondingDelegation(
 	coin := sdk.NewCoin(denom, math.NewIntFromBigInt(amount))
 
 	// Create multistaking cancel unbonding delegation message
-	msg := &stakingtypes.MsgCancelUnbondingDelegation{
+	msg := &mstypes.MsgCancelUnbondingEVMDelegation{
 		DelegatorAddress: delegatorAddr.String(),
 		ValidatorAddress: validatorAddress,
-		Amount:           coin,
+		Amount:           coin.Amount,
 		CreationHeight:   creationHeight,
+		ContractAddress:  contract.Address().String(),
 	}
 
 	// Execute cancel unbonding delegation using multistaking msgServer
 	msgServer := multistakingkeeper.NewMsgServerImpl(p.multiStakingKeeper)
-	_, err = msgServer.CancelUnbondingDelegation(ctx, msg)
+	_, err = msgServer.CancelUnbondingEVMDelegation(ctx, msg)
 	if err != nil {
 		return nil, fmt.Errorf("multistaking cancel unbonding delegation failed: %v", err)
 	}
@@ -203,6 +213,7 @@ func (p Precompile) CancelUnbondingDelegation(
 // CreateValidator creates a new validator using the multistaking module.
 func (p Precompile) CreateValidator(
 	ctx sdk.Context,
+	contract *vm.Contract,
 	origin common.Address,
 	stateDB vm.StateDB,
 	method *abi.Method,
@@ -223,18 +234,27 @@ func (p Precompile) CreateValidator(
 		return nil, fmt.Errorf("failed to convert ERC20 to SDK coin: %v", err)
 	}
 
-	msg, err := stakingtypes.NewMsgCreateValidator(
-		validatorAddress,
-		pubkey,
-		coin,
-		description,
-		commission,
-		minSelfDelegation,
-	)
+	var pkAny *codectypes.Any
+	if pubkey != nil {
+		var err error
+		if pkAny, err = codectypes.NewAnyWithValue(pubkey); err != nil {
+			return nil, err
+		}
+	}
+
+	msg := &mstypes.MsgCreateEVMValidator{
+		Description:       description,
+		Commission:        commission,
+		MinSelfDelegation: minSelfDelegation,
+		ValidatorAddress:  validatorAddress,
+		Pubkey:            pkAny,
+		ContractAddress:   contract.Address().String(),
+		Value:             coin.Amount,
+	}
 
 	// Execute create validator using multistaking msgServer
 	msgServer := multistakingkeeper.NewMsgServerImpl(p.multiStakingKeeper)
-	_, err = msgServer.CreateValidator(ctx, msg)
+	_, err = msgServer.CreateEVMValidator(ctx, msg)
 	if err != nil {
 		return nil, fmt.Errorf("multistaking create validator failed: %v", err)
 	}
@@ -245,6 +265,7 @@ func (p Precompile) CreateValidator(
 // EditValidator edits an existing validator using the multistaking module.
 func (p Precompile) EditValidator(
 	ctx sdk.Context,
+	contract *vm.Contract,
 	origin common.Address,
 	stateDB vm.StateDB,
 	method *abi.Method,
