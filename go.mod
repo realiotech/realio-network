@@ -266,7 +266,7 @@ replace (
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
-	github.com/realio-tech/multi-staking-module => github.com/decentrio/multi-staking v1.0.1-rc2
+	github.com/realio-tech/multi-staking-module => github.com/decentrio/multi-staking v1.0.1-rc2.0.20250721102044-15f363db56c2
 
 	// replace broken goleveldb
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
