@@ -1,0 +1,138 @@
+package integration
+
+import (
+	"math/big"
+
+	"cosmossdk.io/math"
+	"github.com/cosmos/evm/testutil/integration/os/factory"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/ethereum/go-ethereum/common"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/evm/contracts"
+	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
+	integrationutils "github.com/realiotech/realio-network/testutil/integration/utils"
+)
+
+var (
+	transferAmount   int64 = 1000
+	compiledContract       = contracts.ERC20MinterBurnerDecimalsContract
+	senderIndex            = 0
+	recipientIndex         = 1
+	constructorArgs        = []interface{}{"coin", "token", uint8(18)}
+)
+
+func (suite *EVMTestSuite) TestERC20MsgsTxBuilder() {
+	// Deploy ERC20 contract
+	senderPriv := suite.keyring.GetPrivKey(senderIndex)
+	recipientPriv := suite.keyring.GetPrivKey(recipientIndex)
+
+	recipientKey := suite.keyring.GetKey(recipientIndex)
+	senderKey := suite.keyring.GetKey(senderIndex)
+
+	contractAddr, err := suite.factory.DeployContract(
+		senderPriv,
+		evmtypes.EvmTxArgs{}, // Default values
+		factory.ContractDeploymentData{
+			Contract:        compiledContract,
+			ConstructorArgs: constructorArgs,
+		},
+	)
+	suite.Require().NoError(err)
+	suite.NotEqual(contractAddr, common.Address{})
+	suite.Require().NoError(suite.network.NextBlock())
+
+	// Mint token to sender
+	mintTxArgs := evmtypes.EvmTxArgs{}
+	mintTxArgs.To = &contractAddr
+	amountToMint := big.NewInt(mintAmount)
+	mintArgs := factory.CallArgs{
+		ContractABI: compiledContract.ABI,
+		MethodName:  "mint",
+		Args:        []interface{}{suite.keyring.GetKey(0).Addr, amountToMint},
+	}
+	mintResponse, err := suite.factory.ExecuteContractCall(senderPriv, mintTxArgs, mintArgs)
+	suite.Require().NoError(err)
+	suite.Require().True(mintResponse.IsOK(), "transaction should have succeeded", mintResponse.GetLog())
+	suite.Require().NoError(suite.network.NextBlock())
+	suite.assertContractTotalSupply(contractAddr, mintAmount)
+	suite.assertContractBalanceOf(contractAddr, senderKey.Addr, mintAmount)
+
+	// Register ERC20 token as native token, should build tx fail
+	suite.registerErc20(contractAddr)
+
+	// Convert ERC20 to native token, should build tx fail
+	_, err = suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&erc20types.MsgConvertERC20{
+			ContractAddress: contractAddr.Hex(),
+			Amount:          math.NewInt(transferAmount),
+			Receiver:        recipientKey.AccAddr.String(),
+			Sender:          senderKey.Addr.Hex(),
+		}},
+	})
+	suite.Require().Error(err)
+	suite.Require().Contains(err.Error(), "failed to build tx")
+
+	// Convert native token back to ERC20, should build tx fail
+	_, err = suite.factory.ExecuteCosmosTx(recipientPriv, commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&erc20types.MsgConvertCoin{
+			Coin:     sdk.NewCoin("erc20/0xb841F365D5221Bed66d60E69094418D8C2aa5A44", math.NewInt(transferAmount)),
+			Sender:   recipientKey.AccAddr.String(),
+			Receiver: senderKey.Addr.Hex(),
+		}},
+	})
+	suite.Require().Error(err)
+	suite.Require().Contains(err.Error(), "failed to build tx")
+}
+
+func (suite *EVMTestSuite) assertContractTotalSupply(contractAddr common.Address, expected int64) {
+	totalSupplyTxArgs := evmtypes.EvmTxArgs{
+		To: &contractAddr,
+	}
+	totalSupplyArgs := factory.CallArgs{
+		ContractABI: compiledContract.ABI,
+		MethodName:  "totalSupply",
+		Args:        []interface{}{},
+	}
+	totalSupplyRes, err := suite.factory.ExecuteContractCall(suite.keyring.GetPrivKey(senderIndex), totalSupplyTxArgs, totalSupplyArgs)
+	suite.Require().NoError(err)
+	suite.Require().True(totalSupplyRes.IsOK(), "transaction should have succeeded", totalSupplyRes.GetLog())
+
+	var totalSupplyResponse *big.Int
+	err = integrationutils.DecodeContractCallResponse(&totalSupplyResponse, totalSupplyArgs, totalSupplyRes)
+	suite.Require().NoError(err)
+	suite.Require().Equal(totalSupplyResponse, big.NewInt(expected))
+	suite.Require().NoError(suite.network.NextBlock())
+}
+
+func (suite *EVMTestSuite) assertContractBalanceOf(contractAddr common.Address, addr common.Address, expected int64) {
+	balanceTxArgs := evmtypes.EvmTxArgs{
+		To: &contractAddr,
+	}
+	balanceArgs := factory.CallArgs{
+		ContractABI: compiledContract.ABI,
+		MethodName:  "balanceOf",
+		Args:        []interface{}{addr},
+	}
+	balanceRes, err := suite.factory.ExecuteContractCall(suite.keyring.GetPrivKey(senderIndex), balanceTxArgs, balanceArgs)
+	suite.Require().NoError(err)
+
+	var balance *big.Int
+	err = integrationutils.DecodeContractCallResponse(&balance, balanceArgs, balanceRes)
+	suite.Require().NoError(err)
+	suite.Require().Equal(balance, big.NewInt(expected))
+
+	suite.Require().NoError(suite.network.NextBlock())
+}
+
+func (suite *EVMTestSuite) registerErc20(contractAddr common.Address) {
+	_, err := suite.factory.ExecuteCosmosTx(suite.keyring.GetPrivKey(senderIndex), commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&erc20types.MsgRegisterERC20{
+			Signer:         suite.keyring.GetAccAddr(0).String(),
+			Erc20Addresses: []string{contractAddr.Hex()},
+		}},
+	})
+	suite.Require().Error(err)
+	suite.Require().Contains(err.Error(), "failed to build tx")
+}

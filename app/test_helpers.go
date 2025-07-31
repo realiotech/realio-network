@@ -30,6 +30,7 @@ import (
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	"github.com/realiotech/realio-network/cmd/config"
 	"github.com/realiotech/realio-network/types"
@@ -118,6 +119,8 @@ func Setup(
 			}
 			genesisState[feemarkettypes.ModuleName] = app.AppCodec().MustMarshalJSON(feemarketGenesis)
 		}
+
+		genesisState[erc20types.ModuleName] = app.AppCodec().MustMarshalJSON(erc20types.DefaultGenesisState())
 
 		stateBytes, err := json.MarshalIndent(genesisState, "", " ")
 		if err != nil {

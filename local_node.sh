@@ -10,7 +10,7 @@ KEYRING="test"
 KEYALGO="eth_secp256k1"
 
 LOGLEVEL="info"
-# Set dedicated home directory for the realio-networkd instance
+# Set dedicated home directory for the ./build/realio-networkd instance
 HOMEDIR="$HOME/.realio-network"
 
 BASEFEE=10000000
@@ -90,7 +90,6 @@ fi
 if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	# Remove the previous folder
 	rm -rf "$HOMEDIR"
-
 	# Set client config
 	realio-networkd config set client chain-id "$CHAINID" --home "$HOMEDIR"
 	realio-networkd config set client keyring-backend "$KEYRING" --home "$HOMEDIR"
@@ -248,7 +247,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	## 5. Copy the `gentx-*` folders under `~/.clonedOsd/config/gentx/` folders into the original `~/.realio-networkd/config/gentx`
 
 	# Collect genesis tx
-	realio-networkd genesis collect-gentxs --home "$HOMEDIR"
+	./build/realio-networkd genesis collect-gentxs --home "$HOMEDIR"
 
 	# Run this to ensure everything worked and that the genesis file is setup correctly
 	realio-networkd genesis validate-genesis --home "$HOMEDIR"
