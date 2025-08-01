@@ -90,6 +90,7 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 		v4.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
+			*app.EvmKeeper,
 			app.Erc20Keeper,
 			app.AccountKeeper,
 		),
