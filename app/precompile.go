@@ -2,6 +2,7 @@ package app
 
 import (
 	"fmt"
+	"cosmossdk.io/log"
 	"maps"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -22,6 +23,7 @@ import (
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
 
+	"cosmossdk.io/core/address"
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -50,6 +52,8 @@ func NewAvailableStaticPrecompiles(
 	slashingKeeper slashingkeeper.Keeper,
 	evidenceKeeper evidencekeeper.Keeper,
 	multiStakingKeeper multistakingkeeper.Keeper,
+	addrCodec address.Codec,
+	logger log.Logger,
 ) map[common.Address]vm.PrecompiledContract {
 	// Clone the mapping from the latest EVM fork.
 	precompiles := maps.Clone(vm.PrecompiledContractsBerlin)
@@ -91,7 +95,7 @@ func NewAvailableStaticPrecompiles(
 		panic(fmt.Errorf("failed to instantiate bank precompile: %w", err))
 	}
 
-	mulStakingPrecompile, err := precompileMultiStaking.NewPrecompile(cdc, stakingKeeper, multiStakingKeeper, erc20Keeper)
+	mulStakingPrecompile, err := precompileMultiStaking.NewPrecompile(cdc, stakingKeeper, multiStakingKeeper, erc20Keeper, addrCodec, logger)
 	if err != nil {
 		panic(fmt.Errorf("failed to instantiate bank precompile: %w", err))
 	}

@@ -634,6 +634,8 @@ func New(
 			app.SlashingKeeper,
 			app.EvidenceKeeper,
 			app.MultiStakingKeeper,
+			app.AccountKeeper.AddressCodec(),
+			logger,
 		),
 	)
 
