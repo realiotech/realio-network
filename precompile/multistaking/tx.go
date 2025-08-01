@@ -9,6 +9,8 @@ import (
 
 	"cosmossdk.io/math"
 	// codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+	"encoding/json"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cmn "github.com/cosmos/evm/precompiles/common"
 	"github.com/ethereum/go-ethereum/accounts/abi"
@@ -24,7 +26,7 @@ import (
 
 // Delegate handles the delegation of ERC20 tokens to a validator.
 // This method converts ERC20 tokens to SDK coins and delegates them.
-func (p Precompile) Delegate(
+func (p Precompile) DelegateEVM(
 	ctx sdk.Context,
 	contract *vm.Contract,
 	sender common.Address,
@@ -38,18 +40,17 @@ func (p Precompile) Delegate(
 		return nil, err
 	}
 
-	// Convert ERC20 to SDK coin
-	coin, err := p.convertERC20ToSDKCoin(ctx, sender, erc20Token, amount)
+	delAddr, err := p.addrCodec.BytesToString(sender.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("failed to convert ERC20 to SDK coin: %v", err)
+		return nil, err
 	}
-
 	// Create multistaking delegation message
+
 	msg := &mstypes.MsgDelegateEVM{
-		DelegatorAddress: sdk.AccAddress(sender.Bytes()).String(),
+		DelegatorAddress: delAddr,
 		ValidatorAddress: validatorAddress,
-		Amount:           coin.Amount,
-		ContractAddress:  contract.Address().String(),
+		Amount:           math.NewIntFromBigInt(amount),
+		ContractAddress:  erc20Token.Hex(),
 	}
 
 	// Execute delegation using multistaking msgServer
@@ -65,7 +66,7 @@ func (p Precompile) Delegate(
 
 // Undelegate handles the undelegation of tokens from a validator.
 // This method undelegates SDK coins and converts them back to ERC20 tokens.
-func (p Precompile) Undelegate(
+func (p Precompile) UndelegateEVM(
 	ctx sdk.Context,
 	contract *vm.Contract,
 	origin common.Address,
@@ -80,23 +81,17 @@ func (p Precompile) Undelegate(
 	}
 
 	// Convert caller address to SDK address
-	delegatorAddr := sdk.AccAddress(origin.Bytes())
-
-	// Get the corresponding SDK coin denom for the ERC20 token
-	denom, err := p.getSDKDenomForERC20(ctx, erc20Token)
+	delegatorAddr, err := p.addrCodec.BytesToString(origin.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("failed to get SDK denom for ERC20: %v", err)
+		return nil, err
 	}
-
-	// Create coin for undelegation
-	coin := sdk.NewCoin(denom, math.NewIntFromBigInt(amount))
 
 	// Create multistaking undelegation message
 	msg := &mstypes.MsgUndelegateEVM{
-		DelegatorAddress: delegatorAddr.String(),
+		DelegatorAddress: delegatorAddr,
 		ValidatorAddress: validatorAddress,
-		Amount:           coin.Amount,
-		ContractAddress:  contract.Address().String(),
+		Amount:           math.NewIntFromBigInt(amount),
+		ContractAddress:  erc20Token.Hex(),
 	}
 
 	// Execute undelegation using multistaking msgServer
@@ -106,18 +101,12 @@ func (p Precompile) Undelegate(
 		return nil, fmt.Errorf("multistaking undelegation failed: %v", err)
 	}
 
-	// Convert undelegated coins back to ERC20
-	err = p.convertSDKCoinToERC20(ctx, delegatorAddr, coin)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert SDK coin back to ERC20: %v", err)
-	}
-
 	// Return completion time
 	return method.Outputs.Pack(resp.CompletionTime.Unix())
 }
 
-// Redelegate handles the redelegation of tokens from one validator to another.
-func (p Precompile) Redelegate(
+// BeginRedelegateEVM handles the redelegation of tokens from one validator to another.
+func (p Precompile) BeginRedelegateEVM(
 	ctx sdk.Context,
 	contract *vm.Contract,
 	origin common.Address,
@@ -132,24 +121,18 @@ func (p Precompile) Redelegate(
 	}
 
 	// Convert caller address to SDK address
-	delegatorAddr := sdk.AccAddress(origin.Bytes())
-
-	// Get the corresponding SDK coin denom for the ERC20 token
-	denom, err := p.getSDKDenomForERC20(ctx, erc20Token)
+	delegatorAddr, err := p.addrCodec.BytesToString(origin.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("failed to get SDK denom for ERC20: %v", err)
+		return nil, err
 	}
-
-	// Create coin for redelegation
-	coin := sdk.NewCoin(denom, math.NewIntFromBigInt(amount))
 
 	// Create multistaking redelegation message
 	msg := &mstypes.MsgBeginRedelegateEVM{
-		DelegatorAddress:    delegatorAddr.String(),
+		DelegatorAddress:    delegatorAddr,
 		ValidatorSrcAddress: srcValidatorAddress,
 		ValidatorDstAddress: dstValidatorAddress,
-		Amount:              coin.Amount,
-		ContractAddress:     contract.CallerAddress.String(),
+		Amount:              math.NewIntFromBigInt(amount),
+		ContractAddress:     erc20Token.Hex(),
 	}
 
 	// Execute redelegation using multistaking msgServer
@@ -163,8 +146,8 @@ func (p Precompile) Redelegate(
 	return method.Outputs.Pack(resp.CompletionTime.Unix())
 }
 
-// CancelUnbondingDelegation handles the cancellation of an unbonding delegation.
-func (p Precompile) CancelUnbondingDelegation(
+// CancelUnbondingEVMDelegation handles the cancellation of an unbonding delegation using erc20 token.
+func (p Precompile) CancelUnbondingEVMDelegation(
 	ctx sdk.Context,
 	contract *vm.Contract,
 	origin common.Address,
@@ -179,24 +162,18 @@ func (p Precompile) CancelUnbondingDelegation(
 	}
 
 	// Convert caller address to SDK address
-	delegatorAddr := sdk.AccAddress(origin.Bytes())
-
-	// Get the corresponding SDK coin denom for the ERC20 token
-	denom, err := p.getSDKDenomForERC20(ctx, erc20Token)
+	delegatorAddr, err := p.addrCodec.BytesToString(origin.Bytes())
 	if err != nil {
-		return nil, fmt.Errorf("failed to get SDK denom for ERC20: %v", err)
+		return nil, err
 	}
 
-	// Create coin for cancel unbonding delegation
-	coin := sdk.NewCoin(denom, math.NewIntFromBigInt(amount))
-
-	// Create multistaking cancel unbonding delegation message
+	// Create multistaking cancel unbonding evm delegation message
 	msg := &mstypes.MsgCancelUnbondingEVMDelegation{
-		DelegatorAddress: delegatorAddr.String(),
+		DelegatorAddress: delegatorAddr,
 		ValidatorAddress: validatorAddress,
-		Amount:           coin.Amount,
+		Amount:           math.NewIntFromBigInt(amount),
 		CreationHeight:   creationHeight,
-		ContractAddress:  contract.Address().String(),
+		ContractAddress:  erc20Token.Hex(),
 	}
 
 	// Execute cancel unbonding delegation using multistaking msgServer
@@ -210,8 +187,8 @@ func (p Precompile) CancelUnbondingDelegation(
 	return method.Outputs.Pack(true)
 }
 
-// CreateValidator creates a new validator using the multistaking module.
-func (p Precompile) CreateValidator(
+// CreateValidator creates a new erc20 validator using the multistaking module.
+func (p Precompile) CreateEVMValidator(
 	ctx sdk.Context,
 	contract *vm.Contract,
 	origin common.Address,
@@ -223,15 +200,6 @@ func (p Precompile) CreateValidator(
 	validatorAddress, pubkey, contractAddress, amount, commission, description, minSelfDelegation, err := p.parseCreateValidatorArgs(args)
 	if err != nil {
 		return nil, err
-	}
-
-	// Get delegator address from origin
-	// delegatorAddr := sdk.AccAddress(origin.Bytes())
-
-	// Convert ERC20 to SDK coin
-	coin, err := p.convertERC20ToSDKCoin(ctx, origin, contractAddress, amount)
-	if err != nil {
-		return nil, fmt.Errorf("failed to convert ERC20 to SDK coin: %v", err)
 	}
 
 	var pkAny *codectypes.Any
@@ -248,8 +216,8 @@ func (p Precompile) CreateValidator(
 		MinSelfDelegation: minSelfDelegation,
 		ValidatorAddress:  validatorAddress,
 		Pubkey:            pkAny,
-		ContractAddress:   contract.Address().String(),
-		Value:             coin.Amount,
+		ContractAddress:   contractAddress.Hex(),
+		Value:             math.NewIntFromBigInt(amount),
 	}
 
 	// Execute create validator using multistaking msgServer
@@ -262,38 +230,38 @@ func (p Precompile) CreateValidator(
 	return method.Outputs.Pack(true)
 }
 
-// EditValidator edits an existing validator using the multistaking module.
-func (p Precompile) EditValidator(
-	ctx sdk.Context,
-	contract *vm.Contract,
-	origin common.Address,
-	stateDB vm.StateDB,
-	method *abi.Method,
-	args []interface{},
-) ([]byte, error) {
-	// Parse arguments
-	validatorAddress, description, commissionRate, minSelfDelegation, err := parseEditValidatorArgs(args)
-	if err != nil {
-		return nil, err
-	}
+// // EditValidator edits an existing validator using the multistaking module.
+// func (p Precompile) EditValidator(
+// 	ctx sdk.Context,
+// 	contract *vm.Contract,
+// 	origin common.Address,
+// 	stateDB vm.StateDB,
+// 	method *abi.Method,
+// 	args []interface{},
+// ) ([]byte, error) {
+// 	// Parse arguments
+// 	validatorAddress, description, commissionRate, minSelfDelegation, err := parseEditValidatorArgs(args)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	// Create multistaking edit validator message
-	msg := &stakingtypes.MsgEditValidator{
-		Description:       description,
-		ValidatorAddress:  validatorAddress,
-		CommissionRate:    commissionRate,
-		MinSelfDelegation: minSelfDelegation,
-	}
+// 	// Create multistaking edit validator message
+// 	msg := &stakingtypes.MsgEditValidator{
+// 		Description:       description,
+// 		ValidatorAddress:  validatorAddress,
+// 		CommissionRate:    commissionRate,
+// 		MinSelfDelegation: minSelfDelegation,
+// 	}
 
-	// Execute edit validator using multistaking msgServer
-	msgServer := multistakingkeeper.NewMsgServerImpl(p.multiStakingKeeper)
-	_, err = msgServer.EditValidator(ctx, msg)
-	if err != nil {
-		return nil, fmt.Errorf("multistaking edit validator failed: %v", err)
-	}
+// 	// Execute edit validator using multistaking msgServer
+// 	msgServer := multistakingkeeper.NewMsgServerImpl(p.multiStakingKeeper)
+// 	_, err = msgServer.EditValidator(ctx, msg)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("multistaking edit validator failed: %v", err)
+// 	}
 
-	return method.Outputs.Pack(true)
-}
+// 	return method.Outputs.Pack(true)
+// }
 
 // Helper functions for parsing arguments
 
@@ -302,22 +270,23 @@ func checkDelegationUndelegationArgs(args []interface{}) (common.Address, string
 		return common.Address{}, "", nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 3, len(args))
 	}
 
-	delegatorAddr, ok := args[0].(common.Address)
-	if !ok || delegatorAddr == (common.Address{}) {
+	contractAddressStr, ok := args[0].(string)
+	if !ok {
 		return common.Address{}, "", nil, fmt.Errorf(cmn.ErrInvalidDelegator, args[0])
 	}
+	contractAddress := common.HexToAddress(contractAddressStr)
 
 	validatorAddress, ok := args[1].(string)
 	if !ok {
 		return common.Address{}, "", nil, fmt.Errorf(cmn.ErrInvalidType, "validatorAddress", "string", args[1])
 	}
 
-	amount, ok := args[2].(*big.Int)
+	amount, ok := new(big.Int).SetString(args[2].(string), 10)
 	if !ok {
 		return common.Address{}, "", nil, fmt.Errorf(cmn.ErrInvalidAmount, args[2])
 	}
 
-	return delegatorAddr, validatorAddress, amount, nil
+	return contractAddress, validatorAddress, amount, nil
 }
 
 func parseRedelegateArgs(args []interface{}) (common.Address, string, string, *big.Int, error) {
@@ -325,10 +294,11 @@ func parseRedelegateArgs(args []interface{}) (common.Address, string, string, *b
 		return common.Address{}, "", "", nil, fmt.Errorf("invalid number of arguments for redelegate")
 	}
 
-	erc20Token, ok := args[0].(common.Address)
+	erc20TokenStr, ok := args[0].(string)
 	if !ok {
 		return common.Address{}, "", "", nil, fmt.Errorf("invalid erc20Token address")
 	}
+	erc20Token := common.HexToAddress(erc20TokenStr)
 
 	srcValidatorAddress, ok := args[1].(string)
 	if !ok {
@@ -340,7 +310,7 @@ func parseRedelegateArgs(args []interface{}) (common.Address, string, string, *b
 		return common.Address{}, "", "", nil, fmt.Errorf("invalid destination validator address")
 	}
 
-	amount, ok := args[3].(*big.Int)
+	amount, ok := new(big.Int).SetString(args[3].(string), 10)
 	if !ok {
 		return common.Address{}, "", "", nil, fmt.Errorf("invalid amount")
 	}
@@ -353,22 +323,23 @@ func parseCancelUnbondingArgs(args []interface{}) (common.Address, string, *big.
 		return common.Address{}, "", nil, 0, fmt.Errorf("invalid number of arguments for cancelUnbondingDelegation")
 	}
 
-	erc20Token, ok := args[0].(common.Address)
+	erc20TokenStr, ok := args[0].(string)
 	if !ok {
 		return common.Address{}, "", nil, 0, fmt.Errorf("invalid erc20Token address")
 	}
+	erc20Token := common.HexToAddress(erc20TokenStr)
 
 	validatorAddress, ok := args[1].(string)
 	if !ok {
 		return common.Address{}, "", nil, 0, fmt.Errorf("invalid validator address")
 	}
 
-	amount, ok := args[2].(*big.Int)
+	amount, ok := new(big.Int).SetString(args[2].(string), 10)
 	if !ok {
 		return common.Address{}, "", nil, 0, fmt.Errorf("invalid amount")
 	}
 
-	creationHeight, ok := args[3].(*big.Int)
+	creationHeight, ok := new(big.Int).SetString(args[3].(string), 10)
 	if !ok {
 		return common.Address{}, "", nil, 0, fmt.Errorf("invalid creation height")
 	}
@@ -392,9 +363,12 @@ func (p Precompile) parseCreateValidatorArgs(args []interface{}) (string, crypto
 	if !ok {
 		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid pubkey")
 	}
+	pkStr := fmt.Sprintf(`{"@type":"/cosmos.crypto.ed25519.PubKey","key":"%s"}`, pubkeyStr)
+
+	pubkeyJSON := json.RawMessage(pkStr)
 
 	var pk cryptotypes.PubKey
-	if err := p.Codec.UnmarshalInterfaceJSON([]byte(pubkeyStr), &pk); err != nil {
+	if err := p.Codec.UnmarshalInterfaceJSON(pubkeyJSON, &pk); err != nil {
 		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, err
 	}
 

@@ -13,6 +13,8 @@ import (
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
 
+	"cosmossdk.io/core/address"
+	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -34,6 +36,8 @@ type Precompile struct {
 	stakingKeeper      stakingkeeper.Keeper
 	multiStakingKeeper multistakingkeeper.Keeper
 	erc20Keeper        erc20keeper.Keeper
+	addrCodec          address.Codec
+	logger             log.Logger
 }
 
 // NewPrecompile creates a new multistaking Precompile instance implementing the
@@ -43,6 +47,8 @@ func NewPrecompile(
 	stakingKeeper stakingkeeper.Keeper,
 	multiStakingKeeper multistakingkeeper.Keeper,
 	erc20Keeper erc20keeper.Keeper,
+	addrCodec address.Codec,
+	logger log.Logger,
 ) (*Precompile, error) {
 	newABI, err := cmn.LoadABI(f, "abi.json")
 	if err != nil {
@@ -61,6 +67,8 @@ func NewPrecompile(
 		stakingKeeper:      stakingKeeper,
 		multiStakingKeeper: multiStakingKeeper,
 		erc20Keeper:        erc20Keeper,
+		addrCodec:          addrCodec,
+		logger:             logger,
 	}
 
 	// SetAddress defines the address of the multistaking compile contract.
@@ -96,31 +104,33 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	switch method.Name {
 	// Transactions
 	case DelegateMethod:
-		bz, err = p.Delegate(ctx, contract, evm.Origin, stateDB, method, args)
+		bz, err = p.DelegateEVM(ctx, contract, evm.Origin, stateDB, method, args)
 	case UndelegateMethod:
-		bz, err = p.Undelegate(ctx, contract, evm.Origin, stateDB, method, args)
+		bz, err = p.UndelegateEVM(ctx, contract, evm.Origin, stateDB, method, args)
 	case RedelegateMethod:
-		bz, err = p.Redelegate(ctx, contract, evm.Origin, stateDB, method, args)
+		bz, err = p.BeginRedelegateEVM(ctx, contract, evm.Origin, stateDB, method, args)
 	case CancelUnbondingDelegationMethod:
-		bz, err = p.CancelUnbondingDelegation(ctx, contract, evm.Origin, stateDB, method, args)
+		bz, err = p.CancelUnbondingEVMDelegation(ctx, contract, evm.Origin, stateDB, method, args)
 	case CreateValidatorMethod:
-		bz, err = p.CreateValidator(ctx, contract, evm.Origin, stateDB, method, args)
-	case EditValidatorMethod:
-		bz, err = p.EditValidator(ctx, contract, evm.Origin, stateDB, method, args)
+		bz, err = p.CreateEVMValidator(ctx, contract, evm.Origin, stateDB, method, args)
+	// case EditValidatorMethod:
+	// 	bz, err = p.EditValidator(ctx, contract, evm.Origin, stateDB, method, args)
 
-	// Queries
-	case DelegationMethod:
-		bz, err = p.Delegation(ctx, contract, method, args)
-	case UnbondingDelegationMethod:
-		bz, err = p.UnbondingDelegation(ctx, contract, method, args)
-	case ValidatorMethod: // multistaking
-		bz, err = p.Validator(ctx, method, contract, args)
-	case ValidatorsMethod: // multistaking
-		bz, err = p.Validators(ctx, method, contract, args)
-	case RedelegationMethod:
-		bz, err = p.Redelegation(ctx, method, contract, args)
-	case RedelegationsMethod:
-		bz, err = p.Redelegations(ctx, method, contract, args)
+	// Queries: We only support multistaking evm tx for now
+	// Use multistaking module query instead
+
+	// case DelegationMethod:
+	// 	bz, err = p.Delegation(ctx, contract, method, args)
+	// case UnbondingDelegationMethod:
+	// 	bz, err = p.UnbondingDelegation(ctx, contract, method, args)
+	// case ValidatorMethod: // multistaking
+	// 	bz, err = p.Validator(ctx, method, contract, args)
+	// case ValidatorsMethod: // multistaking
+	// 	bz, err = p.Validators(ctx, method, contract, args)
+	// case RedelegationMethod:
+	// 	bz, err = p.Redelegation(ctx, method, contract, args)
+	// case RedelegationsMethod:
+	// 	bz, err = p.Redelegations(ctx, method, contract, args)
 	}
 
 	if err != nil {

@@ -4,317 +4,265 @@
   "sourceName": "solidity/precompiles/multistaking/IMultiStaking.sol",
   "abi": [
     {
-      "name": "delegate",
-      "type": "function",
-      "stateMutability": "nonpayable",
-      "inputs": [
-        { "name": "erc20Token", "type": "string" },
-        { "name": "validatorAddress", "type": "string" },
-        { "name": "amount", "type": "string" }
-      ],
-      "outputs": [{ "name": "success", "type": "bool" }]
-    },
-    {
-      "name": "undelegate",
-      "type": "function",
-      "stateMutability": "nonpayable",
-      "inputs": [
-        { "name": "erc20Token", "type": "address" },
-        { "name": "validatorAddress", "type": "string" },
-        { "name": "amount", "type": "uint256" }
-      ],
-      "outputs": [{ "name": "completionTime", "type": "int64" }]
-    },
-    {
-      "name": "redelegate",
-      "type": "function",
-      "stateMutability": "nonpayable",
-      "inputs": [
-        { "name": "erc20Token", "type": "address" },
-        { "name": "srcValidatorAddress", "type": "string" },
-        { "name": "dstValidatorAddress", "type": "string" },
-        { "name": "amount", "type": "uint256" }
-      ],
-      "outputs": [{ "name": "completionTime", "type": "int64" }]
-    },
-    {
-      "name": "cancelUnbondingDelegation",
-      "type": "function",
-      "stateMutability": "nonpayable",
-      "inputs": [
-        { "name": "erc20Token", "type": "address" },
-        { "name": "validatorAddress", "type": "string" },
-        { "name": "amount", "type": "uint256" },
-        { "name": "creationHeight", "type": "int64" }
-      ],
-      "outputs": [{ "name": "success", "type": "bool" }]
-    },
-    {
-      "name": "createValidator",
-      "type": "function",
-      "stateMutability": "nonpayable",
-      "inputs": [
-        { "name": "validatorAddress", "type": "string" },
-        { "name": "pubkey", "type": "string" },
-        { "name": "contractAddress", "type": "string" },
-        { "name": "amount", "type": "string" },
-        { "name": "moniker", "type": "string" },
-        { "name": "identity", "type": "string" },
-        { "name": "website", "type": "string" },
-        { "name": "security", "type": "string" },
-        { "name": "details", "type": "string" },
-        { "name": "commission-rate", "type": "string" },
-        { "name": "commission-max-rate", "type": "string" },
-        { "name": "commission-max-change-rate", "type": "string" },
-        { "name": "min-self-delegation", "type": "string" }
-      ],
-      "outputs": [{ "name": "success", "type": "bool" }]
-    },
-    {
-      "name": "editValidator",
-      "type": "function",
-      "stateMutability": "nonpayable",
-      "inputs": [
-        { "name": "validatorAddress", "type": "string" },
-        { "name": "moniker", "type": "string" },
-        { "name": "identity", "type": "string" },
-        { "name": "website", "type": "string" },
-        { "name": "security", "type": "string" },
-        { "name": "details", "type": "string" },
-        { "name": "commission-rate", "type": "string" },
-        { "name": "min-self-delegation", "type": "string" }
-      ],
-      "outputs": [{ "name": "success", "type": "bool" }]
-    },
-    {
-      "name": "delegation",
-      "type": "function",
-      "stateMutability": "view",
-      "inputs": [
-        { "name": "delegatorAddress", "type": "string" },
-        { "name": "validatorAddress", "type": "string" }
-      ],
-      "outputs": [
-        { "name": "shares", "type": "uint256" },
-        { "name": "balance", "type": "uint256" }
-      ]
-    },
-    {
-      "name": "unbondingDelegation",
-      "type": "function",
-      "stateMutability": "view",
-      "inputs": [
-        { "name": "delegatorAddress", "type": "string" },
-        { "name": "validatorAddress", "type": "string" }
-      ],
-      "outputs": [
-        { "name": "balance", "type": "uint256" },
-        { "name": "completionTime", "type": "int64" }
-      ]
-    },
-    {
-      "name": "validator",
-      "inputs": [
-        {
-          "internalType": "address",
-          "name": "validatorAddress",
-          "type": "address"
-        }
-      ],
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "string",
-              "name": "operatorAddress",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "consensusPubkey",
-              "type": "string"
-            },
-            {
-              "internalType": "bool",
-              "name": "jailed",
-              "type": "bool"
-            },
-            {
-              "internalType": "enum BondStatus",
-              "name": "status",
-              "type": "uint8"
-            },
-            {
-              "internalType": "uint256",
-              "name": "tokens",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "delegatorShares",
-              "type": "uint256"
-            },
-            {
-              "internalType": "string",
-              "name": "description",
-              "type": "string"
-            },
-            {
-              "internalType": "int64",
-              "name": "unbondingHeight",
-              "type": "int64"
-            },
-            {
-              "internalType": "int64",
-              "name": "unbondingTime",
-              "type": "int64"
-            },
-            {
-              "internalType": "uint256",
-              "name": "commission",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "minSelfDelegation",
-              "type": "uint256"
-            }
-          ],
-          "internalType": "struct Validator",
-          "name": "validator",
-          "type": "tuple"
-        }
-      ],
-      "stateMutability": "view",
-      "type": "function"
-    },
-    {
-      "name": "validators",
       "inputs": [
         {
           "internalType": "string",
-          "name": "status",
+          "name": "erc20Token",
           "type": "string"
         },
         {
-          "components": [
-            {
-              "internalType": "bytes",
-              "name": "key",
-              "type": "bytes"
-            },
-            {
-              "internalType": "uint64",
-              "name": "offset",
-              "type": "uint64"
-            },
-            {
-              "internalType": "uint64",
-              "name": "limit",
-              "type": "uint64"
-            },
-            {
-              "internalType": "bool",
-              "name": "countTotal",
-              "type": "bool"
-            },
-            {
-              "internalType": "bool",
-              "name": "reverse",
-              "type": "bool"
-            }
-          ],
-          "internalType": "struct PageRequest",
-          "name": "pageRequest",
-          "type": "tuple"
-        }
-      ],
-      "outputs": [
-        {
-          "components": [
-            {
-              "internalType": "string",
-              "name": "operatorAddress",
-              "type": "string"
-            },
-            {
-              "internalType": "string",
-              "name": "consensusPubkey",
-              "type": "string"
-            },
-            {
-              "internalType": "bool",
-              "name": "jailed",
-              "type": "bool"
-            },
-            {
-              "internalType": "enum BondStatus",
-              "name": "status",
-              "type": "uint8"
-            },
-            {
-              "internalType": "uint256",
-              "name": "tokens",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "delegatorShares",
-              "type": "uint256"
-            },
-            {
-              "internalType": "string",
-              "name": "description",
-              "type": "string"
-            },
-            {
-              "internalType": "int64",
-              "name": "unbondingHeight",
-              "type": "int64"
-            },
-            {
-              "internalType": "int64",
-              "name": "unbondingTime",
-              "type": "int64"
-            },
-            {
-              "internalType": "uint256",
-              "name": "commission",
-              "type": "uint256"
-            },
-            {
-              "internalType": "uint256",
-              "name": "minSelfDelegation",
-              "type": "uint256"
-            }
-          ],
-          "internalType": "struct Validator[]",
-          "name": "validators",
-          "type": "tuple[]"
+          "internalType": "string",
+          "name": "validatorAddress",
+          "type": "string"
         },
         {
-          "components": [
-            {
-              "internalType": "bytes",
-              "name": "nextKey",
-              "type": "bytes"
-            },
-            {
-              "internalType": "uint64",
-              "name": "total",
-              "type": "uint64"
-            }
-          ],
-          "internalType": "struct PageResponse",
-          "name": "pageResponse",
-          "type": "tuple"
+          "internalType": "string",
+          "name": "amount",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "creationHeight",
+          "type": "string"
+        }
+      ],
+      "name": "cancelUnbondingDelegation",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "success",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "validatorAddress",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "pubkey",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "contractAddress",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "amount",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "moniker",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "identity",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "website",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "security",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "details",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "commissionRate",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "commissionMaxRate",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "commissionMaxChangeRate",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "minSelfDelegation",
+          "type": "string"
+        }
+      ],
+      "name": "createValidator",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "success",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "erc20Token",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "validatorAddress",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "amount",
+          "type": "string"
+        }
+      ],
+      "name": "delegate",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "success",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "delegatorAddress",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "validatorAddress",
+          "type": "string"
+        }
+      ],
+      "name": "delegation",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "shares",
+          "type": "uint256"
+        },
+        {
+          "internalType": "uint256",
+          "name": "balance",
+          "type": "uint256"
         }
       ],
       "stateMutability": "view",
       "type": "function"
     },
     {
-      "name": "redelegation",
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "validatorAddress",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "moniker",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "identity",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "website",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "security",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "details",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "commissionRate",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "minSelfDelegation",
+          "type": "string"
+        }
+      ],
+      "name": "editValidator",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "success",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "erc20Token",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "srcValidatorAddress",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "dstValidatorAddress",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "amount",
+          "type": "string"
+        }
+      ],
+      "name": "redelegate",
+      "outputs": [
+        {
+          "internalType": "int64",
+          "name": "completionTime",
+          "type": "int64"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
       "inputs": [
         {
           "internalType": "address",
@@ -332,6 +280,7 @@
           "type": "string"
         }
       ],
+      "name": "redelegation",
       "outputs": [
         {
           "components": [
@@ -379,7 +328,7 @@
             }
           ],
           "internalType": "struct RedelegationOutput",
-          "name": "redelegation",
+          "name": "",
           "type": "tuple"
         }
       ],
@@ -387,7 +336,6 @@
       "type": "function"
     },
     {
-      "name": "redelegations",
       "inputs": [
         {
           "internalType": "address",
@@ -437,6 +385,7 @@
           "type": "tuple"
         }
       ],
+      "name": "redelegations",
       "outputs": [
         {
           "components": [
@@ -530,7 +479,7 @@
             }
           ],
           "internalType": "struct RedelegationResponse[]",
-          "name": "response",
+          "name": "",
           "type": "tuple[]"
         },
         {
@@ -547,7 +496,266 @@
             }
           ],
           "internalType": "struct PageResponse",
-          "name": "pageResponse",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "delegatorAddress",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "validatorAddress",
+          "type": "string"
+        }
+      ],
+      "name": "unbondingDelegation",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "balance",
+          "type": "uint256"
+        },
+        {
+          "internalType": "int64",
+          "name": "completionTime",
+          "type": "int64"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "erc20Token",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "validatorAddress",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "amount",
+          "type": "string"
+        }
+      ],
+      "name": "undelegate",
+      "outputs": [
+        {
+          "internalType": "int64",
+          "name": "completionTime",
+          "type": "int64"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "validatorAddress",
+          "type": "address"
+        }
+      ],
+      "name": "validator",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "operatorAddress",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "consensusPubkey",
+              "type": "string"
+            },
+            {
+              "internalType": "bool",
+              "name": "jailed",
+              "type": "bool"
+            },
+            {
+              "internalType": "enum BondStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokens",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "delegatorShares",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "description",
+              "type": "string"
+            },
+            {
+              "internalType": "int64",
+              "name": "unbondingHeight",
+              "type": "int64"
+            },
+            {
+              "internalType": "int64",
+              "name": "unbondingTime",
+              "type": "int64"
+            },
+            {
+              "internalType": "uint256",
+              "name": "commission",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minSelfDelegation",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct Validator",
+          "name": "",
+          "type": "tuple"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "string",
+          "name": "status",
+          "type": "string"
+        },
+        {
+          "components": [
+            {
+              "internalType": "bytes",
+              "name": "key",
+              "type": "bytes"
+            },
+            {
+              "internalType": "uint64",
+              "name": "offset",
+              "type": "uint64"
+            },
+            {
+              "internalType": "uint64",
+              "name": "limit",
+              "type": "uint64"
+            },
+            {
+              "internalType": "bool",
+              "name": "countTotal",
+              "type": "bool"
+            },
+            {
+              "internalType": "bool",
+              "name": "reverse",
+              "type": "bool"
+            }
+          ],
+          "internalType": "struct PageRequest",
+          "name": "pageRequest",
+          "type": "tuple"
+        }
+      ],
+      "name": "validators",
+      "outputs": [
+        {
+          "components": [
+            {
+              "internalType": "string",
+              "name": "operatorAddress",
+              "type": "string"
+            },
+            {
+              "internalType": "string",
+              "name": "consensusPubkey",
+              "type": "string"
+            },
+            {
+              "internalType": "bool",
+              "name": "jailed",
+              "type": "bool"
+            },
+            {
+              "internalType": "enum BondStatus",
+              "name": "status",
+              "type": "uint8"
+            },
+            {
+              "internalType": "uint256",
+              "name": "tokens",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "delegatorShares",
+              "type": "uint256"
+            },
+            {
+              "internalType": "string",
+              "name": "description",
+              "type": "string"
+            },
+            {
+              "internalType": "int64",
+              "name": "unbondingHeight",
+              "type": "int64"
+            },
+            {
+              "internalType": "int64",
+              "name": "unbondingTime",
+              "type": "int64"
+            },
+            {
+              "internalType": "uint256",
+              "name": "commission",
+              "type": "uint256"
+            },
+            {
+              "internalType": "uint256",
+              "name": "minSelfDelegation",
+              "type": "uint256"
+            }
+          ],
+          "internalType": "struct Validator[]",
+          "name": "",
+          "type": "tuple[]"
+        },
+        {
+          "components": [
+            {
+              "internalType": "bytes",
+              "name": "nextKey",
+              "type": "bytes"
+            },
+            {
+              "internalType": "uint64",
+              "name": "total",
+              "type": "uint64"
+            }
+          ],
+          "internalType": "struct PageResponse",
+          "name": "",
           "type": "tuple"
         }
       ],

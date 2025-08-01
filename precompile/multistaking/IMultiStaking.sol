@@ -69,23 +69,23 @@ interface IMultiStaking {
     ) external returns (bool success);
 
     function undelegate(
-        address erc20Token,
+        string calldata erc20Token,
         string calldata validatorAddress,
-        uint256 amount
+        string calldata amount
     ) external returns (int64 completionTime);
 
     function redelegate(
-        address erc20Token,
+        string calldata erc20Token,
         string calldata srcValidatorAddress,
         string calldata dstValidatorAddress,
-        uint256 amount
+        string calldata amount
     ) external returns (int64 completionTime);
 
     function cancelUnbondingDelegation(
-        address erc20Token,
+        string calldata erc20Token,
         string calldata validatorAddress,
-        uint256 amount,
-        int64 creationHeight
+        string calldata amount,
+        string calldata creationHeight
     ) external returns (bool success);
 
     function createValidator(
