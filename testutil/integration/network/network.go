@@ -28,6 +28,7 @@ import (
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
+	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 )
 
 // Network is the interface that wraps the methods to interact with integration test network.
@@ -37,6 +38,7 @@ import (
 type Network interface {
 	network.Network
 	GetMintModuleClient() minttypes.QueryClient // conflict types with current GetMintClient()
+	GetBridgeClient() bridgetypes.QueryClient
 }
 
 var _ Network = (*IntegrationNetwork)(nil)
