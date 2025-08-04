@@ -14,7 +14,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	"cosmossdk.io/core/address"
-	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -37,7 +36,6 @@ type Precompile struct {
 	multiStakingKeeper multistakingkeeper.Keeper
 	erc20Keeper        erc20keeper.Keeper
 	addrCodec          address.Codec
-	logger             log.Logger
 }
 
 // NewPrecompile creates a new multistaking Precompile instance implementing the
@@ -48,7 +46,6 @@ func NewPrecompile(
 	multiStakingKeeper multistakingkeeper.Keeper,
 	erc20Keeper erc20keeper.Keeper,
 	addrCodec address.Codec,
-	logger log.Logger,
 ) (*Precompile, error) {
 	newABI, err := cmn.LoadABI(f, "abi.json")
 	if err != nil {
@@ -68,7 +65,6 @@ func NewPrecompile(
 		multiStakingKeeper: multiStakingKeeper,
 		erc20Keeper:        erc20Keeper,
 		addrCodec:          addrCodec,
-		logger:             logger,
 	}
 
 	// SetAddress defines the address of the multistaking compile contract.
