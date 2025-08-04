@@ -191,7 +191,6 @@ func (suite *BridgeTestSuite) TestDeregisterCoins() {
 			)
 			suite.Require().NoError(err)
 
-
 			proposalID, err = integrationutils.SubmitProposal(
 				suite.factory,
 				suite.network,

@@ -27,8 +27,8 @@ import (
 	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	minttypes "github.com/realiotech/realio-network/x/mint/types"
 	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
+	minttypes "github.com/realiotech/realio-network/x/mint/types"
 )
 
 // Network is the interface that wraps the methods to interact with integration test network.

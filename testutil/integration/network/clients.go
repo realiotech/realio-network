@@ -20,10 +20,10 @@ import (
 	sdkminttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	bridgekeeper "github.com/realiotech/realio-network/x/bridge/keeper"
+	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 	mintkeeper "github.com/realiotech/realio-network/x/mint/keeper"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
-	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
-	bridgekeeper "github.com/realiotech/realio-network/x/bridge/keeper"
 )
 
 func getQueryHelper(ctx sdktypes.Context, encCfg testutil.TestEncodingConfig) *baseapp.QueryServiceTestHelper {
