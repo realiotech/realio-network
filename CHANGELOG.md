@@ -47,6 +47,10 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 - (chore) [#294](https://github.com/realiotech/realio-network/pull/294): Make RegisterNewCoins and DeregisterCoins as gov proposals
 
+### State Machine Breaking
+
+- (chore) [#283](https://github.com/realiotech/realio-network/pull/283): Bump cosmos-sdk version to `0.50.14`
+
 ## [v1.3.0](https://github.com/realiotech/realio-network/releases/tag/v1.3.0) - 2025-06-07
 
 ### Improvements
