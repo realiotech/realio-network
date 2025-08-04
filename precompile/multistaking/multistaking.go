@@ -113,8 +113,6 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 		bz, err = p.CancelUnbondingEVMDelegation(ctx, evm.Origin, method, args)
 	case CreateValidatorMethod:
 		bz, err = p.CreateEVMValidator(ctx, method, args)
-	case EditValidatorMethod:
-		bz, err = p.EditValidator(ctx, method, args)
 
 	// Queries: We only support multistaking evm tx for now
 	// Use multistaking module query instead

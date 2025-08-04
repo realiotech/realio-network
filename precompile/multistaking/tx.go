@@ -218,36 +218,6 @@ func (p Precompile) CreateEVMValidator(
 	return method.Outputs.Pack(true)
 }
 
-// EditValidator edits an existing validator using the multistaking module.
-func (p Precompile) EditValidator(
-	ctx sdk.Context,
-	method *abi.Method,
-	args []interface{},
-) ([]byte, error) {
-	// Parse arguments
-	validatorAddress, description, commissionRate, minSelfDelegation, err := parseEditValidatorArgs(args)
-	if err != nil {
-		return nil, err
-	}
-
-	// Create multistaking edit validator message
-	msg := &stakingtypes.MsgEditValidator{
-		Description:       description,
-		ValidatorAddress:  validatorAddress,
-		CommissionRate:    commissionRate,
-		MinSelfDelegation: minSelfDelegation,
-	}
-
-	// Execute edit validator using multistaking msgServer
-	msgServer := multistakingkeeper.NewMsgServerImpl(p.multiStakingKeeper)
-	_, err = msgServer.EditValidator(ctx, msg)
-	if err != nil {
-		return nil, fmt.Errorf("multistaking edit validator failed: %v", err)
-	}
-
-	return method.Outputs.Pack(true)
-}
-
 // Helper functions for parsing arguments
 
 func checkDelegationUndelegationArgs(args []interface{}) (common.Address, string, *big.Int, error) {
@@ -438,73 +408,6 @@ func (p Precompile) parseCreateValidatorArgs(args []interface{}) (string, crypto
 	}
 
 	return validatorAddress, pk, contractAddress, amount, commission, description, minSelfDelegation, nil
-}
-
-func parseEditValidatorArgs(args []interface{}) (string, stakingtypes.Description, *math.LegacyDec, *math.Int, error) {
-	if len(args) != 8 {
-		return "", stakingtypes.Description{}, nil, nil, fmt.Errorf("invalid number of arguments for editValidator, expected 8, got %d", len(args))
-	}
-
-	// Parse validatorAddress
-	validatorAddress, ok := args[0].(string)
-	if !ok {
-		return "", stakingtypes.Description{}, nil, nil, fmt.Errorf("invalid validator address")
-	}
-
-	// Parse description fields
-	moniker, ok := args[1].(string)
-	if !ok {
-		return "", stakingtypes.Description{}, nil, nil, fmt.Errorf("invalid moniker")
-	}
-
-	identity, ok := args[2].(string)
-	if !ok {
-		return "", stakingtypes.Description{}, nil, nil, fmt.Errorf("invalid identity")
-	}
-
-	website, ok := args[3].(string)
-	if !ok {
-		return "", stakingtypes.Description{}, nil, nil, fmt.Errorf("invalid website")
-	}
-
-	security, ok := args[4].(string)
-	if !ok {
-		return "", stakingtypes.Description{}, nil, nil, fmt.Errorf("invalid security")
-	}
-
-	details, ok := args[5].(string)
-	if !ok {
-		return "", stakingtypes.Description{}, nil, nil, fmt.Errorf("invalid details")
-	}
-
-	description := stakingtypes.Description{
-		Moniker:         moniker,
-		Identity:        identity,
-		Website:         website,
-		SecurityContact: security,
-		Details:         details,
-	}
-
-	// Parse commission rate as *math.LegacyDec
-	commissionRateStr, ok := args[6].(string)
-	if !ok {
-		return "", stakingtypes.Description{}, nil, nil, fmt.Errorf("invalid commission rate")
-	}
-
-	commissionRate := math.LegacyMustNewDecFromStr(commissionRateStr)
-
-	// Parse minSelfDelegation as *math.Int
-	minSelfDelegationStr, ok := args[7].(string)
-	if !ok {
-		return "", stakingtypes.Description{}, nil, nil, fmt.Errorf("invalid min self delegation")
-	}
-
-	minSelfDelegation, ok := math.NewIntFromString(minSelfDelegationStr)
-	if !ok {
-		return "", stakingtypes.Description{}, nil, nil, fmt.Errorf("invalid min self delegation format")
-	}
-
-	return validatorAddress, description, &commissionRate, &minSelfDelegation, nil
 }
 
 // Helper struct for self delegation
