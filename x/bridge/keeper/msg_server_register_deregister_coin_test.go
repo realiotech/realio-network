@@ -76,7 +76,7 @@ func (suite *KeeperTestSuite) TestRegisterNewCoins() {
 			// we register a denom "bar" here
 			// there's a test case to make sure we CANNOT register new coin with the same symbol
 			_, err := srv.RegisterNewCoins(suite.ctx, &types.MsgRegisterNewCoins{
-				Authority: suite.admin,
+				Authority: suite.authority,
 				Coins: sdk.NewCoins(
 					sdk.NewInt64Coin("bar", 9999999),
 				),
@@ -84,7 +84,7 @@ func (suite *KeeperTestSuite) TestRegisterNewCoins() {
 			suite.Require().NoError(err)
 
 			if tc.setAuthority {
-				tc.msg.Authority = suite.admin
+				tc.msg.Authority = suite.authority
 			}
 
 			_, err = srv.RegisterNewCoins(suite.ctx, tc.msg)
@@ -153,7 +153,7 @@ func (suite *KeeperTestSuite) TestDeregisterCoins() {
 			srv := keeper.NewMsgServerImpl(suite.app.BridgeKeeper)
 
 			if tc.setAuthority {
-				tc.msg.Authority = suite.admin
+				tc.msg.Authority = suite.authority
 			}
 
 			_, err := srv.DeregisterCoins(suite.ctx, tc.msg)
