@@ -104,33 +104,33 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	switch method.Name {
 	// Transactions
 	case DelegateMethod:
-		bz, err = p.DelegateEVM(ctx, contract, evm.Origin, stateDB, method, args)
+		bz, err = p.DelegateEVM(ctx, evm.Origin, method, args)
 	case UndelegateMethod:
-		bz, err = p.UndelegateEVM(ctx, contract, evm.Origin, stateDB, method, args)
+		bz, err = p.UndelegateEVM(ctx, evm.Origin, method, args)
 	case RedelegateMethod:
-		bz, err = p.BeginRedelegateEVM(ctx, contract, evm.Origin, stateDB, method, args)
+		bz, err = p.BeginRedelegateEVM(ctx, evm.Origin, method, args)
 	case CancelUnbondingDelegationMethod:
-		bz, err = p.CancelUnbondingEVMDelegation(ctx, contract, evm.Origin, stateDB, method, args)
+		bz, err = p.CancelUnbondingEVMDelegation(ctx, evm.Origin, method, args)
 	case CreateValidatorMethod:
-		bz, err = p.CreateEVMValidator(ctx, contract, evm.Origin, stateDB, method, args)
-	// case EditValidatorMethod:
-	// 	bz, err = p.EditValidator(ctx, contract, evm.Origin, stateDB, method, args)
+		bz, err = p.CreateEVMValidator(ctx, method, args)
+	case EditValidatorMethod:
+		bz, err = p.EditValidator(ctx, method, args)
 
 	// Queries: We only support multistaking evm tx for now
 	// Use multistaking module query instead
 
-	// case DelegationMethod:
-	// 	bz, err = p.Delegation(ctx, contract, method, args)
-	// case UnbondingDelegationMethod:
-	// 	bz, err = p.UnbondingDelegation(ctx, contract, method, args)
-	// case ValidatorMethod: // multistaking
-	// 	bz, err = p.Validator(ctx, method, contract, args)
-	// case ValidatorsMethod: // multistaking
-	// 	bz, err = p.Validators(ctx, method, contract, args)
-	// case RedelegationMethod:
-	// 	bz, err = p.Redelegation(ctx, method, contract, args)
-	// case RedelegationsMethod:
-	// 	bz, err = p.Redelegations(ctx, method, contract, args)
+	case DelegationMethod:
+		bz, err = p.Delegation(ctx, contract, method, args)
+	case UnbondingDelegationMethod:
+		bz, err = p.UnbondingDelegation(ctx, contract, method, args)
+	case ValidatorMethod: // multistaking
+		bz, err = p.Validator(ctx, method, contract, args)
+	case ValidatorsMethod: // multistaking
+		bz, err = p.Validators(ctx, method, contract, args)
+	case RedelegationMethod:
+		bz, err = p.Redelegation(ctx, method, contract, args)
+	case RedelegationsMethod:
+		bz, err = p.Redelegations(ctx, method, contract, args)
 	}
 
 	if err != nil {

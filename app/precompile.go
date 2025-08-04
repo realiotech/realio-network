@@ -2,8 +2,9 @@ package app
 
 import (
 	"fmt"
-	"cosmossdk.io/log"
 	"maps"
+
+	"cosmossdk.io/log"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"

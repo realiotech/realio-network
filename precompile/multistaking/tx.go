@@ -4,18 +4,17 @@
 package multistaking
 
 import (
+	"encoding/json"
 	"fmt"
 	"math/big"
 
 	"cosmossdk.io/math"
 	// codectypes "github.com/cosmos/cosmos-sdk/codec/types"
-	"encoding/json"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cmn "github.com/cosmos/evm/precompiles/common"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/core/vm"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -28,9 +27,7 @@ import (
 // This method converts ERC20 tokens to SDK coins and delegates them.
 func (p Precompile) DelegateEVM(
 	ctx sdk.Context,
-	contract *vm.Contract,
 	sender common.Address,
-	stateDB vm.StateDB,
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
@@ -68,9 +65,7 @@ func (p Precompile) DelegateEVM(
 // This method undelegates SDK coins and converts them back to ERC20 tokens.
 func (p Precompile) UndelegateEVM(
 	ctx sdk.Context,
-	contract *vm.Contract,
 	origin common.Address,
-	stateDB vm.StateDB,
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
@@ -108,9 +103,7 @@ func (p Precompile) UndelegateEVM(
 // BeginRedelegateEVM handles the redelegation of tokens from one validator to another.
 func (p Precompile) BeginRedelegateEVM(
 	ctx sdk.Context,
-	contract *vm.Contract,
 	origin common.Address,
-	stateDB vm.StateDB,
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
@@ -149,9 +142,7 @@ func (p Precompile) BeginRedelegateEVM(
 // CancelUnbondingEVMDelegation handles the cancellation of an unbonding delegation using erc20 token.
 func (p Precompile) CancelUnbondingEVMDelegation(
 	ctx sdk.Context,
-	contract *vm.Contract,
 	origin common.Address,
-	stateDB vm.StateDB,
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
@@ -190,9 +181,6 @@ func (p Precompile) CancelUnbondingEVMDelegation(
 // CreateValidator creates a new erc20 validator using the multistaking module.
 func (p Precompile) CreateEVMValidator(
 	ctx sdk.Context,
-	contract *vm.Contract,
-	origin common.Address,
-	stateDB vm.StateDB,
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
@@ -230,38 +218,35 @@ func (p Precompile) CreateEVMValidator(
 	return method.Outputs.Pack(true)
 }
 
-// // EditValidator edits an existing validator using the multistaking module.
-// func (p Precompile) EditValidator(
-// 	ctx sdk.Context,
-// 	contract *vm.Contract,
-// 	origin common.Address,
-// 	stateDB vm.StateDB,
-// 	method *abi.Method,
-// 	args []interface{},
-// ) ([]byte, error) {
-// 	// Parse arguments
-// 	validatorAddress, description, commissionRate, minSelfDelegation, err := parseEditValidatorArgs(args)
-// 	if err != nil {
-// 		return nil, err
-// 	}
+// EditValidator edits an existing validator using the multistaking module.
+func (p Precompile) EditValidator(
+	ctx sdk.Context,
+	method *abi.Method,
+	args []interface{},
+) ([]byte, error) {
+	// Parse arguments
+	validatorAddress, description, commissionRate, minSelfDelegation, err := parseEditValidatorArgs(args)
+	if err != nil {
+		return nil, err
+	}
 
-// 	// Create multistaking edit validator message
-// 	msg := &stakingtypes.MsgEditValidator{
-// 		Description:       description,
-// 		ValidatorAddress:  validatorAddress,
-// 		CommissionRate:    commissionRate,
-// 		MinSelfDelegation: minSelfDelegation,
-// 	}
+	// Create multistaking edit validator message
+	msg := &stakingtypes.MsgEditValidator{
+		Description:       description,
+		ValidatorAddress:  validatorAddress,
+		CommissionRate:    commissionRate,
+		MinSelfDelegation: minSelfDelegation,
+	}
 
-// 	// Execute edit validator using multistaking msgServer
-// 	msgServer := multistakingkeeper.NewMsgServerImpl(p.multiStakingKeeper)
-// 	_, err = msgServer.EditValidator(ctx, msg)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("multistaking edit validator failed: %v", err)
-// 	}
+	// Execute edit validator using multistaking msgServer
+	msgServer := multistakingkeeper.NewMsgServerImpl(p.multiStakingKeeper)
+	_, err = msgServer.EditValidator(ctx, msg)
+	if err != nil {
+		return nil, fmt.Errorf("multistaking edit validator failed: %v", err)
+	}
 
-// 	return method.Outputs.Pack(true)
-// }
+	return method.Outputs.Pack(true)
+}
 
 // Helper functions for parsing arguments
 

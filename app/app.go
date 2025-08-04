@@ -1277,7 +1277,9 @@ func BlockedAddresses() map[string]bool {
 		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = true
 	}
 
-	blockedPrecompilesHex := append(evmtypes.AvailableStaticPrecompiles, precompileMultistaking.MultistakingPrecompileAddress)
+	blockedPrecompilesHex := append([]string{}, evmtypes.AvailableStaticPrecompiles...)
+	blockedPrecompilesHex = append(blockedPrecompilesHex, precompileMultistaking.MultistakingPrecompileAddress)
+
 	for _, addr := range evmosvm.PrecompiledAddressesBerlin {
 		blockedPrecompilesHex = append(blockedPrecompilesHex, addr.Hex())
 	}
