@@ -89,7 +89,6 @@ interface IMultiStaking {
     ) external returns (bool success);
 
     function createValidator(
-        string calldata validatorAddress,
         string calldata pubkey,
         string calldata contractAddress,
         string calldata amount,

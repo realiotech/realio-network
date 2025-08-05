@@ -41,11 +41,6 @@
       "inputs": [
         {
           "internalType": "string",
-          "name": "validatorAddress",
-          "type": "string"
-        },
-        {
-          "internalType": "string",
           "name": "pubkey",
           "type": "string"
         },

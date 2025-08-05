@@ -36,6 +36,7 @@ type Precompile struct {
 	multiStakingKeeper multistakingkeeper.Keeper
 	erc20Keeper        erc20keeper.Keeper
 	addrCodec          address.Codec
+	valAddrCodec       address.Codec
 }
 
 // NewPrecompile creates a new multistaking Precompile instance implementing the
@@ -46,6 +47,7 @@ func NewPrecompile(
 	multiStakingKeeper multistakingkeeper.Keeper,
 	erc20Keeper erc20keeper.Keeper,
 	addrCodec address.Codec,
+	valAddrCodec address.Codec,
 ) (*Precompile, error) {
 	newABI, err := cmn.LoadABI(f, "abi.json")
 	if err != nil {
@@ -65,6 +67,7 @@ func NewPrecompile(
 		multiStakingKeeper: multiStakingKeeper,
 		erc20Keeper:        erc20Keeper,
 		addrCodec:          addrCodec,
+		valAddrCodec:       valAddrCodec,
 	}
 
 	// SetAddress defines the address of the multistaking compile contract.
@@ -108,7 +111,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	case CancelUnbondingDelegationMethod:
 		bz, err = p.CancelUnbondingEVMDelegation(ctx, evm.Origin, method, args)
 	case CreateValidatorMethod:
-		bz, err = p.CreateEVMValidator(ctx, method, args)
+		bz, err = p.CreateEVMValidator(ctx, evm.Origin, method, args)
 
 		// Queries: We only support multistaking evm tx for now
 		// Use multistaking module query instead

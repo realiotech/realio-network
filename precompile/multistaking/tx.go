@@ -181,11 +181,12 @@ func (p Precompile) CancelUnbondingEVMDelegation(
 // CreateValidator creates a new erc20 validator using the multistaking module.
 func (p Precompile) CreateEVMValidator(
 	ctx sdk.Context,
+	origin common.Address,
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
 	// Parse arguments
-	validatorAddress, pubkey, contractAddress, amount, commission, description, minSelfDelegation, err := p.parseCreateValidatorArgs(args)
+	pubkey, contractAddress, amount, commission, description, minSelfDelegation, err := p.parseCreateValidatorArgs(args)
 	if err != nil {
 		return nil, err
 	}
@@ -196,6 +197,11 @@ func (p Precompile) CreateEVMValidator(
 		if pkAny, err = codectypes.NewAnyWithValue(pubkey); err != nil {
 			return nil, err
 		}
+	}
+
+	validatorAddress, err := p.valAddrCodec.BytesToString(sdk.ValAddress(origin.Bytes()))
+	if err != nil {
+		return nil, err
 	}
 
 	msg := &mstypes.MsgCreateEVMValidator{
@@ -302,21 +308,15 @@ func parseCancelUnbondingArgs(args []interface{}) (common.Address, string, *big.
 	return erc20Token, validatorAddress, amount, creationHeight.Int64(), nil
 }
 
-func (p Precompile) parseCreateValidatorArgs(args []interface{}) (string, cryptotypes.PubKey, common.Address, *big.Int, stakingtypes.CommissionRates, stakingtypes.Description, math.Int, error) {
-	if len(args) != 13 {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid number of arguments for createValidator, expected 13, got %d", len(args))
-	}
-
-	// Parse validatorAddress
-	validatorAddress, ok := args[0].(string)
-	if !ok {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid validator address")
+func (p Precompile) parseCreateValidatorArgs(args []interface{}) (cryptotypes.PubKey, common.Address, *big.Int, stakingtypes.CommissionRates, stakingtypes.Description, math.Int, error) {
+	if len(args) != 12 {
+		return nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid number of arguments for createValidator, expected 13, got %d", len(args))
 	}
 
 	// Parse pubkey as string
-	pubkeyStr, ok := args[1].(string)
+	pubkeyStr, ok := args[0].(string)
 	if !ok {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid pubkey")
+		return nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid pubkey")
 	}
 	pkStr := fmt.Sprintf(`{"@type":"/cosmos.crypto.ed25519.PubKey","key":"%s"}`, pubkeyStr)
 
@@ -324,46 +324,46 @@ func (p Precompile) parseCreateValidatorArgs(args []interface{}) (string, crypto
 
 	var pk cryptotypes.PubKey
 	if err := p.Codec.UnmarshalInterfaceJSON(pubkeyJSON, &pk); err != nil {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, err
+		return nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, err
 	}
 
 	// Parse contractAddress
-	contractAddressStr, ok := args[2].(string)
+	contractAddressStr, ok := args[1].(string)
 	if !ok {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid contract address")
+		return nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid contract address")
 	}
 	contractAddress := common.HexToAddress(contractAddressStr)
 
 	// Parse amount (self delegation amount)
-	amount, ok := new(big.Int).SetString(args[3].(string), 10)
+	amount, ok := new(big.Int).SetString(args[2].(string), 10)
 	if !ok {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid amount")
+		return nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid amount")
 	}
 
 	// Parse description fields
-	moniker, ok := args[4].(string)
+	moniker, ok := args[3].(string)
 	if !ok {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid moniker")
+		return nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid moniker")
 	}
 
-	identity, ok := args[5].(string)
+	identity, ok := args[4].(string)
 	if !ok {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid identity")
+		return nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid identity")
 	}
 
-	website, ok := args[6].(string)
+	website, ok := args[5].(string)
 	if !ok {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid website")
+		return nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid website")
 	}
 
-	security, ok := args[7].(string)
+	security, ok := args[6].(string)
 	if !ok {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid security")
+		return nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid security")
 	}
 
-	details, ok := args[8].(string)
+	details, ok := args[7].(string)
 	if !ok {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid details")
+		return nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid details")
 	}
 
 	description := stakingtypes.Description{
@@ -375,19 +375,19 @@ func (p Precompile) parseCreateValidatorArgs(args []interface{}) (string, crypto
 	}
 
 	// Parse commission fields
-	commissionRate, ok := args[9].(string)
+	commissionRate, ok := args[8].(string)
 	if !ok {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid commission rate")
+		return nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid commission rate")
 	}
 
-	commissionMaxRate, ok := args[10].(string)
+	commissionMaxRate, ok := args[9].(string)
 	if !ok {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid commission max rate")
+		return nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid commission max rate")
 	}
 
-	commissionMaxChangeRate, ok := args[11].(string)
+	commissionMaxChangeRate, ok := args[10].(string)
 	if !ok {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid commission max change rate")
+		return nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid commission max change rate")
 	}
 
 	commission := stakingtypes.CommissionRates{
@@ -397,17 +397,17 @@ func (p Precompile) parseCreateValidatorArgs(args []interface{}) (string, crypto
 	}
 
 	// Parse minSelfDelegation
-	minSelfDelegationStr, ok := args[12].(string)
+	minSelfDelegationStr, ok := args[11].(string)
 	if !ok {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid min self delegation")
+		return nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid min self delegation")
 	}
 
 	minSelfDelegation, ok := math.NewIntFromString(minSelfDelegationStr)
 	if !ok {
-		return "", nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid min self delegation format")
+		return nil, common.Address{}, nil, stakingtypes.CommissionRates{}, stakingtypes.Description{}, math.Int{}, fmt.Errorf("invalid min self delegation format")
 	}
 
-	return validatorAddress, pk, contractAddress, amount, commission, description, minSelfDelegation, nil
+	return pk, contractAddress, amount, commission, description, minSelfDelegation, nil
 }
 
 // Helper struct for self delegation

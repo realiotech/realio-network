@@ -52,6 +52,7 @@ func NewAvailableStaticPrecompiles(
 	evidenceKeeper evidencekeeper.Keeper,
 	multiStakingKeeper multistakingkeeper.Keeper,
 	addrCodec address.Codec,
+	valAddrCodec address.Codec,
 ) map[common.Address]vm.PrecompiledContract {
 	// Clone the mapping from the latest EVM fork.
 	precompiles := maps.Clone(vm.PrecompiledContractsBerlin)
@@ -93,7 +94,7 @@ func NewAvailableStaticPrecompiles(
 		panic(fmt.Errorf("failed to instantiate bank precompile: %w", err))
 	}
 
-	mulStakingPrecompile, err := precompileMultiStaking.NewPrecompile(cdc, stakingKeeper, multiStakingKeeper, erc20Keeper, addrCodec)
+	mulStakingPrecompile, err := precompileMultiStaking.NewPrecompile(cdc, stakingKeeper, multiStakingKeeper, erc20Keeper, addrCodec, valAddrCodec)
 	if err != nil {
 		panic(fmt.Errorf("failed to instantiate bank precompile: %w", err))
 	}

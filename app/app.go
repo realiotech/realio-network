@@ -635,6 +635,7 @@ func New(
 			app.EvidenceKeeper,
 			app.MultiStakingKeeper,
 			app.AccountKeeper.AddressCodec(),
+			authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		),
 	)
 
