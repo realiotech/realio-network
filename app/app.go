@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/realiotech/realio-network/app/ante"
 	"github.com/realiotech/realio-network/client/docs"
@@ -42,6 +43,7 @@ import (
 	evmsecp256k1 "github.com/cosmos/evm/crypto/ethsecp256k1"
 	srvflags "github.com/cosmos/evm/server/flags"
 	ostypes "github.com/cosmos/evm/types"
+	cosmosevmutils "github.com/cosmos/evm/utils"
 	evmosvm "github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/cosmos/evm/x/erc20"
@@ -171,6 +173,8 @@ import (
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
+
+	precompileMultistaking "github.com/realiotech/realio-network/precompile/multistaking"
 )
 
 const (
@@ -415,7 +419,7 @@ func New(
 		appCodec,
 		runtime.NewKVStoreService(keys[banktypes.StoreKey]),
 		app.AccountKeeper,
-		app.ModuleAccountAddrs(),
+		BlockedAddresses(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		logger,
 	)
@@ -507,8 +511,6 @@ func New(
 		app.StakingKeeper,
 		&app.TransferKeeper,
 	)
-
-	app.EvmKeeper.WithStaticPrecompiles(evmosvm.PrecompiledContractsBerlin)
 
 	// multi-staking keeper
 	app.MultiStakingKeeper = *multistakingkeeper.NewKeeper(
@@ -615,6 +617,27 @@ func New(
 
 	tmLightClientModule := ibctm.NewLightClientModule(appCodec, storeProvider)
 	clientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
+
+	// NOTE: we are adding all available Cosmos EVM EVM extensions.
+	// Not all of them need to be enabled, which can be configured on a per-chain basis.
+	app.EvmKeeper.WithStaticPrecompiles(
+		NewAvailableStaticPrecompiles(
+			appCodec,
+			*app.StakingKeeper,
+			app.DistrKeeper,
+			app.BankKeeper,
+			app.Erc20Keeper,
+			app.TransferKeeper,
+			app.IBCKeeper.ChannelKeeper,
+			app.EvmKeeper,
+			app.GovKeeper,
+			app.SlashingKeeper,
+			app.EvidenceKeeper,
+			app.MultiStakingKeeper,
+			app.AccountKeeper.AddressCodec(),
+			authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		),
+	)
 
 	/****  Module Options ****/
 
@@ -1119,7 +1142,11 @@ func (app *RealioNetwork) GetTxConfig() client.TxConfig {
 // DefaultGenesis returns a default genesis from the registered AppModuleBasic's.
 func (app *RealioNetwork) DefaultGenesis() map[string]json.RawMessage {
 	genesis := ModuleBasics.DefaultGenesis(app.appCodec)
-	erc20GenState := erc20types.DefaultGenesisState()
+
+	evmGenState := NewEVMGenesisState()
+	genesis[evmtypes.ModuleName] = app.appCodec.MustMarshalJSON(evmGenState)
+
+	erc20GenState := NewErc20GenesisState()
 	genesis[erc20types.ModuleName] = app.appCodec.MustMarshalJSON(erc20GenState)
 	return genesis
 }
@@ -1234,4 +1261,32 @@ func RealioSigVerificationGasConsumer(
 	default:
 		return authante.DefaultSigVerificationGasConsumer(meter, sig, params)
 	}
+}
+
+func BlockedAddresses() map[string]bool {
+	blockedAddrs := make(map[string]bool)
+
+	maccPerms := GetMaccPerms()
+	accs := make([]string, 0, len(maccPerms))
+	for acc := range maccPerms {
+		accs = append(accs, acc)
+	}
+	sort.Strings(accs)
+
+	for _, acc := range accs {
+		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = true
+	}
+
+	blockedPrecompilesHex := append([]string{}, evmtypes.AvailableStaticPrecompiles...)
+	blockedPrecompilesHex = append(blockedPrecompilesHex, precompileMultistaking.MultistakingPrecompileAddress)
+
+	for _, addr := range evmosvm.PrecompiledAddressesBerlin {
+		blockedPrecompilesHex = append(blockedPrecompilesHex, addr.Hex())
+	}
+
+	for _, precompile := range blockedPrecompilesHex {
+		blockedAddrs[cosmosevmutils.EthHexToCosmosAddr(precompile).String()] = true
+	}
+
+	return blockedAddrs
 }
