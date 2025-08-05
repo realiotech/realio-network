@@ -12,6 +12,7 @@ import (
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	precompileMultistaking "github.com/realiotech/realio-network/precompile/multistaking"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v1.3.0
@@ -37,9 +38,9 @@ func CreateUpgradeHandler(
 			return nil, err
 		}
 
-		// Add multistaking precompile to EVM active precompiles
+		// Add multistaking and distributions precompiles to EVM active precompiles
 		evmParams := evmKeeper.GetParams(sdkCtx)
-		evmParams.ActiveStaticPrecompiles = append(evmParams.ActiveStaticPrecompiles, precompileMultistaking.MultistakingPrecompileAddress)
+		evmParams.ActiveStaticPrecompiles = append(evmParams.ActiveStaticPrecompiles, precompileMultistaking.MultistakingPrecompileAddress, evmtypes.DistributionPrecompileAddress)
 		err = evmKeeper.SetParams(sdkCtx, evmParams)
 		if err != nil {
 			return nil, err
