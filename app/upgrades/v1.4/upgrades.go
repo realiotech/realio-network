@@ -11,8 +11,8 @@ import (
 	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
-	precompileMultistaking "github.com/realiotech/realio-network/precompile/multistaking"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	precompileMultistaking "github.com/realiotech/realio-network/precompile/multistaking"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v1.3.0

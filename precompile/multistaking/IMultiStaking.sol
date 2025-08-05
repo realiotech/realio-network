@@ -103,47 +103,4 @@ interface IMultiStaking {
         string calldata commissionMaxChangeRate,
         string calldata minSelfDelegation
     ) external returns (bool success);
-
-    function editValidator(
-        string calldata validatorAddress,
-        string calldata moniker,
-        string calldata identity,
-        string calldata website,
-        string calldata security,
-        string calldata details,
-        string calldata commissionRate,
-        string calldata minSelfDelegation
-    ) external returns (bool success);
-
-    function delegation(
-        string calldata delegatorAddress,
-        string calldata validatorAddress
-    ) external view returns (uint256 shares, uint256 balance);
-
-    function unbondingDelegation(
-        string calldata delegatorAddress,
-        string calldata validatorAddress
-    ) external view returns (uint256 balance, int64 completionTime);
-
-    function validator(
-        address validatorAddress
-    ) external view returns (Validator memory);
-
-    function validators(
-        string calldata status,
-        PageRequest calldata pageRequest
-    ) external view returns (Validator[] memory, PageResponse memory);
-
-    function redelegation(
-        address delegatorAddress,
-        string calldata srcValidatorAddress,
-        string calldata dstValidatorAddress
-    ) external view returns (RedelegationOutput memory);
-
-    function redelegations(
-        address delegatorAddress,
-        string calldata srcValidatorAddress,
-        string calldata dstValidatorAddress,
-        PageRequest calldata pageRequest
-    ) external view returns (RedelegationResponse[] memory, PageResponse memory);
 }

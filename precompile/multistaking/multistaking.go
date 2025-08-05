@@ -110,21 +110,8 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	case CreateValidatorMethod:
 		bz, err = p.CreateEVMValidator(ctx, method, args)
 
-	// Queries: We only support multistaking evm tx for now
-	// Use multistaking module query instead
-
-	case DelegationMethod:
-		bz, err = p.Delegation(ctx, contract, method, args)
-	case UnbondingDelegationMethod:
-		bz, err = p.UnbondingDelegation(ctx, contract, method, args)
-	case ValidatorMethod: // multistaking
-		bz, err = p.Validator(ctx, method, contract, args)
-	case ValidatorsMethod: // multistaking
-		bz, err = p.Validators(ctx, method, contract, args)
-	case RedelegationMethod:
-		bz, err = p.Redelegation(ctx, method, contract, args)
-	case RedelegationsMethod:
-		bz, err = p.Redelegations(ctx, method, contract, args)
+		// Queries: We only support multistaking evm tx for now
+		// Use multistaking module query instead
 	}
 
 	if err != nil {
@@ -150,8 +137,7 @@ func (Precompile) IsTransaction(method *abi.Method) bool {
 		UndelegateMethod,
 		RedelegateMethod,
 		CancelUnbondingDelegationMethod,
-		CreateValidatorMethod,
-		EditValidatorMethod:
+		CreateValidatorMethod:
 		return true
 	default:
 		return false
