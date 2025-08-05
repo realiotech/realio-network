@@ -12,6 +12,8 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/evm/x/erc20"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 )
 
 // ExportAppStateAndValidators exports the state of the application for a genesis
@@ -34,6 +36,10 @@ func (app *RealioNetwork) ExportAppStateAndValidators(
 	if err != nil {
 		return servertypes.ExportedApp{}, err
 	}
+	// Export erc20 state since it's not included in mm.ExportGenesisForModules
+	erc20State := erc20.ExportGenesis(ctx, app.Erc20Keeper)
+	genState[erc20types.ModuleName] = app.appCodec.MustMarshalJSON(erc20State)
+
 	appState, err := json.MarshalIndent(genState, "", "  ")
 	if err != nil {
 		return servertypes.ExportedApp{}, err
