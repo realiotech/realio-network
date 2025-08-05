@@ -12,4 +12,3 @@ const (
 	CancelUnbondingDelegationMethod = "cancelUnbondingDelegation"
 	CreateValidatorMethod           = "createValidator"
 )
-
