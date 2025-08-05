@@ -40,7 +40,7 @@ func CreateUpgradeHandler(
 
 		// Add multistaking and distributions precompiles to EVM active precompiles
 		evmParams := evmKeeper.GetParams(sdkCtx)
-		evmParams.ActiveStaticPrecompiles = append(evmParams.ActiveStaticPrecompiles, precompileMultistaking.MultistakingPrecompileAddress, evmtypes.DistributionPrecompileAddress)
+		evmParams.ActiveStaticPrecompiles = append(evmParams.ActiveStaticPrecompiles, evmtypes.DistributionPrecompileAddress, precompileMultistaking.MultistakingPrecompileAddress)
 		err = evmKeeper.SetParams(sdkCtx, evmParams)
 		if err != nil {
 			return nil, err
