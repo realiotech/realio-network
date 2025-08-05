@@ -28,6 +28,7 @@ import (
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
+	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
 )
 
@@ -39,6 +40,7 @@ type Network interface {
 	network.Network
 	GetMultistakingClient() multistakingtypes.QueryClient
 	GetMintModuleClient() minttypes.QueryClient // conflict types with current GetMintClient()
+	GetBridgeClient() bridgetypes.QueryClient
 }
 
 var _ Network = (*IntegrationNetwork)(nil)

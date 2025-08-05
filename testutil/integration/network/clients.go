@@ -22,6 +22,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
+	bridgekeeper "github.com/realiotech/realio-network/x/bridge/keeper"
+	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 	mintkeeper "github.com/realiotech/realio-network/x/mint/keeper"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
 )
@@ -96,6 +98,12 @@ func (n *IntegrationNetwork) GetMintModuleClient() minttypes.QueryClient {
 	queryHelper := getQueryHelper(n.GetContext(), n.GetEncodingConfig())
 	minttypes.RegisterQueryServer(queryHelper, mintkeeper.NewQueryServerImpl(n.app.MintKeeper))
 	return minttypes.NewQueryClient(queryHelper)
+}
+
+func (n *IntegrationNetwork) GetBridgeClient() bridgetypes.QueryClient {
+	queryHelper := getQueryHelper(n.GetContext(), n.GetEncodingConfig())
+	bridgetypes.RegisterQueryServer(queryHelper, bridgekeeper.NewQueryServerImpl(n.app.BridgeKeeper))
+	return bridgetypes.NewQueryClient(queryHelper)
 }
 
 func (n *IntegrationNetwork) GetPreciseBankClient() precisebanktypes.QueryClient {

@@ -12,13 +12,8 @@ import (
 )
 
 func (ms msgServer) RegisterNewCoins(goCtx context.Context, msg *types.MsgRegisterNewCoins) (*types.MsgRegisterNewCoinsResponse, error) {
-	param, err := ms.Params.Get(goCtx)
-	if err != nil {
-		return nil, errorsmod.Wrap(sdkerrors.ErrNotFound, "failed to get bridge params")
-	}
-
-	if msg.Authority != param.Authority {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "invalid authority; expected %s, got %s", param.Authority, msg.Authority)
+	if msg.Authority != ms.authority {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "invalid authority; expected %s, got %s", ms.authority, msg.Authority)
 	}
 
 	for _, coin := range msg.Coins {
@@ -26,7 +21,7 @@ func (ms msgServer) RegisterNewCoins(goCtx context.Context, msg *types.MsgRegist
 			return nil, errorsmod.Wrapf(types.ErrCoinAlreadyRegister, "denom: %s", coin.Denom)
 		}
 
-		err = ms.RegisteredCoins.Set(goCtx, coin.Denom, types.RateLimit{
+		err := ms.RegisteredCoins.Set(goCtx, coin.Denom, types.RateLimit{
 			Ratelimit:     coin.Amount,
 			CurrentInflow: math.ZeroInt(),
 		})
@@ -46,13 +41,8 @@ func (ms msgServer) RegisterNewCoins(goCtx context.Context, msg *types.MsgRegist
 }
 
 func (ms msgServer) DeregisterCoins(goCtx context.Context, msg *types.MsgDeregisterCoins) (*types.MsgDeregisterCoinsResponse, error) {
-	param, err := ms.Params.Get(goCtx)
-	if err != nil {
-		return nil, errorsmod.Wrap(sdkerrors.ErrNotFound, "failed to get bridge params")
-	}
-
-	if msg.Authority != param.Authority {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "invalid authority; expected %s, got %s", param.Authority, msg.Authority)
+	if msg.Authority != ms.authority {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "invalid authority; expected %s, got %s", ms.authority, msg.Authority)
 	}
 
 	for _, denom := range msg.Denoms {
@@ -60,7 +50,7 @@ func (ms msgServer) DeregisterCoins(goCtx context.Context, msg *types.MsgDeregis
 			return nil, errorsmod.Wrapf(types.ErrCoinNotRegister, "denom: %s", denom)
 		}
 
-		err = ms.RegisteredCoins.Remove(goCtx, denom)
+		err := ms.RegisteredCoins.Remove(goCtx, denom)
 		if err != nil {
 			return nil, err
 		}
