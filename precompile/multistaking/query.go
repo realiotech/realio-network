@@ -39,7 +39,6 @@ func (p Precompile) Delegation(
 	queryServer := multistakingkeeper.NewQueryServerImpl(p.multiStakingKeeper)
 
 	res, err := queryServer.MultiStakingLock(ctx, req)
-
 	if err != nil {
 		return nil, err
 	}

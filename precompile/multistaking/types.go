@@ -4,15 +4,13 @@
 package multistaking
 
 import (
+	"encoding/base64"
 	"fmt"
-
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 
 	cmn "github.com/cosmos/evm/precompiles/common"
-
-	"encoding/base64"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -191,12 +189,12 @@ func (vo *ValidatorOutput) FromResponse(res *multistakingtypes.QueryValidatorRes
 
 	return ValidatorOutput{
 		Validator: ValidatorInfo{
-			OperatorAddress: common.BytesToAddress(operatorAddress.Bytes()).String(),
-			ConsensusPubkey: FormatConsensusPubkey(res.Validator.ConsensusPubkey),
-			Jailed:          res.Validator.Jailed,
-			Status:          uint8(stakingtypes.BondStatus_value[res.Validator.Status.String()]), //#nosec G115 // enum will always be convertible to uint8
-			Tokens:          res.Validator.Tokens.BigInt(),
-			DelegatorShares: res.Validator.DelegatorShares.BigInt(),
+			OperatorAddress:   common.BytesToAddress(operatorAddress.Bytes()).String(),
+			ConsensusPubkey:   FormatConsensusPubkey(res.Validator.ConsensusPubkey),
+			Jailed:            res.Validator.Jailed,
+			Status:            uint8(stakingtypes.BondStatus_value[res.Validator.Status.String()]), //#nosec G115 // enum will always be convertible to uint8
+			Tokens:            res.Validator.Tokens.BigInt(),
+			DelegatorShares:   res.Validator.DelegatorShares.BigInt(),
 			Description:       res.Validator.Description.Details,
 			UnbondingHeight:   res.Validator.UnbondingHeight,
 			UnbondingTime:     res.Validator.UnbondingTime.UTC().Unix(),

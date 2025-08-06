@@ -119,9 +119,6 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	case ValidatorMethod:
 		bz, err = p.Validator(ctx, contract, method, args)
 
-
-		// Queries: We only support multistaking evm tx for now
-		// Use multistaking module query instead
 	}
 
 	if err != nil {
