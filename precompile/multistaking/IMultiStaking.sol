@@ -1,51 +1,9 @@
 // SPDX-License-Identifier: LGPL-3.0-only
 pragma solidity >=0.8.18;
 
+import "./Types.sol";
+
 enum BondStatus { Unbonded, Unbonding, Bonded }
-
-struct RedelegationEntry {
-    int64 creationHeight;
-    int64 completionTime;
-    uint256 initialBalance;
-    uint256 sharesDst;
-}
-
-struct RedelegationOutput {
-    string delegatorAddress;
-    string validatorSrcAddress;
-    string validatorDstAddress;
-    RedelegationEntry[] entries;
-}
-
-struct Redelegation {
-    string delegatorAddress;
-    string validatorSrcAddress;
-    string validatorDstAddress;
-    RedelegationEntry[] entries;
-}
-
-struct RedelegationEntryResponse {
-    RedelegationEntry redelegationEntry;
-    uint256 balance;
-}
-
-struct RedelegationResponse {
-    Redelegation redelegation;
-    RedelegationEntryResponse[] entries;
-}
-
-struct PageRequest {
-    bytes key;
-    uint64 offset;
-    uint64 limit;
-    bool countTotal;
-    bool reverse;
-}
-
-struct PageResponse {
-    bytes nextKey;
-    uint64 total;
-}
 
 struct Validator {
     string operatorAddress;
@@ -59,6 +17,19 @@ struct Validator {
     int64 unbondingTime;
     uint256 commission;
     uint256 minSelfDelegation;
+    string bondDenom;
+}
+
+struct UnbondingDelegationEntry {
+    int64 creationHeight;
+    uint256 balance;
+}
+
+/// @dev Represents the output of the UnbondingDelegation query.
+struct UnbondingDelegationOutput {
+    string delegatorAddress;
+    string validatorAddress;
+    UnbondingDelegationEntry[] entries;
 }
 
 interface IMultiStaking {
@@ -102,4 +73,21 @@ interface IMultiStaking {
         string calldata commissionMaxChangeRate,
         string calldata minSelfDelegation
     ) external returns (bool success);
+
+    function delegation(
+        address delegatorAddress,
+        string memory validatorAddress
+    ) external view returns (Coin calldata balance);
+
+    function unbondingDelegation(
+        address delegatorAddress,
+        string memory validatorAddress
+    )
+        external
+        view
+        returns (UnbondingDelegationOutput calldata unbondingDelegation);
+    
+    function validator(
+        address validatorAddress
+    ) external view returns (Validator calldata validator);
 }
