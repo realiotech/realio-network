@@ -189,7 +189,7 @@ func (vo *ValidatorOutput) FromResponse(res *multistakingtypes.QueryValidatorRes
 
 	return ValidatorOutput{
 		Validator: ValidatorInfo{
-			OperatorAddress:   common.BytesToAddress(operatorAddress.Bytes()).String(),
+			OperatorAddress:   sdk.ValAddress(operatorAddress.Bytes()).String(),
 			ConsensusPubkey:   FormatConsensusPubkey(res.Validator.ConsensusPubkey),
 			Jailed:            res.Validator.Jailed,
 			Status:            uint8(stakingtypes.BondStatus_value[res.Validator.Status.String()]), //#nosec G115 // enum will always be convertible to uint8
