@@ -302,18 +302,18 @@ func (suite *EVMTestSuite) createEVMValidatorByPrecompile(contractAddr common.Ad
 			ContractABI: abi,
 			MethodName:  "createValidator",
 			Args: []interface{}{
-				base64Pk,
-				contractAddr.Hex(),
-				"1000000",
+				base64Pk,           // pubkey base64 format
+				contractAddr.Hex(), // erc20 contract address
+				"1000000",          // amount
 				"moniker",
 				"identity",
 				"website",
 				"security",
 				"details",
-				"0.1",
-				"0.2",
-				"0.01",
-				"1",
+				"0.1",  // commission-rate
+				"0.2",  // commission-max-rate
+				"0.01", // commission-max-change-rate
+				"1",    // min-self-delegation
 			},
 		},
 	)
