@@ -1,9 +1,7 @@
 package integration
 
 import (
-
-	// "fmt"
-	"fmt"
+	"encoding/base64"
 	"math/big"
 
 	"cosmossdk.io/math"
@@ -11,24 +9,16 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/ethereum/go-ethereum/common"
 
-	// cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	// gov1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
-	// integrationutils "github.com/realiotech/realio-network/testutil/integration/utils"
-	// stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/evm/contracts"
 	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
 
-	// erc20types "github.com/cosmos/evm/x/erc20/types"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	integrationutils "github.com/realiotech/realio-network/testutil/integration/utils"
-
-	// "github.com/realiotech/realio-network/app"
-	"encoding/base64"
 
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -328,8 +318,6 @@ func (suite *EVMTestSuite) createEVMValidatorByPrecompile(contractAddr common.Ad
 		},
 	)
 
-	fmt.Println("createEVMValidatorByPrecompile: ", res, err)
-
 	suite.Require().NoError(err)
 	suite.Require().True(res.IsOK(), "create ERC20 validator should have succeeded", res.GetLog())
 	suite.Require().NoError(suite.network.NextBlock())
@@ -349,13 +337,13 @@ func (suite *EVMTestSuite) createEVMValidatorByPrecompile(contractAddr common.Ad
 		},
 		testutil.LogCheckArgs{ExpPass: true},
 	)
-	fmt.Println("getValidator: ", res, err)
-	var val precompileMultiStaking.ValidatorOutput
-	err = abi.UnpackIntoInterface(&val, "validator", balanceRes.Ret)
-	fmt.Println("unpack", val)
-
 	suite.Require().NoError(err)
 	suite.Require().True(res.IsOK(), "create ERC20 validator should have succeeded", res.GetLog())
+
+	var val precompileMultiStaking.ValidatorOutput
+	err = abi.UnpackIntoInterface(&val, "validator", balanceRes.Ret)
+
+	suite.Require().NoError(err)
 	suite.Require().NotEqual(val.Validator, precompileMultiStaking.ValidatorInfo{})
 	suite.Require().NoError(suite.network.NextBlock())
 
@@ -420,13 +408,13 @@ func (suite *EVMTestSuite) delegateEVMByPrecompile(contractAddr common.Address, 
 		},
 		testutil.LogCheckArgs{ExpPass: true},
 	)
+	suite.Require().NoError(err)
+	suite.Require().True(res.IsOK(), "create ERC20 delegation should have succeeded", res.GetLog())
 
 	var del precompileMultiStaking.DelegationOutput
 	err = abi.UnpackIntoInterface(&del, "delegation", delRes.Ret)
-	fmt.Println("unpack del", del)
 
 	suite.Require().NoError(err)
-	suite.Require().True(res.IsOK(), "create ERC20 delegation should have succeeded", res.GetLog())
 	suite.Require().NoError(suite.network.NextBlock())
 	suite.Require().Equal(del.Balance.Amount, math.NewInt(delegateAmount).BigInt())
 }
@@ -489,13 +477,13 @@ func (suite *EVMTestSuite) redelegateEVMByPrecompile(contractAddr common.Address
 		},
 		testutil.LogCheckArgs{ExpPass: true},
 	)
+	suite.Require().NoError(err)
+	suite.Require().True(res.IsOK(), "create ERC20 delegation should have succeeded", res.GetLog())
 
 	var del precompileMultiStaking.DelegationOutput
 	err = abi.UnpackIntoInterface(&del, "delegation", delRes.Ret)
-	fmt.Println("unpack del", del)
 
 	suite.Require().NoError(err)
-	suite.Require().True(res.IsOK(), "create ERC20 delegation should have succeeded", res.GetLog())
 	suite.Require().NoError(suite.network.NextBlock())
 	suite.Require().Equal(del.Balance.Amount, math.NewInt(redelegateAmount).BigInt())
 }
@@ -563,7 +551,6 @@ func (suite *EVMTestSuite) undelegateEVMByPrecompile(contractAddr common.Address
 	err = abi.UnpackIntoInterface(&unDel, "unbondingDelegation", delRes.Ret)
 	suite.Require().NoError(err)
 	suite.Require().Equal(unDel.UnbondingDelegation.Entries[0].Balance, math.NewInt(undelegateAmount).BigInt())
-	fmt.Println("unpack undel", unDel)
 
 	suite.Require().NoError(suite.network.NextBlock())
 
@@ -627,7 +614,6 @@ func (suite *EVMTestSuite) cancelUndelegateEvmByPrecompile(contractAddr common.A
 		},
 		testutil.LogCheckArgs{ExpPass: true},
 	)
-	fmt.Println("unDelRes", unDelRes, err)
 	suite.Require().NoError(err)
 	suite.Require().True(res.IsOK(), "create ERC20 delegation should have succeeded", res.GetLog())
 
