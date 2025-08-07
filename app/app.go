@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"sort"
 
 	"github.com/realiotech/realio-network/app/ante"
 	"github.com/realiotech/realio-network/client/docs"
@@ -42,14 +43,21 @@ import (
 	evmsecp256k1 "github.com/cosmos/evm/crypto/ethsecp256k1"
 	srvflags "github.com/cosmos/evm/server/flags"
 	ostypes "github.com/cosmos/evm/types"
+	cosmosevmutils "github.com/cosmos/evm/utils"
 	evmosvm "github.com/ethereum/go-ethereum/core/vm"
 
+	"github.com/cosmos/evm/x/erc20"
+	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
+	erc20types "github.com/cosmos/evm/x/erc20/types"
 	"github.com/cosmos/evm/x/feemarket"
 	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	"github.com/cosmos/evm/x/vm"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+
+	// NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens
+	"github.com/cosmos/evm/x/ibc/transfer"
 
 	"github.com/gorilla/mux"
 
@@ -128,8 +136,7 @@ import (
 	"github.com/cosmos/ibc-go/modules/capability"
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
-	"github.com/cosmos/ibc-go/v10/modules/apps/transfer"
-	ibctransferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
+	ibctransfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v10/modules/core"
 	ibcclienttypes "github.com/cosmos/ibc-go/v10/modules/core/02-client/types"
@@ -160,9 +167,14 @@ import (
 	realionetworktypes "github.com/realiotech/realio-network/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
+	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
+	"github.com/ethereum/go-ethereum/common"
+
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
+
+	precompileMultistaking "github.com/realiotech/realio-network/precompile/multistaking"
 )
 
 const (
@@ -204,13 +216,13 @@ var (
 		authzmodule.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
 		evidence.AppModuleBasic{},
-		transfer.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		vm.AppModuleBasic{},
 		feemarket.AppModuleBasic{},
 		assetmodule.AppModuleBasic{},
 		bridgemodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
+		transfer.AppModuleBasic{AppModuleBasic: &ibctransfer.AppModuleBasic{}},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -227,6 +239,7 @@ var (
 		assetmoduletypes.ModuleName:    {authtypes.Minter, authtypes.Burner},
 		bridgemoduletypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		multistakingtypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
+		erc20types.ModuleName:          {authtypes.Minter, authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -284,12 +297,13 @@ type RealioNetwork struct {
 	AuthzKeeper           authzkeeper.Keeper
 	IBCKeeper             *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
 	EvidenceKeeper        evidencekeeper.Keeper
-	TransferKeeper        ibctransferkeeper.Keeper
+	TransferKeeper        transferkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
 
 	// Ethermint keepers
 	EvmKeeper       *evmkeeper.Keeper
 	FeeMarketKeeper feemarketkeeper.Keeper
+	Erc20Keeper     erc20keeper.Keeper
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -332,6 +346,9 @@ func New(
 	bApp.SetVersion(version.Version)
 	bApp.SetTxEncoder(encodingConfig.TxConfig.TxEncoder())
 	bApp.SetInterfaceRegistry(interfaceRegistry)
+	if err := evmAppOptions(bApp.ChainID()); err != nil {
+		panic(err)
+	}
 
 	// initialize the Cosmos EVM application configuration
 	if err := evmAppOptions(bApp.ChainID()); err != nil {
@@ -350,7 +367,7 @@ func New(
 		// realio network keys
 		assetmoduletypes.StoreKey, bridgemoduletypes.StoreKey,
 		// ethermint keys
-		evmtypes.StoreKey, feemarkettypes.StoreKey,
+		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey,
 		// multi-staking keys
 		multistakingtypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
@@ -402,7 +419,7 @@ func New(
 		appCodec,
 		runtime.NewKVStoreService(keys[banktypes.StoreKey]),
 		app.AccountKeeper,
-		app.ModuleAccountAddrs(),
+		BlockedAddresses(),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		logger,
 	)
@@ -414,15 +431,6 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
-	)
-	// multi-staking keeper
-	app.MultiStakingKeeper = *multistakingkeeper.NewKeeper(
-		appCodec,
-		app.AccountKeeper,
-		app.StakingKeeper,
-		app.BankKeeper,
-		keys[multistakingtypes.StoreKey],
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.MintKeeper = mintkeeper.NewKeeper(
 		appCodec,
@@ -489,11 +497,33 @@ func New(
 
 	app.EvmKeeper = evmkeeper.NewKeeper(
 		appCodec, keys[evmtypes.StoreKey], tkeys[evmtypes.TransientKey], authtypes.NewModuleAddress(govtypes.ModuleName),
-		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper, MockErc20Keeper{},
+		app.AccountKeeper, app.BankKeeper, app.StakingKeeper, app.FeeMarketKeeper, &app.Erc20Keeper,
 		tracer,
 	)
 
-	app.EvmKeeper.WithStaticPrecompiles(evmosvm.PrecompiledContractsBerlin)
+	app.Erc20Keeper = erc20keeper.NewKeeper(
+		keys[erc20types.StoreKey],
+		appCodec,
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.EvmKeeper,
+		app.StakingKeeper,
+		&app.TransferKeeper,
+	)
+
+	// multi-staking keeper
+	app.MultiStakingKeeper = *multistakingkeeper.NewKeeper(
+		appCodec,
+		app.AccountKeeper,
+		app.StakingKeeper,
+		app.BankKeeper,
+		app.Erc20Keeper,
+		runtime.NewKVStoreService(keys[multistakingtypes.StoreKey]),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ConsensusAddrPrefix()),
+	)
 
 	// register the staking hooks
 	// NOTE: stakingKeeper above is passed by reference, so that it will contain these hooks
@@ -557,19 +587,25 @@ func New(
 	app.GovKeeper.SetLegacyRouter(govRouter)
 
 	// Create Transfer Keepers
-	app.TransferKeeper = ibctransferkeeper.NewKeeper(
-		appCodec, runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]), app.GetSubspace(ibctransfertypes.ModuleName),
-		app.IBCKeeper.ChannelKeeper, // ISC4 Wrapper: fee IBC middleware
+	app.TransferKeeper = transferkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]),
+		app.GetSubspace(ibctransfertypes.ModuleName),
+		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		app.MsgServiceRouter(),
-		app.AccountKeeper, app.BankKeeper,
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
 
 	// create IBC module from top to bottom of stack
-	transferStack := transfer.NewIBCModule(app.TransferKeeper)
+	var transferStack porttypes.IBCModule
+	transferStack = transfer.NewIBCModule(app.TransferKeeper)
+	transferStack = erc20.NewIBCMiddleware(app.Erc20Keeper, transferStack)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()
@@ -581,6 +617,27 @@ func New(
 
 	tmLightClientModule := ibctm.NewLightClientModule(appCodec, storeProvider)
 	clientKeeper.AddRoute(ibctm.ModuleName, &tmLightClientModule)
+
+	// NOTE: we are adding all available Cosmos EVM EVM extensions.
+	// Not all of them need to be enabled, which can be configured on a per-chain basis.
+	app.EvmKeeper.WithStaticPrecompiles(
+		NewAvailableStaticPrecompiles(
+			appCodec,
+			*app.StakingKeeper,
+			app.DistrKeeper,
+			app.BankKeeper,
+			app.Erc20Keeper,
+			app.TransferKeeper,
+			app.IBCKeeper.ChannelKeeper,
+			app.EvmKeeper,
+			app.GovKeeper,
+			app.SlashingKeeper,
+			app.EvidenceKeeper,
+			app.MultiStakingKeeper,
+			app.AccountKeeper.AddressCodec(),
+			authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
+		),
+	)
 
 	/****  Module Options ****/
 
@@ -909,7 +966,45 @@ func (app *RealioNetwork) InitChainer(ctx sdk.Context, req *abci.RequestInitChai
 		panic(err)
 	}
 
-	return app.mm.InitGenesis(ctx, app.appCodec, genesisState)
+	res, err := app.mm.InitGenesis(ctx, app.appCodec, genesisState)
+	if err != nil {
+		panic(err)
+	}
+
+	var erc20GenState erc20types.GenesisState
+	if genesisState[erc20types.ModuleName] != nil {
+		app.appCodec.MustUnmarshalJSON(genesisState[erc20types.ModuleName], &erc20GenState)
+	} else {
+		erc20GenState = *erc20types.DefaultGenesisState()
+	}
+
+	err = app.Erc20Keeper.SetParams(ctx, erc20GenState.Params)
+	if err != nil {
+		panic(err)
+	}
+
+	for _, pair := range erc20GenState.TokenPairs {
+		app.Erc20Keeper.SetToken(ctx, pair)
+	}
+
+	for _, allowance := range erc20GenState.Allowances {
+		erc20 := common.HexToAddress(allowance.Erc20Address)
+		owner := common.HexToAddress(allowance.Owner)
+		spender := common.HexToAddress(allowance.Spender)
+		value := allowance.Value.BigInt()
+		err := app.Erc20Keeper.UnsafeSetAllowance(ctx, erc20, owner, spender, value)
+		if err != nil {
+			panic(fmt.Errorf("error setting allowance %s", err))
+		}
+	}
+
+	// ensure erc20 module account is set on genesis
+	if acc := app.AccountKeeper.GetModuleAccount(ctx, erc20types.ModuleName); acc == nil {
+		// NOTE: shouldn't occur
+		panic("the erc20 module account has not been set")
+	}
+
+	return res, nil
 }
 
 // LoadHeight loads a particular height
@@ -1039,14 +1134,21 @@ func (app *RealioNetwork) GetScopedIBCKeeper() capabilitykeeper.ScopedKeeper {
 	return app.ScopedIBCKeeper
 }
 
-// GetTxConfig implements the TestingApp interface.
+// GetTxConfig implementxs the TestingApp interface.
 func (app *RealioNetwork) GetTxConfig() client.TxConfig {
 	return app.txConfig
 }
 
 // DefaultGenesis returns a default genesis from the registered AppModuleBasic's.
 func (app *RealioNetwork) DefaultGenesis() map[string]json.RawMessage {
-	return ModuleBasics.DefaultGenesis(app.appCodec)
+	genesis := ModuleBasics.DefaultGenesis(app.appCodec)
+
+	evmGenState := NewEVMGenesisState()
+	genesis[evmtypes.ModuleName] = app.appCodec.MustMarshalJSON(evmGenState)
+
+	erc20GenState := NewErc20GenesisState()
+	genesis[erc20types.ModuleName] = app.appCodec.MustMarshalJSON(erc20GenState)
+	return genesis
 }
 
 // AutoCliOpts returns the autocli options for the app.
@@ -1122,6 +1224,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// ethermint subspaces
 	paramsKeeper.Subspace(evmtypes.ModuleName).WithKeyTable(evmtypes.ParamKeyTable()) //nolint: staticcheck // SA1019
 	paramsKeeper.Subspace(feemarkettypes.ModuleName).WithKeyTable(feemarkettypes.ParamKeyTable())
+	paramsKeeper.Subspace(erc20types.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
@@ -1158,4 +1261,32 @@ func RealioSigVerificationGasConsumer(
 	default:
 		return authante.DefaultSigVerificationGasConsumer(meter, sig, params)
 	}
+}
+
+func BlockedAddresses() map[string]bool {
+	blockedAddrs := make(map[string]bool)
+
+	maccPerms := GetMaccPerms()
+	accs := make([]string, 0, len(maccPerms))
+	for acc := range maccPerms {
+		accs = append(accs, acc)
+	}
+	sort.Strings(accs)
+
+	for _, acc := range accs {
+		blockedAddrs[authtypes.NewModuleAddress(acc).String()] = true
+	}
+
+	blockedPrecompilesHex := append([]string{}, evmtypes.AvailableStaticPrecompiles...)
+	blockedPrecompilesHex = append(blockedPrecompilesHex, precompileMultistaking.MultistakingPrecompileAddress)
+
+	for _, addr := range evmosvm.PrecompiledAddressesBerlin {
+		blockedPrecompilesHex = append(blockedPrecompilesHex, addr.Hex())
+	}
+
+	for _, precompile := range blockedPrecompilesHex {
+		blockedAddrs[cosmosevmutils.EthHexToCosmosAddr(precompile).String()] = true
+	}
+
+	return blockedAddrs
 }
