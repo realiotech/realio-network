@@ -39,6 +39,10 @@ type Precompile struct {
 	valAddrCodec       address.Codec
 }
 
+func LoadABI() (abi.ABI, error) {
+	return cmn.LoadABI(f, "abi.json")
+}
+
 // NewPrecompile creates a new multistaking Precompile instance implementing the
 // PrecompiledContract interface.
 func NewPrecompile(
@@ -49,7 +53,7 @@ func NewPrecompile(
 	addrCodec address.Codec,
 	valAddrCodec address.Codec,
 ) (*Precompile, error) {
-	newABI, err := cmn.LoadABI(f, "abi.json")
+	newABI, err := LoadABI()
 	if err != nil {
 		return nil, err
 	}
