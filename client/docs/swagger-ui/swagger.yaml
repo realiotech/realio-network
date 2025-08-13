@@ -371,7 +371,7 @@ paths:
                       format: byte
       tags:
         - Query
-  /evmos/evm/v1/account/{address}:
+  /cosmos/evm/vm/v1/account/{address}:
     get:
       summary: Account queries an Ethereum account.
       operationId: Account
@@ -596,7 +596,7 @@ paths:
           type: string
       tags:
         - Query
-  /evmos/evm/v1/balances/{address}:
+  /cosmos/evm/vm/v1/balances/{address}:
     get:
       summary: |-
         Balance queries the balance of a the EVM denomination for a single
@@ -816,7 +816,7 @@ paths:
           type: string
       tags:
         - Query
-  /evmos/evm/v1/base_fee:
+  /cosmos/evm/vm/v1/base_fee:
     get:
       summary: >-
         BaseFee queries the base fee of the parent block of the current block,
@@ -1032,7 +1032,7 @@ paths:
                         }
       tags:
         - Query
-  /evmos/evm/v1/codes/{address}:
+  /cosmos/evm/vm/v1/codes/{address}:
     get:
       summary: Code queries the balance of all coins for a single account.
       operationId: Code
@@ -1251,7 +1251,347 @@ paths:
           type: string
       tags:
         - Query
-  /evmos/evm/v1/cosmos_account/{address}:
+  /cosmos/evm/vm/v1/config:
+    get:
+      summary: Config queries the EVM configuration
+      operationId: Config
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              config:
+                title: config is the evm configuration
+                type: object
+                properties:
+                  homestead_block:
+                    type: string
+                    title: >-
+                      homestead_block switch (nil no fork, 0 = already
+                      homestead)
+                  dao_fork_block:
+                    type: string
+                    title: >-
+                      dao_fork_block corresponds to TheDAO hard-fork switch
+                      block (nil no fork)
+                  dao_fork_support:
+                    type: boolean
+                    title: >-
+                      dao_fork_support defines whether the nodes supports or
+                      opposes the DAO
+
+                      hard-fork
+                  eip150_block:
+                    type: string
+                    title: >-
+                      eip150_block: EIP150 implements the Gas price changes
+
+                      (https://github.com/ethereum/EIPs/issues/150) EIP150 HF
+                      block (nil no fork)
+                  eip150_hash:
+                    type: string
+                    title: >-
+                      eip150_hash: EIP150 HF hash (needed for header only
+                      clients as only gas
+
+                      pricing changed)
+                  eip155_block:
+                    type: string
+                    title: 'eip155_block: EIP155Block HF block'
+                  eip158_block:
+                    type: string
+                    title: 'eip158_block: EIP158 HF block'
+                  byzantium_block:
+                    type: string
+                    title: >-
+                      byzantium_block: Byzantium switch block (nil no fork, 0 =
+                      already on
+
+                      byzantium)
+                  constantinople_block:
+                    type: string
+                    title: >-
+                      constantinople_block: Constantinople switch block (nil no
+                      fork, 0 = already
+
+                      activated)
+                  petersburg_block:
+                    type: string
+                    title: >-
+                      petersburg_block: Petersburg switch block (nil same as
+                      Constantinople)
+                  istanbul_block:
+                    type: string
+                    title: >-
+                      istanbul_block: Istanbul switch block (nil no fork, 0 =
+                      already on
+
+                      istanbul)
+                  muir_glacier_block:
+                    type: string
+                    title: >-
+                      muir_glacier_block: Eip-2384 (bomb delay) switch block
+                      (nil no fork, 0 =
+
+                      already activated)
+                  berlin_block:
+                    type: string
+                    title: >-
+                      berlin_block: Berlin switch block (nil = no fork, 0 =
+                      already on berlin)
+                  london_block:
+                    type: string
+                    title: >-
+                      london_block: London switch block (nil = no fork, 0 =
+                      already on london)
+                  arrow_glacier_block:
+                    type: string
+                    title: >-
+                      arrow_glacier_block: Eip-4345 (bomb delay) switch block
+                      (nil = no fork, 0 =
+
+                      already activated)
+                  gray_glacier_block:
+                    type: string
+                    title: >-
+                      gray_glacier_block: EIP-5133 (bomb delay) switch block
+                      (nil = no fork, 0 =
+
+                      already activated)
+                  merge_netsplit_block:
+                    type: string
+                    title: >-
+                      merge_netsplit_block: Virtual fork after The Merge to use
+                      as a network
+
+                      splitter
+                  shanghai_block:
+                    type: string
+                    title: >-
+                      shanghai_block switch block (nil = no fork, 0 = already on
+                      shanghai)
+                  cancun_block:
+                    type: string
+                    title: >-
+                      cancun_block switch block (nil = no fork, 0 = already on
+                      cancun)
+                  chain_id:
+                    type: string
+                    format: uint64
+                    title: chain_id is the id of the chain (EIP-155)
+                  denom:
+                    type: string
+                    title: denom is the denomination used on the EVM
+                  decimals:
+                    type: string
+                    format: uint64
+                    title: >-
+                      decimals is the real decimal precision of the denomination
+                      used on the EVM
+                description: >-
+                  ChainConfig defines the Ethereum ChainConfig parameters using
+                  *sdk.Int values
+
+                  instead of *big.Int.
+            description: QueryConfigResponse returns the EVM config.
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                    value:
+                      type: string
+                      format: byte
+                      description: >-
+                        Must be a valid serialized protocol buffer of the above
+                        specified type.
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+                        // or ...
+                        if (any.isSameTypeAs(Foo.getDefaultInstance())) {
+                          foo = any.unpack(Foo.getDefaultInstance());
+                        }
+
+                    Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                    Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+                    JSON
+
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      tags:
+        - Query
+  /cosmos/evm/vm/v1/cosmos_account/{address}:
     get:
       summary: CosmosAccount queries an Ethereum account's Cosmos Address.
       operationId: CosmosAccount
@@ -1479,7 +1819,7 @@ paths:
           type: string
       tags:
         - Query
-  /evmos/evm/v1/estimate_gas:
+  /cosmos/evm/vm/v1/estimate_gas:
     get:
       summary: EstimateGas implements the `eth_estimateGas` rpc api
       operationId: EstimateGas
@@ -1493,6 +1833,17 @@ paths:
                 type: string
                 format: uint64
                 title: gas returns the estimated gas
+              ret:
+                type: string
+                format: byte
+                title: >-
+                  ret is the returned data from evm function (result or data
+                  supplied with
+
+                  revert opcode)
+              vm_error:
+                type: string
+                title: vm_error is the error returned by vm execution
             title: EstimateGasResponse defines EstimateGas response
         default:
           description: An unexpected error response.
@@ -1717,7 +2068,7 @@ paths:
           format: int64
       tags:
         - Query
-  /evmos/evm/v1/eth_call:
+  /cosmos/evm/vm/v1/eth_call:
     get:
       summary: EthCall implements the `eth_call` rpc api
       operationId: EthCall
@@ -2048,9 +2399,223 @@ paths:
           format: int64
       tags:
         - Query
-  /evmos/evm/v1/params:
+  /cosmos/evm/vm/v1/min_gas_price:
     get:
-      summary: Params queries the parameters of x/evm module.
+      summary: |-
+        GlobalMinGasPrice queries the MinGasPrice
+        it's similar to feemarket module's method,
+        but makes the conversion to 18 decimals
+        when the evm denom is represented with a different precision.
+      operationId: GlobalMinGasPrice
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              min_gas_price:
+                type: string
+                title: min_gas_price is the feemarket's min_gas_price
+            title: QueryGlobalMinGasPriceResponse returns the GlobalMinGasPrice
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                      description: >-
+                        A URL/resource name that uniquely identifies the type of
+                        the serialized
+
+                        protocol buffer message. This string must contain at
+                        least
+
+                        one "/" character. The last segment of the URL's path
+                        must represent
+
+                        the fully qualified name of the type (as in
+
+                        `path/google.protobuf.Duration`). The name should be in
+                        a canonical form
+
+                        (e.g., leading "." is not accepted).
+
+
+                        In practice, teams usually precompile into the binary
+                        all types that they
+
+                        expect it to use in the context of Any. However, for
+                        URLs which use the
+
+                        scheme `http`, `https`, or no scheme, one can optionally
+                        set up a type
+
+                        server that maps type URLs to message definitions as
+                        follows:
+
+
+                        * If no scheme is provided, `https` is assumed.
+
+                        * An HTTP GET on the URL must yield a
+                        [google.protobuf.Type][]
+                          value in binary format, or produce an error.
+                        * Applications are allowed to cache lookup results based
+                        on the
+                          URL, or have them precompiled into a binary to avoid any
+                          lookup. Therefore, binary compatibility needs to be preserved
+                          on changes to types. (Use versioned type names to manage
+                          breaking changes.)
+
+                        Note: this functionality is not currently available in
+                        the official
+
+                        protobuf release, and it is not used for type URLs
+                        beginning with
+
+                        type.googleapis.com.
+
+
+                        Schemes other than `http`, `https` (or the empty scheme)
+                        might be
+
+                        used with implementation specific semantics.
+                    value:
+                      type: string
+                      format: byte
+                      description: >-
+                        Must be a valid serialized protocol buffer of the above
+                        specified type.
+                  description: >-
+                    `Any` contains an arbitrary serialized protocol buffer
+                    message along with a
+
+                    URL that describes the type of the serialized message.
+
+
+                    Protobuf library provides support to pack/unpack Any values
+                    in the form
+
+                    of utility functions or additional generated methods of the
+                    Any type.
+
+
+                    Example 1: Pack and unpack a message in C++.
+
+                        Foo foo = ...;
+                        Any any;
+                        any.PackFrom(foo);
+                        ...
+                        if (any.UnpackTo(&foo)) {
+                          ...
+                        }
+
+                    Example 2: Pack and unpack a message in Java.
+
+                        Foo foo = ...;
+                        Any any = Any.pack(foo);
+                        ...
+                        if (any.is(Foo.class)) {
+                          foo = any.unpack(Foo.class);
+                        }
+                        // or ...
+                        if (any.isSameTypeAs(Foo.getDefaultInstance())) {
+                          foo = any.unpack(Foo.getDefaultInstance());
+                        }
+
+                    Example 3: Pack and unpack a message in Python.
+
+                        foo = Foo(...)
+                        any = Any()
+                        any.Pack(foo)
+                        ...
+                        if any.Is(Foo.DESCRIPTOR):
+                          any.Unpack(foo)
+                          ...
+
+                    Example 4: Pack and unpack a message in Go
+
+                         foo := &pb.Foo{...}
+                         any, err := anypb.New(foo)
+                         if err != nil {
+                           ...
+                         }
+                         ...
+                         foo := &pb.Foo{}
+                         if err := any.UnmarshalTo(foo); err != nil {
+                           ...
+                         }
+
+                    The pack methods provided by protobuf library will by
+                    default use
+
+                    'type.googleapis.com/full.type.name' as the type URL and the
+                    unpack
+
+                    methods only use the fully qualified type name after the
+                    last '/'
+
+                    in the type URL, for example "foo.bar.com/x/y.z" will yield
+                    type
+
+                    name "y.z".
+
+
+                    JSON
+
+
+                    The JSON representation of an `Any` value uses the regular
+
+                    representation of the deserialized, embedded message, with
+                    an
+
+                    additional field `@type` which contains the type URL.
+                    Example:
+
+                        package google.profile;
+                        message Person {
+                          string first_name = 1;
+                          string last_name = 2;
+                        }
+
+                        {
+                          "@type": "type.googleapis.com/google.profile.Person",
+                          "firstName": <string>,
+                          "lastName": <string>
+                        }
+
+                    If the embedded message type is well-known and has a custom
+                    JSON
+
+                    representation, that representation will be embedded adding
+                    a field
+
+                    `value` which holds the custom JSON in addition to the
+                    `@type`
+
+                    field. Example (for message [google.protobuf.Duration][]):
+
+                        {
+                          "@type": "type.googleapis.com/google.protobuf.Duration",
+                          "value": "1.212s"
+                        }
+      tags:
+        - Query
+  /cosmos/evm/vm/v1/params:
+    get:
+      summary: Params queries the parameters of x/vm module.
       operationId: EvmParams
       responses:
         '200':
@@ -2073,6 +2638,7 @@ paths:
                     type: array
                     items:
                       type: string
+                      format: int64
                     title: extra_eips defines the additional EIPs for the vm.Config
                   chain_config:
                     title: >-
@@ -2191,6 +2757,19 @@ paths:
                         title: >-
                           cancun_block switch block (nil = no fork, 0 = already
                           on cancun)
+                      chain_id:
+                        type: string
+                        format: uint64
+                        title: chain_id is the id of the chain (EIP-155)
+                      denom:
+                        type: string
+                        title: denom is the denomination used on the EVM
+                      decimals:
+                        type: string
+                        format: uint64
+                        title: >-
+                          decimals is the real decimal precision of the
+                          denomination used on the EVM
                     description: >-
                       ChainConfig defines the Ethereum ChainConfig parameters
                       using *sdk.Int values
@@ -2311,7 +2890,7 @@ paths:
                       precompiled contracts that are active
                 title: Params defines the EVM module parameters
             description: >-
-              QueryParamsResponse defines the response type for querying x/evm
+              QueryParamsResponse defines the response type for querying x/vm
               parameters.
         default:
           description: An unexpected error response.
@@ -2509,7 +3088,7 @@ paths:
                         }
       tags:
         - Query
-  /evmos/evm/v1/storage/{address}/{key}:
+  /cosmos/evm/vm/v1/storage/{address}/{key}:
     get:
       summary: Storage queries the balance of all coins for a single account.
       operationId: Storage
@@ -2736,7 +3315,7 @@ paths:
           type: string
       tags:
         - Query
-  /evmos/evm/v1/trace_block:
+  /cosmos/evm/vm/v1/trace_block:
     get:
       summary: |-
         TraceBlock implements the `debug_traceBlockByNumber` and
@@ -3134,6 +3713,25 @@ paths:
           in: query
           required: false
           type: string
+        - name: trace_config.overrides.chain_id
+          description: chain_id is the id of the chain (EIP-155).
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: trace_config.overrides.denom
+          description: denom is the denomination used on the EVM.
+          in: query
+          required: false
+          type: string
+        - name: trace_config.overrides.decimals
+          description: >-
+            decimals is the real decimal precision of the denomination used on
+            the EVM.
+          in: query
+          required: false
+          type: string
+          format: uint64
         - name: trace_config.enable_memory
           description: enable_memory switches memory capture.
           in: query
@@ -3188,7 +3786,7 @@ paths:
           format: int64
       tags:
         - Query
-  /evmos/evm/v1/trace_tx:
+  /cosmos/evm/vm/v1/trace_tx:
     get:
       summary: TraceTx implements the `debug_traceTransaction` rpc api
       operationId: TraceTx
@@ -3667,6 +4265,25 @@ paths:
           in: query
           required: false
           type: string
+        - name: trace_config.overrides.chain_id
+          description: chain_id is the id of the chain (EIP-155).
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: trace_config.overrides.denom
+          description: denom is the denomination used on the EVM.
+          in: query
+          required: false
+          type: string
+        - name: trace_config.overrides.decimals
+          description: >-
+            decimals is the real decimal precision of the denomination used on
+            the EVM.
+          in: query
+          required: false
+          type: string
+          format: uint64
         - name: trace_config.enable_memory
           description: enable_memory switches memory capture.
           in: query
@@ -3721,7 +4338,7 @@ paths:
           format: int64
       tags:
         - Query
-  /evmos/evm/v1/validator_account/{cons_address}:
+  /cosmos/evm/vm/v1/validator_account/{cons_address}:
     get:
       summary: >-
         ValidatorAccount queries an Ethereum account's from a validator
@@ -3953,7 +4570,7 @@ paths:
           type: string
       tags:
         - Query
-  /os/feemarket/v1/base_fee:
+  /cosmos/evm/feemarket/v1/base_fee:
     get:
       summary: BaseFee queries the base fee of the parent block of the current block.
       operationId: EvmBaseFee
@@ -3991,7 +4608,7 @@ paths:
                       format: byte
       tags:
         - Query
-  /os/feemarket/v1/block_gas:
+  /cosmos/evm/feemarket/v1/block_gas:
     get:
       summary: BlockGas queries the gas used at a given block height
       operationId: BlockGas
@@ -4030,7 +4647,7 @@ paths:
                       format: byte
       tags:
         - Query
-  /os/feemarket/v1/params:
+  /cosmos/evm/feemarket/v1/params:
     get:
       summary: Params queries the parameters of x/feemarket module.
       operationId: FeeMarketParams
@@ -4092,7 +4709,7 @@ paths:
                       to senders based on gas limit
                 title: Params defines the EVM module parameters
             description: >-
-              QueryParamsResponse defines the response type for querying x/evm
+              QueryParamsResponse defines the response type for querying x/vm
               parameters.
         default:
           description: An unexpected error response.
@@ -37460,7 +38077,7 @@ definitions:
             format: uint64
             title: expected blocks per year
     description: QueryParamsResponse is the response type for the Query/Params RPC method.
-  os.evm.v1.AccessControl:
+  cosmos.evm.vm.v1.AccessControl:
     type: object
     properties:
       create:
@@ -37546,7 +38163,7 @@ definitions:
     title: |-
       AccessControl defines the permission policy of the EVM
       for creating and calling contracts
-  os.evm.v1.AccessControlType:
+  cosmos.evm.vm.v1.AccessControlType:
     type: object
     properties:
       access_type:
@@ -37584,7 +38201,7 @@ definitions:
 
           the operation
     title: AccessControlType defines the permission type for policies
-  os.evm.v1.AccessType:
+  cosmos.evm.vm.v1.AccessType:
     type: string
     enum:
       - ACCESS_TYPE_PERMISSIONLESS
@@ -37597,7 +38214,7 @@ definitions:
        - ACCESS_TYPE_RESTRICTED: ACCESS_TYPE_RESTRICTED restrict the operation to anyone
        - ACCESS_TYPE_PERMISSIONED: ACCESS_TYPE_PERMISSIONED only allows the operation for specific addresses
     title: AccessType defines the types of permissions for the operations
-  os.evm.v1.ChainConfig:
+  cosmos.evm.vm.v1.ChainConfig:
     type: object
     properties:
       homestead_block:
@@ -37695,20 +38312,44 @@ definitions:
       cancun_block:
         type: string
         title: cancun_block switch block (nil = no fork, 0 = already on cancun)
+      chain_id:
+        type: string
+        format: uint64
+        title: chain_id is the id of the chain (EIP-155)
+      denom:
+        type: string
+        title: denom is the denomination used on the EVM
+      decimals:
+        type: string
+        format: uint64
+        title: >-
+          decimals is the real decimal precision of the denomination used on the
+          EVM
     description: >-
       ChainConfig defines the Ethereum ChainConfig parameters using *sdk.Int
       values
 
       instead of *big.Int.
-  os.evm.v1.EstimateGasResponse:
+  cosmos.evm.vm.v1.EstimateGasResponse:
     type: object
     properties:
       gas:
         type: string
         format: uint64
         title: gas returns the estimated gas
+      ret:
+        type: string
+        format: byte
+        title: >-
+          ret is the returned data from evm function (result or data supplied
+          with
+
+          revert opcode)
+      vm_error:
+        type: string
+        title: vm_error is the error returned by vm execution
     title: EstimateGasResponse defines EstimateGas response
-  os.evm.v1.Log:
+  cosmos.evm.vm.v1.Log:
     type: object
     properties:
       address:
@@ -37763,7 +38404,7 @@ definitions:
       fields
 
       are derived, i.e. filled in by the nodes, but not secured by consensus.
-  os.evm.v1.MsgEthereumTx:
+  cosmos.evm.vm.v1.MsgEthereumTx:
     type: object
     properties:
       data:
@@ -37949,7 +38590,7 @@ definitions:
 
           secp256k1 elliptic curve
     description: MsgEthereumTx encapsulates an Ethereum transaction as an SDK message.
-  os.evm.v1.MsgEthereumTxResponse:
+  cosmos.evm.vm.v1.MsgEthereumTxResponse:
     type: object
     properties:
       hash:
@@ -38039,7 +38680,7 @@ definitions:
         format: uint64
         title: gas_used specifies how much gas was consumed by the transaction
     description: MsgEthereumTxResponse defines the Msg/EthereumTx response type.
-  os.evm.v1.Params:
+  cosmos.evm.vm.v1.Params:
     type: object
     properties:
       evm_denom:
@@ -38051,6 +38692,7 @@ definitions:
         type: array
         items:
           type: string
+          format: int64
         title: extra_eips defines the additional EIPs for the vm.Config
       chain_config:
         title: chain_config defines the EVM chain configuration parameters
@@ -38161,6 +38803,19 @@ definitions:
           cancun_block:
             type: string
             title: cancun_block switch block (nil = no fork, 0 = already on cancun)
+          chain_id:
+            type: string
+            format: uint64
+            title: chain_id is the id of the chain (EIP-155)
+          denom:
+            type: string
+            title: denom is the denomination used on the EVM
+          decimals:
+            type: string
+            format: uint64
+            title: >-
+              decimals is the real decimal precision of the denomination used on
+              the EVM
         description: >-
           ChainConfig defines the Ethereum ChainConfig parameters using *sdk.Int
           values
@@ -38270,7 +38925,7 @@ definitions:
           active_static_precompiles defines the slice of hex addresses of the
           precompiled contracts that are active
     title: Params defines the EVM module parameters
-  os.evm.v1.QueryAccountResponse:
+  cosmos.evm.vm.v1.QueryAccountResponse:
     type: object
     properties:
       balance:
@@ -38286,7 +38941,7 @@ definitions:
     description: >-
       QueryAccountResponse is the response type for the Query/Account RPC
       method.
-  os.evm.v1.QueryBalanceResponse:
+  cosmos.evm.vm.v1.QueryBalanceResponse:
     type: object
     properties:
       balance:
@@ -38295,14 +38950,14 @@ definitions:
     description: >-
       QueryBalanceResponse is the response type for the Query/Balance RPC
       method.
-  os.evm.v1.QueryBaseFeeResponse:
+  cosmos.evm.vm.v1.QueryBaseFeeResponse:
     type: object
     properties:
       base_fee:
         type: string
         title: base_fee is the EIP1559 base fee
     description: QueryBaseFeeResponse returns the EIP1559 base fee.
-  os.evm.v1.QueryCodeResponse:
+  cosmos.evm.vm.v1.QueryCodeResponse:
     type: object
     properties:
       code:
@@ -38312,7 +38967,138 @@ definitions:
     description: |-
       QueryCodeResponse is the response type for the Query/Code RPC
       method.
-  os.evm.v1.QueryCosmosAccountResponse:
+  cosmos.evm.vm.v1.QueryConfigResponse:
+    type: object
+    properties:
+      config:
+        title: config is the evm configuration
+        type: object
+        properties:
+          homestead_block:
+            type: string
+            title: homestead_block switch (nil no fork, 0 = already homestead)
+          dao_fork_block:
+            type: string
+            title: >-
+              dao_fork_block corresponds to TheDAO hard-fork switch block (nil
+              no fork)
+          dao_fork_support:
+            type: boolean
+            title: >-
+              dao_fork_support defines whether the nodes supports or opposes the
+              DAO
+
+              hard-fork
+          eip150_block:
+            type: string
+            title: >-
+              eip150_block: EIP150 implements the Gas price changes
+
+              (https://github.com/ethereum/EIPs/issues/150) EIP150 HF block (nil
+              no fork)
+          eip150_hash:
+            type: string
+            title: >-
+              eip150_hash: EIP150 HF hash (needed for header only clients as
+              only gas
+
+              pricing changed)
+          eip155_block:
+            type: string
+            title: 'eip155_block: EIP155Block HF block'
+          eip158_block:
+            type: string
+            title: 'eip158_block: EIP158 HF block'
+          byzantium_block:
+            type: string
+            title: >-
+              byzantium_block: Byzantium switch block (nil no fork, 0 = already
+              on
+
+              byzantium)
+          constantinople_block:
+            type: string
+            title: >-
+              constantinople_block: Constantinople switch block (nil no fork, 0
+              = already
+
+              activated)
+          petersburg_block:
+            type: string
+            title: >-
+              petersburg_block: Petersburg switch block (nil same as
+              Constantinople)
+          istanbul_block:
+            type: string
+            title: |-
+              istanbul_block: Istanbul switch block (nil no fork, 0 = already on
+              istanbul)
+          muir_glacier_block:
+            type: string
+            title: >-
+              muir_glacier_block: Eip-2384 (bomb delay) switch block (nil no
+              fork, 0 =
+
+              already activated)
+          berlin_block:
+            type: string
+            title: >-
+              berlin_block: Berlin switch block (nil = no fork, 0 = already on
+              berlin)
+          london_block:
+            type: string
+            title: >-
+              london_block: London switch block (nil = no fork, 0 = already on
+              london)
+          arrow_glacier_block:
+            type: string
+            title: >-
+              arrow_glacier_block: Eip-4345 (bomb delay) switch block (nil = no
+              fork, 0 =
+
+              already activated)
+          gray_glacier_block:
+            type: string
+            title: >-
+              gray_glacier_block: EIP-5133 (bomb delay) switch block (nil = no
+              fork, 0 =
+
+              already activated)
+          merge_netsplit_block:
+            type: string
+            title: >-
+              merge_netsplit_block: Virtual fork after The Merge to use as a
+              network
+
+              splitter
+          shanghai_block:
+            type: string
+            title: >-
+              shanghai_block switch block (nil = no fork, 0 = already on
+              shanghai)
+          cancun_block:
+            type: string
+            title: cancun_block switch block (nil = no fork, 0 = already on cancun)
+          chain_id:
+            type: string
+            format: uint64
+            title: chain_id is the id of the chain (EIP-155)
+          denom:
+            type: string
+            title: denom is the denomination used on the EVM
+          decimals:
+            type: string
+            format: uint64
+            title: >-
+              decimals is the real decimal precision of the denomination used on
+              the EVM
+        description: >-
+          ChainConfig defines the Ethereum ChainConfig parameters using *sdk.Int
+          values
+
+          instead of *big.Int.
+    description: QueryConfigResponse returns the EVM config.
+  cosmos.evm.vm.v1.QueryCosmosAccountResponse:
     type: object
     properties:
       cosmos_address:
@@ -38331,7 +39117,14 @@ definitions:
       Query/CosmosAccount
 
       RPC method.
-  os.evm.v1.QueryParamsResponse:
+  cosmos.evm.vm.v1.QueryGlobalMinGasPriceResponse:
+    type: object
+    properties:
+      min_gas_price:
+        type: string
+        title: min_gas_price is the feemarket's min_gas_price
+    title: QueryGlobalMinGasPriceResponse returns the GlobalMinGasPrice
+  cosmos.evm.vm.v1.QueryParamsResponse:
     type: object
     properties:
       params:
@@ -38349,6 +39142,7 @@ definitions:
             type: array
             items:
               type: string
+              format: int64
             title: extra_eips defines the additional EIPs for the vm.Config
           chain_config:
             title: chain_config defines the EVM chain configuration parameters
@@ -38463,6 +39257,19 @@ definitions:
                 title: >-
                   cancun_block switch block (nil = no fork, 0 = already on
                   cancun)
+              chain_id:
+                type: string
+                format: uint64
+                title: chain_id is the id of the chain (EIP-155)
+              denom:
+                type: string
+                title: denom is the denomination used on the EVM
+              decimals:
+                type: string
+                format: uint64
+                title: >-
+                  decimals is the real decimal precision of the denomination
+                  used on the EVM
             description: >-
               ChainConfig defines the Ethereum ChainConfig parameters using
               *sdk.Int values
@@ -38575,9 +39382,9 @@ definitions:
               precompiled contracts that are active
         title: Params defines the EVM module parameters
     description: >-
-      QueryParamsResponse defines the response type for querying x/evm
+      QueryParamsResponse defines the response type for querying x/vm
       parameters.
-  os.evm.v1.QueryStorageResponse:
+  cosmos.evm.vm.v1.QueryStorageResponse:
     type: object
     properties:
       value:
@@ -38588,7 +39395,7 @@ definitions:
     description: |-
       QueryStorageResponse is the response type for the Query/Storage RPC
       method.
-  os.evm.v1.QueryTraceBlockResponse:
+  cosmos.evm.vm.v1.QueryTraceBlockResponse:
     type: object
     properties:
       data:
@@ -38596,7 +39403,7 @@ definitions:
         format: byte
         title: data is the response serialized in bytes
     title: QueryTraceBlockResponse defines TraceBlock response
-  os.evm.v1.QueryTraceTxResponse:
+  cosmos.evm.vm.v1.QueryTraceTxResponse:
     type: object
     properties:
       data:
@@ -38604,7 +39411,7 @@ definitions:
         format: byte
         title: data is the response serialized in bytes
     title: QueryTraceTxResponse defines TraceTx response
-  os.evm.v1.QueryValidatorAccountResponse:
+  cosmos.evm.vm.v1.QueryValidatorAccountResponse:
     type: object
     properties:
       account_address:
@@ -38621,7 +39428,7 @@ definitions:
     description: |-
       QueryValidatorAccountResponse is the response type for the
       Query/ValidatorAccount RPC method.
-  os.evm.v1.TraceConfig:
+  cosmos.evm.vm.v1.TraceConfig:
     type: object
     properties:
       tracer:
@@ -38760,6 +39567,19 @@ definitions:
           cancun_block:
             type: string
             title: cancun_block switch block (nil = no fork, 0 = already on cancun)
+          chain_id:
+            type: string
+            format: uint64
+            title: chain_id is the id of the chain (EIP-155)
+          denom:
+            type: string
+            title: denom is the denomination used on the EVM
+          decimals:
+            type: string
+            format: uint64
+            title: >-
+              decimals is the real decimal precision of the denomination used on
+              the EVM
         description: >-
           ChainConfig defines the Ethereum ChainConfig parameters using *sdk.Int
           values
@@ -38775,7 +39595,7 @@ definitions:
         type: string
         title: tracer_json_config configures the tracer using a JSON string
     description: TraceConfig holds extra parameters to trace functions.
-  os.feemarket.v1.Params:
+  cosmos.evm.feemarket.v1.Params:
     type: object
     properties:
       no_base_fee:
@@ -38819,14 +39639,14 @@ definitions:
           min_gas_multiplier bounds the minimum gas used to be charged
           to senders based on gas limit
     title: Params defines the EVM module parameters
-  os.feemarket.v1.QueryBaseFeeResponse:
+  cosmos.evm.feemarket.v1.QueryBaseFeeResponse:
     type: object
     properties:
       base_fee:
         type: string
         title: base_fee is the EIP1559 base fee
     description: QueryBaseFeeResponse returns the EIP1559 base fee.
-  os.feemarket.v1.QueryBlockGasResponse:
+  cosmos.evm.feemarket.v1.QueryBlockGasResponse:
     type: object
     properties:
       gas:
@@ -38834,7 +39654,7 @@ definitions:
         format: int64
         title: gas is the returned block gas
     description: QueryBlockGasResponse returns block gas used for a given height.
-  os.feemarket.v1.QueryParamsResponse:
+  cosmos.evm.feemarket.v1.QueryParamsResponse:
     type: object
     properties:
       params:
@@ -38887,7 +39707,7 @@ definitions:
               to senders based on gas limit
         title: Params defines the EVM module parameters
     description: >-
-      QueryParamsResponse defines the response type for querying x/evm
+      QueryParamsResponse defines the response type for querying x/vm
       parameters.
   cosmos.base.query.v1beta1.PageRequest:
     type: object
