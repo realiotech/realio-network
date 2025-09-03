@@ -58,13 +58,11 @@ func NewPrecompile(
 		return nil, err
 	}
 
-	// NOTE: we set an empty gas configuration to avoid extra gas costs
-	// during the run execution
 	p := &Precompile{
 		Precompile: cmn.Precompile{
 			ABI:                  newABI,
-			KvGasConfig:          storetypes.GasConfig{},
-			TransientKVGasConfig: storetypes.GasConfig{},
+			KvGasConfig:          storetypes.KVGasConfig(),
+			TransientKVGasConfig: storetypes.TransientGasConfig(),
 		},
 		Codec:              cdc,
 		stakingKeeper:      stakingKeeper,
