@@ -256,14 +256,14 @@ require (
 
 replace (
 	github.com/cosmos/evm => github.com/realiotech/evm v0.2.1
-	// github.com/realio-tech/multi-staking-module => ../multi-staking
 	// use Cosmos geth fork
 	github.com/ethereum/go-ethereum => github.com/cosmos/go-ethereum v1.10.26-evmos-rc4.0.20250402013457-cf9d288f0147
 
 	// use cosmos flavored protobufs
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+	// github.com/realio-tech/multi-staking-module => ../multi-staking-ori
 
-	github.com/realio-tech/multi-staking-module => github.com/realiotech/multi-staking v1.1.0-rc1
+	github.com/realio-tech/multi-staking-module => github.com/realiotech/multi-staking v1.1.0-rc2-test
 
 	// replace broken goleveldb
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
