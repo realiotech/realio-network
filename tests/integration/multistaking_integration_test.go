@@ -2,6 +2,7 @@ package integration
 
 import (
 	"encoding/base64"
+	"fmt"
 	"math/big"
 
 	"cosmossdk.io/math"
@@ -32,7 +33,7 @@ var (
 	delegateAmount         int64 = 500_000
 	redelegateAmount       int64 = 200_000
 	undelegateAmount       int64 = 200_000
-	multistakingBondWeight       = "1.0" // 1:1 bond weight
+	multistakingBondWeight       = "11.11" // 1:1 bond weight
 )
 
 func (suite *EVMTestSuite) TestMultistakingCreateValidator() {
@@ -247,6 +248,179 @@ func (suite *EVMTestSuite) TestMultistakingPrecompiles() {
 
 	suite.Require().NoError(suite.network.NextBlockAfter(paramsRes.Params.UnbondingTime))
 	suite.assertContractBalanceOf(contractAddr, delKey.Addr, expectedBalanceBefore+undelegateAmount)
+}
+
+func (suite *EVMTestSuite) TestMultistakingRemoveToken() {
+	// Deploy ERC20 contract
+	val1Priv := suite.keyring.GetPrivKey(0)
+	val1Key := suite.keyring.GetKey(0)
+	delPriv := suite.keyring.GetPrivKey(1)
+	delKey := suite.keyring.GetKey(1)
+	val2Priv := suite.keyring.GetPrivKey(2)
+	val2Key := suite.keyring.GetKey(2)
+	constructorArgs := []interface{}{"StakeToken", "STAKE", uint8(18)}
+	compiledContract := contracts.ERC20MinterBurnerDecimalsContract
+
+	var err error
+	factoryy := factory.New(suite.network, grpc.NewIntegrationHandler(suite.network))
+	contractAddr, err := factoryy.DeployContract(
+		val1Priv,
+		evmtypes.EvmTxArgs{},
+		factory.ContractDeploymentData{
+			Contract:        compiledContract,
+			ConstructorArgs: constructorArgs,
+		},
+	)
+	suite.Require().NoError(err)
+	suite.NotEqual(contractAddr, common.Address{})
+
+	err = suite.network.NextBlock()
+	suite.Require().NoError(err)
+
+	// Mint tokens to sender, delegator and validator
+	suite.mintERC20(contractAddr, val1Key.Addr, mintAmount, val1Priv)
+	suite.mintERC20(contractAddr, delKey.Addr, mintAmount, val1Priv)
+	suite.mintERC20(contractAddr, val2Key.Addr, mintAmount, val1Priv)
+
+	// Add multistaking evm coin proposal
+	bondWeightDec, err := math.LegacyNewDecFromStr(multistakingBondWeight)
+	suite.Require().NoError(err)
+	err = integrationutils.RegisterMultistakingEVMBondDenom(
+		integrationutils.UpdateParamsInput{
+			Tf:      factoryy,
+			Network: suite.network,
+			Pk:      val1Priv,
+		},
+		contractAddr.Hex(),
+		bondWeightDec,
+		val1Key.AccAddr,
+	)
+	suite.Require().NoError(err)
+	suite.Require().NoError(suite.network.NextBlock())
+
+	multistakingClient := suite.network.GetMultistakingClient()
+	coinsInf, err := multistakingClient.MultiStakingCoinInfos(suite.network.GetContext(), &multistakingtypes.QueryMultiStakingCoinInfosRequest{})
+	suite.Require().NoError(err)
+
+	// Create 1st validator
+	validator1Address := sdk.ValAddress(val1Key.AccAddr).String()
+	suite.createEVMValidator(contractAddr, val1Priv, validator1Address)
+
+	// Verify validator was created
+	validatorRes, err := multistakingClient.Validator(suite.network.GetContext(), &multistakingtypes.QueryValidatorRequest{
+		ValidatorAddr: validator1Address,
+	})
+	suite.Require().NoError(err)
+	suite.Require().NotNil(validatorRes.Validator)
+	suite.Require().Equal(coinsInf.Infos[2].Denom, validatorRes.Validator.BondDenom)
+
+	suite.delegateEVM(contractAddr, delPriv, delKey.AccAddr.String(), validator1Address)
+
+	// Verify delegation
+	delRes, err := suite.network.GetStakingClient().Delegation(suite.network.GetContext(), &stakingtypes.QueryDelegationRequest{
+		DelegatorAddr: delKey.AccAddr.String(),
+		ValidatorAddr: validator1Address,
+	})
+	suite.Require().NoError(err)
+	suite.Require().NotNil(delRes.DelegationResponse)
+
+	// Create a new validator then BeginRedelegate
+
+	// Create second validator
+	validator2Address := sdk.ValAddress(val2Key.AccAddr).String()
+	suite.createEVMValidator(contractAddr, val2Priv, validator2Address)
+
+	// Redelegate tokens from first validator to second validator
+	suite.redelegateEVM(contractAddr, delPriv, delKey.AccAddr.String(), validator1Address, validator2Address)
+
+	// Verify delegation
+	delRes, err = suite.network.GetStakingClient().Delegation(suite.network.GetContext(), &stakingtypes.QueryDelegationRequest{
+		DelegatorAddr: delKey.AccAddr.String(),
+		ValidatorAddr: validator2Address,
+	})
+	suite.Require().NoError(err)
+	suite.Require().NotNil(delRes.DelegationResponse)
+
+	// Try to remove multistaking token
+	err = integrationutils.RemoveMultistakingBondDenom(
+		integrationutils.UpdateParamsInput{
+			Tf:      factoryy,
+			Network: suite.network,
+			Pk:      val1Priv,
+		},
+		coinsInf.Infos[2].Denom,
+		val1Key.AccAddr,
+	)
+	suite.Require().NoError(err)
+
+	// Make sure denom was remove from multistaking coin list
+	coinsInf, err = multistakingClient.MultiStakingCoinInfos(suite.network.GetContext(), &multistakingtypes.QueryMultiStakingCoinInfosRequest{})
+	suite.Require().NoError(err)
+	suite.Require().Equal(len(coinsInf.Infos), 2)
+	fmt.Println("coinsInf: ", coinsInf)
+	
+	// Get unbonding delegation
+
+	ubdRes1, err := suite.network.GetStakingClient().ValidatorUnbondingDelegations(suite.network.GetContext(), &stakingtypes.QueryValidatorUnbondingDelegationsRequest{
+		ValidatorAddr: validator1Address,
+	})
+	suite.Require().NoError(err)
+	// should have 2 undels: 1 from validator 1 self delegation, 1 from delKey => validator 1
+	suite.Require().Equal(len(ubdRes1.UnbondingResponses), 2)
+	fmt.Println("ubdRes 1: ", ubdRes1.UnbondingResponses)
+
+	ubdRes2, err := suite.network.GetStakingClient().ValidatorUnbondingDelegations(suite.network.GetContext(), &stakingtypes.QueryValidatorUnbondingDelegationsRequest{
+		ValidatorAddr: validator2Address,
+	})
+	suite.Require().NoError(err)
+	// should have 2 undels: 1 from validator 2 self delegation, 1 from delKey => validator 2
+	suite.Require().Equal(len(ubdRes2.UnbondingResponses), 2)
+	fmt.Println("ubdRes 2: ", ubdRes2)
+
+	val1Res, err := suite.network.GetStakingClient().Validator(suite.network.GetContext(), &stakingtypes.QueryValidatorRequest{
+		ValidatorAddr: validator1Address,
+	})
+
+	suite.Require().NoError(err)
+	suite.Require().Equal(val1Res.Validator.Jailed, true)
+	suite.Require().Equal(val1Res.Validator.Status, stakingtypes.Unbonding)
+	suite.Require().Equal(val1Res.Validator.Tokens, math.ZeroInt())
+	suite.Require().Equal(val1Res.Validator.DelegatorShares, math.LegacyZeroDec())
+
+	val2Res, err := suite.network.GetStakingClient().Validator(suite.network.GetContext(), &stakingtypes.QueryValidatorRequest{
+		ValidatorAddr: validator2Address,
+	})
+
+	suite.Require().NoError(err)
+	suite.Require().Equal(val2Res.Validator.Jailed, true)
+	suite.Require().Equal(val2Res.Validator.Status, stakingtypes.Unbonding)
+	suite.Require().Equal(val2Res.Validator.Tokens, math.ZeroInt())
+	suite.Require().Equal(val2Res.Validator.DelegatorShares, math.LegacyZeroDec())
+	fmt.Println("val1 res", val1Res)
+	fmt.Println("val2 res", val2Res)
+
+	// After unbonding period, all delegated tokens should be returned to users
+	paramsRes, err := suite.network.GetStakingClient().Params(suite.network.GetContext(), &stakingtypes.QueryParamsRequest{})
+	suite.Require().NoError(err)
+	suite.Require().NoError(suite.network.NextBlockAfter(paramsRes.Params.UnbondingTime))
+	suite.assertContractBalanceOf(contractAddr, delKey.Addr, mintAmount)
+	suite.assertContractBalanceOf(contractAddr, val1Key.Addr, mintAmount)
+	suite.assertContractBalanceOf(contractAddr, val2Key.Addr, mintAmount)
+
+	// Also validator should be removed after that since all tokens are unbonded
+	val1Res, err = suite.network.GetStakingClient().Validator(suite.network.GetContext(), &stakingtypes.QueryValidatorRequest{
+		ValidatorAddr: validator1Address,
+	})
+	suite.Require().Error(err)
+	suite.Require().Contains(err.Error(), "not found")
+	fmt.Println("err", err)
+
+	val2Res, err = suite.network.GetStakingClient().Validator(suite.network.GetContext(), &stakingtypes.QueryValidatorRequest{
+		ValidatorAddr: validator2Address,
+	})
+	suite.Require().Error(err)
+	suite.Require().Contains(err.Error(), "not found")
+	fmt.Println("err2", err)
 }
 
 func (suite *EVMTestSuite) mintERC20(contractAddr common.Address, to common.Address, amount int64, privKey cryptotypes.PrivKey) {
