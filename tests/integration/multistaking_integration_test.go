@@ -357,7 +357,7 @@ func (suite *EVMTestSuite) TestMultistakingRemoveToken() {
 	coinsInf, err = multistakingClient.MultiStakingCoinInfos(suite.network.GetContext(), &multistakingtypes.QueryMultiStakingCoinInfosRequest{})
 	suite.Require().NoError(err)
 	suite.Require().Equal(len(coinsInf.Infos), 2)
-	
+
 	// Get unbonding delegation
 
 	ubdRes1, err := suite.network.GetStakingClient().ValidatorUnbondingDelegations(suite.network.GetContext(), &stakingtypes.QueryValidatorUnbondingDelegationsRequest{
@@ -416,18 +416,17 @@ func (suite *EVMTestSuite) TestMultistakingRemoveToken() {
 	suite.assertContractBalanceOf(contractAddr, val2Key.Addr, mintAmount)
 
 	// Also validator should be removed after that since all tokens are unbonded
-	val1Res, err = suite.network.GetStakingClient().Validator(suite.network.GetContext(), &stakingtypes.QueryValidatorRequest{
+	_, err = suite.network.GetStakingClient().Validator(suite.network.GetContext(), &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: validator1Address,
 	})
 	suite.Require().Error(err)
 	suite.Require().Contains(err.Error(), "not found")
 
-	val2Res, err = suite.network.GetStakingClient().Validator(suite.network.GetContext(), &stakingtypes.QueryValidatorRequest{
+	_, err = suite.network.GetStakingClient().Validator(suite.network.GetContext(), &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: validator2Address,
 	})
 	suite.Require().Error(err)
 	suite.Require().Contains(err.Error(), "not found")
-
 }
 
 func (suite *EVMTestSuite) mintERC20(contractAddr common.Address, to common.Address, amount int64, privKey cryptotypes.PrivKey) {
