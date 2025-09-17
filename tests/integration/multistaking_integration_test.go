@@ -2,7 +2,6 @@ package integration
 
 import (
 	"encoding/base64"
-	"fmt"
 	"math/big"
 
 	"cosmossdk.io/math"
@@ -747,7 +746,6 @@ func (suite *EVMTestSuite) cancelUndelegateEvm(contractAddr common.Address, send
 			CreationHeight:   creationHeight,
 		}},
 	})
-	fmt.Println("cancelResponse", cancelResponse, err)
 	suite.Require().NoError(err)
 	suite.Require().True(cancelResponse.IsOK(), "cancelUnbondingDelegation should have succeeded", cancelResponse.GetLog())
 	suite.Require().NoError(suite.network.NextBlock())
