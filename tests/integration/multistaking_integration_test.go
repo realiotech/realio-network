@@ -357,7 +357,6 @@ func (suite *EVMTestSuite) TestMultistakingRemoveToken() {
 	coinsInf, err = multistakingClient.MultiStakingCoinInfos(suite.network.GetContext(), &multistakingtypes.QueryMultiStakingCoinInfosRequest{})
 	suite.Require().NoError(err)
 	suite.Require().Equal(len(coinsInf.Infos), 2)
-	fmt.Println("coinsInf: ", coinsInf)
 	
 	// Get unbonding delegation
 
@@ -367,7 +366,6 @@ func (suite *EVMTestSuite) TestMultistakingRemoveToken() {
 	suite.Require().NoError(err)
 	// should have 2 undels: 1 from validator 1 self delegation, 1 from delKey => validator 1
 	suite.Require().Equal(len(ubdRes1.UnbondingResponses), 2)
-	fmt.Println("ubdRes 1: ", ubdRes1.UnbondingResponses)
 
 	ubdRes2, err := suite.network.GetStakingClient().ValidatorUnbondingDelegations(suite.network.GetContext(), &stakingtypes.QueryValidatorUnbondingDelegationsRequest{
 		ValidatorAddr: validator2Address,
@@ -375,8 +373,6 @@ func (suite *EVMTestSuite) TestMultistakingRemoveToken() {
 	suite.Require().NoError(err)
 	// should have 2 undels: 1 from validator 2 self delegation, 1 from delKey => validator 2
 	suite.Require().Equal(len(ubdRes2.UnbondingResponses), 2)
-	fmt.Println("ubdRes 2: ", ubdRes2)
-
 	val1Res, err := suite.network.GetStakingClient().Validator(suite.network.GetContext(), &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: validator1Address,
 	})
@@ -396,8 +392,20 @@ func (suite *EVMTestSuite) TestMultistakingRemoveToken() {
 	suite.Require().Equal(val2Res.Validator.Status, stakingtypes.Unbonding)
 	suite.Require().Equal(val2Res.Validator.Tokens, math.ZeroInt())
 	suite.Require().Equal(val2Res.Validator.DelegatorShares, math.LegacyZeroDec())
-	fmt.Println("val1 res", val1Res)
-	fmt.Println("val2 res", val2Res)
+
+	// Since we removed bonded token and validator was jailed
+	// attacker not cancel these force undelegations
+	_, err = suite.factory.ExecuteCosmosTx(delPriv, commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&multistakingtypes.MsgCancelUnbondingEVMDelegation{
+			DelegatorAddress: delKey.AccAddr.String(),
+			ValidatorAddress: validator2Address,
+			ContractAddress:  contractAddr.Hex(),
+			Amount:           math.NewInt(undelegateAmount),
+			CreationHeight:   ubdRes2.UnbondingResponses[0].Entries[0].CreationHeight,
+		}},
+	})
+	suite.Require().Error(err)
+	suite.Require().Contains(err.Error(), "validator for this address is currently jailed")
 
 	// After unbonding period, all delegated tokens should be returned to users
 	paramsRes, err := suite.network.GetStakingClient().Params(suite.network.GetContext(), &stakingtypes.QueryParamsRequest{})
@@ -413,14 +421,13 @@ func (suite *EVMTestSuite) TestMultistakingRemoveToken() {
 	})
 	suite.Require().Error(err)
 	suite.Require().Contains(err.Error(), "not found")
-	fmt.Println("err", err)
 
 	val2Res, err = suite.network.GetStakingClient().Validator(suite.network.GetContext(), &stakingtypes.QueryValidatorRequest{
 		ValidatorAddr: validator2Address,
 	})
 	suite.Require().Error(err)
 	suite.Require().Contains(err.Error(), "not found")
-	fmt.Println("err2", err)
+
 }
 
 func (suite *EVMTestSuite) mintERC20(contractAddr common.Address, to common.Address, amount int64, privKey cryptotypes.PrivKey) {
@@ -741,6 +748,7 @@ func (suite *EVMTestSuite) cancelUndelegateEvm(contractAddr common.Address, send
 			CreationHeight:   creationHeight,
 		}},
 	})
+	fmt.Println("cancelResponse", cancelResponse, err)
 	suite.Require().NoError(err)
 	suite.Require().True(cancelResponse.IsOK(), "cancelUnbondingDelegation should have succeeded", cancelResponse.GetLog())
 	suite.Require().NoError(suite.network.NextBlock())
