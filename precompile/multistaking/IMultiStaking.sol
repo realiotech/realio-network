@@ -5,6 +5,14 @@ import "./Types.sol";
 
 enum BondStatus { Unbonded, Unbonding, Bonded }
 
+struct Description {
+    string moniker;
+    string identity;
+    string website;
+    string securityContact;
+    string details;
+}
+
 struct Validator {
     string operatorAddress;
     string consensusPubkey;
@@ -12,7 +20,7 @@ struct Validator {
     BondStatus status;
     uint256 tokens;
     uint256 delegatorShares;
-    string description;
+    Description description;
     int64 unbondingHeight;
     int64 unbondingTime;
     uint256 commission;
