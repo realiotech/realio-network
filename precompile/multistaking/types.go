@@ -151,18 +151,18 @@ type Description = struct {
 // ValidatorInfo is a struct to represent the key information from
 // a validator response.
 type ValidatorInfo struct {
-	OperatorAddress   string   `abi:"operatorAddress"`
-	ConsensusPubkey   string   `abi:"consensusPubkey"`
-	Jailed            bool     `abi:"jailed"`
-	Status            uint8    `abi:"status"`
-	Tokens            *big.Int `abi:"tokens"`
-	DelegatorShares   *big.Int `abi:"delegatorShares"` // TODO: Decimal
-	Description       stakingtypes.Description   `abi:"description"`
-	UnbondingHeight   int64    `abi:"unbondingHeight"`
-	UnbondingTime     int64    `abi:"unbondingTime"`
-	Commission        *big.Int `abi:"commission"`
-	MinSelfDelegation *big.Int `abi:"minSelfDelegation"`
-	BondDenom         string   `abi:"bondDenom"`
+	OperatorAddress   string                   `abi:"operatorAddress"`
+	ConsensusPubkey   string                   `abi:"consensusPubkey"`
+	Jailed            bool                     `abi:"jailed"`
+	Status            uint8                    `abi:"status"`
+	Tokens            *big.Int                 `abi:"tokens"`
+	DelegatorShares   *big.Int                 `abi:"delegatorShares"` // TODO: Decimal
+	Description       stakingtypes.Description `abi:"description"`
+	UnbondingHeight   int64                    `abi:"unbondingHeight"`
+	UnbondingTime     int64                    `abi:"unbondingTime"`
+	Commission        *big.Int                 `abi:"commission"`
+	MinSelfDelegation *big.Int                 `abi:"minSelfDelegation"`
+	BondDenom         string                   `abi:"bondDenom"`
 }
 
 type ValidatorOutput struct {
