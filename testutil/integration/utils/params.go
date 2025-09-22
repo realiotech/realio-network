@@ -92,3 +92,26 @@ func RegisterMultistakingEVMBondDenom(input UpdateParamsInput, contractAddr stri
 	}
 	return ApproveProposal(input.Tf, input.Network, input.Pk, proposalID)
 }
+
+func RemoveMultistakingBondDenom(input UpdateParamsInput, denom string, proposer sdk.AccAddress) error {
+	removeMultiStakingProposal := multistakingtypes.NewRemoveMultiStakingCoinProposal("tittle", "des", denom)
+
+	// Submit governance proposal
+	govMsg, err := govv1beta1.NewMsgSubmitProposal(
+		removeMultiStakingProposal,
+		sdk.NewCoins(sdk.NewCoin(input.Network.GetBaseDenom(), math.NewInt(1e18).Quo(evmtypes.GetEVMCoinDecimals().ConversionFactor()))),
+		proposer,
+	)
+	if err != nil {
+		return err
+	}
+
+	txArgs := commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{govMsg},
+	}
+	proposalID, err := submitProposal(input.Tf, input.Network, input.Pk, txArgs)
+	if err != nil {
+		return err
+	}
+	return ApproveProposal(input.Tf, input.Network, input.Pk, proposalID)
+}

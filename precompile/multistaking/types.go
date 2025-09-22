@@ -139,21 +139,30 @@ func NewValidatorRequest(args []interface{}) (*multistakingtypes.QueryValidatorR
 	return &multistakingtypes.QueryValidatorRequest{ValidatorAddr: validatorAddress}, nil
 }
 
+// Description use golang type alias defines a validator description.
+type Description = struct {
+	Moniker         string "json:\"moniker\""
+	Identity        string "json:\"identity\""
+	Website         string "json:\"website\""
+	SecurityContact string "json:\"securityContact\""
+	Details         string "json:\"details\""
+}
+
 // ValidatorInfo is a struct to represent the key information from
 // a validator response.
 type ValidatorInfo struct {
-	OperatorAddress   string   `abi:"operatorAddress"`
-	ConsensusPubkey   string   `abi:"consensusPubkey"`
-	Jailed            bool     `abi:"jailed"`
-	Status            uint8    `abi:"status"`
-	Tokens            *big.Int `abi:"tokens"`
-	DelegatorShares   *big.Int `abi:"delegatorShares"` // TODO: Decimal
-	Description       string   `abi:"description"`
-	UnbondingHeight   int64    `abi:"unbondingHeight"`
-	UnbondingTime     int64    `abi:"unbondingTime"`
-	Commission        *big.Int `abi:"commission"`
-	MinSelfDelegation *big.Int `abi:"minSelfDelegation"`
-	BondDenom         string   `abi:"bondDenom"`
+	OperatorAddress   string                   `abi:"operatorAddress"`
+	ConsensusPubkey   string                   `abi:"consensusPubkey"`
+	Jailed            bool                     `abi:"jailed"`
+	Status            uint8                    `abi:"status"`
+	Tokens            *big.Int                 `abi:"tokens"`
+	DelegatorShares   *big.Int                 `abi:"delegatorShares"` // TODO: Decimal
+	Description       stakingtypes.Description `abi:"description"`
+	UnbondingHeight   int64                    `abi:"unbondingHeight"`
+	UnbondingTime     int64                    `abi:"unbondingTime"`
+	Commission        *big.Int                 `abi:"commission"`
+	MinSelfDelegation *big.Int                 `abi:"minSelfDelegation"`
+	BondDenom         string                   `abi:"bondDenom"`
 }
 
 type ValidatorOutput struct {
@@ -170,7 +179,7 @@ func DefaultValidatorOutput() ValidatorOutput {
 			Status:            uint8(0),
 			Tokens:            big.NewInt(0),
 			DelegatorShares:   big.NewInt(0),
-			Description:       "",
+			Description:       stakingtypes.Description{},
 			UnbondingHeight:   int64(0),
 			UnbondingTime:     int64(0),
 			Commission:        big.NewInt(0),
@@ -195,7 +204,7 @@ func (vo *ValidatorOutput) FromResponse(res *multistakingtypes.QueryValidatorRes
 			Status:            uint8(stakingtypes.BondStatus_value[res.Validator.Status.String()]), //#nosec G115 // enum will always be convertible to uint8
 			Tokens:            res.Validator.Tokens.BigInt(),
 			DelegatorShares:   res.Validator.DelegatorShares.BigInt(),
-			Description:       res.Validator.Description.Details,
+			Description:       res.Validator.Description,
 			UnbondingHeight:   res.Validator.UnbondingHeight,
 			UnbondingTime:     res.Validator.UnbondingTime.UTC().Unix(),
 			Commission:        res.Validator.Commission.CommissionRates.Rate.BigInt(),
