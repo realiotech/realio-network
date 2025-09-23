@@ -247,7 +247,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	## 5. Copy the `gentx-*` folders under `~/.clonedOsd/config/gentx/` folders into the original `~/.realio-networkd/config/gentx`
 
 	# Collect genesis tx
-	./build/realio-networkd genesis collect-gentxs --home "$HOMEDIR"
+	realio-networkd genesis collect-gentxs --home "$HOMEDIR"
 
 	# Run this to ensure everything worked and that the genesis file is setup correctly
 	realio-networkd genesis validate-genesis --home "$HOMEDIR"
