@@ -389,10 +389,10 @@ func (suite *EVMTestSuite) TestMultistakingRemoveToken() {
 	suite.Require().NoError(err)
 	suite.Require().Equal(len(coinsInf.Infos), 2)
 
-	// Make sure max entry was increased
+	// Make sure max entry was the same
 	paramsRes, err = suite.network.GetStakingClient().Params(suite.network.GetContext(), &stakingtypes.QueryParamsRequest{})
 	suite.Require().NoError(err)
-	suite.Require().Equal(paramsRes.Params.MaxEntries, maxEntry+1)
+	suite.Require().Equal(paramsRes.Params.MaxEntries, maxEntry)
 
 	// Get unbonding delegation
 
