@@ -28,9 +28,9 @@ import (
 )
 
 var (
-	mintAmount             int64 = 1_000_000
-	delegateAmount         int64 = 500_000
-	redelegateAmount       int64 = 200_000
+	mintAmount             int64 = 10_000_000
+	delegateAmount         int64 = 5_000_000
+	redelegateAmount       int64 = 2_000_000
 	undelegateAmount       int64 = 200_000
 	multistakingBondWeight       = "11.11" // 1:1 bond weight
 )
@@ -340,6 +340,38 @@ func (suite *EVMTestSuite) TestMultistakingRemoveToken() {
 	suite.Require().NoError(err)
 	suite.Require().NotNil(delRes.DelegationResponse)
 
+	// Create max undelegations
+	paramsRes, err := suite.network.GetStakingClient().Params(suite.network.GetContext(), &stakingtypes.QueryParamsRequest{})
+	suite.Require().NoError(err)
+	maxEntry := paramsRes.Params.MaxEntries
+
+	for i := 0; i < int(maxEntry); i++ {
+		undelResponse, err := suite.factory.ExecuteCosmosTx(delPriv, commonfactory.CosmosTxArgs{
+			Msgs: []sdk.Msg{&multistakingtypes.MsgUndelegateEVM{
+				DelegatorAddress: delKey.AccAddr.String(),
+				ValidatorAddress: validator2Address,
+				ContractAddress:  contractAddr.Hex(),
+				Amount:           math.NewInt(undelegateAmount),
+			}},
+		})
+		suite.Require().NoError(err)
+		suite.Require().True(undelResponse.IsOK(), "undelegate should have succeeded", undelResponse.GetLog())
+		suite.Require().NoError(suite.network.NextBlock())
+	}
+
+	// Should be faild undelegate
+	_, err = suite.factory.ExecuteCosmosTx(delPriv, commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&multistakingtypes.MsgUndelegateEVM{
+			DelegatorAddress: delKey.AccAddr.String(),
+			ValidatorAddress: validator2Address,
+			ContractAddress:  contractAddr.Hex(),
+			Amount:           math.NewInt(undelegateAmount),
+		}},
+	})
+	suite.Require().Error(err)
+	suite.Require().Contains(err.Error(), "too many unbonding delegation entries")
+	suite.Require().NoError(suite.network.NextBlock())
+
 	// Try to remove multistaking token
 	err = integrationutils.RemoveMultistakingBondDenom(
 		integrationutils.UpdateParamsInput{
@@ -356,6 +388,11 @@ func (suite *EVMTestSuite) TestMultistakingRemoveToken() {
 	coinsInf, err = multistakingClient.MultiStakingCoinInfos(suite.network.GetContext(), &multistakingtypes.QueryMultiStakingCoinInfosRequest{})
 	suite.Require().NoError(err)
 	suite.Require().Equal(len(coinsInf.Infos), 2)
+
+	// Make sure max entry was the same
+	paramsRes, err = suite.network.GetStakingClient().Params(suite.network.GetContext(), &stakingtypes.QueryParamsRequest{})
+	suite.Require().NoError(err)
+	suite.Require().Equal(paramsRes.Params.MaxEntries, maxEntry)
 
 	// Get unbonding delegation
 
@@ -407,8 +444,6 @@ func (suite *EVMTestSuite) TestMultistakingRemoveToken() {
 	suite.Require().Contains(err.Error(), "validator for this address is currently jailed")
 
 	// After unbonding period, all delegated tokens should be returned to users
-	paramsRes, err := suite.network.GetStakingClient().Params(suite.network.GetContext(), &stakingtypes.QueryParamsRequest{})
-	suite.Require().NoError(err)
 	suite.Require().NoError(suite.network.NextBlockAfter(paramsRes.Params.UnbondingTime))
 	suite.assertContractBalanceOf(contractAddr, delKey.Addr, mintAmount)
 	suite.assertContractBalanceOf(contractAddr, val1Key.Addr, mintAmount)
