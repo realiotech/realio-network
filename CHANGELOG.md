@@ -37,7 +37,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
-## [Unreleased]
+## [v1.4.0](https://github.com/realiotech/realio-network/releases/tag/v1.4.0) - 2025-09-24
 
 ### Improvements
 
@@ -52,6 +52,10 @@ Ref: https://keepachangelog.com/en/1.0.0/
 - (chore) [#283](https://github.com/realiotech/realio-network/pull/283): Bump cosmos-sdk version to `0.50.14`
 
 - (multistaking) [#254](https://github.com/realiotech/realio-network/pull/254): Bump multistaking module to v1.1.0-rc1 for EVM Coin staking support
+
+- (multistaking) [#312](https://github.com/realiotech/realio-network/pull/312):  Bump multistaking module to v1.1.0-rc3 to support RemoveMultistakingBondDenom
+
+- (multistaking) [#314](https://github.com/realiotech/realio-network/pull/314): Avoid MaxEntry undelegations
 
 ## [v1.3.0](https://github.com/realiotech/realio-network/releases/tag/v1.3.0) - 2025-06-07
 
