@@ -28,7 +28,6 @@ func Test14Upgrade(t *testing.T) {
 
 	ctx := realioApp.BaseApp.NewContextLegacy(false, tmproto.Header{Height: realioApp.LastBlockHeight() + 1, Time: time.Now()})
 
-
 	// Set block height and block time same as genesis file
 	blockTime, _ := time.Parse(time.RFC3339Nano, "2025-09-26T05:43:53.576222314Z")
 	ctx = ctx.WithBlockHeight(14432412).WithBlockTime(blockTime).WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
@@ -41,6 +40,7 @@ func Test14Upgrade(t *testing.T) {
 	})
 	require.NoError(t, err)
 	_, err = realioApp.EndBlocker(ctx)
+	require.NoError(t, err)
 
 	qServer := multistakingkeeper.NewQueryServerImpl(realioApp.MultiStakingKeeper)
 
@@ -54,7 +54,7 @@ func Test14Upgrade(t *testing.T) {
 		delegatorAddr, err := sdk.AccAddressFromBech32(unlock.UnlockID.MultiStakerAddr)
 		require.NoError(t, err)
 		balances := realioApp.BankKeeper.GetAllBalances(ctx, delegatorAddr)
-		beforeBals = append(beforeBals, balances)		
+		beforeBals = append(beforeBals, balances)
 	}
 
 	// Move time forward to complete unbonding (7 days = 604800 seconds)
@@ -74,10 +74,10 @@ func Test14Upgrade(t *testing.T) {
 		delegatorAddr, err := sdk.AccAddressFromBech32(unlock.UnlockID.MultiStakerAddr)
 		require.NoError(t, err)
 		balances := realioApp.BankKeeper.GetAllBalances(ctx, delegatorAddr)
-		afterBals = append(afterBals, balances)		
+		afterBals = append(afterBals, balances)
 	}
 
-	for i, _ := range ubdRes.Unlocks {
+	for i := range ubdRes.Unlocks {
 		require.True(t, afterBals[i].IsAllGTE(beforeBals[i]))
 	}
 }
