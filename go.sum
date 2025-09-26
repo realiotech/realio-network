@@ -1033,8 +1033,8 @@ github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:N/ElC8H3+5X
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/realiotech/evm v0.2.1 h1:XEoLoiWwsZ23Zp6xgFf48bxTm2bQXfsvxN8nQSg/LKA=
 github.com/realiotech/evm v0.2.1/go.mod h1:/4D24vd1xRnUVaXzfNryxTo5Gn1c/phJG5FvpH9OvLQ=
-github.com/realiotech/multi-staking v1.2.0-rc2.0.20250926083222-39aa799c5a67 h1:MBNQ/GdCrFQPsQeQMrf78oCH0dPV/Jj7FxF2NZXSwh0=
-github.com/realiotech/multi-staking v1.2.0-rc2.0.20250926083222-39aa799c5a67/go.mod h1:jNjSslDy7t9OozYsFShqRmjPrKCQV6Do4VhXRKYmh2A=
+github.com/realiotech/multi-staking v1.2.0-rc2.0.20250926133149-41ba1efcbf85 h1:HvRRFOgtHSVSBONnOz21vJwskXlLWu49p7Rb+t0xlnY=
+github.com/realiotech/multi-staking v1.2.0-rc2.0.20250926133149-41ba1efcbf85/go.mod h1:jNjSslDy7t9OozYsFShqRmjPrKCQV6Do4VhXRKYmh2A=
 github.com/regen-network/protobuf v1.3.3-alpha.regen.1 h1:OHEc+q5iIAXpqiqFKeLpu5NwTIkVXUs48vFMwzqpqY4=
 github.com/regen-network/protobuf v1.3.3-alpha.regen.1/go.mod h1:2DjTFR1HhMQhiWC5sZ4OhQ3+NtdbZ6oBDKQwq5Ou+FI=
 github.com/rivo/uniseg v0.2.0 h1:S1pD9weZBuJdFmowNwbpi7BJ8TNftyUImj/0WQi72jY=
