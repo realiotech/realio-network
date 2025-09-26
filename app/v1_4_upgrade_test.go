@@ -23,7 +23,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func Test14Upgrade(t *testing.T) {
+func Test14UpgradeRemoveLMX(t *testing.T) {
 	realioApp := SetupWithGenFiles(t)
 
 	ctx := realioApp.BaseApp.NewContextLegacy(false, tmproto.Header{Height: realioApp.LastBlockHeight() + 1, Time: time.Now()})
@@ -37,6 +37,124 @@ func Test14Upgrade(t *testing.T) {
 		Title:       "title",
 		Description: "description",
 		Denom:       "almx",
+	})
+	require.NoError(t, err)
+	_, err = realioApp.EndBlocker(ctx)
+	require.NoError(t, err)
+
+	qServer := multistakingkeeper.NewQueryServerImpl(realioApp.MultiStakingKeeper)
+
+	// Check balances BEFORE unbonding delegation finishes
+	ubdRes, err := qServer.MultiStakingUnlocks(ctx, &multistakingtypes.QueryMultiStakingUnlocksRequest{})
+	require.NoError(t, err)
+
+	// Check balances for each delegator before unbonding finishes
+	beforeBals := []sdk.Coins{}
+	for _, unlock := range ubdRes.Unlocks {
+		delegatorAddr, err := sdk.AccAddressFromBech32(unlock.UnlockID.MultiStakerAddr)
+		require.NoError(t, err)
+		balances := realioApp.BankKeeper.GetAllBalances(ctx, delegatorAddr)
+		beforeBals = append(beforeBals, balances)
+	}
+
+	// Move time forward to complete unbonding (7 days = 604800 seconds)
+	ctx = ctx.WithBlockTime(blockTime.Add(time.Second * 604800)).WithBlockHeight(ctx.BlockHeight() + 1)
+	_, err = realioApp.EndBlocker(ctx)
+	require.NoError(t, err)
+
+	// Move 1 block
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second)).WithBlockHeight(ctx.BlockHeight() + 1)
+	_, err = realioApp.EndBlocker(ctx)
+	require.NoError(t, err)
+
+	// Check balances AFTER unbonding delegation finishes
+	// Check balances for each delegator after unbonding finishes
+	afterBals := []sdk.Coins{}
+	for _, unlock := range ubdRes.Unlocks {
+		delegatorAddr, err := sdk.AccAddressFromBech32(unlock.UnlockID.MultiStakerAddr)
+		require.NoError(t, err)
+		balances := realioApp.BankKeeper.GetAllBalances(ctx, delegatorAddr)
+		afterBals = append(afterBals, balances)
+	}
+
+	for i := range ubdRes.Unlocks {
+		require.True(t, afterBals[i].IsAllGTE(beforeBals[i]))
+	}
+}
+
+func Test14UpgradeRemoveRST(t *testing.T) {
+	realioApp := SetupWithGenFiles(t)
+
+	ctx := realioApp.BaseApp.NewContextLegacy(false, tmproto.Header{Height: realioApp.LastBlockHeight() + 1, Time: time.Now()})
+
+	// Set block height and block time same as genesis file
+	blockTime, _ := time.Parse(time.RFC3339Nano, "2025-09-26T05:43:53.576222314Z")
+	ctx = ctx.WithBlockHeight(14432412).WithBlockTime(blockTime).WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
+
+	// Test Remove lmx proposal
+	err := realioApp.MultiStakingKeeper.RemoveMultiStakingCoinProposal(ctx, &multistakingtypes.RemoveMultiStakingCoinProposal{
+		Title:       "title",
+		Description: "description",
+		Denom:       "arst",
+	})
+	require.NoError(t, err)
+	_, err = realioApp.EndBlocker(ctx)
+	require.NoError(t, err)
+
+	qServer := multistakingkeeper.NewQueryServerImpl(realioApp.MultiStakingKeeper)
+
+	// Check balances BEFORE unbonding delegation finishes
+	ubdRes, err := qServer.MultiStakingUnlocks(ctx, &multistakingtypes.QueryMultiStakingUnlocksRequest{})
+	require.NoError(t, err)
+
+	// Check balances for each delegator before unbonding finishes
+	beforeBals := []sdk.Coins{}
+	for _, unlock := range ubdRes.Unlocks {
+		delegatorAddr, err := sdk.AccAddressFromBech32(unlock.UnlockID.MultiStakerAddr)
+		require.NoError(t, err)
+		balances := realioApp.BankKeeper.GetAllBalances(ctx, delegatorAddr)
+		beforeBals = append(beforeBals, balances)
+	}
+
+	// Move time forward to complete unbonding (7 days = 604800 seconds)
+	ctx = ctx.WithBlockTime(blockTime.Add(time.Second * 604800)).WithBlockHeight(ctx.BlockHeight() + 1)
+	_, err = realioApp.EndBlocker(ctx)
+	require.NoError(t, err)
+
+	// Move 1 block
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second)).WithBlockHeight(ctx.BlockHeight() + 1)
+	_, err = realioApp.EndBlocker(ctx)
+	require.NoError(t, err)
+
+	// Check balances AFTER unbonding delegation finishes
+	// Check balances for each delegator after unbonding finishes
+	afterBals := []sdk.Coins{}
+	for _, unlock := range ubdRes.Unlocks {
+		delegatorAddr, err := sdk.AccAddressFromBech32(unlock.UnlockID.MultiStakerAddr)
+		require.NoError(t, err)
+		balances := realioApp.BankKeeper.GetAllBalances(ctx, delegatorAddr)
+		afterBals = append(afterBals, balances)
+	}
+
+	for i := range ubdRes.Unlocks {
+		require.True(t, afterBals[i].IsAllGTE(beforeBals[i]))
+	}
+}
+
+func Test14UpgradeRemoveRIO(t *testing.T) {
+	realioApp := SetupWithGenFiles(t)
+
+	ctx := realioApp.BaseApp.NewContextLegacy(false, tmproto.Header{Height: realioApp.LastBlockHeight() + 1, Time: time.Now()})
+
+	// Set block height and block time same as genesis file
+	blockTime, _ := time.Parse(time.RFC3339Nano, "2025-09-26T05:43:53.576222314Z")
+	ctx = ctx.WithBlockHeight(14432412).WithBlockTime(blockTime).WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
+
+	// Test Remove lmx proposal
+	err := realioApp.MultiStakingKeeper.RemoveMultiStakingCoinProposal(ctx, &multistakingtypes.RemoveMultiStakingCoinProposal{
+		Title:       "title",
+		Description: "description",
+		Denom:       "ario",
 	})
 	require.NoError(t, err)
 	_, err = realioApp.EndBlocker(ctx)
