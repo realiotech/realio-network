@@ -49,11 +49,14 @@ func Test14UpgradeRemoveLMX(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check balances for each delegator before unbonding finishes
-	beforeBals := []sdk.Coins{}
+	beforeBals := []sdk.Coin{}
 	for _, unlock := range ubdRes.Unlocks {
+		if unlock.Entries[0].UnlockingCoin.Denom != "almx" {
+			continue
+		}
 		delegatorAddr, err := sdk.AccAddressFromBech32(unlock.UnlockID.MultiStakerAddr)
 		require.NoError(t, err)
-		balances := realioApp.BankKeeper.GetAllBalances(ctx, delegatorAddr)
+		balances := realioApp.BankKeeper.GetBalance(ctx, delegatorAddr, "almx")
 		beforeBals = append(beforeBals, balances)
 	}
 
@@ -69,16 +72,20 @@ func Test14UpgradeRemoveLMX(t *testing.T) {
 
 	// Check balances AFTER unbonding delegation finishes
 	// Check balances for each delegator after unbonding finishes
-	afterBals := []sdk.Coins{}
+	afterBals := []sdk.Coin{}
 	for _, unlock := range ubdRes.Unlocks {
+		if unlock.Entries[0].UnlockingCoin.Denom != "almx" {
+			continue
+		}
 		delegatorAddr, err := sdk.AccAddressFromBech32(unlock.UnlockID.MultiStakerAddr)
 		require.NoError(t, err)
-		balances := realioApp.BankKeeper.GetAllBalances(ctx, delegatorAddr)
+		balances := realioApp.BankKeeper.GetBalance(ctx, delegatorAddr, "almx")
 		afterBals = append(afterBals, balances)
 	}
 
-	for i := range ubdRes.Unlocks {
-		require.True(t, afterBals[i].IsAllGTE(beforeBals[i]))
+	// Check almx balance increase after unbonding complete
+	for i := range afterBals {
+		require.True(t, beforeBals[i].IsLT(afterBals[i]))
 	}
 }
 
@@ -108,11 +115,14 @@ func Test14UpgradeRemoveRST(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check balances for each delegator before unbonding finishes
-	beforeBals := []sdk.Coins{}
+	beforeBals := []sdk.Coin{}
 	for _, unlock := range ubdRes.Unlocks {
+		if unlock.Entries[0].UnlockingCoin.Denom != "arst" {
+			continue
+		}
 		delegatorAddr, err := sdk.AccAddressFromBech32(unlock.UnlockID.MultiStakerAddr)
 		require.NoError(t, err)
-		balances := realioApp.BankKeeper.GetAllBalances(ctx, delegatorAddr)
+		balances := realioApp.BankKeeper.GetBalance(ctx, delegatorAddr, "arst")
 		beforeBals = append(beforeBals, balances)
 	}
 
@@ -128,16 +138,20 @@ func Test14UpgradeRemoveRST(t *testing.T) {
 
 	// Check balances AFTER unbonding delegation finishes
 	// Check balances for each delegator after unbonding finishes
-	afterBals := []sdk.Coins{}
+	afterBals := []sdk.Coin{}
 	for _, unlock := range ubdRes.Unlocks {
+		if unlock.Entries[0].UnlockingCoin.Denom != "arst" {
+			continue
+		}
 		delegatorAddr, err := sdk.AccAddressFromBech32(unlock.UnlockID.MultiStakerAddr)
 		require.NoError(t, err)
-		balances := realioApp.BankKeeper.GetAllBalances(ctx, delegatorAddr)
+		balances := realioApp.BankKeeper.GetBalance(ctx, delegatorAddr, "arst")
 		afterBals = append(afterBals, balances)
 	}
 
-	for i := range ubdRes.Unlocks {
-		require.True(t, afterBals[i].IsAllGTE(beforeBals[i]))
+	// Check arst balance increase after unbonding complete
+	for i := range afterBals {
+		require.True(t, beforeBals[i].IsLT(afterBals[i]))
 	}
 }
 
@@ -167,16 +181,19 @@ func Test14UpgradeRemoveRIO(t *testing.T) {
 	require.NoError(t, err)
 
 	// Check balances for each delegator before unbonding finishes
-	beforeBals := []sdk.Coins{}
+	beforeBals := []sdk.Coin{}
 	for _, unlock := range ubdRes.Unlocks {
+		if unlock.Entries[0].UnlockingCoin.Denom != "ario" {
+			continue
+		}
 		delegatorAddr, err := sdk.AccAddressFromBech32(unlock.UnlockID.MultiStakerAddr)
 		require.NoError(t, err)
-		balances := realioApp.BankKeeper.GetAllBalances(ctx, delegatorAddr)
+		balances := realioApp.BankKeeper.GetBalance(ctx, delegatorAddr, "ario")
 		beforeBals = append(beforeBals, balances)
 	}
 
 	// Move time forward to complete unbonding (7 days = 604800 seconds)
-	ctx = ctx.WithBlockTime(blockTime.Add(time.Second * 604800)).WithBlockHeight(ctx.BlockHeight() + 1)
+	ctx = ctx.WithBlockTime(blockTime.Add(time.Second * 604800 * 3)).WithBlockHeight(ctx.BlockHeight() + 1)
 	_, err = realioApp.EndBlocker(ctx)
 	require.NoError(t, err)
 
@@ -187,16 +204,20 @@ func Test14UpgradeRemoveRIO(t *testing.T) {
 
 	// Check balances AFTER unbonding delegation finishes
 	// Check balances for each delegator after unbonding finishes
-	afterBals := []sdk.Coins{}
+	afterBals := []sdk.Coin{}
 	for _, unlock := range ubdRes.Unlocks {
+		if unlock.Entries[0].UnlockingCoin.Denom != "ario" {
+			continue
+		}
 		delegatorAddr, err := sdk.AccAddressFromBech32(unlock.UnlockID.MultiStakerAddr)
 		require.NoError(t, err)
-		balances := realioApp.BankKeeper.GetAllBalances(ctx, delegatorAddr)
+		balances := realioApp.BankKeeper.GetBalance(ctx, delegatorAddr, "ario")
 		afterBals = append(afterBals, balances)
 	}
 
-	for i := range ubdRes.Unlocks {
-		require.True(t, afterBals[i].IsAllGTE(beforeBals[i]))
+	// Check ario balance increase after unbonding complete
+	for i := range afterBals {
+		require.True(t, beforeBals[i].IsLT(afterBals[i]))
 	}
 }
 
