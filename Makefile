@@ -197,20 +197,16 @@ PACKAGE_NAME:=github.com/realiotech/realio-network
 GOLANG_CROSS_VERSION  = v1.22
 GOPATH ?= '$(HOME)/go'
 release-dry-run:
-	@mkdir -p /tmp/go-cache
 	docker run \
 		--rm \
 		--privileged \
 		-e CGO_ENABLED=1 \
-		-e GOCACHE=/tmp/go-cache \
-		-e GOMODCACHE=/tmp/go-cache/mod \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v `pwd`:/go/src/$(PACKAGE_NAME) \
-		-v /tmp/go-cache:/tmp/go-cache \
+		-v ${GOPATH}/pkg:/go/pkg \
 		-w /go/src/$(PACKAGE_NAME) \
 		ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
 		--clean --skip=validate --skip=publish --snapshot
-	@rm -rf /tmp/go-cache
 
 release:
 	@if [ ! -f ".release-env" ]; then \
