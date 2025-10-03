@@ -6,7 +6,7 @@ on:
       - "v*.*.*"
 jobs:
   goreleaser:
-    runs-on: ubuntu-latest-4-cores
+    runs-on: blacksmith-8vcpu-ubuntu-2404
     environment: release
     steps:
       - uses: actions/checkout@v3
