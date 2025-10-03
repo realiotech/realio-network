@@ -202,9 +202,11 @@ release-dry-run:
 		--rm \
 		--privileged \
 		-e CGO_ENABLED=1 \
+		-e GOCACHE=/tmp/go-cache \
+		-e GOMODCACHE=/tmp/go-cache/mod \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v `pwd`:/go/src/$(PACKAGE_NAME) \
-		-v /tmp/go-cache:/go/pkg \
+		-v /tmp/go-cache:/tmp/go-cache \
 		-w /go/src/$(PACKAGE_NAME) \
 		ghcr.io/goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
 		--clean --skip=validate --skip=publish --snapshot
