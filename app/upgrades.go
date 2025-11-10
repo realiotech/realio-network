@@ -7,7 +7,8 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 	"github.com/realiotech/realio-network/app/upgrades/commission"
-	v1 "github.com/realiotech/realio-network/app/upgrades/v1"
+
+	// v1 "github.com/realiotech/realio-network/app/upgrades/v1"
 	v2 "github.com/realiotech/realio-network/app/upgrades/v1.2"
 	v3 "github.com/realiotech/realio-network/app/upgrades/v1.3"
 	v4 "github.com/realiotech/realio-network/app/upgrades/v1.4"
@@ -15,7 +16,6 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // BaseAppParamManager defines an interrace that BaseApp is expected to fullfil
@@ -48,22 +48,6 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 			app.mm,
 			app.configurator,
 			app.StakingKeeper,
-		),
-	)
-
-	app.UpgradeKeeper.SetUpgradeHandler(
-		v1.UpgradeName,
-		v1.CreateUpgradeHandler(
-			app.mm,
-			app.configurator,
-			app.ParamsKeeper,
-			app.ConsensusParamsKeeper,
-			*app.IBCKeeper,
-			app.BridgeKeeper,
-			app.AccountKeeper,
-			app.MintKeeper,
-			app.EvmKeeper,
-			app.keys[evmtypes.StoreKey],
 		),
 	)
 
@@ -103,10 +87,6 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 
 	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 		return
-	}
-
-	if upgradeInfo.Name == v1.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &v1.V1StoreUpgrades))
 	}
 
 	if upgradeInfo.Name == v4.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {

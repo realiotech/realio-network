@@ -49,6 +49,13 @@ var ChainsCoinInfo = map[string]evmtypes.EvmCoinInfo{
 	},
 }
 
+const (
+	// MainnetChainID defines the RealioNetwork EIP155 chain ID for mainnet
+	MainnetChainID = 3301
+	// TestnetChainID defines the RealioNetwork EIP155 chain ID for testnet
+	TestnetChainID = 3300
+)
+
 // EvmAppOptions allows to setup the global configuration
 // for the Cosmos EVM chain.
 func EvmAppOptions(chainID string) error {
@@ -62,11 +69,8 @@ func EvmAppOptions(chainID string) error {
 		return fmt.Errorf("unknown chain id: %s", id)
 	}
 
-	ethCfg := evmtypes.DefaultChainConfig(chainID)
-
 	err := evmtypes.NewEVMConfigurator().
 		WithExtendedEips(cosmosEVMActivators).
-		WithChainConfig(ethCfg).
 		// NOTE: we're using the 18 decimals default for the example chain
 		WithEVMCoinInfo(coinInfo).
 		Configure()

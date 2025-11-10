@@ -15,15 +15,15 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 
 	evmcryptocodec "github.com/cosmos/evm/crypto/codec"
+	enccodec "github.com/cosmos/evm/encoding/codec"
 	"github.com/cosmos/evm/ethereum/eip712"
-	evmostypes "github.com/cosmos/evm/types"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ethcryptocodec "github.com/realiotech/realio-network/crypto/codec"
 )
 
 // MakeEncodingConfig creates the EncodingConfig for realio network
-func MakeEncodingConfig() params.EncodingConfig {
+func MakeEncodingConfig(evmChainID uint64) params.EncodingConfig {
 	legacyAmino := codec.NewLegacyAmino()
 	signingOptions := signing.Options{
 		AddressCodec: address.Bech32Codec{
@@ -47,7 +47,7 @@ func MakeEncodingConfig() params.EncodingConfig {
 	txConfig := tx.NewTxConfig(codec, tx.DefaultSignModes)
 
 	std.RegisterInterfaces(interfaceRegistry)
-	evmostypes.RegisterInterfaces(interfaceRegistry)
+	enccodec.RegisterInterfaces(interfaceRegistry)
 	evmcryptocodec.RegisterCrypto(legacyAmino)
 	evmcryptocodec.RegisterInterfaces(interfaceRegistry)
 	ethcryptocodec.RegisterCrypto(legacyAmino)
@@ -56,7 +56,7 @@ func MakeEncodingConfig() params.EncodingConfig {
 	// This is needed for the EIP712 txs because currently is using
 	// the deprecated method legacytx.StdSignBytes
 	legacytx.RegressionTestingAminoCodec = legacyAmino
-	eip712.SetEncodingConfig(legacyAmino, interfaceRegistry)
+	eip712.SetEncodingConfig(legacyAmino, interfaceRegistry, evmChainID)
 
 	ModuleBasics.RegisterLegacyAminoCodec(legacyAmino)
 	ModuleBasics.RegisterInterfaces(interfaceRegistry)

@@ -241,7 +241,7 @@ func SetupWithGenFiles(t *testing.T) *RealioNetwork {
 	initialHeight := int64(14432412) // From initial_height in file
 
 	// Create the app directly (similar to Setup but without default genesis)
-	encCdc := MakeEncodingConfig()
+	// encCdc := MakeEncodingConfig(MainnetChainID)
 	db := dbm.NewMemDB()
 	opt := baseapp.SetChainID(chainID)
 
@@ -258,7 +258,6 @@ func SetupWithGenFiles(t *testing.T) *RealioNetwork {
 		map[int64]bool{},
 		DefaultNodeHome,
 		1,
-		encCdc,
 		appOpts,
 		EvmAppOptions,
 		opt,
