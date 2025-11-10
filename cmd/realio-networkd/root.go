@@ -10,6 +10,7 @@ import (
 	tmcfg "github.com/cometbft/cometbft/config"
 	tmcli "github.com/cometbft/cometbft/libs/cli"
 
+	evmconfig "github.com/cosmos/evm/config"
 	"github.com/spf13/viper"
 
 	"github.com/spf13/cast"
@@ -33,7 +34,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/client/snapshot"
 	"github.com/cosmos/cosmos-sdk/server"
-	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
@@ -42,13 +42,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	cosmosevmserverconfig "github.com/cosmos/evm/server/config"
 	"github.com/realiotech/realio-network/client/debug"
 
 	ethermintclient "github.com/cosmos/evm/client"
 
+	serverconfig "github.com/cosmos/cosmos-sdk/server/config"
 	"github.com/cosmos/evm/crypto/hd"
-	ethermintserver "github.com/cosmos/evm/server"
-	servercfg "github.com/cosmos/evm/server/config"
+	cosmosevmserver "github.com/cosmos/evm/server"
 
 	"github.com/realiotech/realio-network/app"
 	cmdcfg "github.com/realiotech/realio-network/cmd/config"
@@ -84,11 +85,15 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 		map[int64]bool{},
 		tempDir,
 		5,
-		app.MakeEncodingConfig(),
 		initAppOptions,
 		app.NoOpEVMOptions,
 	)
-	encodingConfig := app.MakeEncodingConfig()
+	encodingConfig := params.EncodingConfig{
+		InterfaceRegistry: tempApp.InterfaceRegistry(),
+		Codec:             tempApp.AppCodec(),
+		TxConfig:          tempApp.GetTxConfig(),
+		Amino:             tempApp.LegacyAmino(),
+	}
 	initClientCtx := client.Context{}.
 		WithCodec(encodingConfig.Codec).
 		WithInterfaceRegistry(encodingConfig.InterfaceRegistry).
@@ -122,7 +127,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 				return err
 			}
 
-			customAppTemplate, customAppConfig := AppConfig()
+			customAppTemplate, customAppConfig := AppConfig(app.MainnetChainID)
 			customTMConfig := initTendermintConfig()
 
 			return server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig, customTMConfig)
@@ -149,21 +154,22 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	cfg.Seal()
 
 	a := appCreator{encodingConfig}
+	sdkAppCreator := func(l log.Logger, d dbm.DB, w io.Writer, ao servertypes.AppOptions) servertypes.Application {
+		return a.newApp(l, d, w, ao)
+	}
 	rootCmd.AddCommand(
-		ethermintclient.ValidateChainID(
-			genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
-		),
+		genutilcli.InitCmd(app.ModuleBasics, app.DefaultNodeHome),
 		genutilcli.Commands(encodingConfig.TxConfig, app.ModuleBasics, app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		NewTestnetCmd(app.ModuleBasics, banktypes.GenesisBalancesIterator{}),
 		debug.Cmd(),
 		confixcmd.ConfigCommand(),
-		pruning.Cmd(a.newApp, app.DefaultNodeHome),
-		snapshot.Cmd(a.newApp),
+		pruning.Cmd(sdkAppCreator, app.DefaultNodeHome),
+		snapshot.Cmd(sdkAppCreator),
 		// this line is used by starport scaffolding # stargate/root/commands
 	)
 
-	ethermintserver.AddCommands(rootCmd, ethermintserver.NewDefaultStartOptions(a.newApp, app.DefaultNodeHome),
+	cosmosevmserver.AddCommands(rootCmd, cosmosevmserver.NewDefaultStartOptions(a.newApp, app.DefaultNodeHome),
 		a.appExport, addModuleInitFlags)
 
 	// add keybase, auxiliary RPC, query, and tx child commands
@@ -238,10 +244,10 @@ func txCommand() *cobra.Command {
 
 // initAppConfig helps to override default appConfig template and configs.
 // return "", nil if no custom configuration is required for the application.
-func AppConfig() (string, interface{}) {
+func AppConfig(evmChainID uint64) (string, interface{}) {
 	// Optionally allow the chain developer to overwrite the SDK's default
 	// server config.
-	srvCfg := servercfg.DefaultConfig()
+	srvCfg := serverconfig.DefaultConfig()
 	// The SDK's default minimum gas price is set to "" (empty value) inside
 	// app.toml. If left empty by validators, the node will halt on startup.
 	// However, the chain developer can set a default app.toml value for their
@@ -256,10 +262,17 @@ func AppConfig() (string, interface{}) {
 	// In this example application, we set the min gas prices to 0.
 	srvCfg.MinGasPrices = "0" + cmdcfg.BaseDenom
 
-	customAppTemplate := serverconfig.DefaultConfigTemplate +
-		servercfg.DefaultEVMConfigTemplate
+	evmCfg := cosmosevmserverconfig.DefaultEVMConfig()
+	evmCfg.EVMChainID = evmChainID
 
-	return customAppTemplate, srvCfg
+	customAppConfig := evmconfig.EVMAppConfig{
+		Config:  *srvCfg,
+		EVM:     *evmCfg,
+		JSONRPC: *cosmosevmserverconfig.DefaultJSONRPCConfig(),
+		TLS:     *cosmosevmserverconfig.DefaultTLSConfig(),
+	}
+
+	return evmconfig.EVMAppTemplate, customAppConfig
 }
 
 type appCreator struct {
@@ -267,7 +280,7 @@ type appCreator struct {
 }
 
 // newApp is an AppCreator
-func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) servertypes.Application {
+func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, appOpts servertypes.AppOptions) cosmosevmserver.Application {
 	var cache storetypes.MultiStorePersistentCache
 
 	if cast.ToBool(appOpts.Get(server.FlagInterBlockCache)) {
@@ -326,7 +339,6 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		logger, db, traceStore, true, skipUpgradeHeights,
 		cast.ToString(appOpts.Get(flags.FlagHome)),
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
-		a.encCfg,
 		// this line is used by starport scaffolding # stargate/root/appArgument
 		appOpts,
 		app.EvmAppOptions,
@@ -366,7 +378,6 @@ func (a appCreator) appExport(
 			map[int64]bool{},
 			homePath,
 			uint(1),
-			a.encCfg,
 			// this line is used by starport scaffolding # stargate/root/exportArgument
 			appOpts,
 			app.NoOpEVMOptions,
@@ -384,7 +395,6 @@ func (a appCreator) appExport(
 			map[int64]bool{},
 			homePath,
 			uint(1),
-			a.encCfg,
 			// this line is used by starport scaffolding # stargate/root/noHeightExportArgument
 			appOpts,
 			app.NoOpEVMOptions,

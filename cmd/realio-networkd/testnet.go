@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 
 	"cosmossdk.io/math"
+	"github.com/realiotech/realio-network/app"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
 
 	tmconfig "github.com/cometbft/cometbft/config"
@@ -341,7 +342,7 @@ func initTestnetFiles(
 			return err
 		}
 
-		customAppTemplate, customAppConfig := AppConfig()
+		customAppTemplate, customAppConfig := AppConfig(app.TestnetChainID)
 		srvconfig.SetConfigTemplate(customAppTemplate)
 		customTMConfig := initTendermintConfig()
 
