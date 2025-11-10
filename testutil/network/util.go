@@ -129,10 +129,16 @@ func startInProcess(cfg Config, val *Validator) error {
 			return fmt.Errorf("validator %s context is nil", val.Moniker)
 		}
 
-		tmEndpoint := "/websocket"
-		tmRPCAddr := fmt.Sprintf("tcp://%s", val.AppConfig.GRPC.Address)
-
-		val.jsonrpc, val.jsonrpcDone, err = server.StartJSONRPC(val.Ctx, val.ClientCtx, tmRPCAddr, tmEndpoint, val.AppConfig, nil)
+		val.jsonrpc, err = server.StartJSONRPC(
+			ctx,
+			val.Ctx, 
+			val.ClientCtx, 
+			nil,
+			val.AppConfig, 
+			nil,
+			app.(server.AppWithPendingTxStream),
+			nil,
+		)
 		if err != nil {
 			return err
 		}

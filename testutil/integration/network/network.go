@@ -16,12 +16,12 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cometbft/cometbft/version"
 
-	chainutil "github.com/cosmos/evm/evmd/testutil"
-	"github.com/cosmos/evm/testutil/integration/os/network"
-	"github.com/cosmos/evm/types"
+	// chainutil "github.com/cosmos/evm/evmd/testutil"
+	"github.com/cosmos/evm/testutil/integration/evm/network"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/evm/testutil/integration"
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
@@ -51,6 +51,7 @@ type IntegrationNetwork struct {
 	ctx        sdktypes.Context
 	validators []stakingtypes.Validator
 	app        *app.RealioNetwork
+	baseDecimal evmtypes.Decimals
 
 	// This is only needed for IBC chain testing setup
 	valSet     *cmttypes.ValidatorSet
@@ -99,6 +100,7 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 
 	// The bonded amount should be updated to reflect the actual base denom
 	baseDecimals := n.cfg.chainCoins.BaseDecimals()
+	n.baseDecimal = baseDecimals
 	fmt.Println("Base decimals: ", baseDecimals)
 	bondedAmount := GetInitialBondedAmount(baseDecimals)
 
@@ -185,7 +187,7 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 		return err
 	}
 
-	consensusParams := chainutil.DefaultConsensusParams
+	consensusParams := integration.DefaultConsensusParams
 	consensusParams.Validator.PubKeyTypes = append(consensusParams.Validator.PubKeyTypes, cmttypes.ABCIPubKeyTypeSecp256k1)
 	now := time.Now()
 
@@ -235,13 +237,18 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 
 	n.app = exampleApp
 	n.ctx = n.ctx.WithConsensusParams(*consensusParams)
-	n.ctx = n.ctx.WithBlockGasMeter(types.NewInfiniteGasMeterWithLimit(blockMaxGas))
+	n.ctx = n.ctx.WithBlockGasMeter(evmtypes.NewInfiniteGasMeterWithLimit(blockMaxGas))
 
 	n.validators = validators
 	n.valSet = valSet
 	n.valSigners = valSigners
 
 	return nil
+}
+
+// GetConfig returns the network's configuration
+func (n *IntegrationNetwork) GetBaseDecimal() evmtypes.Decimals {
+	return n.baseDecimal
 }
 
 // GetContext returns the network's context

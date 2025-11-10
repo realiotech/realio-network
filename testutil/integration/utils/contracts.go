@@ -6,7 +6,7 @@ import (
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 
-	"github.com/cosmos/evm/testutil/integration/os/factory"
+	testutiltypes "github.com/cosmos/evm/testutil/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
@@ -33,7 +33,7 @@ func CheckTxTopics(res abcitypes.ExecTxResult, expectedTopics []string) error {
 }
 
 // DecodeContractCallResponse decodes the response of a contract call query
-func DecodeContractCallResponse(response interface{}, callArgs factory.CallArgs, res abcitypes.ExecTxResult) error {
+func DecodeContractCallResponse(response interface{}, callArgs testutiltypes.CallArgs, res abcitypes.ExecTxResult) error {
 	msgEthResponse, err := DecodeExecTxResult(res)
 	if err != nil {
 		return err

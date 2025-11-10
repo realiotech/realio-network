@@ -7,8 +7,8 @@ import (
 
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 
-	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
-	"github.com/cosmos/evm/testutil/integration/os/factory"
+	commonfactory "github.com/cosmos/evm/testutil/integration/base/factory"
+	"github.com/cosmos/evm/testutil/integration/evm/factory"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/realiotech/realio-network/testutil/integration/network"
 

@@ -56,7 +56,6 @@ import (
 
 	"github.com/cosmos/evm/crypto/hd"
 	"github.com/cosmos/evm/server/config"
-	ethermint "github.com/cosmos/evm/types"
 
 	"github.com/realiotech/realio-network/app"
 )
@@ -102,7 +101,7 @@ type Config struct {
 // DefaultConfig returns a sane default configuration suitable for nearly all
 // testing requirements.
 func DefaultConfig() Config {
-	encCfg := app.MakeEncodingConfig()
+	encCfg := app.MakeEncodingConfig(app.MainnetChainID)
 
 	return Config{
 		Codec:             encCfg.Codec,
@@ -134,7 +133,6 @@ func NewAppConstructor(encodingCfg params.EncodingConfig) AppConstructor {
 	return func(val Validator) servertypes.Application {
 		return app.New(
 			val.Ctx.Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.Ctx.Config.RootDir, 0,
-			encodingCfg,
 			simtestutil.EmptyAppOptions{},
 			app.NoOpEVMOptions,
 			baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.AppConfig.Pruning)),
@@ -225,10 +223,6 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 	// only one caller/test can create and use a network at a time
 	l.Log("acquiring test network lock")
 	lock.Lock()
-
-	if !ethermint.IsValidChainID(cfg.ChainID) {
-		return nil, fmt.Errorf("invalid chain-id: %s", cfg.ChainID)
-	}
 
 	network := &Network{
 		Logger:     l,

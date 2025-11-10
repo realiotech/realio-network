@@ -1,7 +1,6 @@
 package network
 
 import (
-	"github.com/ethereum/go-ethereum/common"
 	"github.com/realiotech/realio-network/app"
 
 	"github.com/cosmos/evm/x/vm/statedb"
@@ -36,11 +35,10 @@ func NewUnitTestNetwork(opts ...ConfigOption) *UnitTestNetwork {
 
 // GetStateDB returns the state database for the current block.
 func (n *UnitTestNetwork) GetStateDB() *statedb.StateDB {
-	headerHash := n.GetContext().HeaderHash()
 	return statedb.New(
 		n.GetContext(),
 		n.app.EvmKeeper,
-		statedb.NewEmptyTxConfig(common.BytesToHash(headerHash)),
+		statedb.NewEmptyTxConfig(),
 	)
 }
 

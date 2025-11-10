@@ -14,7 +14,7 @@ import (
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
 
 	dbm "github.com/cosmos/cosmos-db"
-	exampleapp "github.com/cosmos/evm/evmd"
+	// exampleapp "github.com/cosmos/evm/evmd"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
@@ -169,7 +169,7 @@ func createTestingApp(chainID string, customBaseAppOptions ...func(*baseapp.Base
 	db := dbm.NewMemDB()
 	logger := log.NewNopLogger()
 	loadLatest := true
-	appOptions := simutils.NewAppOptionsWithFlagHome(exampleapp.DefaultNodeHome)
+	appOptions := simutils.NewAppOptionsWithFlagHome(app.DefaultNodeHome)
 	baseAppOptions := append(customBaseAppOptions, baseapp.SetChainID(chainID)) //nolint:gocritic
 
 	return app.New(
@@ -180,7 +180,6 @@ func createTestingApp(chainID string, customBaseAppOptions ...func(*baseapp.Base
 		map[int64]bool{},
 		"",
 		5,
-		app.MakeEncodingConfig(),
 		appOptions,
 		app.EvmAppOptions,
 		baseAppOptions...,
@@ -506,7 +505,7 @@ func setDefaultMintGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState si
 
 func setDefaultErc20GenesisState(cosmosEVMApp *app.RealioNetwork, genesisState simapp.GenesisState) simapp.GenesisState {
 	// NOTE: here we are using the setup from the example chain
-	erc20Gen := exampleapp.NewErc20GenesisState()
+	erc20Gen := app.NewErc20GenesisState()
 	updatedErc20Gen := updateErc20GenesisStateForChainID(cosmosEVMApp.ChainID(), *erc20Gen)
 
 	genesisState[erc20types.ModuleName] = cosmosEVMApp.AppCodec().MustMarshalJSON(&updatedErc20Gen)

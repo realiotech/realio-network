@@ -3,7 +3,7 @@ package utils
 import (
 	"fmt"
 
-	"github.com/cosmos/evm/testutil/integration/os/factory"
+	"github.com/cosmos/evm/testutil/integration/evm/factory"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
@@ -16,7 +16,7 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	govv1types "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 	govv1beta1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1beta1"
-	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
+	commonfactory "github.com/cosmos/evm/testutil/integration/base/factory"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 )
 
