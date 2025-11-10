@@ -4,13 +4,13 @@ import (
 	"math/big"
 
 	"cosmossdk.io/math"
-	"github.com/cosmos/evm/testutil/integration/os/factory"
+	"github.com/cosmos/evm/testutil/integration/evm/factory"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/ethereum/go-ethereum/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/contracts"
-	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
+	commonfactory "github.com/cosmos/evm/testutil/integration/base/factory"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	integrationutils "github.com/realiotech/realio-network/testutil/integration/utils"
 )

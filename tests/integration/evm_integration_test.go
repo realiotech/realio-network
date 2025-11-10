@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	"github.com/cosmos/evm/testutil/integration/os/factory"
-	"github.com/cosmos/evm/testutil/integration/os/grpc"
-	testkeyring "github.com/cosmos/evm/testutil/integration/os/keyring"
+	"github.com/cosmos/evm/testutil/integration/evm/factory"
+	"github.com/cosmos/evm/testutil/integration/evm/grpc"
+	testkeyring "github.com/cosmos/evm/testutil/keyring"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"

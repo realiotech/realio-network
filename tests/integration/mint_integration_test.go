@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
+	commonfactory "github.com/cosmos/evm/testutil/integration/base/factory"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -13,9 +13,9 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	realiotypes "github.com/realiotech/realio-network/types"
 
-	"github.com/cosmos/evm/testutil/integration/os/factory"
-	"github.com/cosmos/evm/testutil/integration/os/grpc"
-	testkeyring "github.com/cosmos/evm/testutil/integration/os/keyring"
+	"github.com/cosmos/evm/testutil/integration/evm/factory"
+	"github.com/cosmos/evm/testutil/integration/evm/grpc"
+	testkeyring "github.com/cosmos/evm/testutil/keyring"
 	"github.com/realiotech/realio-network/testutil/integration/network"
 
 	// authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
