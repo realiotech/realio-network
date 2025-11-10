@@ -16,6 +16,7 @@ import (
 	"cosmossdk.io/core/address"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/ethereum/go-ethereum/core/vm"
@@ -31,6 +32,7 @@ var f embed.FS
 // Precompile defines the multistaking precompile
 type Precompile struct {
 	cmn.Precompile
+	abi.ABI
 	codec.Codec
 	stakingKeeper      stakingkeeper.Keeper
 	multiStakingKeeper multistakingkeeper.Keeper
@@ -60,10 +62,10 @@ func NewPrecompile(
 
 	p := &Precompile{
 		Precompile: cmn.Precompile{
-			ABI:                  newABI,
 			KvGasConfig:          storetypes.KVGasConfig(),
 			TransientKVGasConfig: storetypes.TransientGasConfig(),
 		},
+		ABI:                newABI,
 		Codec:              cdc,
 		stakingKeeper:      stakingKeeper,
 		multiStakingKeeper: multiStakingKeeper,
@@ -93,27 +95,31 @@ func (p Precompile) RequiredGas(input []byte) uint64 {
 
 // Run executes the precompiled contract multistaking methods defined in the ABI.
 func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz []byte, err error) {
-	ctx, stateDB, snapshot, method, initialGas, args, err := p.RunSetup(evm, contract, readOnly, p.IsTransaction)
+	return p.RunNativeAction(evm, contract, func(ctx sdk.Context) ([]byte, error) {
+		return p.Execute(ctx, contract, readOnly)
+	})
+}
+
+// Execute executes the precompiled contract bank query methods defined in the ABI.
+func (p Precompile) Execute(ctx sdk.Context, contract *vm.Contract, readOnly bool) ([]byte, error) {
+	method, args, err := cmn.SetupABI(p.ABI, contract, readOnly, p.IsTransaction)
 	if err != nil {
 		return nil, err
 	}
 
-	// This handles any out of gas errors that may occur during the execution of a precompile tx or query.
-	// It avoids panics and returns the out of gas error so the EVM can continue gracefully.
-	defer cmn.HandleGasError(ctx, contract, initialGas, &err, stateDB, snapshot)()
-
+	var bz []byte
 	switch method.Name {
 	// Transactions
 	case DelegateMethod:
-		bz, err = p.DelegateEVM(ctx, evm.Origin, method, args)
+		bz, err = p.DelegateEVM(ctx, contract.Caller(), method, args)
 	case UndelegateMethod:
-		bz, err = p.UndelegateEVM(ctx, evm.Origin, method, args)
+		bz, err = p.UndelegateEVM(ctx, contract.Caller(), method, args)
 	case RedelegateMethod:
-		bz, err = p.BeginRedelegateEVM(ctx, evm.Origin, method, args)
+		bz, err = p.BeginRedelegateEVM(ctx, contract.Caller(), method, args)
 	case CancelUnbondingDelegationMethod:
-		bz, err = p.CancelUnbondingEVMDelegation(ctx, evm.Origin, method, args)
+		bz, err = p.CancelUnbondingEVMDelegation(ctx, contract.Caller(), method, args)
 	case CreateValidatorMethod:
-		bz, err = p.CreateEVMValidator(ctx, evm.Origin, method, args)
+		bz, err = p.CreateEVMValidator(ctx, contract.Caller(), method, args)
 	case DelegationMethod:
 		bz, err = p.Delegation(ctx, contract, method, args)
 	case UnbondingDelegationMethod:
@@ -126,18 +132,7 @@ func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz [
 	if err != nil {
 		return nil, err
 	}
-
-	cost := ctx.GasMeter().GasConsumed() - initialGas
-
-	if !contract.UseGas(cost) {
-		return nil, vm.ErrOutOfGas
-	}
-
-	if err := p.AddJournalEntries(stateDB, snapshot); err != nil {
-		return nil, err
-	}
-
-	return bz, nil
+	return bz, err
 }
 
 func (Precompile) IsTransaction(method *abi.Method) bool {
