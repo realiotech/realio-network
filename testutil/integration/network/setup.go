@@ -41,6 +41,8 @@ import (
 	// minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	srvflags "github.com/cosmos/evm/server/flags"
 )
 
 // genSetupFn is the type for the module genesis setup functions
@@ -56,6 +58,7 @@ type defaultGenesisParams struct {
 	gov         GovCustomGenesisState
 	mint        MintCustomGenesisState
 	feemarket   FeeMarketCustomGenesisState
+	evm         EvmCustomGenesisState
 }
 
 // genesisSetupFunctions contains the available genesis setup functions
@@ -170,6 +173,10 @@ func createTestingApp(chainID string, customBaseAppOptions ...func(*baseapp.Base
 	logger := log.NewNopLogger()
 	loadLatest := true
 	appOptions := simutils.NewAppOptionsWithFlagHome(app.DefaultNodeHome)
+	appOptions = simutils.AppOptionsMap{
+		srvflags.EVMChainID: constants.ExampleEIP155ChainID,
+		flags.FlagHome:     app.DefaultNodeHome,
+	}
 	baseAppOptions := append(customBaseAppOptions, baseapp.SetChainID(chainID)) //nolint:gocritic
 
 	return app.New(
@@ -181,7 +188,6 @@ func createTestingApp(chainID string, customBaseAppOptions ...func(*baseapp.Base
 		"",
 		5,
 		appOptions,
-		app.EvmAppOptions,
 		baseAppOptions...,
 	)
 }
@@ -461,7 +467,7 @@ type GovCustomGenesisState struct {
 func setDefaultGovGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState simapp.GenesisState, overwriteParams GovCustomGenesisState) simapp.GenesisState {
 	govGen := govtypesv1.DefaultGenesisState()
 	updatedParams := govGen.Params
-	minDepositAmt := math.NewInt(1e18).Quo(evmtypes.GetEVMCoinDecimals().ConversionFactor())
+	minDepositAmt := math.NewInt(100)
 	updatedParams.MinDeposit = sdktypes.NewCoins(sdktypes.NewCoin(overwriteParams.denom, minDepositAmt))
 	updatedParams.ExpeditedMinDeposit = sdktypes.NewCoins(sdktypes.NewCoin(overwriteParams.denom, minDepositAmt))
 	govGen.Params = updatedParams
@@ -479,6 +485,19 @@ func setDefaultFeeMarketGenesisState(cosmosEVMApp *app.RealioNetwork, genesisSta
 	fmGen := feemarkettypes.DefaultGenesisState()
 	fmGen.Params.BaseFee = overwriteParams.baseFee
 	genesisState[feemarkettypes.ModuleName] = cosmosEVMApp.AppCodec().MustMarshalJSON(fmGen)
+	return genesisState
+}
+
+// FeeMarketCustomGenesisState defines the fee market genesis state
+type EvmCustomGenesisState struct {
+	EvmDenom string
+}
+
+// setDefaultFeeMarketGenesisState sets the default fee market genesis state
+func setDefaultEvmGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState simapp.GenesisState, overwriteParams EvmCustomGenesisState) simapp.GenesisState {
+	fmGen := app.NewEVMGenesisState()
+	fmGen.Params.EvmDenom = overwriteParams.EvmDenom
+	genesisState[evmtypes.ModuleName] = cosmosEVMApp.AppCodec().MustMarshalJSON(fmGen)
 	return genesisState
 }
 
@@ -535,6 +554,7 @@ func newDefaultGenesisState(cosmosEVMApp *app.RealioNetwork, params defaultGenes
 	genesisState = setDefaultBankGenesisState(cosmosEVMApp, genesisState, params.bank)
 	genesisState = setDefaultGovGenesisState(cosmosEVMApp, genesisState, params.gov)
 	genesisState = setDefaultFeeMarketGenesisState(cosmosEVMApp, genesisState, params.feemarket)
+	genesisState = setDefaultEvmGenesisState(cosmosEVMApp, genesisState, params.evm)
 	genesisState = setDefaultSlashingGenesisState(cosmosEVMApp, genesisState, params.slashing)
 	genesisState = setDefaultMintGenesisState(cosmosEVMApp, genesisState, params.mint)
 	genesisState = setDefaultErc20GenesisState(cosmosEVMApp, genesisState)

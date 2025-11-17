@@ -65,7 +65,6 @@ type IntegrationNetwork struct {
 // It panics if an error occurs.
 func New(opts ...ConfigOption) *IntegrationNetwork {
 	cfg := DefaultConfig()
-	fmt.Println("Default Coins: ", cfg.chainCoins.baseCoin.Decimals)
 	// Modify the default config with the given options
 	for _, opt := range opts {
 		opt(&cfg)
@@ -171,6 +170,9 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 			slashing:    slashingParams,
 			gov:         govParams,
 			mint:        mintParams,
+			evm: EvmCustomGenesisState{
+				EvmDenom: n.cfg.chainCoins.BaseDenom(),
+			},
 		},
 	)
 
@@ -274,7 +276,7 @@ func (n *IntegrationNetwork) GetEIP155ChainID() *big.Int {
 
 // GetEVMChainConfig returns the network's EVM chain config
 func (n *IntegrationNetwork) GetEVMChainConfig() *gethparams.ChainConfig {
-	return evmtypes.GetEthChainConfig()
+	return n.GetEVMChainConfig()
 }
 
 // GetBaseDenom returns the network's base denom
