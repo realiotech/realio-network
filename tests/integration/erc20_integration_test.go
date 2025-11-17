@@ -4,13 +4,13 @@ import (
 	"math/big"
 
 	"cosmossdk.io/math"
-	"github.com/cosmos/evm/testutil/integration/evm/factory"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/ethereum/go-ethereum/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/contracts"
 	commonfactory "github.com/cosmos/evm/testutil/integration/base/factory"
+	testutiltypes "github.com/cosmos/evm/testutil/types"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	integrationutils "github.com/realiotech/realio-network/testutil/integration/utils"
 )
@@ -34,7 +34,7 @@ func (suite *EVMTestSuite) TestERC20MsgsTxBuilder() {
 	contractAddr, err := suite.factory.DeployContract(
 		senderPriv,
 		evmtypes.EvmTxArgs{}, // Default values
-		factory.ContractDeploymentData{
+		testutiltypes.ContractDeploymentData{
 			Contract:        compiledContract,
 			ConstructorArgs: constructorArgs,
 		},
@@ -47,7 +47,7 @@ func (suite *EVMTestSuite) TestERC20MsgsTxBuilder() {
 	mintTxArgs := evmtypes.EvmTxArgs{}
 	mintTxArgs.To = &contractAddr
 	amountToMint := big.NewInt(mintAmount)
-	mintArgs := factory.CallArgs{
+	mintArgs := testutiltypes.CallArgs{
 		ContractABI: compiledContract.ABI,
 		MethodName:  "mint",
 		Args:        []interface{}{suite.keyring.GetKey(0).Addr, amountToMint},
@@ -90,7 +90,7 @@ func (suite *EVMTestSuite) assertContractTotalSupply(contractAddr common.Address
 	totalSupplyTxArgs := evmtypes.EvmTxArgs{
 		To: &contractAddr,
 	}
-	totalSupplyArgs := factory.CallArgs{
+	totalSupplyArgs := testutiltypes.CallArgs{
 		ContractABI: compiledContract.ABI,
 		MethodName:  "totalSupply",
 		Args:        []interface{}{},
@@ -110,7 +110,7 @@ func (suite *EVMTestSuite) assertContractBalanceOf(contractAddr common.Address, 
 	balanceTxArgs := evmtypes.EvmTxArgs{
 		To: &contractAddr,
 	}
-	balanceArgs := factory.CallArgs{
+	balanceArgs := testutiltypes.CallArgs{
 		ContractABI: compiledContract.ABI,
 		MethodName:  "balanceOf",
 		Args:        []interface{}{addr},

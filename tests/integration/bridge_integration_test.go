@@ -15,6 +15,7 @@ import (
 	integrationutils "github.com/realiotech/realio-network/testutil/integration/utils"
 	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 	"github.com/stretchr/testify/suite"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // Define the suite, and absorb the built-in basic suite
@@ -31,6 +32,8 @@ type BridgeTestSuite struct {
 // Make sure that VariableThatShouldStartAtFive is set to five
 // before each test
 func (suite *BridgeTestSuite) SetupTest() {
+	configurator := evmtypes.NewEVMConfigurator()
+	configurator.ResetTestConfig()
 	keyring := testkeyring.New(4)
 	integrationNetwork := network.New(
 		network.WithPreFundedAccounts(keyring.GetAllAccAddrs()...),

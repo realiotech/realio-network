@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"fmt"
 	"math/big"
 	"testing"
 
@@ -16,8 +17,11 @@ import (
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/contracts"
+	testutiltypes "github.com/cosmos/evm/testutil/types"
 	integrationutils "github.com/realiotech/realio-network/testutil/integration/utils"
 	"github.com/stretchr/testify/suite"
+	testconstants "github.com/cosmos/evm/testutil/constants"
+
 )
 
 // Define the suite, and absorb the built-in basic suite
@@ -34,9 +38,16 @@ type EVMTestSuite struct {
 // Make sure that VariableThatShouldStartAtFive is set to five
 // before each test
 func (suite *EVMTestSuite) SetupTest() {
+	fmt.Println("SetupTest")
+	configurator := evmtypes.NewEVMConfigurator()
+	configurator.ResetTestConfig()
 	keyring := testkeyring.New(4)
 	integrationNetwork := network.New(
 		network.WithPreFundedAccounts(keyring.GetAllAccAddrs()...),
+		network.WithChainID(testconstants.ChainID{
+			ChainID: "realionetwork_3301-1",
+			EVMChainID: 3301,
+		}),
 	)
 	grpcHandler := grpc.NewIntegrationHandler(integrationNetwork)
 	factory := factory.New(integrationNetwork, grpcHandler)
@@ -176,7 +187,7 @@ func (suite *EVMTestSuite) TestContractDeploymentPermissionless() {
 			contractAddr, err := suite.factory.DeployContract(
 				senderPriv,
 				txArgs,
-				factory.ContractDeploymentData{
+				testutiltypes.ContractDeploymentData{
 					Contract:        compiledContract,
 					ConstructorArgs: constructorArgs,
 				},
@@ -210,7 +221,7 @@ func (suite *EVMTestSuite) TestContractCall() {
 		contractAddr, err := suite.factory.DeployContract(
 			senderPriv,
 			evmtypes.EvmTxArgs{}, // Default values
-			factory.ContractDeploymentData{
+			testutiltypes.ContractDeploymentData{
 				Contract:        compiledContract,
 				ConstructorArgs: constructorArgs,
 			},
@@ -264,7 +275,7 @@ func (suite *EVMTestSuite) TestContractCall() {
 			mintTxArgs.To = &contractAddr
 
 			amountToMint := big.NewInt(1e18)
-			mintArgs := factory.CallArgs{
+			mintArgs := testutiltypes.CallArgs{
 				ContractABI: compiledContract.ABI,
 				MethodName:  "mint",
 				Args:        []interface{}{recipientKey.Addr, amountToMint},
@@ -282,7 +293,7 @@ func (suite *EVMTestSuite) TestContractCall() {
 			totalSupplyTxArgs := evmtypes.EvmTxArgs{
 				To: &contractAddr,
 			}
-			totalSupplyArgs := factory.CallArgs{
+			totalSupplyArgs := testutiltypes.CallArgs{
 				ContractABI: compiledContract.ABI,
 				MethodName:  "totalSupply",
 				Args:        []interface{}{},
@@ -505,7 +516,7 @@ func (suite *EVMTestSuite) TestContractDeploymentAndCallWithPermissions() {
 			contractAddr, err := suite.factory.DeployContract(
 				createSigner,
 				evmtypes.EvmTxArgs{}, // Default values
-				factory.ContractDeploymentData{
+				testutiltypes.ContractDeploymentData{
 					Contract:        compiledContract,
 					ConstructorArgs: constructorArgs,
 				},
@@ -525,7 +536,7 @@ func (suite *EVMTestSuite) TestContractDeploymentAndCallWithPermissions() {
 			totalSupplyTxArgs := evmtypes.EvmTxArgs{
 				To: &contractAddr,
 			}
-			totalSupplyArgs := factory.CallArgs{
+			totalSupplyArgs := testutiltypes.CallArgs{
 				ContractABI: compiledContract.ABI,
 				MethodName:  "totalSupply",
 				Args:        []interface{}{},

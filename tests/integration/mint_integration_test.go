@@ -21,6 +21,7 @@ import (
 	// authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/realiotech/realio-network/x/mint/types"
 	"github.com/stretchr/testify/suite"
+	testconstants "github.com/cosmos/evm/testutil/constants"
 )
 
 // Define the suite, and absorb the built-in basic suite
@@ -37,10 +38,16 @@ type MintTestSuite struct {
 // Make sure that VariableThatShouldStartAtFive is set to five
 // before each test
 func (suite *MintTestSuite) SetupTest() {
+	configurator := evmtypes.NewEVMConfigurator()
+	configurator.ResetTestConfig()
 	keyring := testkeyring.New(4)
 	integrationNetwork := network.New(
 		network.WithPreFundedAccounts(keyring.GetAllAccAddrs()...),
 		network.WithOtherDenoms([]string{testTokenDenom}),
+		network.WithChainID(testconstants.ChainID{
+			ChainID: "realionetwork_3301-1",
+			EVMChainID: 3301,
+		}),
 	)
 	grpcHandler := grpc.NewIntegrationHandler(integrationNetwork)
 	factory := factory.New(integrationNetwork, grpcHandler)
