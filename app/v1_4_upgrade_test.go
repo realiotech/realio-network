@@ -259,7 +259,6 @@ func SetupWithGenFiles(t *testing.T) *RealioNetwork {
 		DefaultNodeHome,
 		1,
 		appOpts,
-		EvmAppOptions,
 		opt,
 	)
 

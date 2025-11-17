@@ -86,7 +86,6 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 		tempDir,
 		5,
 		initAppOptions,
-		app.NoOpEVMOptions,
 	)
 	encodingConfig := params.EncodingConfig{
 		InterfaceRegistry: tempApp.InterfaceRegistry(),
@@ -341,7 +340,6 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		// this line is used by starport scaffolding # stargate/root/appArgument
 		appOpts,
-		app.EvmAppOptions,
 		baseapp.SetChainID(chainID),
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
@@ -380,7 +378,6 @@ func (a appCreator) appExport(
 			uint(1),
 			// this line is used by starport scaffolding # stargate/root/exportArgument
 			appOpts,
-			app.NoOpEVMOptions,
 		)
 
 		if err := anApp.LoadHeight(height); err != nil {
@@ -397,7 +394,6 @@ func (a appCreator) appExport(
 			uint(1),
 			// this line is used by starport scaffolding # stargate/root/noHeightExportArgument
 			appOpts,
-			app.NoOpEVMOptions,
 		)
 	}
 

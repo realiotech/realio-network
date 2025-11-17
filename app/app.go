@@ -338,7 +338,6 @@ func New(
 	invCheckPeriod uint,
 	// encodingConfig simappparams.EncodingConfig,
 	appOpts servertypes.AppOptions,
-	evmAppOptions EVMOptionsFn,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *RealioNetwork {
 	evmChainID := cast.ToUint64(appOpts.Get(srvflags.EVMChainID))
@@ -352,14 +351,6 @@ func New(
 	bApp.SetVersion(version.Version)
 	bApp.SetTxEncoder(encodingConfig.TxConfig.TxEncoder())
 	bApp.SetInterfaceRegistry(interfaceRegistry)
-	if err := evmAppOptions(bApp.ChainID()); err != nil {
-		panic(err)
-	}
-
-	// initialize the Cosmos EVM application configuration
-	if err := evmAppOptions(bApp.ChainID()); err != nil {
-		panic(err)
-	}
 
 	keys := storetypes.NewKVStoreKeys(
 		// sdk keys
@@ -700,6 +691,8 @@ func New(
 	// NOTE: upgrade module is required to be prioritized
 	app.mm.SetOrderPreBlockers(
 		upgradetypes.ModuleName,
+		authtypes.ModuleName,
+		evmtypes.ModuleName,
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that

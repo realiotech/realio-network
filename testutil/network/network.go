@@ -134,7 +134,6 @@ func NewAppConstructor(encodingCfg params.EncodingConfig) AppConstructor {
 		return app.New(
 			val.Ctx.Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.Ctx.Config.RootDir, 0,
 			simtestutil.EmptyAppOptions{},
-			app.NoOpEVMOptions,
 			baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.AppConfig.Pruning)),
 			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
 		)
