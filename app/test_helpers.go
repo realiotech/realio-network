@@ -93,6 +93,10 @@ func Setup(
 	feemarketGenesis *feemarkettypes.GenesisState,
 	numberVals int,
 ) *RealioNetwork {
+	// Reset EVMConfig each test
+	configurator := evmtypes.NewEVMConfigurator()
+	configurator.ResetTestConfig()
+	
 	encCdc := MakeEncodingConfig(MainnetChainID)
 
 	valSet := GenValSet(numberVals)
@@ -107,7 +111,7 @@ func Setup(
 
 	db := dbm.NewMemDB()
 	opt := baseapp.SetChainID(types.MainnetChainID + "-1")
-	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, simtestutil.EmptyAppOptions{}, EvmAppOptions, opt)
+	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, simtestutil.EmptyAppOptions{}, opt)
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
 		genesisState := NewDefaultGenesisState(encCdc.Codec)
@@ -251,6 +255,35 @@ func GenesisStateWithValSet(app *RealioNetwork, genesisState simapp.GenesisState
 
 	// update total supply
 	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{}, []banktypes.SendEnabled{})
+	bankGenesis.DenomMetadata = []banktypes.Metadata{
+		{
+			Description: MultiStakingCoinA.Denom,
+			Base:        MultiStakingCoinA.Denom,
+			DenomUnits: []*banktypes.DenomUnit{
+				{
+					Denom:    MultiStakingCoinA.Denom,
+					Exponent: 18,
+				},
+			},
+			Display: MultiStakingCoinA.Denom,
+			Name:    MultiStakingCoinA.Denom,
+			Symbol:  MultiStakingCoinA.Denom,
+		},
+		{
+			Description: MultiStakingCoinB.Denom,
+			Base:        MultiStakingCoinB.Denom,
+			DenomUnits: []*banktypes.DenomUnit{
+				{
+					Denom:    MultiStakingCoinB.Denom,
+					Exponent: 18,
+				},
+			},
+			Display: MultiStakingCoinB.Denom,
+			Name:    MultiStakingCoinB.Denom,
+			Symbol:  MultiStakingCoinB.Denom,
+		},
+	}
+
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
 
 	bridgeGenesis := bridgetypes.DefaultGenesis()
@@ -274,7 +307,7 @@ func NewDefaultGenesisState(cdc codec.JSONCodec) simapp.GenesisState {
 func SetupTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	db := dbm.NewMemDB()
 	cfg := MakeEncodingConfig(MainnetChainID)
-	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, simtestutil.EmptyAppOptions{}, NoOpEVMOptions)
+	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, simtestutil.EmptyAppOptions{})
 	return app, NewDefaultGenesisState(cfg.Codec)
 }
 
