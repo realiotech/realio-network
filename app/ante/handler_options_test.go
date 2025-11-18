@@ -6,9 +6,11 @@ import (
 	"github.com/cosmos/evm/encoding"
 	"github.com/realiotech/realio-network/app"
 	"github.com/realiotech/realio-network/app/ante"
+	"github.com/cosmos/evm/rpc/stream"
 )
 
 func (suite *AnteTestSuite) TestValidateHandlerOptions() {
+	testStream := stream.RPCStream{}
 	cases := []struct {
 		name    string
 		options ante.HandlerOptions
@@ -139,6 +141,7 @@ func (suite *AnteTestSuite) TestValidateHandlerOptions() {
 				SigGasConsumer:         evmosante.SigVerificationGasConsumer,
 				MaxTxGasWanted:         40000000,
 				DynamicFeeChecker:      true,
+				PendingTxListener: testStream.ListenPendingTx,
 			},
 			true,
 		},
