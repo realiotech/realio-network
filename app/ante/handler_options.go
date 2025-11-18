@@ -71,9 +71,15 @@ func (options HandlerOptions) Validate() error {
 func newEthAnteHandler(ctx sdk.Context, options HandlerOptions) sdk.AnteHandler {
 	evmParams := options.EvmKeeper.GetParams(ctx)
 	feemarketParams := options.FeeMarketKeeper.GetParams(ctx)
-	return sdk.ChainAnteDecorators(
+	decorators := []sdk.AnteDecorator{
 		evmosanteevm.NewEVMMonoDecorator(options.AccountKeeper, options.FeeMarketKeeper, options.EvmKeeper, options.MaxTxGasWanted, &evmParams,&feemarketParams,), // outermost AnteDecorator. SetUpContext must be called first
-	)
+	}
+	
+	if options.PendingTxListener != nil {
+		decorators = append(decorators, NewTxListenerDecorator(options.PendingTxListener))
+	}
+
+	return sdk.ChainAnteDecorators(decorators...)
 }
 
 // newCosmosAnteHandler creates the default ante handler for Cosmos transactions
