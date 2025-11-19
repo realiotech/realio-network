@@ -8,10 +8,10 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/realiotech/realio-network/app/upgrades/commission"
 
-	// v1 "github.com/realiotech/realio-network/app/upgrades/v1"
 	v2 "github.com/realiotech/realio-network/app/upgrades/v1.2"
 	v3 "github.com/realiotech/realio-network/app/upgrades/v1.3"
 	v4 "github.com/realiotech/realio-network/app/upgrades/v1.4"
+	v5 "github.com/realiotech/realio-network/app/upgrades/v1.5"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -77,6 +77,16 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 			*app.EvmKeeper,
 			app.Erc20Keeper,
 			app.AccountKeeper,
+		),
+	)
+
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v5.UpgradeName,
+		v5.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			*app.EvmKeeper,
+			app.Erc20Keeper,
 		),
 	)
 
