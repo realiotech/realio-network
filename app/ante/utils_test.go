@@ -39,11 +39,11 @@ import (
 
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 
+	enccodec "github.com/cosmos/evm/encoding/codec"
 	"github.com/realiotech/realio-network/app"
 	realionetworktypes "github.com/realiotech/realio-network/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	enccodec "github.com/cosmos/evm/encoding/codec"
 )
 
 var (

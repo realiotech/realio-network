@@ -6,9 +6,9 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
 	precompilemultistaking "github.com/realiotech/realio-network/precompile/multistaking"
 	realiotypes "github.com/realiotech/realio-network/types"
 )
@@ -53,7 +53,7 @@ func CreateUpgradeHandler(
 
 		// Update erc20 params
 		erc20Params := erc20Keeper.GetParams(sdkCtx)
-		// Disable permissionless registration, 
+		// Disable permissionless registration,
 		// only register new erc20 through gov
 		erc20Params.PermissionlessRegistration = false
 		err = erc20Keeper.SetParams(sdkCtx, erc20Params)

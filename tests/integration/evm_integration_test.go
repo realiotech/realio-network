@@ -17,11 +17,10 @@ import (
 	abcitypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/evm/contracts"
+	testconstants "github.com/cosmos/evm/testutil/constants"
 	testutiltypes "github.com/cosmos/evm/testutil/types"
 	integrationutils "github.com/realiotech/realio-network/testutil/integration/utils"
 	"github.com/stretchr/testify/suite"
-	testconstants "github.com/cosmos/evm/testutil/constants"
-
 )
 
 // Define the suite, and absorb the built-in basic suite
@@ -45,7 +44,7 @@ func (suite *EVMTestSuite) SetupTest() {
 	integrationNetwork := network.New(
 		network.WithPreFundedAccounts(keyring.GetAllAccAddrs()...),
 		network.WithChainID(testconstants.ChainID{
-			ChainID: "realionetwork_3301-1",
+			ChainID:    "realionetwork_3301-1",
 			EVMChainID: 3301,
 		}),
 	)

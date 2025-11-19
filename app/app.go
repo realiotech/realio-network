@@ -11,11 +11,11 @@ import (
 	"path/filepath"
 	"sort"
 
+	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/realiotech/realio-network/app/ante"
 	"github.com/realiotech/realio-network/client/docs"
 	"github.com/realiotech/realio-network/crypto/ethsecp256k1"
 	"github.com/realiotech/realio-network/crypto/ossecp256k1"
-	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 
 	reflectionv1 "cosmossdk.io/api/cosmos/reflection/v1"
 	errorsmod "cosmossdk.io/errors"
@@ -40,7 +40,6 @@ import (
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 
-	evmosante "github.com/cosmos/evm/ante"
 	evmsecp256k1 "github.com/cosmos/evm/crypto/ethsecp256k1"
 	srvflags "github.com/cosmos/evm/server/flags"
 	cosmosevmutils "github.com/cosmos/evm/utils"
@@ -108,7 +107,6 @@ import (
 	consensusparamkeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	consensusparamtypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
-	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
@@ -147,17 +145,17 @@ import (
 	tmjson "github.com/cometbft/cometbft/libs/json"
 	tmos "github.com/cometbft/cometbft/libs/os"
 	antetypes "github.com/cosmos/evm/ante/types"
-	"github.com/spf13/cast"
 	precisebankkeeper "github.com/cosmos/evm/x/precisebank/keeper"
+	"github.com/spf13/cast"
 
 	"github.com/realiotech/realio-network/x/mint"
 	mintkeeper "github.com/realiotech/realio-network/x/mint/keeper"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
 
+	evmmempool "github.com/cosmos/evm/mempool"
 	assetmodule "github.com/realiotech/realio-network/x/asset"
 	assetmodulekeeper "github.com/realiotech/realio-network/x/asset/keeper"
 	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
-	evmmempool "github.com/cosmos/evm/mempool"
 
 	evmante "github.com/cosmos/evm/ante"
 	bridgemodule "github.com/realiotech/realio-network/x/bridge"
@@ -293,7 +291,6 @@ type RealioNetwork struct {
 	MintKeeper            mintkeeper.Keeper
 	DistrKeeper           distrkeeper.Keeper
 	GovKeeper             govkeeper.Keeper
-	CrisisKeeper          *crisiskeeper.Keeper
 	UpgradeKeeper         *upgradekeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	AuthzKeeper           authzkeeper.Keeper
@@ -303,9 +300,9 @@ type RealioNetwork struct {
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
 
 	// Ethermint keepers
-	EvmKeeper       *evmkeeper.Keeper
-	FeeMarketKeeper feemarketkeeper.Keeper
-	Erc20Keeper     erc20keeper.Keeper
+	EvmKeeper         *evmkeeper.Keeper
+	FeeMarketKeeper   feemarketkeeper.Keeper
+	Erc20Keeper       erc20keeper.Keeper
 	PreciseBankKeeper precisebankkeeper.Keeper
 	EVMMempool        *evmmempool.ExperimentalEVMMempool
 
@@ -341,6 +338,7 @@ func New(
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *RealioNetwork {
 	evmChainID := cast.ToUint64(appOpts.Get(srvflags.EVMChainID))
+	fmt.Println("evmChainID", evmChainID)
 	encodingConfig := MakeEncodingConfig(evmChainID)
 	appCodec := encodingConfig.Codec
 	legacyAmino := encodingConfig.Amino
@@ -450,15 +448,6 @@ func New(
 		legacyAmino,
 		runtime.NewKVStoreService(keys[slashingtypes.StoreKey]),
 		app.StakingKeeper, authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-	app.CrisisKeeper = crisiskeeper.NewKeeper(
-		appCodec,
-		runtime.NewKVStoreService(keys[crisistypes.StoreKey]),
-		invCheckPeriod,
-		app.BankKeeper,
-		authtypes.FeeCollectorName,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-		app.AccountKeeper.AddressCodec(),
 	)
 	app.FeeGrantKeeper = feegrantkeeper.NewKeeper(
 		appCodec,
@@ -632,10 +621,8 @@ func New(
 			app.Erc20Keeper,
 			app.TransferKeeper,
 			app.IBCKeeper.ChannelKeeper,
-			app.EvmKeeper,
 			app.GovKeeper,
 			app.SlashingKeeper,
-			app.EvidenceKeeper,
 			app.MultiStakingKeeper,
 			appCodec,
 			app.AccountKeeper.AddressCodec(),
@@ -647,8 +634,6 @@ func New(
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
 	// we prefer to be more strict in what arguments the modules expect.
-	skipGenesisInvariants := cast.ToBool(appOpts.Get(crisis.FlagSkipGenesisInvariants))
-
 	// NOTE: Any module instantiated in the module manager that is later modified
 	// must be passed by reference here.
 
@@ -661,7 +646,6 @@ func New(
 		auth.NewAppModule(appCodec, app.AccountKeeper, authsims.RandomGenesisAccounts, nil),
 		bank.NewAppModule(appCodec, app.BankKeeper, app.AccountKeeper, nil),
 		capability.NewAppModule(appCodec, *app.CapabilityKeeper, false),
-		crisis.NewAppModule(app.CrisisKeeper, skipGenesisInvariants, nil),
 		gov.NewAppModule(appCodec, &app.GovKeeper, app.AccountKeeper, app.BankKeeper, nil),
 		mint.NewAppModule(appCodec, app.MintKeeper, app.AccountKeeper, nil),
 		slashing.NewAppModule(appCodec, app.SlashingKeeper, app.AccountKeeper, app.BankKeeper, app.StakingKeeper, nil, app.interfaceRegistry),
@@ -826,7 +810,6 @@ func New(
 		consensusparamtypes.ModuleName,
 	)
 
-	app.mm.RegisterInvariants(app.CrisisKeeper)
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
 	err := app.mm.RegisterServices(app.configurator)
 	if err != nil {
@@ -986,7 +969,10 @@ func (app *RealioNetwork) InitChainer(ctx sdk.Context, req *abci.RequestInitChai
 	}
 
 	for _, pair := range erc20GenState.TokenPairs {
-		app.Erc20Keeper.SetToken(ctx, pair)
+		err = app.Erc20Keeper.SetToken(ctx, pair)
+		if err != nil {
+			panic(err)
+		}
 	}
 
 	for _, allowance := range erc20GenState.Allowances {
@@ -1208,15 +1194,15 @@ func RealioSigVerificationGasConsumer(
 	switch pubkey := pubkey.(type) {
 	case *evmsecp256k1.PubKey:
 		// Ethereum keys
-		meter.ConsumeGas(evmosante.Secp256k1VerifyCost, "ante verify: eth_secp256k1")
+		meter.ConsumeGas(evmante.Secp256k1VerifyCost, "ante verify: eth_secp256k1")
 		return nil
 	case *ossecp256k1.PubKey:
 		// Ethereum keys
-		meter.ConsumeGas(evmosante.Secp256k1VerifyCost, "ante verify: eth_secp256k1")
+		meter.ConsumeGas(evmante.Secp256k1VerifyCost, "ante verify: eth_secp256k1")
 		return nil
 	case *ethsecp256k1.PubKey:
 		// Ethereum keys
-		meter.ConsumeGas(evmosante.Secp256k1VerifyCost, "ante verify: eth_secp256k1")
+		meter.ConsumeGas(evmante.Secp256k1VerifyCost, "ante verify: eth_secp256k1")
 		return nil
 	case *ed25519.PubKey:
 		// Validator keys
@@ -1228,7 +1214,7 @@ func RealioSigVerificationGasConsumer(
 		if !ok {
 			return fmt.Errorf("expected %T, got, %T", &signing.MultiSignatureData{}, sig.Data)
 		}
-		return evmosante.ConsumeMultisignatureVerificationGas(meter, multisignature, pubkey, params, sig.Sequence)
+		return evmante.ConsumeMultisignatureVerificationGas(meter, multisignature, pubkey, params, sig.Sequence)
 	default:
 		return authante.DefaultSigVerificationGasConsumer(meter, sig, params)
 	}

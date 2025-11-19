@@ -4,9 +4,9 @@ import (
 	evmosante "github.com/cosmos/evm/ante"
 	antetypes "github.com/cosmos/evm/ante/types"
 	"github.com/cosmos/evm/encoding"
+	"github.com/cosmos/evm/rpc/stream"
 	"github.com/realiotech/realio-network/app"
 	"github.com/realiotech/realio-network/app/ante"
-	"github.com/cosmos/evm/rpc/stream"
 )
 
 func (suite *AnteTestSuite) TestValidateHandlerOptions() {
@@ -141,7 +141,7 @@ func (suite *AnteTestSuite) TestValidateHandlerOptions() {
 				SigGasConsumer:         evmosante.SigVerificationGasConsumer,
 				MaxTxGasWanted:         40000000,
 				DynamicFeeChecker:      true,
-				PendingTxListener: testStream.ListenPendingTx,
+				PendingTxListener:      testStream.ListenPendingTx,
 			},
 			true,
 		},

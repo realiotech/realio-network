@@ -6,9 +6,9 @@ package legacytx
 import (
 	"math/big"
 
+	"github.com/cosmos/evm/utils"
 	"github.com/ethereum/go-ethereum/common"
 	ethtypes "github.com/ethereum/go-ethereum/core/types"
-	"github.com/cosmos/evm/utils"
 	ethutils "github.com/evmos/os/utils/eth"
 )
 

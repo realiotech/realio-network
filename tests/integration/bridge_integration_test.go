@@ -12,10 +12,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	integrationutils "github.com/realiotech/realio-network/testutil/integration/utils"
 	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 	"github.com/stretchr/testify/suite"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 )
 
 // Define the suite, and absorb the built-in basic suite

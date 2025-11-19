@@ -39,9 +39,9 @@ import (
 	govtypesv1 "github.com/cosmos/cosmos-sdk/x/gov/types/v1"
 
 	// minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	srvflags "github.com/cosmos/evm/server/flags"
 )
 
@@ -172,10 +172,9 @@ func createTestingApp(chainID string, customBaseAppOptions ...func(*baseapp.Base
 	db := dbm.NewMemDB()
 	logger := log.NewNopLogger()
 	loadLatest := true
-	appOptions := simutils.NewAppOptionsWithFlagHome(app.DefaultNodeHome)
-	appOptions = simutils.AppOptionsMap{
+	appOptions := simutils.AppOptionsMap{
 		srvflags.EVMChainID: constants.ExampleEIP155ChainID,
-		flags.FlagHome:     app.DefaultNodeHome,
+		flags.FlagHome:      app.DefaultNodeHome,
 	}
 	baseAppOptions := append(customBaseAppOptions, baseapp.SetChainID(chainID)) //nolint:gocritic
 

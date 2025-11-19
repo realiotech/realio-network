@@ -47,10 +47,10 @@ var _ Network = (*IntegrationNetwork)(nil)
 
 // IntegrationNetwork is the implementation of the Network interface for integration tests.
 type IntegrationNetwork struct {
-	cfg        Config
-	ctx        sdktypes.Context
-	validators []stakingtypes.Validator
-	app        *app.RealioNetwork
+	cfg         Config
+	ctx         sdktypes.Context
+	validators  []stakingtypes.Validator
+	app         *app.RealioNetwork
 	baseDecimal evmtypes.Decimals
 
 	// This is only needed for IBC chain testing setup
@@ -276,7 +276,7 @@ func (n *IntegrationNetwork) GetEIP155ChainID() *big.Int {
 
 // GetEVMChainConfig returns the network's EVM chain config
 func (n *IntegrationNetwork) GetEVMChainConfig() *gethparams.ChainConfig {
-	return n.GetEVMChainConfig()
+	return evmtypes.GetEthChainConfig()
 }
 
 // GetBaseDenom returns the network's base denom

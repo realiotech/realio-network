@@ -176,7 +176,7 @@ func (p Precompile) BeginRedelegateEVM(
 			return nil, fmt.Errorf("multistaking redelegation failed: %v", err)
 		}
 		completionTime = resp.CompletionTime.Unix()
-	}	
+	}
 
 	// Return completion time
 	return method.Outputs.Pack(completionTime)
@@ -213,7 +213,6 @@ func (p Precompile) CancelUnbondingEVMDelegation(
 			ContractAddress:  erc20Token.Hex(),
 		}
 
-		
 		_, err = msgServer.CancelUnbondingEVMDelegation(ctx, msg)
 		if err != nil {
 			return nil, fmt.Errorf("multistaking cancel unbonding delegation failed: %v", err)
@@ -227,9 +226,10 @@ func (p Precompile) CancelUnbondingEVMDelegation(
 		}
 		_, err = msgServer.CancelUnbondingDelegation(ctx, msg)
 		if err != nil {
-			return nil, fmt.Errorf("multistaking cancel unbonding delegation failed: %v", err)}
+			return nil, fmt.Errorf("multistaking cancel unbonding delegation failed: %v", err)
+		}
 
-	}	
+	}
 
 	// Return success
 	return method.Outputs.Pack(true)

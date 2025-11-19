@@ -6,7 +6,7 @@ import (
 
 const (
 	// MainnetChainID defines the RealioNetwork EIP155 chain ID for mainnet
-	MainnetChainID = "realionetwork_3301"
+	MainnetChainID    = "realionetwork_3301"
 	MainnetEVMChainID = 3301
 	// TestnetChainID defines the RealioNetwork EIP155 chain ID for testnet
 	TestnetChainID = "realionetwork_3300"

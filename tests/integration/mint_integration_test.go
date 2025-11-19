@@ -19,9 +19,9 @@ import (
 	"github.com/realiotech/realio-network/testutil/integration/network"
 
 	// authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	testconstants "github.com/cosmos/evm/testutil/constants"
 	"github.com/realiotech/realio-network/x/mint/types"
 	"github.com/stretchr/testify/suite"
-	testconstants "github.com/cosmos/evm/testutil/constants"
 )
 
 // Define the suite, and absorb the built-in basic suite
@@ -45,7 +45,7 @@ func (suite *MintTestSuite) SetupTest() {
 		network.WithPreFundedAccounts(keyring.GetAllAccAddrs()...),
 		network.WithOtherDenoms([]string{testTokenDenom}),
 		network.WithChainID(testconstants.ChainID{
-			ChainID: "realionetwork_3301-1",
+			ChainID:    "realionetwork_3301-1",
 			EVMChainID: 3301,
 		}),
 	)

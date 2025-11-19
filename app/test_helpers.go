@@ -96,7 +96,7 @@ func Setup(
 	// Reset EVMConfig each test
 	configurator := evmtypes.NewEVMConfigurator()
 	configurator.ResetTestConfig()
-	
+
 	encCdc := MakeEncodingConfig(MainnetChainID)
 
 	valSet := GenValSet(numberVals)
