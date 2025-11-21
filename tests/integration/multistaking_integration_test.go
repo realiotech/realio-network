@@ -2,7 +2,6 @@ package integration
 
 import (
 	"encoding/base64"
-	"fmt"
 	"math/big"
 
 	"cosmossdk.io/math"
@@ -557,7 +556,6 @@ func (suite *EVMTestSuite) createEVMValidatorByPrecompile(contractAddr common.Ad
 	suite.Require().True(res.IsOK(), "create ERC20 validator should have succeeded", res.GetLog())
 
 	var val precompileMultiStaking.ValidatorOutput
-	fmt.Println("Validator res", balanceRes.Ret, balanceRes)
 	err = abi.UnpackIntoInterface(&val, "validator", balanceRes.Ret)
 
 	suite.Require().NoError(err)

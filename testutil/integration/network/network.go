@@ -100,7 +100,6 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 	// The bonded amount should be updated to reflect the actual base denom
 	baseDecimals := n.cfg.chainCoins.BaseDecimals()
 	n.baseDecimal = baseDecimals
-	fmt.Println("Base decimals: ", baseDecimals)
 	bondedAmount := GetInitialBondedAmount(baseDecimals)
 
 	// Create validator set with the amount of validators specified in the config
