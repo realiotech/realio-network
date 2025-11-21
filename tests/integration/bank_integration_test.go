@@ -138,6 +138,7 @@ func (suite *EVMTestSuite) GetBalancesByBankPrecompile(senderPriv cryptotypes.Pr
 
 	var bals []precompileBank.Balance
 	err = abi.UnpackIntoInterface(&bals, "balances", balRes.Ret)
+	suite.Require().NoError(err)
 
 	coins := sdk.NewCoins()
 	for _, bal := range bals {
