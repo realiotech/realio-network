@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"fmt"
 	"math/big"
 	"testing"
 
@@ -37,7 +36,6 @@ type EVMTestSuite struct {
 // Make sure that VariableThatShouldStartAtFive is set to five
 // before each test
 func (suite *EVMTestSuite) SetupTest() {
-	fmt.Println("SetupTest")
 	configurator := evmtypes.NewEVMConfigurator()
 	configurator.ResetTestConfig()
 	keyring := testkeyring.New(4)
