@@ -3,6 +3,7 @@ package bank
 import (
 	"fmt"
 	"math/big"
+	"reflect"
 
 	"github.com/ethereum/go-ethereum/common"
 
@@ -19,7 +20,7 @@ type Balance struct {
 
 type Output struct {
 	Addr   common.Address `abi:"addr"`
-	Amount string     `abi:"amount"`
+	Amount string         `abi:"amount"`
 }
 
 // ParseBalancesArgs parses the call arguments for the bank Balances query.
@@ -87,9 +88,61 @@ func ParseMultiSendArgs(args []interface{}) (sdk.Coins, []Output, error) {
 		return sdk.Coins{}, nil, err
 	}
 
-	outputs, ok := args[1].([]Output)
-	if !ok {
-		return sdk.Coins{}, nil, fmt.Errorf(cmn.ErrInvalidType, "output", []Output{}, args[1])
+	// Handle the outputs - they may come as []Output or as a slice of structs with json tags
+	var outputs []Output
+
+	// Try direct type assertion first
+	if outputsTyped, ok := args[1].([]Output); ok {
+		outputs = outputsTyped
+	} else {
+		// Handle case where outputs come as a slice (could be []interface{} or other slice type)
+		// Use reflection to handle dynamically unmarshaled structs
+		val := reflect.ValueOf(args[1])
+		if val.Kind() != reflect.Slice {
+			return sdk.Coins{}, nil, fmt.Errorf(cmn.ErrInvalidType, "output", []Output{}, args[1])
+		}
+
+		outputs = make([]Output, val.Len())
+		for i := 0; i < val.Len(); i++ {
+			item := val.Index(i).Interface()
+
+			// Try direct type assertion first
+			if output, ok := item.(Output); ok {
+				outputs[i] = output
+				continue
+			}
+
+			// If it's a struct with different tags, extract fields using reflection
+			itemVal := reflect.ValueOf(item)
+			if itemVal.Kind() != reflect.Struct {
+				return sdk.Coins{}, nil, fmt.Errorf(cmn.ErrInvalidType, "output item", Output{}, item)
+			}
+
+			// Extract addr field
+			addrField := itemVal.FieldByName("Addr")
+			if !addrField.IsValid() {
+				return sdk.Coins{}, nil, fmt.Errorf("output struct missing Addr field")
+			}
+			addr, ok := addrField.Interface().(common.Address)
+			if !ok {
+				return sdk.Coins{}, nil, fmt.Errorf("output Addr field is not common.Address")
+			}
+
+			// Extract amount field
+			amountField := itemVal.FieldByName("Amount")
+			if !amountField.IsValid() {
+				return sdk.Coins{}, nil, fmt.Errorf("output struct missing Amount field")
+			}
+			amount, ok := amountField.Interface().(string)
+			if !ok {
+				return sdk.Coins{}, nil, fmt.Errorf("output Amount field is not string")
+			}
+
+			outputs[i] = Output{
+				Addr:   addr,
+				Amount: amount,
+			}
+		}
 	}
 
 	return coins, outputs, nil
