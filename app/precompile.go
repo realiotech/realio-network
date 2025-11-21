@@ -6,7 +6,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/vm"
 
-	cmn "github.com/cosmos/evm/precompiles/common"
 	erc20Keeper "github.com/cosmos/evm/x/erc20/keeper"
 	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
 	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
@@ -14,6 +13,7 @@ import (
 	"cosmossdk.io/core/address"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	distributionkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	govkeeper "github.com/cosmos/cosmos-sdk/x/gov/keeper"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
@@ -21,6 +21,7 @@ import (
 
 	precompiletypes "github.com/cosmos/evm/precompiles/types"
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
+	precompileBank "github.com/realiotech/realio-network/precompile/bank"
 	precompileMultiStaking "github.com/realiotech/realio-network/precompile/multistaking"
 )
 
@@ -31,7 +32,7 @@ func NewAvailableStaticPrecompiles(
 	cdc codec.Codec,
 	stakingKeeper stakingkeeper.Keeper,
 	distributionKeeper distributionkeeper.Keeper,
-	bankKeeper cmn.BankKeeper,
+	bankKeeper bankkeeper.Keeper,
 	erc20Keeper erc20Keeper.Keeper,
 	transferKeeper transferkeeper.Keeper,
 	channelKeeper *channelkeeper.Keeper,
@@ -53,6 +54,10 @@ func NewAvailableStaticPrecompiles(
 		slashingKeeper,
 		appCodec,
 	)
+
+	// Override bank precompile with our custom one
+	bankPrecompile := precompileBank.NewPrecompile(bankKeeper, &erc20Keeper)
+	precompiles[bankPrecompile.Address()] = bankPrecompile
 
 	mulStakingPrecompile, err := precompileMultiStaking.NewPrecompile(cdc, stakingKeeper, multiStakingKeeper, erc20Keeper, addrCodec, valAddrCodec)
 	if err != nil {

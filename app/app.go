@@ -338,7 +338,6 @@ func New(
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *RealioNetwork {
 	evmChainID := cast.ToUint64(appOpts.Get(srvflags.EVMChainID))
-	fmt.Println("evmChainID", evmChainID)
 	encodingConfig := MakeEncodingConfig(evmChainID)
 	appCodec := encodingConfig.Codec
 	legacyAmino := encodingConfig.Amino
