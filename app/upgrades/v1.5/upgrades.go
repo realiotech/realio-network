@@ -1,19 +1,23 @@
-package v4
+package v5
 
 import (
 	"context"
 
+	storetypes "cosmossdk.io/store/types"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	realiotypes "github.com/realiotech/realio-network/types"
+	"github.com/realiotech/realio-network/app/upgrades/v1.5/legacy"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v1.3.0
 func CreateUpgradeHandler(
+	storeKey *storetypes.KVStoreKey,
+	codec codec.BinaryCodec,
 	mm *module.Manager,
 	cfg module.Configurator,
 	evmKeeper evmkeeper.Keeper,
@@ -23,12 +27,8 @@ func CreateUpgradeHandler(
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 		sdkCtx.Logger().Info("Starting upgrade for v1.5.0...")
 
-		// Update EVM params
-		evmParams := evmKeeper.GetParams(sdkCtx)
-		evmParams.EvmDenom = realiotypes.AttoRio
-		evmParams.HistoryServeWindow = evmtypes.DefaultHistoryServeWindow
-
-		err := evmKeeper.SetParams(sdkCtx, evmParams)
+		// Migrate EVM params
+		err := migrateEVMParams(sdkCtx, storeKey, codec, evmKeeper)
 		if err != nil {
 			return nil, err
 		}
@@ -50,4 +50,33 @@ func CreateUpgradeHandler(
 
 		return mm.RunMigrations(ctx, cfg, vm)
 	}
+}
+
+func migrateEVMParams(sdkCtx sdk.Context, storeKey *storetypes.KVStoreKey, codec codec.BinaryCodec, evmKeeper evmkeeper.Keeper) error {
+	store := sdkCtx.KVStore(storeKey)
+	bz := store.Get(evmtypes.KeyPrefixParams)
+
+	var legacyParams legacy.Params
+	codec.MustUnmarshal(bz, &legacyParams)
+
+	// Update EVM params
+	var evmParams evmtypes.Params
+	evmParams.EvmDenom = legacyParams.EvmDenom
+	evmParams.ExtraEIPs = legacyParams.ExtraEIPs
+	evmParams.AccessControl = evmtypes.AccessControl{
+		Create: evmtypes.AccessControlType{
+			AccessType:        evmtypes.AccessType(legacyParams.AccessControl.Create.AccessType),
+			AccessControlList: legacyParams.AccessControl.Create.AccessControlList,
+		},
+		Call: evmtypes.AccessControlType{
+			AccessType:        evmtypes.AccessType(legacyParams.AccessControl.Call.AccessType),
+			AccessControlList: legacyParams.AccessControl.Call.AccessControlList,
+		},
+	}
+	evmParams.EVMChannels = legacyParams.EVMChannels
+	evmParams.ActiveStaticPrecompiles = legacyParams.ActiveStaticPrecompiles
+	evmParams.ExtendedDenomOptions = nil
+	evmParams.HistoryServeWindow = evmtypes.DefaultHistoryServeWindow
+
+	return evmKeeper.SetParams(sdkCtx, evmParams)
 }

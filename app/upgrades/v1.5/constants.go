@@ -1,4 +1,4 @@
-package v4
+package v5
 
 const (
 	// UpgradeName defines the on-chain upgrade name.
