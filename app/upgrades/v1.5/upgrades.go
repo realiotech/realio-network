@@ -9,7 +9,6 @@ import (
 	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
 	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
-	precompilemultistaking "github.com/realiotech/realio-network/precompile/multistaking"
 	realiotypes "github.com/realiotech/realio-network/types"
 )
 
@@ -24,22 +23,10 @@ func CreateUpgradeHandler(
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 		sdkCtx.Logger().Info("Starting upgrade for v1.5.0...")
 
-		// Update EVM precompiles
+		// Update EVM params
 		evmParams := evmKeeper.GetParams(sdkCtx)
-		availablePrecompile := []string{
-			evmtypes.P256PrecompileAddress,
-			evmtypes.Bech32PrecompileAddress,
-			// evmtypes.StakingPrecompileAddress, // Use multistaking precompile instead
-			evmtypes.DistributionPrecompileAddress,
-			evmtypes.ICS20PrecompileAddress,
-			evmtypes.VestingPrecompileAddress,
-			evmtypes.BankPrecompileAddress,
-			evmtypes.GovPrecompileAddress,
-			evmtypes.SlashingPrecompileAddress,
-			precompilemultistaking.MultistakingPrecompileAddress,
-		}
-		evmParams.ActiveStaticPrecompiles = availablePrecompile
 		evmParams.EvmDenom = realiotypes.AttoRio
+		evmParams.HistoryServeWindow = evmtypes.DefaultHistoryServeWindow
 
 		err := evmKeeper.SetParams(sdkCtx, evmParams)
 		if err != nil {
