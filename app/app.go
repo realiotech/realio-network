@@ -866,7 +866,7 @@ func New(
 	if err := app.configureEVMMempool(appOpts, logger); err != nil {
 		panic(fmt.Sprintf("failed to configure EVM mempool: %s", err.Error()))
 	}
-	
+
 	app.setPostHandler()
 
 	// At startup, after all modules have been registered, check that all prot
