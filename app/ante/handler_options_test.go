@@ -137,7 +137,7 @@ func (suite *AnteTestSuite) TestValidateHandlerOptions() {
 				FeegrantKeeper:         suite.app.FeeGrantKeeper,
 				IBCKeeper:              suite.app.IBCKeeper,
 				FeeMarketKeeper:        suite.app.FeeMarketKeeper,
-				SignModeHandler:        encoding.MakeConfig(app.MainnetChainID).TxConfig.SignModeHandler(),
+				SignModeHandler:        encoding.MakeConfig(app.MainnetEVMChainID).TxConfig.SignModeHandler(),
 				SigGasConsumer:         evmosante.SigVerificationGasConsumer,
 				MaxTxGasWanted:         40000000,
 				DynamicFeeChecker:      true,

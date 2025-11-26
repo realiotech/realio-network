@@ -141,7 +141,7 @@ func (suite *AnteTestSuite) CommitAfter(t time.Duration) {
 }
 
 func (suite *AnteTestSuite) CreateTestTxBuilder(gasPrice sdkmath.Int, denom string, msgs ...sdk.Msg) client.TxBuilder {
-	encodingConfig := encoding.MakeConfig(app.MainnetChainID)
+	encodingConfig := encoding.MakeConfig(app.MainnetEVMChainID)
 	gasLimit := uint64(1000000)
 
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
@@ -155,7 +155,7 @@ func (suite *AnteTestSuite) CreateTestTxBuilder(gasPrice sdkmath.Int, denom stri
 }
 
 func (suite *AnteTestSuite) CreateEthTestTxBuilder(msgEthereumTx *evmtypes.MsgEthereumTx) client.TxBuilder {
-	encodingConfig := encoding.MakeConfig(app.MainnetChainID)
+	encodingConfig := encoding.MakeConfig(app.MainnetEVMChainID)
 	option, err := codectypes.NewAnyWithValue(&evmtypes.ExtensionOptionsEthereumTx{})
 	suite.Require().NoError(err)
 
@@ -260,7 +260,7 @@ func generatePrivKeyAddressPairs(accCount int) ([]*osecp256k1.PrivKey, []sdk.Acc
 }
 
 func createTx(priv *osecp256k1.PrivKey, msgs ...sdk.Msg) (sdk.Tx, error) {
-	encodingConfig := encoding.MakeConfig(app.MainnetChainID)
+	encodingConfig := encoding.MakeConfig(app.MainnetEVMChainID)
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 
 	txBuilder.SetGasLimit(1000000)
@@ -316,7 +316,7 @@ func createEIP712CosmosTx(
 ) (sdk.Tx, error) {
 	var err error
 
-	encodingConfig := app.MakeEncodingConfig(app.MainnetChainID)
+	encodingConfig := app.MakeEncodingConfig(app.MainnetEVMChainID)
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 
 	// GenerateTypedData TypedData
@@ -334,7 +334,7 @@ func createEIP712CosmosTx(
 
 	data := legacytx.StdSignBytes(realionetworktypes.MainnetChainID+"-1", 0, 0, 0, fee, msgs, "")
 
-	typedData, err := eip712.LegacyWrapTxToTypedData(ethermintCodec, app.MainnetChainID, msgs[0], data, &eip712.FeeDelegationOptions{
+	typedData, err := eip712.LegacyWrapTxToTypedData(ethermintCodec, app.MainnetEVMChainID, msgs[0], data, &eip712.FeeDelegationOptions{
 		FeePayer: from,
 	})
 	if err != nil {

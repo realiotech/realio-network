@@ -51,9 +51,9 @@ var ChainsCoinInfo = map[string]evmtypes.EvmCoinInfo{
 
 const (
 	// MainnetChainID defines the RealioNetwork EIP155 chain ID for mainnet
-	MainnetChainID = 3301
+	MainnetEVMChainID = 3301
 	// TestnetChainID defines the RealioNetwork EIP155 chain ID for testnet
-	TestnetChainID = 3300
+	TestnetEVMChainID = 3300
 )
 
 // EvmAppOptions allows to setup the global configuration

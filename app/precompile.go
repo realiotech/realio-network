@@ -21,7 +21,6 @@ import (
 
 	precompiletypes "github.com/cosmos/evm/precompiles/types"
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
-	precompileBank "github.com/realiotech/realio-network/precompile/bank"
 	precompileMultiStaking "github.com/realiotech/realio-network/precompile/multistaking"
 )
 
@@ -54,10 +53,6 @@ func NewAvailableStaticPrecompiles(
 		slashingKeeper,
 		appCodec,
 	)
-
-	// Override bank precompile with our custom one
-	bankPrecompile := precompileBank.NewPrecompile(bankKeeper, &erc20Keeper)
-	precompiles[bankPrecompile.Address()] = bankPrecompile
 
 	mulStakingPrecompile, err := precompileMultiStaking.NewPrecompile(cdc, stakingKeeper, multiStakingKeeper, erc20Keeper, addrCodec, valAddrCodec)
 	if err != nil {

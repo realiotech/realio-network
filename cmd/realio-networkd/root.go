@@ -125,7 +125,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 				return err
 			}
 
-			customAppTemplate, customAppConfig := AppConfig(app.MainnetChainID)
+			customAppTemplate, customAppConfig := AppConfig(app.MainnetEVMChainID)
 			customTMConfig := initTendermintConfig()
 
 			return server.InterceptConfigsPreRunHandler(cmd, customAppTemplate, customAppConfig, customTMConfig)

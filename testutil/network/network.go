@@ -100,7 +100,7 @@ type Config struct {
 // DefaultConfig returns a sane default configuration suitable for nearly all
 // testing requirements.
 func DefaultConfig() Config {
-	encCfg := app.MakeEncodingConfig(app.MainnetChainID)
+	encCfg := app.MakeEncodingConfig(app.MainnetEVMChainID)
 
 	return Config{
 		Codec:             encCfg.Codec,

@@ -97,7 +97,7 @@ func Setup(
 	configurator := evmtypes.NewEVMConfigurator()
 	configurator.ResetTestConfig()
 
-	encCdc := MakeEncodingConfig(MainnetChainID)
+	encCdc := MakeEncodingConfig(MainnetEVMChainID)
 
 	valSet := GenValSet(numberVals)
 
@@ -306,7 +306,7 @@ func NewDefaultGenesisState(cdc codec.JSONCodec) simapp.GenesisState {
 // SetupTestingApp initializes the IBC-go testing application
 func SetupTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	db := dbm.NewMemDB()
-	cfg := MakeEncodingConfig(MainnetChainID)
+	cfg := MakeEncodingConfig(MainnetEVMChainID)
 	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, simtestutil.EmptyAppOptions{})
 	return app, NewDefaultGenesisState(cfg.Codec)
 }
