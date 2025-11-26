@@ -76,8 +76,6 @@ import (
 	"cosmossdk.io/core/appmodule"
 	"cosmossdk.io/log"
 
-	// "cosmossdk.io/simapp"
-	// simappparams "cosmossdk.io/simapp/params"
 	"cosmossdk.io/x/evidence"
 	evidencekeeper "cosmossdk.io/x/evidence/keeper"
 	evidencetypes "cosmossdk.io/x/evidence/types"
@@ -333,7 +331,6 @@ func New(
 	skipUpgradeHeights map[int64]bool,
 	homePath string,
 	invCheckPeriod uint,
-	// encodingConfig simappparams.EncodingConfig,
 	appOpts servertypes.AppOptions,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *RealioNetwork {
@@ -863,6 +860,13 @@ func New(
 	}
 
 	app.SetAnteHandler(ante.NewAnteHandler(options))
+
+	// set the EVM priority nonce mempool
+	// if you wish to use the noop mempool, remove this codeblock
+	if err := app.configureEVMMempool(appOpts, logger); err != nil {
+		panic(fmt.Sprintf("failed to configure EVM mempool: %s", err.Error()))
+	}
+	
 	app.setPostHandler()
 
 	// At startup, after all modules have been registered, check that all prot
