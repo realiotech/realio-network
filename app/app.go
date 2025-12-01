@@ -126,6 +126,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/slashing"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	evmaddress "github.com/cosmos/evm/encoding/address"
 
 	"cosmossdk.io/x/upgrade"
 	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
@@ -175,6 +176,8 @@ import (
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 
+	ibccallbackskeeper "github.com/cosmos/evm/x/ibc/callbacks/keeper"
+	ibccallbacks "github.com/cosmos/ibc-go/v10/modules/apps/callbacks"
 	precompileMultistaking "github.com/realiotech/realio-network/precompile/multistaking"
 )
 
@@ -302,6 +305,7 @@ type RealioNetwork struct {
 	EvidenceKeeper        evidencekeeper.Keeper
 	TransferKeeper        transferkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
+	CallbackKeeper        ibccallbackskeeper.ContractKeeper
 
 	// Ethermint keepers
 	EvmKeeper       *evmkeeper.Keeper
@@ -595,13 +599,21 @@ func New(
 		app.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	app.TransferKeeper.SetAddressCodec(evmaddress.NewEvmCodec(sdk.GetConfig().GetBech32AccountAddrPrefix()))
 
 	transferModule := transfer.NewAppModule(app.TransferKeeper)
 
 	// create IBC module from top to bottom of stack
 	var transferStack porttypes.IBCModule
 	transferStack = transfer.NewIBCModule(app.TransferKeeper)
+	maxCallbackGas := uint64(1_000_000)
 	transferStack = erc20.NewIBCMiddleware(app.Erc20Keeper, transferStack)
+	app.CallbackKeeper = ibccallbackskeeper.NewKeeper(
+		app.AccountKeeper,
+		app.EvmKeeper,
+		app.Erc20Keeper,
+	)
+	transferStack = ibccallbacks.NewIBCMiddleware(transferStack, app.IBCKeeper.ChannelKeeper, app.CallbackKeeper, maxCallbackGas)
 
 	// Create static IBC router, add transfer route, then set and seal it
 	ibcRouter := porttypes.NewRouter()

@@ -7,7 +7,6 @@ import (
 	"cosmossdk.io/simapp/params"
 	"cosmossdk.io/x/tx/signing"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 
 	evmcryptocodec "github.com/cosmos/evm/crypto/codec"
+	evmaddress "github.com/cosmos/evm/encoding/address"
 	enccodec "github.com/cosmos/evm/encoding/codec"
 	"github.com/cosmos/evm/ethereum/eip712"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
@@ -26,12 +26,8 @@ import (
 func MakeEncodingConfig(evmChainID uint64) params.EncodingConfig {
 	legacyAmino := codec.NewLegacyAmino()
 	signingOptions := signing.Options{
-		AddressCodec: address.Bech32Codec{
-			Bech32Prefix: sdk.GetConfig().GetBech32AccountAddrPrefix(),
-		},
-		ValidatorAddressCodec: address.Bech32Codec{
-			Bech32Prefix: sdk.GetConfig().GetBech32ValidatorAddrPrefix(),
-		},
+		AddressCodec:          evmaddress.NewEvmCodec(sdk.GetConfig().GetBech32AccountAddrPrefix()),
+		ValidatorAddressCodec: evmaddress.NewEvmCodec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
 		CustomGetSigners: map[protoreflect.FullName]signing.GetSignersFunc{
 			evmtypes.MsgEthereumTxCustomGetSigner.MsgType:     evmtypes.MsgEthereumTxCustomGetSigner.Fn,
 			erc20types.MsgConvertERC20CustomGetSigner.MsgType: erc20types.MsgConvertERC20CustomGetSigner.Fn,
