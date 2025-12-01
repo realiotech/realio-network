@@ -169,11 +169,11 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
-	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
-	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/js"
 	_ "github.com/ethereum/go-ethereum/eth/tracers/native"
 
+	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
+	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	ibccallbackskeeper "github.com/cosmos/evm/x/ibc/callbacks/keeper"
 	ibccallbacks "github.com/cosmos/ibc-go/v10/modules/apps/callbacks"
 	precompileMultistaking "github.com/realiotech/realio-network/precompile/multistaking"
@@ -295,7 +295,7 @@ type RealioNetwork struct {
 	DistrKeeper           distrkeeper.Keeper
 	GovKeeper             govkeeper.Keeper
 	UpgradeKeeper         *upgradekeeper.Keeper
-	ParamsKeeper          paramskeeper.Keeper
+	ParamsKeeper          paramskeeper.Keeper //nolint:staticcheck
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	AuthzKeeper           authzkeeper.Keeper
 	IBCKeeper             *ibckeeper.Keeper // IBC Keeper must be a pointer in the app, so we can SetRouter on it correctly
@@ -666,7 +666,7 @@ func New(
 		multistaking.NewAppModule(appCodec, app.MultiStakingKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.GetSubspace(stakingtypes.ModuleName)),
 		upgrade.NewAppModule(app.UpgradeKeeper, app.AccountKeeper.AddressCodec()),
 		evidence.NewAppModule(app.EvidenceKeeper),
-		params.NewAppModule(app.ParamsKeeper),
+		params.NewAppModule(app.ParamsKeeper), //nolint:staticcheck
 		feegrantmodule.NewAppModule(appCodec, app.AccountKeeper, app.BankKeeper, app.FeeGrantKeeper, app.interfaceRegistry),
 		authzmodule.NewAppModule(appCodec, app.AuthzKeeper, app.AccountKeeper, app.BankKeeper, app.interfaceRegistry),
 		vesting.NewAppModule(app.AccountKeeper, app.BankKeeper),
@@ -875,9 +875,7 @@ func New(
 
 	// set the EVM priority nonce mempool
 	// if you wish to use the noop mempool, remove this codeblock
-	if err := app.configureEVMMempool(appOpts, logger); err != nil {
-		panic(fmt.Sprintf("failed to configure EVM mempool: %s", err.Error()))
-	}
+	app.configureEVMMempool(appOpts, logger)
 
 	app.setPostHandler()
 
@@ -1211,8 +1209,8 @@ func (app *RealioNetwork) SimulationManager() *module.SimulationManager {
 }
 
 // initParamsKeeper init params keeper and its subspaces
-func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper {
-	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
+func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino, key, tkey storetypes.StoreKey) paramskeeper.Keeper { //nolint:staticcheck
+	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey) //nolint:staticcheck
 
 	paramsKeeper.Subspace(authtypes.ModuleName).WithKeyTable(authtypes.ParamKeyTable())       //nolint: staticcheck
 	paramsKeeper.Subspace(banktypes.ModuleName).WithKeyTable(banktypes.ParamKeyTable())       //nolint: staticcheck // SA1019
@@ -1228,7 +1226,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	// realio network subspaces
 	paramsKeeper.Subspace(assetmoduletypes.ModuleName).WithKeyTable(assetmoduletypes.ParamKeyTable())
 	// ethermint subspaces
-	paramsKeeper.Subspace(evmtypes.ModuleName) 
+	paramsKeeper.Subspace(evmtypes.ModuleName)
 	paramsKeeper.Subspace(feemarkettypes.ModuleName)
 	paramsKeeper.Subspace(erc20types.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace

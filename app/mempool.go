@@ -1,8 +1,6 @@
 package app
 
 import (
-	"fmt"
-
 	"cosmossdk.io/log"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -15,22 +13,17 @@ import (
 )
 
 // configureEVMMempool sets up the EVM mempool and related handlers using viper configuration.
-func (app *RealioNetwork) configureEVMMempool(appOpts servertypes.AppOptions, logger log.Logger) error {
+func (app *RealioNetwork) configureEVMMempool(appOpts servertypes.AppOptions, logger log.Logger) {
 	if evmtypes.GetChainConfig() == nil {
 		logger.Debug("evm chain config is not set, skipping mempool configuration")
-		return nil
 	}
 
 	cosmosPoolMaxTx := evmconfig.GetCosmosPoolMaxTx(appOpts, logger)
 	if cosmosPoolMaxTx < 0 {
 		logger.Debug("app-side mempool is disabled, skipping evm mempool configuration")
-		return nil
 	}
 
-	mempoolConfig, err := app.createMempoolConfig(appOpts, logger)
-	if err != nil {
-		return fmt.Errorf("failed to get mempool config: %w", err)
-	}
+	mempoolConfig := app.createMempoolConfig(appOpts, logger)
 
 	evmMempool := evmmempool.NewExperimentalEVMMempool(
 		app.CreateQueryContext,
@@ -54,17 +47,15 @@ func (app *RealioNetwork) configureEVMMempool(appOpts servertypes.AppOptions, lo
 		),
 	)
 	app.SetPrepareProposal(abciProposalHandler.PrepareProposalHandler())
-
-	return nil
 }
 
 // createMempoolConfig creates a new EVMMempoolConfig with the default configuration
 // and overrides it with values from appOpts if they exist and are non-zero.
-func (app *RealioNetwork) createMempoolConfig(appOpts servertypes.AppOptions, logger log.Logger) (*evmmempool.EVMMempoolConfig, error) {
+func (app *RealioNetwork) createMempoolConfig(appOpts servertypes.AppOptions, logger log.Logger) *evmmempool.EVMMempoolConfig {
 	return &evmmempool.EVMMempoolConfig{
 		AnteHandler:      app.GetBaseApp().AnteHandler(),
 		LegacyPoolConfig: evmconfig.GetLegacyPoolConfig(appOpts, logger),
 		BlockGasLimit:    evmconfig.GetBlockGasLimit(appOpts, logger),
 		MinTip:           evmconfig.GetMinTip(appOpts, logger),
-	}, nil
+	}
 }
