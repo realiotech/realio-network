@@ -9,6 +9,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/cosmos/cosmos-sdk/types/tx"
+	"github.com/cosmos/evm/x/vm/types/v1"
 	"github.com/realiotech/realio-network/crypto/account"
 	"github.com/realiotech/realio-network/crypto/ethsecp256k1"
 	"github.com/realiotech/realio-network/crypto/legacytx"
@@ -34,10 +35,12 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 	registry.RegisterImplementations(
 		(*tx.TxExtensionOptionI)(nil),
 		&legacytx.ExtensionOptionsEthereumTx{},
+		&v1.ExtensionOptionsEthereumTx{},
 	)
 	registry.RegisterImplementations(
 		(*sdk.Msg)(nil),
 		&legacytx.MsgEthereumTx{},
+		&v1.MsgEthereumTx{},
 		&legacytx.MsgUpdateParams{},
 	)
 	registry.RegisterInterface(
@@ -53,5 +56,13 @@ func RegisterInterfaces(registry codectypes.InterfaceRegistry) {
 		&legacytx.DynamicFeeTx{},
 		&legacytx.AccessListTx{},
 		&legacytx.LegacyTx{},
+	)
+
+	registry.RegisterInterface(
+		"os.vm.v1.TxData",
+		(*v1.TxData)(nil),
+		&v1.DynamicFeeTx{},
+		&v1.AccessListTx{},
+		&v1.LegacyTx{},
 	)
 }
