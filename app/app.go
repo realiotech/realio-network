@@ -16,7 +16,6 @@ import (
 	ibcconnectiontypes "github.com/cosmos/ibc-go/v10/modules/core/03-connection/types"
 
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
-	"github.com/realiotech/realio-network/app/ante"
 	"github.com/realiotech/realio-network/client/docs"
 	"github.com/realiotech/realio-network/crypto/ethsecp256k1"
 	"github.com/realiotech/realio-network/crypto/ossecp256k1"
@@ -852,7 +851,8 @@ func New(
 	app.SetEndBlocker(app.EndBlocker)
 
 	maxGasWanted := cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted))
-	options := ante.HandlerOptions{
+	options := evmante.HandlerOptions{
+		Cdc:                    app.appCodec,
 		AccountKeeper:          app.AccountKeeper,
 		BankKeeper:             app.BankKeeper,
 		SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
@@ -871,11 +871,7 @@ func New(
 		panic(err)
 	}
 
-	app.SetAnteHandler(ante.NewAnteHandler(options))
-
-	// set the EVM priority nonce mempool
-	// if you wish to use the noop mempool, remove this codeblock
-	app.configureEVMMempool(appOpts, logger)
+	app.SetAnteHandler(evmante.NewAnteHandler(options))
 
 	app.setPostHandler()
 
