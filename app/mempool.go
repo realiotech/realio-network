@@ -16,11 +16,13 @@ import (
 func (app *RealioNetwork) configureEVMMempool(appOpts servertypes.AppOptions, logger log.Logger) {
 	if evmtypes.GetChainConfig() == nil {
 		logger.Debug("evm chain config is not set, skipping mempool configuration")
+		return
 	}
 
 	cosmosPoolMaxTx := evmconfig.GetCosmosPoolMaxTx(appOpts, logger)
 	if cosmosPoolMaxTx < 0 {
 		logger.Debug("app-side mempool is disabled, skipping evm mempool configuration")
+		return
 	}
 
 	mempoolConfig := app.createMempoolConfig(appOpts, logger)
