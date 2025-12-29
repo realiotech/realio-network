@@ -14,6 +14,8 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	"cosmossdk.io/simapp"
+
+	// "cosmossdk.io/simapp"
 	dbm "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -91,7 +93,11 @@ func Setup(
 	feemarketGenesis *feemarkettypes.GenesisState,
 	numberVals int,
 ) *RealioNetwork {
-	encCdc := MakeEncodingConfig()
+	// Reset EVMConfig each test
+	configurator := evmtypes.NewEVMConfigurator()
+	configurator.ResetTestConfig()
+
+	encCdc := MakeEncodingConfig(MainnetEVMChainID)
 
 	valSet := GenValSet(numberVals)
 
@@ -105,7 +111,7 @@ func Setup(
 
 	db := dbm.NewMemDB()
 	opt := baseapp.SetChainID(types.MainnetChainID + "-1")
-	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, encCdc, simtestutil.EmptyAppOptions{}, EvmAppOptions, opt)
+	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, simtestutil.EmptyAppOptions{}, opt)
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
 		genesisState := NewDefaultGenesisState(encCdc.Codec)
@@ -249,6 +255,35 @@ func GenesisStateWithValSet(app *RealioNetwork, genesisState simapp.GenesisState
 
 	// update total supply
 	bankGenesis := banktypes.NewGenesisState(banktypes.DefaultGenesisState().Params, balances, totalSupply, []banktypes.Metadata{}, []banktypes.SendEnabled{})
+	bankGenesis.DenomMetadata = []banktypes.Metadata{
+		{
+			Description: MultiStakingCoinA.Denom,
+			Base:        MultiStakingCoinA.Denom,
+			DenomUnits: []*banktypes.DenomUnit{
+				{
+					Denom:    MultiStakingCoinA.Denom,
+					Exponent: 18,
+				},
+			},
+			Display: MultiStakingCoinA.Denom,
+			Name:    MultiStakingCoinA.Denom,
+			Symbol:  MultiStakingCoinA.Denom,
+		},
+		{
+			Description: MultiStakingCoinB.Denom,
+			Base:        MultiStakingCoinB.Denom,
+			DenomUnits: []*banktypes.DenomUnit{
+				{
+					Denom:    MultiStakingCoinB.Denom,
+					Exponent: 18,
+				},
+			},
+			Display: MultiStakingCoinB.Denom,
+			Name:    MultiStakingCoinB.Denom,
+			Symbol:  MultiStakingCoinB.Denom,
+		},
+	}
+
 	genesisState[banktypes.ModuleName] = app.AppCodec().MustMarshalJSON(bankGenesis)
 
 	bridgeGenesis := bridgetypes.DefaultGenesis()
@@ -271,8 +306,8 @@ func NewDefaultGenesisState(cdc codec.JSONCodec) simapp.GenesisState {
 // SetupTestingApp initializes the IBC-go testing application
 func SetupTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	db := dbm.NewMemDB()
-	cfg := MakeEncodingConfig()
-	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, cfg, simtestutil.EmptyAppOptions{}, NoOpEVMOptions)
+	cfg := MakeEncodingConfig(MainnetEVMChainID)
+	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, simtestutil.EmptyAppOptions{})
 	return app, NewDefaultGenesisState(cfg.Codec)
 }
 

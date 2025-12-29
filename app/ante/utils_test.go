@@ -35,11 +35,11 @@ import (
 	"github.com/cosmos/evm/encoding"
 	"github.com/cosmos/evm/ethereum/eip712"
 	tests "github.com/cosmos/evm/testutil/tx"
-	"github.com/cosmos/evm/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 
+	enccodec "github.com/cosmos/evm/encoding/codec"
 	"github.com/realiotech/realio-network/app"
 	realionetworktypes "github.com/realiotech/realio-network/types"
 	"github.com/stretchr/testify/require"
@@ -141,7 +141,7 @@ func (suite *AnteTestSuite) CommitAfter(t time.Duration) {
 }
 
 func (suite *AnteTestSuite) CreateTestTxBuilder(gasPrice sdkmath.Int, denom string, msgs ...sdk.Msg) client.TxBuilder {
-	encodingConfig := encoding.MakeConfig()
+	encodingConfig := encoding.MakeConfig(app.MainnetEVMChainID)
 	gasLimit := uint64(1000000)
 
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
@@ -155,7 +155,7 @@ func (suite *AnteTestSuite) CreateTestTxBuilder(gasPrice sdkmath.Int, denom stri
 }
 
 func (suite *AnteTestSuite) CreateEthTestTxBuilder(msgEthereumTx *evmtypes.MsgEthereumTx) client.TxBuilder {
-	encodingConfig := encoding.MakeConfig()
+	encodingConfig := encoding.MakeConfig(app.MainnetEVMChainID)
 	option, err := codectypes.NewAnyWithValue(&evmtypes.ExtensionOptionsEthereumTx{})
 	suite.Require().NoError(err)
 
@@ -167,10 +167,7 @@ func (suite *AnteTestSuite) CreateEthTestTxBuilder(msgEthereumTx *evmtypes.MsgEt
 	err = txBuilder.SetMsgs(msgEthereumTx)
 	suite.Require().NoError(err)
 
-	txData, err := evmtypes.UnpackTxData(msgEthereumTx.Data)
-	suite.Require().NoError(err)
-
-	fees := sdk.Coins{{Denom: s.denom, Amount: sdkmath.NewIntFromBigInt(txData.Fee())}}
+	fees := sdk.Coins{{Denom: s.denom, Amount: sdkmath.NewInt(100_000)}}
 	builder.SetFeeAmount(fees)
 	builder.SetGasLimit(msgEthereumTx.GetGas())
 
@@ -206,7 +203,7 @@ func (suite *AnteTestSuite) BuildTestEthTx(
 		Accesses:  accesses,
 	}
 	msgEthereumTx := evmtypes.NewTx(&args)
-	msgEthereumTx.From = from.String()
+	msgEthereumTx.From = from.Bytes()
 	return msgEthereumTx
 }
 
@@ -263,7 +260,7 @@ func generatePrivKeyAddressPairs(accCount int) ([]*osecp256k1.PrivKey, []sdk.Acc
 }
 
 func createTx(priv *osecp256k1.PrivKey, msgs ...sdk.Msg) (sdk.Tx, error) {
-	encodingConfig := encoding.MakeConfig()
+	encodingConfig := encoding.MakeConfig(app.MainnetEVMChainID)
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 
 	txBuilder.SetGasLimit(1000000)
@@ -319,12 +316,12 @@ func createEIP712CosmosTx(
 ) (sdk.Tx, error) {
 	var err error
 
-	encodingConfig := app.MakeEncodingConfig()
+	encodingConfig := app.MakeEncodingConfig(app.MainnetEVMChainID)
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 
 	// GenerateTypedData TypedData
 	registry := codectypes.NewInterfaceRegistry()
-	types.RegisterInterfaces(registry)
+	enccodec.RegisterInterfaces(registry)
 	ethermintCodec := codec.NewProtoCodec(registry)
 	cryptocodec.RegisterInterfaces(registry)
 	ethcryptocodec.RegisterInterfaces(registry)
@@ -336,13 +333,8 @@ func createEIP712CosmosTx(
 	fee := legacytx.NewStdFee(gas, amount) //nolint
 
 	data := legacytx.StdSignBytes(realionetworktypes.MainnetChainID+"-1", 0, 0, 0, fee, msgs, "")
-	pc, err := types.ParseChainID(realionetworktypes.MainnetChainID + "-1")
-	if err != nil {
-		return nil, err
-	}
-	chainIDNum := pc.Uint64()
 
-	typedData, err := eip712.LegacyWrapTxToTypedData(ethermintCodec, chainIDNum, msgs[0], data, &eip712.FeeDelegationOptions{
+	typedData, err := eip712.LegacyWrapTxToTypedData(ethermintCodec, app.MainnetEVMChainID, msgs[0], data, &eip712.FeeDelegationOptions{
 		FeePayer: from,
 	})
 	if err != nil {

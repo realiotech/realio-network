@@ -5,7 +5,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
+	commonfactory "github.com/cosmos/evm/testutil/integration/base/factory"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -13,12 +13,13 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	realiotypes "github.com/realiotech/realio-network/types"
 
-	"github.com/cosmos/evm/testutil/integration/os/factory"
-	"github.com/cosmos/evm/testutil/integration/os/grpc"
-	testkeyring "github.com/cosmos/evm/testutil/integration/os/keyring"
+	"github.com/cosmos/evm/testutil/integration/evm/factory"
+	"github.com/cosmos/evm/testutil/integration/evm/grpc"
+	testkeyring "github.com/cosmos/evm/testutil/keyring"
 	"github.com/realiotech/realio-network/testutil/integration/network"
 
 	// authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	testconstants "github.com/cosmos/evm/testutil/constants"
 	"github.com/realiotech/realio-network/x/mint/types"
 	"github.com/stretchr/testify/suite"
 )
@@ -37,10 +38,16 @@ type MintTestSuite struct {
 // Make sure that VariableThatShouldStartAtFive is set to five
 // before each test
 func (suite *MintTestSuite) SetupTest() {
+	configurator := evmtypes.NewEVMConfigurator()
+	configurator.ResetTestConfig()
 	keyring := testkeyring.New(4)
 	integrationNetwork := network.New(
 		network.WithPreFundedAccounts(keyring.GetAllAccAddrs()...),
 		network.WithOtherDenoms([]string{testTokenDenom}),
+		network.WithChainID(testconstants.ChainID{
+			ChainID:    "realionetwork_3301-1",
+			EVMChainID: 3301,
+		}),
 	)
 	grpcHandler := grpc.NewIntegrationHandler(integrationNetwork)
 	factory := factory.New(integrationNetwork, grpcHandler)

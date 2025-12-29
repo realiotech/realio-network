@@ -5,13 +5,14 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/cosmos/evm/testutil/integration/os/factory"
-	"github.com/cosmos/evm/testutil/integration/os/grpc"
-	testkeyring "github.com/cosmos/evm/testutil/integration/os/keyring"
+	"github.com/cosmos/evm/testutil/integration/evm/factory"
+	"github.com/cosmos/evm/testutil/integration/evm/grpc"
+	testkeyring "github.com/cosmos/evm/testutil/keyring"
 	"github.com/realiotech/realio-network/testutil/integration/network"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
 	integrationutils "github.com/realiotech/realio-network/testutil/integration/utils"
 	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 	"github.com/stretchr/testify/suite"
@@ -31,6 +32,8 @@ type BridgeTestSuite struct {
 // Make sure that VariableThatShouldStartAtFive is set to five
 // before each test
 func (suite *BridgeTestSuite) SetupTest() {
+	configurator := evmtypes.NewEVMConfigurator()
+	configurator.ResetTestConfig()
 	keyring := testkeyring.New(4)
 	integrationNetwork := network.New(
 		network.WithPreFundedAccounts(keyring.GetAllAccAddrs()...),

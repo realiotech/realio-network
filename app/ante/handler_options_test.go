@@ -2,13 +2,15 @@ package ante_test
 
 import (
 	evmosante "github.com/cosmos/evm/ante"
-	evmosanteevm "github.com/cosmos/evm/ante/evm"
+	antetypes "github.com/cosmos/evm/ante/types"
 	"github.com/cosmos/evm/encoding"
-	"github.com/cosmos/evm/types"
+	"github.com/cosmos/evm/rpc/stream"
+	"github.com/realiotech/realio-network/app"
 	"github.com/realiotech/realio-network/app/ante"
 )
 
 func (suite *AnteTestSuite) TestValidateHandlerOptions() {
+	testStream := stream.RPCStream{}
 	cases := []struct {
 		name    string
 		options ante.HandlerOptions
@@ -114,14 +116,14 @@ func (suite *AnteTestSuite) TestValidateHandlerOptions() {
 		{
 			"fail - empty tx fee checker",
 			ante.HandlerOptions{
-				AccountKeeper:   suite.app.AccountKeeper,
-				BankKeeper:      suite.app.BankKeeper,
-				IBCKeeper:       suite.app.IBCKeeper,
-				FeeMarketKeeper: suite.app.FeeMarketKeeper,
-				EvmKeeper:       suite.app.EvmKeeper,
-				SigGasConsumer:  evmosante.SigVerificationGasConsumer,
-				SignModeHandler: suite.app.GetTxConfig().SignModeHandler(),
-				TxFeeChecker:    nil,
+				AccountKeeper:     suite.app.AccountKeeper,
+				BankKeeper:        suite.app.BankKeeper,
+				IBCKeeper:         suite.app.IBCKeeper,
+				FeeMarketKeeper:   suite.app.FeeMarketKeeper,
+				EvmKeeper:         suite.app.EvmKeeper,
+				SigGasConsumer:    evmosante.SigVerificationGasConsumer,
+				SignModeHandler:   suite.app.GetTxConfig().SignModeHandler(),
+				DynamicFeeChecker: false,
 			},
 			false,
 		},
@@ -130,15 +132,16 @@ func (suite *AnteTestSuite) TestValidateHandlerOptions() {
 			ante.HandlerOptions{
 				AccountKeeper:          suite.app.AccountKeeper,
 				BankKeeper:             suite.app.BankKeeper,
-				ExtensionOptionChecker: types.HasDynamicFeeExtensionOption,
+				ExtensionOptionChecker: antetypes.HasDynamicFeeExtensionOption,
 				EvmKeeper:              suite.app.EvmKeeper,
 				FeegrantKeeper:         suite.app.FeeGrantKeeper,
 				IBCKeeper:              suite.app.IBCKeeper,
 				FeeMarketKeeper:        suite.app.FeeMarketKeeper,
-				SignModeHandler:        encoding.MakeConfig().TxConfig.SignModeHandler(),
+				SignModeHandler:        encoding.MakeConfig(app.MainnetEVMChainID).TxConfig.SignModeHandler(),
 				SigGasConsumer:         evmosante.SigVerificationGasConsumer,
 				MaxTxGasWanted:         40000000,
-				TxFeeChecker:           evmosanteevm.NewDynamicFeeChecker(suite.app.FeeMarketKeeper),
+				DynamicFeeChecker:      true,
+				PendingTxListener:      testStream.ListenPendingTx,
 			},
 			true,
 		},

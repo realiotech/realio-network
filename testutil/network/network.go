@@ -44,7 +44,6 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/simapp"
-	"cosmossdk.io/simapp/params"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	networktestutil "github.com/cosmos/cosmos-sdk/testutil/network"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
@@ -56,7 +55,6 @@ import (
 
 	"github.com/cosmos/evm/crypto/hd"
 	"github.com/cosmos/evm/server/config"
-	ethermint "github.com/cosmos/evm/types"
 
 	"github.com/realiotech/realio-network/app"
 )
@@ -102,7 +100,7 @@ type Config struct {
 // DefaultConfig returns a sane default configuration suitable for nearly all
 // testing requirements.
 func DefaultConfig() Config {
-	encCfg := app.MakeEncodingConfig()
+	encCfg := app.MakeEncodingConfig(app.MainnetEVMChainID)
 
 	return Config{
 		Codec:             encCfg.Codec,
@@ -110,7 +108,7 @@ func DefaultConfig() Config {
 		LegacyAmino:       encCfg.Amino,
 		InterfaceRegistry: encCfg.InterfaceRegistry,
 		AccountRetriever:  authtypes.AccountRetriever{},
-		AppConstructor:    NewAppConstructor(encCfg),
+		AppConstructor:    NewAppConstructor(),
 		GenesisState:      app.ModuleBasics.DefaultGenesis(encCfg.Codec),
 		TimeoutCommit:     2 * time.Second,
 		ChainID:           fmt.Sprintf("realionetworklocal_%d-1", tmrand.Int63n(9999999999999)+1),
@@ -130,13 +128,11 @@ func DefaultConfig() Config {
 }
 
 // NewAppConstructor returns a new Realio Network AppConstructor
-func NewAppConstructor(encodingCfg params.EncodingConfig) AppConstructor {
+func NewAppConstructor() AppConstructor {
 	return func(val Validator) servertypes.Application {
 		return app.New(
 			val.Ctx.Logger, dbm.NewMemDB(), nil, true, make(map[int64]bool), val.Ctx.Config.RootDir, 0,
-			encodingCfg,
 			simtestutil.EmptyAppOptions{},
-			app.NoOpEVMOptions,
 			baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.AppConfig.Pruning)),
 			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
 		)
@@ -225,10 +221,6 @@ func New(l Logger, baseDir string, cfg Config) (*Network, error) {
 	// only one caller/test can create and use a network at a time
 	l.Log("acquiring test network lock")
 	lock.Lock()
-
-	if !ethermint.IsValidChainID(cfg.ChainID) {
-		return nil, fmt.Errorf("invalid chain-id: %s", cfg.ChainID)
-	}
 
 	network := &Network{
 		Logger:     l,

@@ -16,12 +16,12 @@ import (
 	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cometbft/cometbft/version"
 
-	chainutil "github.com/cosmos/evm/evmd/testutil"
-	"github.com/cosmos/evm/testutil/integration/os/network"
-	"github.com/cosmos/evm/types"
+	// chainutil "github.com/cosmos/evm/evmd/testutil"
+	"github.com/cosmos/evm/testutil/integration/evm/network"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
+	"github.com/cosmos/evm/testutil/integration"
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
@@ -47,10 +47,11 @@ var _ Network = (*IntegrationNetwork)(nil)
 
 // IntegrationNetwork is the implementation of the Network interface for integration tests.
 type IntegrationNetwork struct {
-	cfg        Config
-	ctx        sdktypes.Context
-	validators []stakingtypes.Validator
-	app        *app.RealioNetwork
+	cfg         Config
+	ctx         sdktypes.Context
+	validators  []stakingtypes.Validator
+	app         *app.RealioNetwork
+	baseDecimal evmtypes.Decimals
 
 	// This is only needed for IBC chain testing setup
 	valSet     *cmttypes.ValidatorSet
@@ -64,7 +65,6 @@ type IntegrationNetwork struct {
 // It panics if an error occurs.
 func New(opts ...ConfigOption) *IntegrationNetwork {
 	cfg := DefaultConfig()
-	fmt.Println("Default Coins: ", cfg.chainCoins.baseCoin.Decimals)
 	// Modify the default config with the given options
 	for _, opt := range opts {
 		opt(&cfg)
@@ -99,7 +99,7 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 
 	// The bonded amount should be updated to reflect the actual base denom
 	baseDecimals := n.cfg.chainCoins.BaseDecimals()
-	fmt.Println("Base decimals: ", baseDecimals)
+	n.baseDecimal = baseDecimals
 	bondedAmount := GetInitialBondedAmount(baseDecimals)
 
 	// Create validator set with the amount of validators specified in the config
@@ -169,6 +169,9 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 			slashing:    slashingParams,
 			gov:         govParams,
 			mint:        mintParams,
+			evm: EvmCustomGenesisState{
+				EvmDenom: n.cfg.chainCoins.BaseDenom(),
+			},
 		},
 	)
 
@@ -185,7 +188,7 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 		return err
 	}
 
-	consensusParams := chainutil.DefaultConsensusParams
+	consensusParams := integration.DefaultConsensusParams
 	consensusParams.Validator.PubKeyTypes = append(consensusParams.Validator.PubKeyTypes, cmttypes.ABCIPubKeyTypeSecp256k1)
 	now := time.Now()
 
@@ -235,13 +238,18 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 
 	n.app = exampleApp
 	n.ctx = n.ctx.WithConsensusParams(*consensusParams)
-	n.ctx = n.ctx.WithBlockGasMeter(types.NewInfiniteGasMeterWithLimit(blockMaxGas))
+	n.ctx = n.ctx.WithBlockGasMeter(evmtypes.NewInfiniteGasMeterWithLimit(blockMaxGas))
 
 	n.validators = validators
 	n.valSet = valSet
 	n.valSigners = valSigners
 
 	return nil
+}
+
+// GetConfig returns the network's configuration
+func (n *IntegrationNetwork) GetBaseDecimal() evmtypes.Decimals {
+	return n.baseDecimal
 }
 
 // GetContext returns the network's context

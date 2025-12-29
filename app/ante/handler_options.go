@@ -11,7 +11,7 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	sdkvesting "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	evmosantecosmos "github.com/cosmos/evm/ante/cosmos"
-	evmosanteevm "github.com/cosmos/evm/ante/evm"
+	evmante "github.com/cosmos/evm/ante/evm"
 	evmosanteinterfaces "github.com/cosmos/evm/ante/interfaces"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ibcante "github.com/cosmos/ibc-go/v10/modules/core/ante"
@@ -32,7 +32,9 @@ type HandlerOptions struct {
 	SignModeHandler        *txsigning.HandlerMap
 	SigGasConsumer         func(meter storetypes.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
 	MaxTxGasWanted         uint64
-	TxFeeChecker           ante.TxFeeChecker
+	// use dynamic fee checker or the cosmos-sdk default one for native transactions
+	DynamicFeeChecker bool
+	PendingTxListener PendingTxListener
 }
 
 // Validate checks if the keepers are defined
@@ -58,21 +60,35 @@ func (options HandlerOptions) Validate() error {
 	if options.SignModeHandler == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "sign mode handler is required for AnteHandler")
 	}
-	if options.TxFeeChecker == nil {
-		return errorsmod.Wrap(errortypes.ErrLogic, "tx fee checker is required for AnteHandler")
+	if options.PendingTxListener == nil {
+		return errorsmod.Wrap(errortypes.ErrLogic, "pending tx listener is required for AnteHandler")
 	}
 	return nil
 }
 
 // newEthAnteHandler creates the default ante handler for Ethereum transactions
-func newEthAnteHandler(options HandlerOptions) sdk.AnteHandler {
-	return sdk.ChainAnteDecorators(
-		evmosanteevm.NewEVMMonoDecorator(options.AccountKeeper, options.FeeMarketKeeper, options.EvmKeeper, options.MaxTxGasWanted), // outermost AnteDecorator. SetUpContext must be called first
-	)
+func newEthAnteHandler(ctx sdk.Context, options HandlerOptions) sdk.AnteHandler {
+	evmParams := options.EvmKeeper.GetParams(ctx)
+	feemarketParams := options.FeeMarketKeeper.GetParams(ctx)
+	decorators := []sdk.AnteDecorator{
+		evmante.NewEVMMonoDecorator(options.AccountKeeper, options.FeeMarketKeeper, options.EvmKeeper, options.MaxTxGasWanted, &evmParams, &feemarketParams), // outermost AnteDecorator. SetUpContext must be called first
+	}
+
+	if options.PendingTxListener != nil {
+		decorators = append(decorators, NewTxListenerDecorator(options.PendingTxListener))
+	}
+
+	return sdk.ChainAnteDecorators(decorators...)
 }
 
 // newCosmosAnteHandler creates the default ante handler for Cosmos transactions
-func newCosmosAnteHandler(options HandlerOptions) sdk.AnteHandler {
+func newCosmosAnteHandler(ctx sdk.Context, options HandlerOptions) sdk.AnteHandler {
+	feemarketParams := options.FeeMarketKeeper.GetParams(ctx)
+	var txFeeChecker ante.TxFeeChecker
+	if options.DynamicFeeChecker {
+		txFeeChecker = evmante.NewDynamicFeeChecker(&feemarketParams)
+	}
+
 	return sdk.ChainAnteDecorators(
 		evmosantecosmos.RejectMessagesDecorator{}, // reject MsgEthereumTxs
 		NewAuthzLimiterDecorator( // disable the Msg types that cannot be included on an authz.MsgExec msgs field
@@ -84,9 +100,9 @@ func newCosmosAnteHandler(options HandlerOptions) sdk.AnteHandler {
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),
-		evmosantecosmos.NewMinGasPriceDecorator(options.FeeMarketKeeper, options.EvmKeeper),
+		evmosantecosmos.NewMinGasPriceDecorator(&feemarketParams),
 		ante.NewConsumeGasForTxSizeDecorator(options.AccountKeeper),
-		ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, options.TxFeeChecker),
+		ante.NewDeductFeeDecorator(options.AccountKeeper, options.BankKeeper, options.FeegrantKeeper, txFeeChecker),
 		// SetPubKeyDecorator must be called before all signature verification decorators
 		ante.NewSetPubKeyDecorator(options.AccountKeeper),
 		ante.NewValidateSigCountDecorator(options.AccountKeeper),
@@ -94,6 +110,6 @@ func newCosmosAnteHandler(options HandlerOptions) sdk.AnteHandler {
 		ante.NewSigVerificationDecorator(options.AccountKeeper, options.SignModeHandler),
 		ante.NewIncrementSequenceDecorator(options.AccountKeeper),
 		ibcante.NewRedundantRelayDecorator(options.IBCKeeper),
-		evmosanteevm.NewGasWantedDecorator(options.EvmKeeper, options.FeeMarketKeeper),
+		evmante.NewGasWantedDecorator(options.EvmKeeper, options.FeeMarketKeeper, &feemarketParams),
 	)
 }

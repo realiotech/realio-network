@@ -5,14 +5,14 @@ import (
 	"math/big"
 
 	"cosmossdk.io/math"
-	"github.com/cosmos/evm/testutil/integration/os/factory"
+	"github.com/cosmos/evm/testutil/integration/evm/factory"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/ethereum/go-ethereum/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cosmos/evm/contracts"
-	commonfactory "github.com/cosmos/evm/testutil/integration/common/factory"
+	commonfactory "github.com/cosmos/evm/testutil/integration/base/factory"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -23,7 +23,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/evm/precompiles/testutil"
-	"github.com/cosmos/evm/testutil/integration/os/grpc"
+	"github.com/cosmos/evm/testutil/integration/evm/grpc"
+	testutiltypes "github.com/cosmos/evm/testutil/types"
 	precompileMultiStaking "github.com/realiotech/realio-network/precompile/multistaking"
 )
 
@@ -51,7 +52,7 @@ func (suite *EVMTestSuite) TestMultistakingCreateValidator() {
 	contractAddr, err := factoryy.DeployContract(
 		senderPriv,
 		evmtypes.EvmTxArgs{},
-		factory.ContractDeploymentData{
+		testutiltypes.ContractDeploymentData{
 			Contract:        compiledContract,
 			ConstructorArgs: constructorArgs,
 		},
@@ -177,7 +178,7 @@ func (suite *EVMTestSuite) TestMultistakingPrecompiles() {
 	contractAddr, err := factoryy.DeployContract(
 		senderPriv,
 		evmtypes.EvmTxArgs{},
-		factory.ContractDeploymentData{
+		testutiltypes.ContractDeploymentData{
 			Contract:        compiledContract,
 			ConstructorArgs: constructorArgs,
 		},
@@ -265,7 +266,7 @@ func (suite *EVMTestSuite) TestMultistakingRemoveToken() {
 	contractAddr, err := factoryy.DeployContract(
 		val1Priv,
 		evmtypes.EvmTxArgs{},
-		factory.ContractDeploymentData{
+		testutiltypes.ContractDeploymentData{
 			Contract:        compiledContract,
 			ConstructorArgs: constructorArgs,
 		},
@@ -465,7 +466,7 @@ func (suite *EVMTestSuite) TestMultistakingRemoveToken() {
 
 func (suite *EVMTestSuite) mintERC20(contractAddr common.Address, to common.Address, amount int64, privKey cryptotypes.PrivKey) {
 	mintTxArgs := evmtypes.EvmTxArgs{To: &contractAddr}
-	mintArgs := factory.CallArgs{
+	mintArgs := testutiltypes.CallArgs{
 		ContractABI: compiledContract.ABI,
 		MethodName:  "mint",
 		Args:        []interface{}{to, big.NewInt(amount)},
@@ -512,7 +513,7 @@ func (suite *EVMTestSuite) createEVMValidatorByPrecompile(contractAddr common.Ad
 		evmtypes.EvmTxArgs{
 			To: &multistakingPrecompileAddr,
 		},
-		factory.CallArgs{
+		testutiltypes.CallArgs{
 			ContractABI: abi,
 			MethodName:  "createValidator",
 			Args: []interface{}{
@@ -542,7 +543,7 @@ func (suite *EVMTestSuite) createEVMValidatorByPrecompile(contractAddr common.Ad
 		evmtypes.EvmTxArgs{
 			To: &multistakingPrecompileAddr,
 		},
-		factory.CallArgs{
+		testutiltypes.CallArgs{
 			ContractABI: abi,
 			MethodName:  "validator",
 			Args: []interface{}{
@@ -590,7 +591,7 @@ func (suite *EVMTestSuite) delegateEVMByPrecompile(contractAddr common.Address, 
 		evmtypes.EvmTxArgs{
 			To: &multistakingPrecompileAddr,
 		},
-		factory.CallArgs{
+		testutiltypes.CallArgs{
 			ContractABI: abi,
 			MethodName:  "delegate",
 			Args: []interface{}{
@@ -612,7 +613,7 @@ func (suite *EVMTestSuite) delegateEVMByPrecompile(contractAddr common.Address, 
 		evmtypes.EvmTxArgs{
 			To: &multistakingPrecompileAddr,
 		},
-		factory.CallArgs{
+		testutiltypes.CallArgs{
 			ContractABI: abi,
 			MethodName:  "delegation",
 			Args: []interface{}{
@@ -659,7 +660,7 @@ func (suite *EVMTestSuite) redelegateEVMByPrecompile(contractAddr common.Address
 		evmtypes.EvmTxArgs{
 			To: &multistakingPrecompileAddr,
 		},
-		factory.CallArgs{
+		testutiltypes.CallArgs{
 			ContractABI: abi,
 			MethodName:  "redelegate",
 			Args: []interface{}{
@@ -681,7 +682,7 @@ func (suite *EVMTestSuite) redelegateEVMByPrecompile(contractAddr common.Address
 		evmtypes.EvmTxArgs{
 			To: &multistakingPrecompileAddr,
 		},
-		factory.CallArgs{
+		testutiltypes.CallArgs{
 			ContractABI: abi,
 			MethodName:  "delegation",
 			Args: []interface{}{
@@ -727,7 +728,7 @@ func (suite *EVMTestSuite) undelegateEVMByPrecompile(contractAddr common.Address
 		evmtypes.EvmTxArgs{
 			To: &multistakingPrecompileAddr,
 		},
-		factory.CallArgs{
+		testutiltypes.CallArgs{
 			ContractABI: abi,
 			MethodName:  "undelegate",
 			Args: []interface{}{
@@ -748,7 +749,7 @@ func (suite *EVMTestSuite) undelegateEVMByPrecompile(contractAddr common.Address
 		evmtypes.EvmTxArgs{
 			To: &multistakingPrecompileAddr,
 		},
-		factory.CallArgs{
+		testutiltypes.CallArgs{
 			ContractABI: abi,
 			MethodName:  "unbondingDelegation",
 			Args: []interface{}{
@@ -797,7 +798,7 @@ func (suite *EVMTestSuite) cancelUndelegateEvmByPrecompile(contractAddr common.A
 		evmtypes.EvmTxArgs{
 			To: &multistakingPrecompileAddr,
 		},
-		factory.CallArgs{
+		testutiltypes.CallArgs{
 			ContractABI: abi,
 			MethodName:  "cancelUnbondingDelegation",
 			Args: []interface{}{
@@ -818,7 +819,7 @@ func (suite *EVMTestSuite) cancelUndelegateEvmByPrecompile(contractAddr common.A
 		evmtypes.EvmTxArgs{
 			To: &multistakingPrecompileAddr,
 		},
-		factory.CallArgs{
+		testutiltypes.CallArgs{
 			ContractABI: abi,
 			MethodName:  "unbondingDelegation",
 			Args: []interface{}{
