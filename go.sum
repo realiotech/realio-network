@@ -865,8 +865,6 @@ github.com/cosmos/cosmos-proto v1.0.0-beta.5 h1:eNcayDLpip+zVLRLYafhzLvQlSmyab+R
 github.com/cosmos/cosmos-proto v1.0.0-beta.5/go.mod h1:hQGLpiIUloJBMdQMMWb/4wRApmI9hjHH05nefC0Ojec=
 github.com/cosmos/cosmos-sdk v0.53.5-0.20251030204916-768cb210885c h1:HMVLvm0q3ahGvsyExkSCBcmvcdItMpTxAh4jllL4rJ4=
 github.com/cosmos/cosmos-sdk v0.53.5-0.20251030204916-768cb210885c/go.mod h1:nifazrMGFjpmOuaVIZBQ8akQc160imzySYFEA8A7tus=
-github.com/cosmos/evm v0.5.1 h1:eSRsxFxy/Tr2jiga/h8X5DojnC8JJwd21MB+HTa1SIg=
-github.com/cosmos/evm v0.5.1/go.mod h1:AiKOtGMt539qICNH2Kdy+iw9yK3rlcU6MWet3+g8sWs=
 github.com/cosmos/go-bip39 v1.0.0 h1:pcomnQdrdH22njcAatO0yWojsUnCO3y2tNoV1cb6hHY=
 github.com/cosmos/go-bip39 v1.0.0/go.mod h1:RNJv0H/pOIVgxw6KS7QeX2a0Uo0aKUlfhZ4xuwvCdJw=
 github.com/cosmos/go-ethereum v1.16.2-cosmos-1 h1:QIaIS6HIdPSBdTvpFhxswhMLUJgcr4irbd2o9ZKldAI=
@@ -986,8 +984,6 @@ github.com/ethereum/c-kzg-4844/v2 v2.1.0 h1:gQropX9YFBhl3g4HYhwE70zq3IHFRgbbNPw0
 github.com/ethereum/c-kzg-4844/v2 v2.1.0/go.mod h1:TC48kOKjJKPbN7C++qIgt0TJzZ70QznYR7Ob+WXl57E=
 github.com/ethereum/go-verkle v0.2.2 h1:I2W0WjnrFUIzzVPwm8ykY+7pL2d4VhlsePn4j7cnFk8=
 github.com/ethereum/go-verkle v0.2.2/go.mod h1:M3b90YRnzqKyyzBEWJGqj8Qff4IDeXnzFw0P9bFw3uk=
-github.com/evmos/os v0.0.0-20250318092432-d14323f1cec6 h1:zC09sXzlTMUZr6BdGVn8jc7QhAg+TQuDQsROq7LwBC0=
-github.com/evmos/os v0.0.0-20250318092432-d14323f1cec6/go.mod h1:zgs0dJ8M4AQtRDtGNCa6h2XqQDh4a5ar4Za+B80YJwc=
 github.com/fatih/color v1.7.0/go.mod h1:Zm6kSWBoL9eyXnKyktHP6abPY2pDugNf5KwzbycvMj4=
 github.com/fatih/color v1.13.0/go.mod h1:kLAiJbzzSOZDVNGyDpeOxJ47H46qBXwg5ILebYFFOfk=
 github.com/fatih/color v1.17.0 h1:GlRw1BRJxkpqUCBKzKOw098ed57fEsKeNjpTe3cSjK4=
@@ -1594,6 +1590,8 @@ github.com/rakyll/statik v0.1.7/go.mod h1:AlZONWzMtEnMs7W4e/1LURLiI49pIMmp6V9Ung
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:N/ElC8H3+5XpJzTSTfLsJV/mx9Q9g7kxmchpfZyxgzM=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
+github.com/realiotech/evm v0.5.2 h1:zwiUSrN39g3W5hSbOoot3biukmqpr2nlUmm7qxmIt6Y=
+github.com/realiotech/evm v0.5.2/go.mod h1:AiKOtGMt539qICNH2Kdy+iw9yK3rlcU6MWet3+g8sWs=
 github.com/realiotech/multi-staking v1.2.0-rc2.0.20251110105803-186b12b4bab1 h1:UcV+v00W53tbEWBrCgZXtfIciriFRFez0txCcjswfR0=
 github.com/realiotech/multi-staking v1.2.0-rc2.0.20251110105803-186b12b4bab1/go.mod h1:1Xqnya1oRaig2dHy/PmJjWRczqI/fIGsEt/pPF5XviQ=
 github.com/regen-network/protobuf v1.3.3-alpha.regen.1 h1:OHEc+q5iIAXpqiqFKeLpu5NwTIkVXUs48vFMwzqpqY4=
