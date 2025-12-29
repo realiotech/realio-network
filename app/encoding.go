@@ -1,11 +1,14 @@
 package app
 
 import (
+	"strings"
+
 	"github.com/cosmos/gogoproto/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 
 	"cosmossdk.io/simapp/params"
 	"cosmossdk.io/x/tx/signing"
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
@@ -19,8 +22,50 @@ import (
 	"github.com/cosmos/evm/ethereum/eip712"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/cosmos/evm/x/vm/types/legacy"
 	ethcryptocodec "github.com/realiotech/realio-network/crypto/codec"
 )
+
+// legacyFallbackTxConfig wraps a TxConfig to provide legacy transaction decoding fallback
+type legacyFallbackTxConfig struct {
+	client.TxConfig
+}
+
+// TxDecoder returns a decoder that falls back to legacy decoding for old EVM transactions
+func (c legacyFallbackTxConfig) TxDecoder() sdk.TxDecoder {
+	primaryDecoder := c.TxConfig.TxDecoder()
+	return func(txBytes []byte) (sdk.Tx, error) {
+		// Try primary decoder first
+		tx, err := primaryDecoder(txBytes)
+		if err == nil {
+			return tx, nil
+		}
+
+		// Check if this looks like a legacy EVM tx error
+		if !isLegacyTxError(err) {
+			return nil, err
+		}
+
+		// Try legacy decoder
+		legacyTx, legacyErr := legacy.DecodeTx(txBytes)
+		if legacyErr != nil {
+			// Return original error if legacy also fails
+			return nil, err
+		}
+
+		return legacyTx, nil
+	}
+}
+
+// isLegacyTxError checks if an error indicates a legacy transaction format issue
+func isLegacyTxError(err error) bool {
+	if err == nil {
+		return false
+	}
+	errStr := err.Error()
+	return strings.Contains(errStr, "errUnknownField") &&
+		strings.Contains(errStr, "MsgEthereumTx")
+}
 
 // MakeEncodingConfig creates the EncodingConfig for realio network
 func MakeEncodingConfig(evmChainID uint64) params.EncodingConfig {
@@ -57,10 +102,13 @@ func MakeEncodingConfig(evmChainID uint64) params.EncodingConfig {
 	ModuleBasics.RegisterLegacyAminoCodec(legacyAmino)
 	ModuleBasics.RegisterInterfaces(interfaceRegistry)
 
+	// Wrap TxConfig with legacy fallback for decoding old EVM transactions
+	wrappedTxConfig := legacyFallbackTxConfig{TxConfig: txConfig}
+
 	return params.EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
 		Codec:             codec,
-		TxConfig:          txConfig,
+		TxConfig:          wrappedTxConfig,
 		Amino:             legacyAmino,
 	}
 }

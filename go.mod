@@ -29,7 +29,6 @@ require (
 	github.com/cosmos/ibc-go/v10 v10.4.0
 	github.com/cosmos/rosetta v0.50.10
 	github.com/ethereum/go-ethereum v1.15.11
-	github.com/evmos/os v0.0.0-20250318092432-d14323f1cec6
 	github.com/golang/protobuf v1.5.4
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
@@ -282,7 +281,7 @@ require (
 )
 
 replace (
-	// github.com/cosmos/evm => github.com/realiotech/evm v0.2.1
+	github.com/cosmos/evm => github.com/realiotech/evm v0.5.2
 	// use Cosmos geth fork
 	github.com/ethereum/go-ethereum => github.com/cosmos/go-ethereum v1.16.2-cosmos-1
 
