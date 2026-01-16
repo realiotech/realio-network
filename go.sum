@@ -386,8 +386,6 @@ github.com/coinbase/rosetta-sdk-go/types v1.0.0 h1:jpVIwLcPoOeCR6o1tU+Xv7r5bMONN
 github.com/coinbase/rosetta-sdk-go/types v1.0.0/go.mod h1:eq7W2TMRH22GTW0N0beDnN931DW0/WOI1R2sdHNHG4c=
 github.com/cometbft/cometbft-db v0.14.1 h1:SxoamPghqICBAIcGpleHbmoPqy+crij/++eZz3DlerQ=
 github.com/cometbft/cometbft-db v0.14.1/go.mod h1:KHP1YghilyGV/xjD5DP3+2hyigWx0WTp9X+0Gnx0RxQ=
-github.com/cometbft/cometbft-sec-tachyon v0.38.21-0.20260113214209-9ac677707f85 h1:xCfV8uIRpj/O6wwoJhGBdUQYBSaVHyxy+aCxV70hnOI=
-github.com/cometbft/cometbft-sec-tachyon v0.38.21-0.20260113214209-9ac677707f85/go.mod h1:UCu8dlHqvkAsmAFmWDRWNZJPlu6ya2fTWZlDrWsivwo=
 github.com/containerd/continuity v0.3.0 h1:nisirsYROK15TAMVukJOUyGJjz4BNQJBVsNvAXZJ/eg=
 github.com/containerd/continuity v0.3.0/go.mod h1:wJEAIwKOm/pBZuBd0JmeTvnLquTB1Ag8espWhkykbPM=
 github.com/coreos/go-semver v0.2.0/go.mod h1:nnelYz7RCh+5ahJtPPxZlU+153eP4D4r3EedlOD2RNk=
@@ -1031,6 +1029,8 @@ github.com/rakyll/statik v0.1.7/go.mod h1:AlZONWzMtEnMs7W4e/1LURLiI49pIMmp6V9Ung
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:N/ElC8H3+5XpJzTSTfLsJV/mx9Q9g7kxmchpfZyxgzM=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
+github.com/realiotech/cometbft-sec-tachyon v0.38.21-0.20260113214209-9ac677707f85 h1:1zFG2zUq1Q4phAWDhsFa70ZQSroCd3iTkhbt28oObZo=
+github.com/realiotech/cometbft-sec-tachyon v0.38.21-0.20260113214209-9ac677707f85/go.mod h1:UCu8dlHqvkAsmAFmWDRWNZJPlu6ya2fTWZlDrWsivwo=
 github.com/realiotech/evm v0.2.1 h1:XEoLoiWwsZ23Zp6xgFf48bxTm2bQXfsvxN8nQSg/LKA=
 github.com/realiotech/evm v0.2.1/go.mod h1:/4D24vd1xRnUVaXzfNryxTo5Gn1c/phJG5FvpH9OvLQ=
 github.com/realiotech/multi-staking v1.1.0-rc6 h1:fHqrsrSdilGDC3F0DGVjnSurVZDkccl5MiHFV/T+Ui0=

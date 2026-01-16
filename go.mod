@@ -255,7 +255,7 @@ require (
 )
 
 replace (
-	github.com/cometbft/cometbft => github.com/cometbft/cometbft-sec-tachyon v0.38.21-0.20260113214209-9ac677707f85
+	github.com/cometbft/cometbft => github.com/realiotech/cometbft-sec-tachyon v0.38.21-0.20260113214209-9ac677707f85
 
 	github.com/cosmos/evm => github.com/realiotech/evm v0.2.1
 	// use Cosmos geth fork
