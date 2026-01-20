@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v6
         with:
           go-version: 1.22
       # Initializes the CodeQL tools for scanning.
