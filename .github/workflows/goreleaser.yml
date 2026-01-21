@@ -9,7 +9,7 @@ jobs:
     runs-on: blacksmith-8vcpu-ubuntu-2404
     environment: release
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v6
         with:
           submodules: true
       - name: Set up Go
