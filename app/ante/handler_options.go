@@ -16,6 +16,8 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ibcante "github.com/cosmos/ibc-go/v10/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	feesponsorkeeper "github.com/cosmos/evm/x/feesponsor/keeper"
+	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 )
 
 // HandlerOptions defines the list of module keepers required to run the RealioNetwork
@@ -28,7 +30,8 @@ type HandlerOptions struct {
 	IBCKeeper              *ibckeeper.Keeper
 	FeeMarketKeeper        evmosanteinterfaces.FeeMarketKeeper
 	EvmKeeper              evmosanteinterfaces.EVMKeeper
-	FeegrantKeeper         ante.FeegrantKeeper
+	FeegrantKeeper         feegrantkeeper.Keeper
+	FeesponsorKeeper       feesponsorkeeper.Keeper
 	SignModeHandler        *txsigning.HandlerMap
 	SigGasConsumer         func(meter storetypes.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
 	MaxTxGasWanted         uint64
@@ -71,7 +74,7 @@ func newEthAnteHandler(ctx sdk.Context, options HandlerOptions) sdk.AnteHandler 
 	evmParams := options.EvmKeeper.GetParams(ctx)
 	feemarketParams := options.FeeMarketKeeper.GetParams(ctx)
 	decorators := []sdk.AnteDecorator{
-		evmante.NewEVMMonoDecorator(options.AccountKeeper, options.FeeMarketKeeper, options.EvmKeeper, options.MaxTxGasWanted, &evmParams, &feemarketParams), // outermost AnteDecorator. SetUpContext must be called first
+		evmante.NewEVMMonoDecorator(options.AccountKeeper, options.FeeMarketKeeper, options.EvmKeeper, options.FeegrantKeeper, options.FeesponsorKeeper, options.MaxTxGasWanted, &evmParams, &feemarketParams), // outermost AnteDecorator. SetUpContext must be called first
 	}
 
 	if options.PendingTxListener != nil {

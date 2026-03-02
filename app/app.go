@@ -162,6 +162,10 @@ import (
 	bridgemodulekeeper "github.com/realiotech/realio-network/x/bridge/keeper"
 	bridgemoduletypes "github.com/realiotech/realio-network/x/bridge/types"
 
+	"github.com/cosmos/evm/x/feesponsor"
+	feesponsorkeeper "github.com/cosmos/evm/x/feesponsor/keeper"
+	feesponsortypes "github.com/cosmos/evm/x/feesponsor/types"
+
 	realionetworktypes "github.com/realiotech/realio-network/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
@@ -220,6 +224,7 @@ var (
 		vesting.AppModuleBasic{},
 		vm.AppModuleBasic{},
 		feemarket.AppModuleBasic{},
+		feesponsor.AppModuleBasic{},
 		assetmodule.AppModuleBasic{},
 		bridgemodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
@@ -305,10 +310,11 @@ type RealioNetwork struct {
 	CallbackKeeper        ibccallbackskeeper.ContractKeeper
 
 	// Ethermint keepers
-	EvmKeeper       *evmkeeper.Keeper
-	FeeMarketKeeper feemarketkeeper.Keeper
-	Erc20Keeper     erc20keeper.Keeper
-	EVMMempool      *evmmempool.ExperimentalEVMMempool
+	EvmKeeper        *evmkeeper.Keeper
+	FeeMarketKeeper  feemarketkeeper.Keeper
+	Erc20Keeper      erc20keeper.Keeper
+	FeeSponsorKeeper feesponsorkeeper.Keeper
+	EVMMempool       *evmmempool.ExperimentalEVMMempool
 
 	// make scoped keepers public for test purposes
 	ScopedIBCKeeper      capabilitykeeper.ScopedKeeper
@@ -364,7 +370,7 @@ func New(
 		// realio network keys
 		assetmoduletypes.StoreKey, bridgemoduletypes.StoreKey,
 		// ethermint keys
-		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey,
+		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, feesponsortypes.StoreKey,
 		// multi-staking keys
 		multistakingtypes.StoreKey,
 		// this line is used by starport scaffolding # stargate/app/storeKey
@@ -508,6 +514,12 @@ func New(
 		app.EvmKeeper,
 		app.StakingKeeper,
 		&app.TransferKeeper,
+	)
+
+	app.FeeSponsorKeeper = feesponsorkeeper.NewKeeper(
+		appCodec,
+		authtypes.NewModuleAddress(govtypes.ModuleName),
+		keys[feesponsortypes.StoreKey],
 	)
 
 	// multi-staking keeper
@@ -680,6 +692,7 @@ func New(
 		// ethermint
 		vm.NewAppModule(app.EvmKeeper, app.AccountKeeper, app.BankKeeper, app.AccountKeeper.AddressCodec()),
 		feemarket.NewAppModule(app.FeeMarketKeeper),
+		feesponsor.NewAppModule(app.FeeSponsorKeeper),
 
 		// realio network
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper, app.GetSubspace(assetmoduletypes.ModuleName)),
@@ -703,6 +716,7 @@ func New(
 		capabilitytypes.ModuleName,
 		feemarkettypes.ModuleName,
 		evmtypes.ModuleName,
+		feesponsortypes.ModuleName,
 		distrtypes.ModuleName,
 		slashingtypes.ModuleName,
 		evidencetypes.ModuleName,
@@ -730,6 +744,7 @@ func New(
 		multistakingtypes.ModuleName,
 		evmtypes.ModuleName,
 		feemarkettypes.ModuleName,
+		feesponsortypes.ModuleName,
 		// no-op modules
 		ibcexported.ModuleName,
 		ibctransfertypes.ModuleName,
@@ -774,6 +789,7 @@ func New(
 		// NOTE: feemarket need to be initialized before genutil module:
 		// gentx transactions use MinGasPriceDecorator.AnteHandle
 		feemarkettypes.ModuleName,
+		feesponsortypes.ModuleName,
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		paramstypes.ModuleName,
@@ -805,6 +821,7 @@ func New(
 		// NOTE: feemarket need to be initialized before genutil module:
 		// gentx transactions use MinGasPriceDecorator.AnteHandle
 		feemarkettypes.ModuleName,
+		feesponsortypes.ModuleName,
 		genutiltypes.ModuleName,
 		evidencetypes.ModuleName,
 		paramstypes.ModuleName,
@@ -857,6 +874,7 @@ func New(
 		BankKeeper:             app.BankKeeper,
 		SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
 		FeegrantKeeper:         app.FeeGrantKeeper,
+		FeesponsorKeeper:       app.FeeSponsorKeeper,
 		SigGasConsumer:         RealioSigVerificationGasConsumer,
 		IBCKeeper:              app.IBCKeeper,
 		EvmKeeper:              app.EvmKeeper,
