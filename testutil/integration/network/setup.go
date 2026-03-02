@@ -25,6 +25,8 @@ import (
 	"cosmossdk.io/math"
 	"cosmossdk.io/simapp"
 
+	feegranttypes "cosmossdk.io/x/feegrant"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
@@ -43,6 +45,8 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	srvflags "github.com/cosmos/evm/server/flags"
+
+	feesponsortypes "github.com/cosmos/evm/x/feesponsor/types"
 )
 
 // genSetupFn is the type for the module genesis setup functions
@@ -481,9 +485,18 @@ type FeeMarketCustomGenesisState struct {
 
 // setDefaultFeeMarketGenesisState sets the default fee market genesis state
 func setDefaultFeeMarketGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState simapp.GenesisState, overwriteParams FeeMarketCustomGenesisState) simapp.GenesisState {
-	fmGen := feemarkettypes.DefaultGenesisState()
-	fmGen.Params.BaseFee = overwriteParams.baseFee
-	genesisState[feemarkettypes.ModuleName] = cosmosEVMApp.AppCodec().MustMarshalJSON(fmGen)
+	newGen := feemarkettypes.GenesisState{
+		Params: feemarkettypes.Params{
+			BaseFee: math.LegacyNewDec(7),
+			BaseFeeChangeDenominator: 8,
+			ElasticityMultiplier: 2,
+			EnableHeight: 0,
+			MinGasMultiplier: math.LegacyMustNewDecFromStr("0.5"),
+			MinGasPrice: math.LegacyNewDec(7),
+			NoBaseFee: false,
+		},
+	} 
+	genesisState[feemarkettypes.ModuleName] = cosmosEVMApp.AppCodec().MustMarshalJSON(&newGen)
 	return genesisState
 }
 
@@ -518,6 +531,23 @@ func setDefaultMintGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState si
 
 	mintGen.Params = updatedParams
 	genesisState[minttypes.ModuleName] = cosmosEVMApp.AppCodec().MustMarshalJSON(mintGen)
+	return genesisState
+}
+
+func setDefaultFeesponsorGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState simapp.GenesisState) simapp.GenesisState {
+	// mintGen := minttypes.DefaultGenesisState()
+	feeSponsorGen := feesponsortypes.DefaultGenesisState()
+	feeSponsorGen.FeePayer = "realio1t4uhy2gl5c56e5zjzkqq9le9tgvkrgs7ps9aun"
+
+	genesisState[feesponsortypes.ModuleName] = cosmosEVMApp.AppCodec().MustMarshalJSON(feeSponsorGen)
+	return genesisState
+}
+
+func setDefaultFeegrantGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState simapp.GenesisState) simapp.GenesisState {
+	// mintGen := minttypes.DefaultGenesisState()
+	feegrantGen := feegranttypes.DefaultGenesisState()
+
+	genesisState[feegranttypes.ModuleName] = cosmosEVMApp.AppCodec().MustMarshalJSON(feegrantGen)
 	return genesisState
 }
 
@@ -557,6 +587,8 @@ func newDefaultGenesisState(cosmosEVMApp *app.RealioNetwork, params defaultGenes
 	genesisState = setDefaultSlashingGenesisState(cosmosEVMApp, genesisState, params.slashing)
 	genesisState = setDefaultMintGenesisState(cosmosEVMApp, genesisState, params.mint)
 	genesisState = setDefaultErc20GenesisState(cosmosEVMApp, genesisState)
+	genesisState = setDefaultFeesponsorGenesisState(cosmosEVMApp, genesisState)
+	genesisState = setDefaultFeegrantGenesisState(cosmosEVMApp, genesisState)
 	return genesisState
 }
 
