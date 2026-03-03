@@ -12,6 +12,7 @@ import (
 	v3 "github.com/realiotech/realio-network/app/upgrades/v1.3"
 	v4 "github.com/realiotech/realio-network/app/upgrades/v1.4"
 	v5 "github.com/realiotech/realio-network/app/upgrades/v1.5"
+	v6 "github.com/realiotech/realio-network/app/upgrades/v1.6"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -90,6 +91,14 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 			app.configurator,
 			*app.EvmKeeper,
 			app.Erc20Keeper,
+		),
+	)
+
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v6.UpgradeName,
+		v6.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
 		),
 	)
 
