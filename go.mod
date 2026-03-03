@@ -281,7 +281,7 @@ require (
 )
 
 replace (
-	github.com/cosmos/evm => github.com/realiotech/evm v0.5.2-0.20260302084059-4f0e20b79d97
+	github.com/cosmos/evm => github.com/realiotech/evm v0.5.2-0.20260303034321-525f2ad59d2a
 	// use Cosmos geth fork
 	github.com/ethereum/go-ethereum => github.com/cosmos/go-ethereum v1.16.2-cosmos-1
 
