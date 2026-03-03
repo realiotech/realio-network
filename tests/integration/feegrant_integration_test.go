@@ -3,14 +3,12 @@ package integration
 import (
 	"fmt"
 	"math/big"
-	"testing"
 	"time"
 
 	"github.com/cosmos/evm/testutil/integration/base/factory"
 	feesponsortypes "github.com/cosmos/evm/x/feesponsor/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/stretchr/testify/suite"
 
 	"cosmossdk.io/math"
 	feegranttypes "cosmossdk.io/x/feegrant"
@@ -25,20 +23,9 @@ import (
 	"github.com/realiotech/realio-network/testutil/integration/utils"
 )
 
-// FeeGrantTestSuite tests the feegrant module functionality
-type FeeGrantTestSuite struct {
-	suite.Suite
-	EVMTestSuite
-}
-
-// SetupTest sets up the test suite
-func (suite *FeeGrantTestSuite) SetupTest() {
-	suite.EVMTestSuite.SetupTest()
-}
-
 // SubmitSetFeePayerProposal submits a governance proposal to set the EVM fee payer
 // and votes on it to make it pass
-func (suite *FeeGrantTestSuite) SubmitSetFeePayerProposal(granterPriv cryptotypes.PrivKey, granterAddr sdk.AccAddress) uint64 {
+func (suite *EVMTestSuite) SubmitSetFeePayerProposal(granterPriv cryptotypes.PrivKey, granterAddr sdk.AccAddress) uint64 {
 	// Step 1: Submit governance proposal to update feesponsor fee payer
 	updateParamsMsg := &feesponsortypes.MsgSetFeePayer{
 		Authority:   authtypes.NewModuleAddress(govtypes.ModuleName).String(),
@@ -69,7 +56,7 @@ func (suite *FeeGrantTestSuite) SubmitSetFeePayerProposal(granterPriv cryptotype
 // 4. Grantee deploys an ERC20 contract
 // 5. Grantee calls contract method (mint) using fee grant
 // 6. Granter pays the gas fees (grantee balance remains the same)
-func (suite *FeeGrantTestSuite) TestFeeGrantEVMBasicFlow() {
+func (suite *EVMTestSuite) TestFeeGrantEVMBasicFlow() {
 	granterPriv := suite.keyring.GetPrivKey(0)
 	granter := suite.keyring.GetKey(0)
 	granterAddr := granter.AccAddr
@@ -155,7 +142,7 @@ func (suite *FeeGrantTestSuite) TestFeeGrantEVMBasicFlow() {
 // 4. Grantee deploys an ERC20 contract
 // 5. Grantee calls contract method (mint) multiple times using fee grant
 // 6. Granter pays the gas fees for all calls
-func (suite *FeeGrantTestSuite) TestFeeGrantMultipleEVMCalls() {
+func (suite *EVMTestSuite) TestFeeGrantMultipleEVMCalls() {
 	granterPriv := suite.keyring.GetPrivKey(0)
 	granter := suite.keyring.GetKey(0)
 	granterAddr := granter.AccAddr
@@ -262,7 +249,7 @@ func (suite *FeeGrantTestSuite) TestFeeGrantMultipleEVMCalls() {
 // 5. Drain granter's balance to minimal amount (just enough for fees)
 // 6. Grantee calls contract method using fee grant
 // 7. Transaction should succeed, granter balance stays same, grantee balance decreases
-func (suite *FeeGrantTestSuite) TestFeeGrantGranterZeroBalance() {
+func (suite *EVMTestSuite) TestFeeGrantGranterZeroBalance() {
 	granterPriv := suite.keyring.GetPrivKey(0)
 	granter := suite.keyring.GetKey(0)
 	granterAddr := granter.AccAddr
@@ -387,7 +374,7 @@ func (suite *FeeGrantTestSuite) TestFeeGrantGranterZeroBalance() {
 // 4. Grantee deploys an ERC20 contract
 // 5. Unauthorized wallet sends base denom tokens via EVM call
 // 6. Transaction succeeds, granter balance stays same, unauthorized wallet balance decreases
-func (suite *FeeGrantTestSuite) TestFeeGrantUnauthorizedWallet() {
+func (suite *EVMTestSuite) TestFeeGrantUnauthorizedWallet() {
 	granterPriv := suite.keyring.GetPrivKey(0)
 	granter := suite.keyring.GetKey(0)
 	granterAddr := granter.AccAddr
@@ -489,7 +476,7 @@ func (suite *FeeGrantTestSuite) TestFeeGrantUnauthorizedWallet() {
 // 4. Drain grantee's balance to zero
 // 5. Grantee sends base denom tokens via EVM call
 // 6. Transaction succeeds, granter pays the fees, grantee balance stays zero
-func (suite *FeeGrantTestSuite) TestFeeGrantSenderZeroBalance() {
+func (suite *EVMTestSuite) TestFeeGrantSenderZeroBalance() {
 	granterPriv := suite.keyring.GetPrivKey(0)
 	granter := suite.keyring.GetKey(0)
 	granterAddr := granter.AccAddr
@@ -594,7 +581,7 @@ func (suite *FeeGrantTestSuite) TestFeeGrantSenderZeroBalance() {
 // 4. Drain both granter and grantee's balance to zero
 // 5. Grantee attempts to send base denom tokens via EVM call
 // 6. Transaction should fail because neither has balance for fees
-func (suite *FeeGrantTestSuite) TestFeeGrantBothZeroBalance() {
+func (suite *EVMTestSuite) TestFeeGrantBothZeroBalance() {
 	granterPriv := suite.keyring.GetPrivKey(0)
 	granter := suite.keyring.GetKey(0)
 	granterAddr := granter.AccAddr
@@ -698,7 +685,7 @@ func (suite *FeeGrantTestSuite) TestFeeGrantBothZeroBalance() {
 // 6. Transaction succeeds because spend is within limit
 // 7. Grantee attempts another transaction that exceeds spend limit
 // 8. Transaction should fail because spend limit is exceeded
-func (suite *FeeGrantTestSuite) TestFeeGrantWithSpendLimit() {
+func (suite *EVMTestSuite) TestFeeGrantWithSpendLimit() {
 	granterPriv := suite.keyring.GetPrivKey(0)
 	granter := suite.keyring.GetKey(0)
 	granterAddr := granter.AccAddr
@@ -803,7 +790,7 @@ func (suite *FeeGrantTestSuite) TestFeeGrantWithSpendLimit() {
 // 3. Granter grants fee to grantee with expiration time (set to past)
 // 4. Grantee attempts to call contract method using expired fee grant
 // 5. Transaction should fail because fee grant has expired
-func (suite *FeeGrantTestSuite) TestFeeGrantWithExpiration() {
+func (suite *EVMTestSuite) TestFeeGrantWithExpiration() {
 	granterPriv := suite.keyring.GetPrivKey(0)
 	granter := suite.keyring.GetKey(0)
 	granterAddr := granter.AccAddr
@@ -904,7 +891,7 @@ func (suite *FeeGrantTestSuite) TestFeeGrantWithExpiration() {
 // 3. Granter grants fee to grantee
 // 4. Grantee sends base denom tokens via EVM call
 // 5. Transaction succeeds, granter pays the fees, grantee balance decreases by send amount
-func (suite *FeeGrantTestSuite) TestFeeSponsorCanCoverFee() {
+func (suite *EVMTestSuite) TestFeeSponsorCanCoverFee() {
 	granterPriv := suite.keyring.GetPrivKey(0)
 	granter := suite.keyring.GetKey(0)
 	granterAddr := granter.AccAddr
@@ -985,7 +972,7 @@ func (suite *FeeGrantTestSuite) TestFeeSponsorCanCoverFee() {
 // 3. Granter grants fee to grantee
 // 4. Grantee sends base denom tokens via EVM call
 // 5. Transaction succeeds, grantee balance decreases by send amount + fees
-func (suite *FeeGrantTestSuite) TestSenderCanCoverSendAmount() {
+func (suite *EVMTestSuite) TestSenderCanCoverSendAmount() {
 	granterPriv := suite.keyring.GetPrivKey(0)
 	granter := suite.keyring.GetKey(0)
 	granterAddr := granter.AccAddr
@@ -1067,7 +1054,7 @@ func (suite *FeeGrantTestSuite) TestSenderCanCoverSendAmount() {
 // 4. Drain grantee's balance to zero
 // 5. Grantee attempts to send base denom tokens via EVM call
 // 6. Transaction should fail because grantee cannot cover send amount
-func (suite *FeeGrantTestSuite) TestSenderCannotCoverSendAmount() {
+func (suite *EVMTestSuite) TestSenderCannotCoverSendAmount() {
 	granterPriv := suite.keyring.GetPrivKey(0)
 	granter := suite.keyring.GetKey(0)
 	granterAddr := granter.AccAddr
@@ -1136,7 +1123,50 @@ func (suite *FeeGrantTestSuite) TestSenderCannotCoverSendAmount() {
 	suite.Error(err, "transaction should fail because sender cannot cover send amount")
 }
 
-// TestFeeGrantTestSuite runs the test suite
-func TestFeeGrantTestSuite(t *testing.T) {
-	suite.Run(t, new(FeeGrantTestSuite))
+// TestNoProposalSenderPaysFees tests that without governance proposal, sender pays their own fees
+// 1. Do NOT submit governance proposal to set EVM fee payer
+// 2. Sender sends base denom tokens via EVM call
+// 3. Transaction succeeds, sender pays both the send amount and the fees
+// 4. Sender balance should decrease by send amount + fees
+func (suite *EVMTestSuite) TestNoProposalSenderPaysFees() {
+	senderPriv := suite.keyring.GetPrivKey(0)
+	sender := suite.keyring.GetKey(0)
+	senderAddr := sender.AccAddr
+
+	recipient := suite.keyring.GetKey(1)
+
+	baseDenom := suite.network.GetBaseDenom()
+
+	// Get sender balance before transaction
+	senderBeforeTx, err := suite.grpcHandler.GetBalanceFromBank(senderAddr, baseDenom)
+	suite.Require().NoError(err)
+
+	// Sender sends base denom tokens via EVM call (without fee grant or fee sponsor)
+	sendAmount := int64(1000)
+	sendTxArgs := evmtypes.EvmTxArgs{
+		To:     &recipient.Addr,
+		Amount: big.NewInt(sendAmount),
+	}
+
+	// Execute transaction - sender should pay for both send amount and fees
+	_, err = suite.factory.ExecuteEthTx(senderPriv, sendTxArgs)
+	suite.Require().NoError(err, "transaction should succeed")
+	suite.Require().NoError(suite.network.NextBlock())
+
+	// Get sender balance after transaction
+	senderAfterTx, err := suite.grpcHandler.GetBalanceFromBank(senderAddr, baseDenom)
+	suite.Require().NoError(err)
+
+	// Verify sender balance decreased (by send amount + fees)
+	suite.True(
+		senderAfterTx.Balance.Amount.LT(senderBeforeTx.Balance.Amount),
+		"Sender balance should decrease after paying for send amount and fees",
+	)
+
+	// Verify the decrease is at least the send amount
+	balanceDecrease := senderBeforeTx.Balance.Amount.Sub(senderAfterTx.Balance.Amount)
+	suite.True(
+		balanceDecrease.GTE(math.NewInt(sendAmount)),
+		"Balance decrease should be at least the send amount",
+	)
 }
