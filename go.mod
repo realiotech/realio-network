@@ -1,8 +1,6 @@
 module github.com/realiotech/realio-network
 
-go 1.23.8
-
-toolchain go1.23.9
+go 1.24.0
 
 require (
 	cosmossdk.io/api v0.9.2
@@ -39,7 +37,7 @@ require (
 	github.com/spf13/viper v1.20.1
 	github.com/stretchr/testify v1.11.1
 	golang.org/x/exp v0.0.0-20250305212735-054e65f0b394
-	golang.org/x/sync v0.16.0
+	golang.org/x/sync v0.19.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20250707201910-8d1bb00bc6a7
 	google.golang.org/grpc v1.75.0
 	google.golang.org/protobuf v1.36.10
