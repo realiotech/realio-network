@@ -99,6 +99,7 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 		v6.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
+			*app.EvmKeeper,
 		),
 	)
 
@@ -111,7 +112,7 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 		return
 	}
 
-	if upgradeInfo.Name == v4.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &v4.V4StoreUpgrades))
+	if upgradeInfo.Name == v6.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &v6.V6StoreUpgrades))
 	}
 }

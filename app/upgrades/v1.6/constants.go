@@ -10,7 +10,7 @@ const (
 	UpgradeName = "v1.6.0"
 )
 
-var V4StoreUpgrades = storetypes.StoreUpgrades{
+var V6StoreUpgrades = storetypes.StoreUpgrades{
 	Added: []string{
 		feesponsor.ModuleName,
 	},
