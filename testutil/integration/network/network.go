@@ -21,6 +21,7 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	sdkmath "cosmossdk.io/math"
+	feegranttypes "cosmossdk.io/x/feegrant"
 	"github.com/cosmos/evm/testutil/integration"
 
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
@@ -39,6 +40,7 @@ import (
 type Network interface {
 	network.Network
 	GetMultistakingClient() multistakingtypes.QueryClient
+	GetFeeGrantClient() feegranttypes.QueryClient
 	GetMintModuleClient() minttypes.QueryClient // conflict types with current GetMintClient()
 	GetBridgeClient() bridgetypes.QueryClient
 }
