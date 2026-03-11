@@ -144,8 +144,9 @@ func NewGrantRequest(origin common.Address, args []interface{}) (*feegranttypes.
 	return msg, nil
 }
 
-// NewRevokeRequest creates a new revoke request from ABI arguments
-func NewRevokeRequest(args []interface{}) (sdk.AccAddress, error) {
+// NewRevokeRequest parses ABI arguments and builds a MsgRevokeAllowance directly.
+// args: [grantee address]
+func NewRevokeRequest(origin common.Address, args []interface{}) (*feegranttypes.MsgRevokeAllowance, error) {
 	if len(args) != 1 {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 1, len(args))
 	}
@@ -155,7 +156,10 @@ func NewRevokeRequest(args []interface{}) (sdk.AccAddress, error) {
 		return nil, fmt.Errorf(cmn.ErrInvalidDelegator, args[0])
 	}
 
-	return sdk.AccAddress(granteeAddr.Bytes()), nil
+	return &feegranttypes.MsgRevokeAllowance{
+		Granter: sdk.AccAddress(origin.Bytes()).String(),
+		Grantee: sdk.AccAddress(granteeAddr.Bytes()).String(),
+	}, nil
 }
 
 // GrantOutput is a struct to represent the output of a grant operation
