@@ -180,6 +180,7 @@ import (
 	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	ibccallbackskeeper "github.com/cosmos/evm/x/ibc/callbacks/keeper"
 	ibccallbacks "github.com/cosmos/ibc-go/v10/modules/apps/callbacks"
+	precompileFeeGrant "github.com/realiotech/realio-network/precompile/feegrant"
 	precompileMultistaking "github.com/realiotech/realio-network/precompile/multistaking"
 )
 
@@ -649,6 +650,7 @@ func New(
 			app.GovKeeper,
 			app.SlashingKeeper,
 			app.MultiStakingKeeper,
+			app.FeeGrantKeeper,
 			appCodec,
 			app.AccountKeeper.AddressCodec(),
 			authcodec.NewBech32Codec(sdk.GetConfig().GetBech32ValidatorAddrPrefix()),
@@ -1301,6 +1303,7 @@ func BlockedAddresses() map[string]bool {
 
 	blockedPrecompilesHex := append([]string{}, evmtypes.AvailableStaticPrecompiles...)
 	blockedPrecompilesHex = append(blockedPrecompilesHex, precompileMultistaking.MultistakingPrecompileAddress)
+	blockedPrecompilesHex = append(blockedPrecompilesHex, precompileFeeGrant.FeeGrantPrecompileAddress)
 
 	for _, addr := range evmosvm.PrecompiledAddressesBerlin {
 		blockedPrecompilesHex = append(blockedPrecompilesHex, addr.Hex())
