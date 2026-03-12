@@ -71,7 +71,6 @@ func (suite *EVMTestSuite) TestFeeGrantPrecompile() {
 		Grantee: granteeAddr.String(),
 	})
 	suite.Require().NoError(err)
-	fmt.Println("allowanceRes", allowanceRes)
 	suite.Require().NotNil(allowanceRes.Allowance, "fee grant allowance should exist")
 
 	// Get balances before grantee transaction
@@ -170,7 +169,6 @@ func (suite *EVMTestSuite) TestFeeGrantPrecompile_BasicWithSpendLimit() {
 		Granter: granterAddr.String(),
 		Grantee: granteeAddr.String(),
 	})
-	fmt.Println("allowanceRes", allowanceRes)
 	suite.Require().NoError(err)
 	suite.Require().NotNil(allowanceRes.Allowance)
 
@@ -243,8 +241,6 @@ func (suite *EVMTestSuite) TestFeeGrantPrecompile_BasicWithExpiration() {
 	suite.Require().NoError(err)
 	suite.Require().NotNil(allowanceRes.Allowance)
 
-	fmt.Println("allowanceRes", allowanceRes)
-
 	// Get balances before grantee transaction
 	granterBeforeTx := suite.GetBalance(granterAddr, baseDenom)
 	granteeBeforeTx := suite.GetBalance(granteeAddr, baseDenom)
@@ -313,8 +309,6 @@ func (suite *EVMTestSuite) TestFeeGrantPrecompile_Periodic() {
 	})
 	suite.Require().NoError(err)
 	suite.Require().NotNil(allowanceRes.Allowance)
-
-	fmt.Println("allowanceRes", allowanceRes)
 
 	// Get balances before grantee transaction
 	granterBeforeTx := suite.GetBalance(granterAddr, baseDenom)
@@ -441,11 +435,10 @@ func (suite *EVMTestSuite) TestFeeGrantPrecompile_AllowedMessages() {
 
 	// Verify the grant was revoked
 	feegrantClient = suite.network.GetFeeGrantClient()
-	allowance, err := feegrantClient.Allowance(suite.network.GetContext(), &feegranttypes.QueryAllowanceRequest{
+	_, err = feegrantClient.Allowance(suite.network.GetContext(), &feegranttypes.QueryAllowanceRequest{
 		Granter: granterAddr.String(),
 		Grantee: granteeAddr.String(),
 	})
-	fmt.Println("allowance", allowance, err)
 	suite.Require().Error(err, "allowance should no longer exist after revoke")
 
 	// --- Case 2: Grant with EVM message type, EVM tx should succeed ---

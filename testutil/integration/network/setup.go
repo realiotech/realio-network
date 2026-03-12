@@ -535,16 +535,12 @@ func setDefaultMintGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState si
 }
 
 func setDefaultFeesponsorGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState simapp.GenesisState) simapp.GenesisState {
-	// mintGen := minttypes.DefaultGenesisState()
 	feeSponsorGen := feesponsortypes.DefaultGenesisState()
-	// feeSponsorGen.FeePayer = "realio1t4uhy2gl5c56e5zjzkqq9le9tgvkrgs7ps9aun"
-
 	genesisState[feesponsortypes.ModuleName] = cosmosEVMApp.AppCodec().MustMarshalJSON(feeSponsorGen)
 	return genesisState
 }
 
 func setDefaultFeegrantGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState simapp.GenesisState) simapp.GenesisState {
-	// mintGen := minttypes.DefaultGenesisState()
 	feegrantGen := feegranttypes.DefaultGenesisState()
 
 	genesisState[feegranttypes.ModuleName] = cosmosEVMApp.AppCodec().MustMarshalJSON(feegrantGen)

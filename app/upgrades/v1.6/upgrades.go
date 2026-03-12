@@ -10,7 +10,7 @@ import (
 	precompileFeeGrant "github.com/realiotech/realio-network/precompile/feegrant"
 )
 
-// CreateUpgradeHandler creates an SDK upgrade handler for v1.3.0
+// CreateUpgradeHandler creates an SDK upgrade handler for v1.6.0
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	cfg module.Configurator,
@@ -20,7 +20,7 @@ func CreateUpgradeHandler(
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 		sdkCtx.Logger().Info("Starting upgrade for v1.6.0...")
 
-		// Add multistaking and distributions precompiles to EVM active precompiles
+		// Add feegrant precompile
 		evmParams := evmKeeper.GetParams(sdkCtx)
 		evmParams.ActiveStaticPrecompiles = append(evmParams.ActiveStaticPrecompiles, precompileFeeGrant.FeeGrantPrecompileAddress)
 		err := evmKeeper.SetParams(sdkCtx, evmParams)
