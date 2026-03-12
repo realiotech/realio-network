@@ -1,7 +1,6 @@
 package integration
 
 import (
-	"fmt"
 	"math/big"
 	"time"
 
@@ -26,7 +25,6 @@ import (
 // SubmitSetFeePayerProposal submits a governance proposal to set the EVM fee payer
 // and votes on it to make it pass
 func (suite *EVMTestSuite) SubmitSetFeePayerProposal(granterPriv cryptotypes.PrivKey, granterAddr sdk.AccAddress) uint64 {
-	// Step 1: Submit governance proposal to update feesponsor fee payer
 	updateParamsMsg := &feesponsortypes.MsgSetFeePayer{
 		Authority:   authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		EvmFeePayer: granterAddr.String(),
@@ -42,11 +40,82 @@ func (suite *EVMTestSuite) SubmitSetFeePayerProposal(granterPriv cryptotypes.Pri
 	suite.Require().NoError(err)
 	suite.Require().NotZero(proposalID, "proposal ID should be non-zero")
 
-	// Step 2: Vote on the proposal using granter's private key and wait for it to pass
 	err = utils.ApproveProposal(suite.factory, suite.network, granterPriv, proposalID)
 	suite.Require().NoError(err)
 
 	return proposalID
+}
+
+// GrantFeeAllowance grants a fee allowance from granter to grantee
+func (suite *EVMTestSuite) GrantFeeAllowance(granterPriv cryptotypes.PrivKey, granterAddr, granteeAddr sdk.AccAddress, allowance *feegranttypes.BasicAllowance) {
+	allowanceAny, err := codectypes.NewAnyWithValue(allowance)
+	suite.Require().NoError(err)
+
+	grantMsg := &feegranttypes.MsgGrantAllowance{
+		Granter:   granterAddr.String(),
+		Grantee:   granteeAddr.String(),
+		Allowance: allowanceAny,
+	}
+
+	grantRes, err := suite.factory.ExecuteCosmosTx(granterPriv, factory.CosmosTxArgs{
+		Msgs: []sdk.Msg{grantMsg},
+	})
+	suite.Require().NoError(err)
+	suite.Require().True(grantRes.IsOK(), "grant should have succeeded", grantRes.GetLog())
+	suite.Require().NoError(suite.network.NextBlock())
+}
+
+// DeployERC20Contract deploys an ERC20 contract and returns the contract address
+func (suite *EVMTestSuite) DeployERC20Contract(deployerPriv cryptotypes.PrivKey) common.Address {
+	constructorArgs := []interface{}{"TestToken", "TEST", uint8(18)}
+	compiledContract := contracts.ERC20MinterBurnerDecimalsContract
+
+	contractAddr, err := suite.factory.DeployContract(
+		deployerPriv,
+		evmtypes.EvmTxArgs{},
+		testutiltypes.ContractDeploymentData{
+			Contract:        compiledContract,
+			ConstructorArgs: constructorArgs,
+		},
+	)
+	suite.Require().NoError(err)
+	suite.Require().NotEqual(contractAddr, common.Address{})
+	suite.Require().NoError(suite.network.NextBlock())
+
+	return contractAddr
+}
+
+// GetBalance retrieves the balance of an address
+func (suite *EVMTestSuite) GetBalance(addr sdk.AccAddress, denom string) math.Int {
+	balance, err := suite.grpcHandler.GetBalanceFromBank(addr, denom)
+	suite.Require().NoError(err)
+	return balance.Balance.Amount
+}
+
+// DrainBalance drains an account's balance to a specific amount
+func (suite *EVMTestSuite) DrainBalance(senderPriv cryptotypes.PrivKey, senderAddr, recipientAddr sdk.AccAddress, denom string, leaveAmount math.Int) {
+	currentBalance := suite.GetBalance(senderAddr, denom)
+	if !currentBalance.IsPositive() {
+		return
+	}
+
+	drainAmount := currentBalance.Sub(leaveAmount)
+	if !drainAmount.IsPositive() {
+		return
+	}
+
+	drainMsg := &banktypes.MsgSend{
+		FromAddress: senderAddr.String(),
+		ToAddress:   recipientAddr.String(),
+		Amount:      sdk.NewCoins(sdk.NewCoin(denom, drainAmount)),
+	}
+
+	drainRes, err := suite.factory.ExecuteCosmosTx(senderPriv, factory.CosmosTxArgs{
+		Msgs: []sdk.Msg{drainMsg},
+	})
+	suite.Require().NoError(err)
+	suite.Require().True(drainRes.IsOK(), "drain should have succeeded", drainRes.GetLog())
+	suite.Require().NoError(suite.network.NextBlock())
 }
 
 // TestFeeGrantEVMBasicFlow tests feegrant with EVM transactions:
@@ -60,7 +129,6 @@ func (suite *EVMTestSuite) TestFeeGrantEVMBasicFlow() {
 	granterPriv := suite.keyring.GetPrivKey(0)
 	granter := suite.keyring.GetKey(0)
 	granterAddr := granter.AccAddr
-	fmt.Println("granter addr", granterAddr.String())
 
 	granteePriv := suite.keyring.GetPrivKey(1)
 	grantee := suite.keyring.GetKey(1)
@@ -71,66 +139,30 @@ func (suite *EVMTestSuite) TestFeeGrantEVMBasicFlow() {
 	// Submit governance proposal to set fee payer and vote on it
 	suite.SubmitSetFeePayerProposal(granterPriv, granterAddr)
 
-	// Create a basic allowance (unlimited spend)
-	basicAllowance := &feegranttypes.BasicAllowance{}
-	allowanceAny, err := codectypes.NewAnyWithValue(basicAllowance)
-	suite.Require().NoError(err)
-
 	// Grant fee to grantee
-	grantMsg := &feegranttypes.MsgGrantAllowance{
-		Granter:   granterAddr.String(),
-		Grantee:   granteeAddr.String(),
-		Allowance: allowanceAny,
-	}
-
-	grantRes, err := suite.factory.ExecuteCosmosTx(granterPriv, factory.CosmosTxArgs{
-		Msgs: []sdk.Msg{grantMsg},
-	})
-	suite.Require().NoError(err)
-	suite.Require().True(grantRes.IsOK(), "grant should have succeeded", grantRes.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
+	suite.GrantFeeAllowance(granterPriv, granterAddr, granteeAddr, &feegranttypes.BasicAllowance{})
 
 	// Get balances before grantee transaction
-	granterBeforeTx, err := suite.grpcHandler.GetBalanceFromBank(granterAddr, baseDenom)
-	suite.Require().NoError(err)
-
-	granteeBeforeTx, err := suite.grpcHandler.GetBalanceFromBank(granteeAddr, baseDenom)
-	suite.Require().NoError(err)
+	granterBeforeTx := suite.GetBalance(granterAddr, baseDenom)
+	granteeBeforeTx := suite.GetBalance(granteeAddr, baseDenom)
 
 	// Deploy ERC20 contract for testing
-	constructorArgs := []interface{}{"TestToken", "TEST", uint8(18)}
-	compiledContract := contracts.ERC20MinterBurnerDecimalsContract
-
-	contractAddr, err := suite.factory.DeployContract(
-		granteePriv,
-		evmtypes.EvmTxArgs{},
-		testutiltypes.ContractDeploymentData{
-			Contract:        compiledContract,
-			ConstructorArgs: constructorArgs,
-		},
-	)
-	suite.Require().NoError(err)
-	suite.Require().NotEqual(contractAddr, common.Address{})
-	suite.Require().NoError(suite.network.NextBlock())
-	fmt.Println("After deploy contract")
+	_ = suite.DeployERC20Contract(granteePriv)
 
 	// Get balances after transaction
-	granterAfterTx, err := suite.grpcHandler.GetBalanceFromBank(granterAddr, baseDenom)
-	suite.Require().NoError(err)
-
-	granteeAfterTx, err := suite.grpcHandler.GetBalanceFromBank(granteeAddr, baseDenom)
-	suite.Require().NoError(err)
+	granterAfterTx := suite.GetBalance(granterAddr, baseDenom)
+	granteeAfterTx := suite.GetBalance(granteeAddr, baseDenom)
 
 	// Verify grantee balance decreased only by gas fees (not by transaction amount)
 	// Since this is an EVM call, grantee shouldn't lose tokens, only gas
 	suite.True(
-		granteeAfterTx.Balance.Amount.Equal(granteeBeforeTx.Balance.Amount),
+		granteeAfterTx.Equal(granteeBeforeTx),
 		"Grantee balance should not increase",
 	)
 
 	// Verify granter balance decreased by fees
 	suite.True(
-		granterAfterTx.Balance.Amount.LT(granterBeforeTx.Balance.Amount),
+		granterAfterTx.LT(granterBeforeTx),
 		"Granter balance should decrease due to paying fees",
 	)
 }
@@ -156,47 +188,16 @@ func (suite *EVMTestSuite) TestFeeGrantMultipleEVMCalls() {
 	// Submit governance proposal to set fee payer and vote on it
 	suite.SubmitSetFeePayerProposal(granterPriv, granterAddr)
 
-	// Create a basic allowance (unlimited spend)
-	basicAllowance := &feegranttypes.BasicAllowance{}
-	allowanceAny, err := codectypes.NewAnyWithValue(basicAllowance)
-	suite.Require().NoError(err)
-
 	// Grant fee to grantee
-	grantMsg := &feegranttypes.MsgGrantAllowance{
-		Granter:   granterAddr.String(),
-		Grantee:   granteeAddr.String(),
-		Allowance: allowanceAny,
-	}
-
-	grantRes, err := suite.factory.ExecuteCosmosTx(granterPriv, factory.CosmosTxArgs{
-		Msgs: []sdk.Msg{grantMsg},
-	})
-	suite.Require().NoError(err)
-	suite.Require().True(grantRes.IsOK(), "grant should have succeeded", grantRes.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
+	suite.GrantFeeAllowance(granterPriv, granterAddr, granteeAddr, &feegranttypes.BasicAllowance{})
 
 	// Deploy ERC20 contract for testing
-	constructorArgs := []interface{}{"TestToken", "TEST", uint8(18)}
 	compiledContract := contracts.ERC20MinterBurnerDecimalsContract
-
-	contractAddr, err := suite.factory.DeployContract(
-		granteePriv,
-		evmtypes.EvmTxArgs{},
-		testutiltypes.ContractDeploymentData{
-			Contract:        compiledContract,
-			ConstructorArgs: constructorArgs,
-		},
-	)
-	suite.Require().NoError(err)
-	suite.Require().NotEqual(contractAddr, common.Address{})
-	suite.Require().NoError(suite.network.NextBlock())
+	contractAddr := suite.DeployERC20Contract(granteePriv)
 
 	// Get balances before grantee transactions
-	granterBeforeTx, err := suite.grpcHandler.GetBalanceFromBank(granterAddr, baseDenom)
-	suite.Require().NoError(err)
-
-	granteeBeforeTx, err := suite.grpcHandler.GetBalanceFromBank(granteeAddr, baseDenom)
-	suite.Require().NoError(err)
+	granterBeforeTx := suite.GetBalance(granterAddr, baseDenom)
+	granteeBeforeTx := suite.GetBalance(granteeAddr, baseDenom)
 
 	// Grantee calls contract method (mint) multiple times using fee grant
 	amountToMint := big.NewInt(1e18)
@@ -222,21 +223,18 @@ func (suite *EVMTestSuite) TestFeeGrantMultipleEVMCalls() {
 	suite.Require().NoError(suite.network.NextBlock())
 
 	// Get balances after transactions
-	granterAfterTx, err := suite.grpcHandler.GetBalanceFromBank(granterAddr, baseDenom)
-	suite.Require().NoError(err)
-
-	granteeAfterTx, err := suite.grpcHandler.GetBalanceFromBank(granteeAddr, baseDenom)
-	suite.Require().NoError(err)
+	granterAfterTx := suite.GetBalance(granterAddr, baseDenom)
+	granteeAfterTx := suite.GetBalance(granteeAddr, baseDenom)
 
 	// Verify grantee balance did not decrease (only paid gas)
 	suite.True(
-		granteeAfterTx.Balance.Amount.Equal(granteeBeforeTx.Balance.Amount),
+		granteeAfterTx.Equal(granteeBeforeTx),
 		"Grantee balance should not increase",
 	)
 
 	// Verify granter balance decreased by fees for both calls
 	suite.True(
-		granterAfterTx.Balance.Amount.LT(granterBeforeTx.Balance.Amount),
+		granterAfterTx.LT(granterBeforeTx),
 		"Granter balance should decrease due to paying fees for multiple calls",
 	)
 }
@@ -267,68 +265,19 @@ func (suite *EVMTestSuite) TestFeeGrantGranterZeroBalance() {
 	// Submit governance proposal to set fee payer and vote on it
 	suite.SubmitSetFeePayerProposal(granterPriv, granterAddr)
 
-	// Create a basic allowance (unlimited spend)
-	basicAllowance := &feegranttypes.BasicAllowance{}
-	allowanceAny, err := codectypes.NewAnyWithValue(basicAllowance)
-	suite.Require().NoError(err)
-
 	// Grant fee to grantee
-	grantMsg := &feegranttypes.MsgGrantAllowance{
-		Granter:   granterAddr.String(),
-		Grantee:   granteeAddr.String(),
-		Allowance: allowanceAny,
-	}
-
-	grantRes, err := suite.factory.ExecuteCosmosTx(granterPriv, factory.CosmosTxArgs{
-		Msgs: []sdk.Msg{grantMsg},
-	})
-	suite.Require().NoError(err)
-	suite.Require().True(grantRes.IsOK(), "grant should have succeeded", grantRes.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
+	suite.GrantFeeAllowance(granterPriv, granterAddr, granteeAddr, &feegranttypes.BasicAllowance{})
 
 	// Deploy ERC20 contract for testing
-	constructorArgs := []interface{}{"TestToken", "TEST", uint8(18)}
 	compiledContract := contracts.ERC20MinterBurnerDecimalsContract
-
-	contractAddr, err := suite.factory.DeployContract(
-		granteePriv,
-		evmtypes.EvmTxArgs{},
-		testutiltypes.ContractDeploymentData{
-			Contract:        compiledContract,
-			ConstructorArgs: constructorArgs,
-		},
-	)
-	suite.Require().NoError(err)
-	suite.Require().NotEqual(contractAddr, common.Address{})
-	suite.Require().NoError(suite.network.NextBlock())
-
-	// Get granter's balance
-	granterBalance, err := suite.grpcHandler.GetBalanceFromBank(granterAddr, baseDenom)
-	suite.Require().NoError(err)
+	contractAddr := suite.DeployERC20Contract(granteePriv)
 
 	// Drain granter's balance to near-zero (leave some for the grant message fee)
-	drainAmount := granterBalance.Balance.Amount.Sub(math.NewInt(1100000))
-	if drainAmount.IsPositive() {
-		drainMsg := &banktypes.MsgSend{
-			FromAddress: granterAddr.String(),
-			ToAddress:   thirdAddr.String(),
-			Amount:      sdk.NewCoins(sdk.NewCoin(baseDenom, drainAmount)),
-		}
-
-		drainRes, err := suite.factory.ExecuteCosmosTx(granterPriv, factory.CosmosTxArgs{
-			Msgs: []sdk.Msg{drainMsg},
-		})
-		suite.Require().NoError(err)
-		suite.Require().True(drainRes.IsOK(), "drain should have succeeded", drainRes.GetLog())
-		suite.Require().NoError(suite.network.NextBlock())
-	}
+	suite.DrainBalance(granterPriv, granterAddr, thirdAddr, baseDenom, math.NewInt(1100000))
 
 	// Get balances before grantee transaction
-	granterBeforeTx, err := suite.grpcHandler.GetBalanceFromBank(granterAddr, baseDenom)
-	suite.Require().NoError(err)
-
-	granteeBeforeTx, err := suite.grpcHandler.GetBalanceFromBank(granteeAddr, baseDenom)
-	suite.Require().NoError(err)
+	granterBeforeTx := suite.GetBalance(granterAddr, baseDenom)
+	granteeBeforeTx := suite.GetBalance(granteeAddr, baseDenom)
 
 	// Now call contract method when granter has minimal balance (just enough for fees)
 	amountToMint := big.NewInt(1e18)
@@ -348,21 +297,18 @@ func (suite *EVMTestSuite) TestFeeGrantGranterZeroBalance() {
 	suite.Require().NoError(suite.network.NextBlock())
 
 	// Get balances after transaction
-	granterAfterTx, err := suite.grpcHandler.GetBalanceFromBank(granterAddr, baseDenom)
-	suite.Require().NoError(err)
-
-	granteeAfterTx, err := suite.grpcHandler.GetBalanceFromBank(granteeAddr, baseDenom)
-	suite.Require().NoError(err)
+	granterAfterTx := suite.GetBalance(granterAddr, baseDenom)
+	granteeAfterTx := suite.GetBalance(granteeAddr, baseDenom)
 
 	// Verify granter balance stayed the same (fee grant paid the fees)
 	suite.True(
-		granterAfterTx.Balance.Amount.Equal(granterBeforeTx.Balance.Amount),
+		granterAfterTx.Equal(granterBeforeTx),
 		"Granter balance should remain the same when fee grant is used",
 	)
 
 	// Verify grantee balance decreased (they paid for the transaction)
 	suite.True(
-		granteeAfterTx.Balance.Amount.LT(granteeBeforeTx.Balance.Amount),
+		granteeAfterTx.LT(granteeBeforeTx),
 		"Grantee balance should decrease due to paying for the transaction",
 	)
 }
@@ -386,56 +332,24 @@ func (suite *EVMTestSuite) TestFeeGrantUnauthorizedWallet() {
 	// Get a third wallet that is NOT authorized
 	unauthorizedPriv := suite.keyring.GetPrivKey(2)
 
+	baseDenom := suite.network.GetBaseDenom()
+
 	// Submit governance proposal to set fee payer and vote on it
 	suite.SubmitSetFeePayerProposal(granterPriv, granterAddr)
 
-	// Create a basic allowance (unlimited spend)
-	basicAllowance := &feegranttypes.BasicAllowance{}
-	allowanceAny, err := codectypes.NewAnyWithValue(basicAllowance)
-	suite.Require().NoError(err)
-
 	// Grant fee to grantee (NOT to unauthorized wallet)
-	grantMsg := &feegranttypes.MsgGrantAllowance{
-		Granter:   granterAddr.String(),
-		Grantee:   granteeAddr.String(),
-		Allowance: allowanceAny,
-	}
-
-	grantRes, err := suite.factory.ExecuteCosmosTx(granterPriv, factory.CosmosTxArgs{
-		Msgs: []sdk.Msg{grantMsg},
-	})
-	suite.Require().NoError(err)
-	suite.Require().True(grantRes.IsOK(), "grant should have succeeded", grantRes.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
+	suite.GrantFeeAllowance(granterPriv, granterAddr, granteeAddr, &feegranttypes.BasicAllowance{})
 
 	// Deploy ERC20 contract for testing
-	constructorArgs := []interface{}{"TestToken", "TEST", uint8(18)}
-	compiledContract := contracts.ERC20MinterBurnerDecimalsContract
-
-	contractAddr, err := suite.factory.DeployContract(
-		granteePriv,
-		evmtypes.EvmTxArgs{},
-		testutiltypes.ContractDeploymentData{
-			Contract:        compiledContract,
-			ConstructorArgs: constructorArgs,
-		},
-	)
-	suite.Require().NoError(err)
-	suite.Require().NotEqual(contractAddr, common.Address{})
-	suite.Require().NoError(suite.network.NextBlock())
-
-	baseDenom := suite.network.GetBaseDenom()
+	_ = suite.DeployERC20Contract(granteePriv)
 
 	// Get a third wallet that is NOT authorized
 	unauthorized := suite.keyring.GetKey(2)
 	unauthorizedAddr := unauthorized.AccAddr
 
 	// Get balances before unauthorized wallet sends tokens
-	granterBeforeTx, err := suite.grpcHandler.GetBalanceFromBank(granterAddr, baseDenom)
-	suite.Require().NoError(err)
-
-	unauthorizedBeforeTx, err := suite.grpcHandler.GetBalanceFromBank(unauthorizedAddr, baseDenom)
-	suite.Require().NoError(err)
+	granterBeforeTx := suite.GetBalance(granterAddr, baseDenom)
+	unauthorizedBeforeTx := suite.GetBalance(unauthorizedAddr, baseDenom)
 
 	// Unauthorized wallet sends base denom tokens via EVM call using granter as fee payer
 	sendAmount := int64(1000)
@@ -445,26 +359,24 @@ func (suite *EVMTestSuite) TestFeeGrantUnauthorizedWallet() {
 	}
 
 	// This should succeed because fee grant allows unauthorized wallet to use granter's balance for fees
+	var err error
 	_, err = suite.factory.ExecuteEthTx(unauthorizedPriv, sendTxArgs)
 	suite.Require().NoError(err)
 	suite.Require().NoError(suite.network.NextBlock())
 
 	// Get balances after transaction
-	granterAfterTx, err := suite.grpcHandler.GetBalanceFromBank(granterAddr, baseDenom)
-	suite.Require().NoError(err)
-
-	unauthorizedAfterTx, err := suite.grpcHandler.GetBalanceFromBank(unauthorizedAddr, baseDenom)
-	suite.Require().NoError(err)
+	granterAfterTx := suite.GetBalance(granterAddr, baseDenom)
+	unauthorizedAfterTx := suite.GetBalance(unauthorizedAddr, baseDenom)
 
 	// Verify granter balance stayed the same (fee grant paid the fees)
 	suite.True(
-		granterAfterTx.Balance.Amount.Equal(granterBeforeTx.Balance.Amount),
+		granterAfterTx.Equal(granterBeforeTx),
 		"Granter balance should remain the same when fee grant is used",
 	)
 
 	// Verify unauthorized wallet balance decreased (they paid for the transaction)
 	suite.True(
-		unauthorizedAfterTx.Balance.Amount.LT(unauthorizedBeforeTx.Balance.Amount.Sub(math.NewInt(sendAmount))),
+		unauthorizedAfterTx.LT(unauthorizedBeforeTx.Sub(math.NewInt(sendAmount))),
 		"Unauthorized wallet balance should decrease due to paying for the transaction",
 	)
 }
@@ -494,49 +406,14 @@ func (suite *EVMTestSuite) TestFeeGrantSenderZeroBalance() {
 	// Submit governance proposal to set fee payer and vote on it
 	suite.SubmitSetFeePayerProposal(granterPriv, granterAddr)
 
-	// Create a basic allowance (unlimited spend)
-	basicAllowance := &feegranttypes.BasicAllowance{}
-	allowanceAny, err := codectypes.NewAnyWithValue(basicAllowance)
-	suite.Require().NoError(err)
-
 	// Grant fee to grantee
-	grantMsg := &feegranttypes.MsgGrantAllowance{
-		Granter:   granterAddr.String(),
-		Grantee:   granteeAddr.String(),
-		Allowance: allowanceAny,
-	}
-
-	grantRes, err := suite.factory.ExecuteCosmosTx(granterPriv, factory.CosmosTxArgs{
-		Msgs: []sdk.Msg{grantMsg},
-	})
-	suite.Require().NoError(err)
-	suite.Require().True(grantRes.IsOK(), "grant should have succeeded", grantRes.GetLog())
-	suite.Require().NoError(suite.network.NextBlock())
-
-	// Get grantee's balance
-	granteeBalance, err := suite.grpcHandler.GetBalanceFromBank(granteeAddr, baseDenom)
-	suite.Require().NoError(err)
+	suite.GrantFeeAllowance(granterPriv, granterAddr, granteeAddr, &feegranttypes.BasicAllowance{})
 
 	// Drain grantee's balance to zero
-	drainAmount := granteeBalance.Balance.Amount.Sub(math.NewInt(58899672026158))
-	if drainAmount.IsPositive() {
-		drainMsg := &banktypes.MsgSend{
-			FromAddress: granteeAddr.String(),
-			ToAddress:   thirdAddr.String(),
-			Amount:      sdk.NewCoins(sdk.NewCoin(baseDenom, drainAmount)),
-		}
-
-		drainRes, err := suite.factory.ExecuteCosmosTx(granteePriv, factory.CosmosTxArgs{
-			Msgs: []sdk.Msg{drainMsg},
-		})
-		suite.Require().NoError(err)
-		suite.Require().True(drainRes.IsOK(), "drain should have succeeded", drainRes.GetLog())
-		suite.Require().NoError(suite.network.NextBlock())
-	}
+	suite.DrainBalance(granteePriv, granteeAddr, thirdAddr, baseDenom, math.NewInt(58899672026158))
 
 	// Get balances before grantee sends tokens
-	granterBeforeTx, err := suite.grpcHandler.GetBalanceFromBank(granterAddr, baseDenom)
-	suite.Require().NoError(err)
+	granterBeforeTx := suite.GetBalance(granterAddr, baseDenom)
 
 	granteeBeforeTx, err := suite.grpcHandler.GetBalanceFromBank(granteeAddr, baseDenom)
 	suite.Require().NoError(err)
@@ -563,7 +440,7 @@ func (suite *EVMTestSuite) TestFeeGrantSenderZeroBalance() {
 
 	// Verify granter balance decreased (paid the fees)
 	suite.True(
-		granterAfterTx.Balance.Amount.LT(granterBeforeTx.Balance.Amount),
+		granterAfterTx.Balance.Amount.LT(granterBeforeTx),
 		"Granter balance should decrease due to paying fees",
 	)
 
@@ -651,7 +528,6 @@ func (suite *EVMTestSuite) TestFeeGrantBothZeroBalance() {
 		drainRes, err := suite.factory.ExecuteCosmosTx(granteePriv, factory.CosmosTxArgs{
 			Msgs: []sdk.Msg{drainMsg},
 		})
-		fmt.Println("drainRes", drainRes)
 		suite.Require().NoError(err)
 		suite.Require().True(drainRes.IsOK(), "drain should have succeeded", drainRes.GetLog())
 		suite.Require().NoError(suite.network.NextBlock())
@@ -666,11 +542,10 @@ func (suite *EVMTestSuite) TestFeeGrantBothZeroBalance() {
 	}
 
 	_, err = suite.factory.ExecuteEthTx(granteePriv, sendTxArgs)
-	fmt.Println("err", err)
+	suite.Require().NoError(err)
 	suite.Require().NoError(suite.network.NextBlock())
 
 	_, err = suite.factory.ExecuteEthTx(granteePriv, sendTxArgs)
-	fmt.Println("err", err)
 	suite.Require().NoError(suite.network.NextBlock())
 
 	suite.Error(err, "transaction should fail when both sender and granter have zero balance")
