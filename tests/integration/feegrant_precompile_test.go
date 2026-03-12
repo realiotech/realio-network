@@ -355,7 +355,6 @@ func (suite *EVMTestSuite) TestFeeGrantPrecompile_Periodic() {
 		granterAfterTx.LT(granterBeforeTx),
 		"Granter balance should decrease due to paying fees",
 	)
-
 }
 
 // TestFeeGrantPrecompile_AllowedMessages tests that:

@@ -46,8 +46,7 @@ func (p Precompile) RevokeEVM(
 
 	// Execute revoke using feegrant msgServer
 	msgServer := feegrantkeeper.NewMsgServerImpl(p.feegrantKeeper)
-	revokeRes, err := msgServer.RevokeAllowance(ctx, msg)
-	fmt.Println("revokeRes", revokeRes)
+	_, err = msgServer.RevokeAllowance(ctx, msg)
 	if err != nil {
 		return nil, fmt.Errorf("feegrant revoke failed: %v", err)
 	}

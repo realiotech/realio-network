@@ -3,6 +3,7 @@ package ante
 import (
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
+	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 	txsigning "cosmossdk.io/x/tx/signing"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
@@ -13,11 +14,10 @@ import (
 	evmosantecosmos "github.com/cosmos/evm/ante/cosmos"
 	evmante "github.com/cosmos/evm/ante/evm"
 	evmosanteinterfaces "github.com/cosmos/evm/ante/interfaces"
+	feesponsorkeeper "github.com/cosmos/evm/x/feesponsor/keeper"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ibcante "github.com/cosmos/ibc-go/v10/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
-	feesponsorkeeper "github.com/cosmos/evm/x/feesponsor/keeper"
-	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 )
 
 // HandlerOptions defines the list of module keepers required to run the RealioNetwork

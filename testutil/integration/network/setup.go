@@ -484,18 +484,18 @@ type FeeMarketCustomGenesisState struct {
 }
 
 // setDefaultFeeMarketGenesisState sets the default fee market genesis state
-func setDefaultFeeMarketGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState simapp.GenesisState, overwriteParams FeeMarketCustomGenesisState) simapp.GenesisState {
+func setDefaultFeeMarketGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState simapp.GenesisState, _ FeeMarketCustomGenesisState) simapp.GenesisState {
 	newGen := feemarkettypes.GenesisState{
 		Params: feemarkettypes.Params{
-			BaseFee: math.LegacyNewDec(7),
+			BaseFee:                  math.LegacyNewDec(7),
 			BaseFeeChangeDenominator: 8,
-			ElasticityMultiplier: 2,
-			EnableHeight: 0,
-			MinGasMultiplier: math.LegacyMustNewDecFromStr("0.5"),
-			MinGasPrice: math.LegacyNewDec(7),
-			NoBaseFee: false,
+			ElasticityMultiplier:     2,
+			EnableHeight:             0,
+			MinGasMultiplier:         math.LegacyMustNewDecFromStr("0.5"),
+			MinGasPrice:              math.LegacyNewDec(7),
+			NoBaseFee:                false,
 		},
-	} 
+	}
 	genesisState[feemarkettypes.ModuleName] = cosmosEVMApp.AppCodec().MustMarshalJSON(&newGen)
 	return genesisState
 }
@@ -537,7 +537,7 @@ func setDefaultMintGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState si
 func setDefaultFeesponsorGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState simapp.GenesisState) simapp.GenesisState {
 	// mintGen := minttypes.DefaultGenesisState()
 	feeSponsorGen := feesponsortypes.DefaultGenesisState()
-	feeSponsorGen.FeePayer = "realio1t4uhy2gl5c56e5zjzkqq9le9tgvkrgs7ps9aun"
+	// feeSponsorGen.FeePayer = "realio1t4uhy2gl5c56e5zjzkqq9le9tgvkrgs7ps9aun"
 
 	genesisState[feesponsortypes.ModuleName] = cosmosEVMApp.AppCodec().MustMarshalJSON(feeSponsorGen)
 	return genesisState

@@ -113,8 +113,7 @@ func (p Precompile) Execute(ctx sdk.Context, contract *vm.Contract, readOnly boo
 
 func (Precompile) IsTransaction(method *abi.Method) bool {
 	switch method.Name {
-	case GrantMethod,
-		RevokeMethod:
+	case GrantMethod, RevokeMethod:
 		return true
 	default:
 		return false
