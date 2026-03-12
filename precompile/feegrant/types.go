@@ -14,7 +14,6 @@ import (
 	cmn "github.com/cosmos/evm/precompiles/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/ethereum/go-ethereum/accounts/abi"
 )
 
 const (
@@ -30,14 +29,14 @@ const (
 // - PeriodicAllowance if period > 0 and periodLimit is provided
 // - Wraps in AllowedMsgAllowance if allowedMessages is non-empty
 // args: [grantee address, spendLimit string, expiration int64, period int64, periodLimit string, allowedMessages string[]]
-func NewGrantRequest(origin common.Address, args []interface{}) (*feegranttypes.MsgGrantAllowance, error) {
+func NewGrantRequest(ctx sdk.Context, origin common.Address, args []interface{}) (*feegranttypes.MsgGrantAllowance, error) {
 	if len(args) != 6 {
 		return nil, fmt.Errorf(cmn.ErrInvalidNumberOfArgs, 6, len(args))
 	}
 
 	granteeAddr, ok := args[0].(common.Address)
 	if !ok || granteeAddr == (common.Address{}) {
-		return nil, fmt.Errorf(cmn.ErrInvalidDelegator, args[0])
+		return nil, fmt.Errorf(cmn.ErrInvalidHexAddress, args[0])
 	}
 
 	// Parse spendLimit string (e.g. "100stake") using sdk.ParseCoinsNormalized
@@ -68,10 +67,11 @@ func NewGrantRequest(origin common.Address, args []interface{}) (*feegranttypes.
 	}
 
 	var expiresAtTime time.Time
+	var parseErr error
 	if expirationStr != "" {
-		expiresAtTime, err := time.Parse(time.RFC3339, expirationStr)
-		if err != nil {
-			return nil, fmt.Errorf("invalid expiration: %v", err)
+		expiresAtTime, parseErr = time.Parse(time.RFC3339, expirationStr)
+		if parseErr != nil {
+			return nil, fmt.Errorf("invalid expiration: %v", parseErr)
 		}
 		basic.Expiration = &expiresAtTime
 	}
@@ -111,7 +111,7 @@ func NewGrantRequest(origin common.Address, args []interface{}) (*feegranttypes.
 			return nil, fmt.Errorf("period limit was not set")
 		}
 
-		periodReset := getPeriodReset(period)
+		periodReset := getPeriodReset(ctx, period)
 		if expirationStr != "" && periodReset.Sub(expiresAtTime) > 0 {
 			return nil, fmt.Errorf("period (%d) cannot reset after expiration (%v)", period, expirationStr)
 		}
@@ -121,7 +121,7 @@ func NewGrantRequest(origin common.Address, args []interface{}) (*feegranttypes.
 			Period:           getPeriod(period),
 			PeriodSpendLimit: periodLimit,
 			PeriodCanSpend:   periodLimit,
-			PeriodReset:      getPeriodReset(period),
+			PeriodReset:      getPeriodReset(ctx, period),
 		}
 		grant = &periodic
 	}
@@ -153,7 +153,7 @@ func NewRevokeRequest(origin common.Address, args []interface{}) (*feegranttypes
 
 	granteeAddr, ok := args[0].(common.Address)
 	if !ok || granteeAddr == (common.Address{}) {
-		return nil, fmt.Errorf(cmn.ErrInvalidDelegator, args[0])
+		return nil, fmt.Errorf(cmn.ErrInvalidHexAddress, args[0])
 	}
 
 	return &feegranttypes.MsgRevokeAllowance{
@@ -162,28 +162,8 @@ func NewRevokeRequest(origin common.Address, args []interface{}) (*feegranttypes
 	}, nil
 }
 
-// GrantOutput is a struct to represent the output of a grant operation
-type GrantOutput struct {
-	Success bool
-}
-
-// Pack packs a given slice of abi arguments into a byte array
-func (g *GrantOutput) Pack(args abi.Arguments) ([]byte, error) {
-	return args.Pack(g.Success)
-}
-
-// RevokeOutput is a struct to represent the output of a revoke operation
-type RevokeOutput struct {
-	Success bool
-}
-
-// Pack packs a given slice of abi arguments into a byte array
-func (ro *RevokeOutput) Pack(args abi.Arguments) ([]byte, error) {
-	return args.Pack(ro.Success)
-}
-
-func getPeriodReset(duration int64) time.Time {
-	return time.Now().Add(getPeriod(duration))
+func getPeriodReset(ctx sdk.Context, duration int64) time.Time {
+	return ctx.BlockTime().Add(getPeriod(duration))
 }
 
 func getPeriod(duration int64) time.Duration {

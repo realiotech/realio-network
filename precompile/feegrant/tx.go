@@ -16,7 +16,7 @@ func (p Precompile) GrantEVM(
 	method *abi.Method,
 	args []interface{},
 ) ([]byte, error) {
-	msg, err := NewGrantRequest(origin, args)
+	msg, err := NewGrantRequest(ctx, origin, args)
 	if err != nil {
 		return nil, err
 	}
