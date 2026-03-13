@@ -410,7 +410,7 @@ func (suite *EVMTestSuite) TestFeeGrantSenderZeroBalance() {
 	suite.GrantFeeAllowance(granterPriv, granterAddr, granteeAddr, &feegranttypes.BasicAllowance{})
 
 	// Drain grantee's balance to zero
-	suite.DrainBalance(granteePriv, granteeAddr, thirdAddr, baseDenom, math.NewInt(58899672026158))
+	suite.DrainBalance(granteePriv, granteeAddr, thirdAddr, baseDenom, math.NewInt(1100000))
 
 	// Get balances before grantee sends tokens
 	granterBeforeTx := suite.GetBalance(granterAddr, baseDenom)
