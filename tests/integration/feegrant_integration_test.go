@@ -649,13 +649,13 @@ func (suite *EVMTestSuite) TestFeeGrantWithSpendLimit() {
 	// Verify granter balance is the same
 	suite.True(
 		granterAfterTx.Balance.Amount.Equal(granterBeforeTx.Balance.Amount),
-		"Granter balance should decrease due to paying fees",
+		"Granter balance should be the same",
 	)
 
 	// Verify grantee balance decrease
 	suite.True(
 		granteeAfterTx.Balance.Amount.LT(granteeBeforeTx.Balance.Amount),
-		"Grantee balance should remain zero",
+		"Grantee balance should be decreased",
 	)
 }
 
@@ -750,13 +750,13 @@ func (suite *EVMTestSuite) TestFeeGrantWithExpiration() {
 	// Verify granter balance is the same
 	suite.True(
 		granterAfterTx.Balance.Amount.Equal(granterBeforeTx.Balance.Amount),
-		"Granter balance should decrease due to paying fees",
+		"Granter balance should be the same",
 	)
 
 	// Verify grantee balance decrease
 	suite.True(
 		granteeAfterTx.Balance.Amount.LT(granteeBeforeTx.Balance.Amount),
-		"Grantee balance should remain zero",
+		"Grantee balance should be decrease",
 	)
 }
 
