@@ -3,7 +3,6 @@ package ante
 import (
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
-	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 	txsigning "cosmossdk.io/x/tx/signing"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
@@ -30,7 +29,7 @@ type HandlerOptions struct {
 	IBCKeeper              *ibckeeper.Keeper
 	FeeMarketKeeper        evmosanteinterfaces.FeeMarketKeeper
 	EvmKeeper              evmosanteinterfaces.EVMKeeper
-	FeegrantKeeper         feegrantkeeper.Keeper
+	FeegrantKeeper         evmosanteinterfaces.FeegrantKeeper
 	FeesponsorKeeper       feesponsorkeeper.Keeper
 	SignModeHandler        *txsigning.HandlerMap
 	SigGasConsumer         func(meter storetypes.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
