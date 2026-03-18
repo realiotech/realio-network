@@ -37,6 +37,24 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
+## [v1.6.0](https://github.com/realiotech/realio-network/releases/tag/v1.6.0) - 2026-03-18
+
+### Improvements
+
+- (feat) [333](https://github.com/realiotech/realio-network/pull/333): Use evm/x/feesponsor module and add feegrant precompile
+
+## [v1.5.0](https://github.com/realiotech/realio-network/releases/tag/v1.5.0) - 2026-02-03
+
+### Improvements
+
+- (feat) [330](https://github.com/realiotech/realio-network/pull/330): Add evm legacy tx support
+
+- (chore) [#327](https://github.com/realiotech/realio-network/pull/327): Bump evm to v0.5.0
+
+### Bug Fixes
+
+- (fix) [#332](https://github.com/realiotech/realio-network/pull/332): Patch cometbft 0.38.21
+
 ## [v1.4.0](https://github.com/realiotech/realio-network/releases/tag/v1.4.0) - 2025-09-24
 
 ### Improvements

@@ -11,6 +11,7 @@ import (
 	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
 
 	"cosmossdk.io/core/address"
+	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
@@ -21,6 +22,7 @@ import (
 
 	precompiletypes "github.com/cosmos/evm/precompiles/types"
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
+	precompileFeeGrant "github.com/realiotech/realio-network/precompile/feegrant"
 	precompileMultiStaking "github.com/realiotech/realio-network/precompile/multistaking"
 )
 
@@ -38,6 +40,7 @@ func NewAvailableStaticPrecompiles(
 	govKeeper govkeeper.Keeper,
 	slashingKeeper slashingkeeper.Keeper,
 	multiStakingKeeper multistakingkeeper.Keeper,
+	feegrantKeeper feegrantkeeper.Keeper,
 	appCodec codec.Codec,
 	addrCodec address.Codec,
 	valAddrCodec address.Codec,
@@ -56,10 +59,17 @@ func NewAvailableStaticPrecompiles(
 
 	mulStakingPrecompile, err := precompileMultiStaking.NewPrecompile(cdc, stakingKeeper, multiStakingKeeper, erc20Keeper, addrCodec, valAddrCodec)
 	if err != nil {
-		panic(fmt.Errorf("failed to instantiate bank precompile: %w", err))
+		panic(fmt.Errorf("failed to instantiate multistaking precompile: %w", err))
 	}
 
 	precompiles[mulStakingPrecompile.Address()] = mulStakingPrecompile
+
+	feeGrantPrecompile, err := precompileFeeGrant.NewPrecompile(cdc, feegrantKeeper, addrCodec)
+	if err != nil {
+		panic(fmt.Errorf("failed to instantiate feegrant precompile: %w", err))
+	}
+
+	precompiles[feeGrantPrecompile.Address()] = feeGrantPrecompile
 
 	return precompiles
 }

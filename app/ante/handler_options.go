@@ -13,6 +13,7 @@ import (
 	evmosantecosmos "github.com/cosmos/evm/ante/cosmos"
 	evmante "github.com/cosmos/evm/ante/evm"
 	evmosanteinterfaces "github.com/cosmos/evm/ante/interfaces"
+	feesponsorkeeper "github.com/cosmos/evm/x/feesponsor/keeper"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ibcante "github.com/cosmos/ibc-go/v10/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
@@ -28,7 +29,8 @@ type HandlerOptions struct {
 	IBCKeeper              *ibckeeper.Keeper
 	FeeMarketKeeper        evmosanteinterfaces.FeeMarketKeeper
 	EvmKeeper              evmosanteinterfaces.EVMKeeper
-	FeegrantKeeper         ante.FeegrantKeeper
+	FeegrantKeeper         evmosanteinterfaces.FeegrantKeeper
+	FeesponsorKeeper       feesponsorkeeper.Keeper
 	SignModeHandler        *txsigning.HandlerMap
 	SigGasConsumer         func(meter storetypes.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
 	MaxTxGasWanted         uint64
@@ -71,7 +73,7 @@ func newEthAnteHandler(ctx sdk.Context, options HandlerOptions) sdk.AnteHandler 
 	evmParams := options.EvmKeeper.GetParams(ctx)
 	feemarketParams := options.FeeMarketKeeper.GetParams(ctx)
 	decorators := []sdk.AnteDecorator{
-		evmante.NewEVMMonoDecorator(options.AccountKeeper, options.FeeMarketKeeper, options.EvmKeeper, options.MaxTxGasWanted, &evmParams, &feemarketParams), // outermost AnteDecorator. SetUpContext must be called first
+		evmante.NewEVMMonoDecorator(options.AccountKeeper, options.FeeMarketKeeper, options.EvmKeeper, options.FeegrantKeeper, options.FeesponsorKeeper, options.MaxTxGasWanted, &evmParams, &feemarketParams), // outermost AnteDecorator. SetUpContext must be called first
 	}
 
 	if options.PendingTxListener != nil {

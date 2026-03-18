@@ -143,6 +143,10 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	# Configure fee market module parameters
 	jq '.app_state["feemarket"]["params"]["base_fee"]="100.000000000000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["feemarket"]["params"]["min_gas_price"]="100.000000000000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+
+	# Configure fee sponsor module parameters
+	# Set evm global fee payer as dev0 address
+	jq '.app_state["feesponsor"]["fee_payer"]="realio1cml96vmptgw99syqrrz8az79xer2pcgpvp5f6p"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	# Change mint denom to ario
 	jq '.app_state["mint"]["params"]["mint_denom"]="ario"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 

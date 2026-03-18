@@ -6,6 +6,7 @@ import (
 	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
+	feegranttypes "cosmossdk.io/x/feegrant"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
@@ -114,4 +115,10 @@ func (n *IntegrationNetwork) GetMultistakingClient() multistakingtypes.QueryClie
 	queryHelper := getQueryHelper(n.GetContext(), n.GetEncodingConfig())
 	multistakingtypes.RegisterQueryServer(queryHelper, multistakingkeeper.NewQueryServerImpl(n.app.MultiStakingKeeper))
 	return multistakingtypes.NewQueryClient(queryHelper)
+}
+
+func (n *IntegrationNetwork) GetFeeGrantClient() feegranttypes.QueryClient {
+	queryHelper := getQueryHelper(n.GetContext(), n.GetEncodingConfig())
+	feegranttypes.RegisterQueryServer(queryHelper, &n.app.FeeGrantKeeper)
+	return feegranttypes.NewQueryClient(queryHelper)
 }

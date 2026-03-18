@@ -1,0 +1,75 @@
+{
+  "_format": "hh-sol-artifact-1",
+  "contractName": "IFeeGrant",
+  "sourceName": "solidity/precompiles/feegrant/IFeeGrant.sol",
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "grantee",
+          "type": "address"
+        },
+        {
+          "internalType": "string",
+          "name": "spendLimit",
+          "type": "string"
+        },
+        {
+          "internalType": "string",
+          "name": "expiration",
+          "type": "string"
+        },
+        {
+          "internalType": "int64",
+          "name": "period",
+          "type": "int64"
+        },
+        {
+          "internalType": "string",
+          "name": "periodLimit",
+          "type": "string"
+        },
+        {
+          "internalType": "string[]",
+          "name": "allowedMessages",
+          "type": "string[]"
+        }
+      ],
+      "name": "grant",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "success",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "grantee",
+          "type": "address"
+        }
+      ],
+      "name": "revoke",
+      "outputs": [
+        {
+          "internalType": "bool",
+          "name": "success",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x",
+  "deployedBytecode": "0x",
+  "linkReferences": {},
+  "deployedLinkReferences": {}
+}
+
