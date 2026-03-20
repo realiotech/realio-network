@@ -465,7 +465,6 @@ func New(
 		runtime.NewKVStoreService(keys[feegrant.StoreKey]),
 		app.AccountKeeper,
 	)
-	app.FeeGrantKeeper.SetBankKeeper(app.BankKeeper)
 
 	app.UpgradeKeeper = upgradekeeper.NewKeeper(
 		skipUpgradeHeights,
