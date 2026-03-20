@@ -12,6 +12,7 @@ import (
 	testutiltypes "github.com/cosmos/evm/testutil/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/ethereum/go-ethereum/common"
+	testkeyring "github.com/cosmos/evm/testutil/keyring"
 
 	precompileFeegrant "github.com/realiotech/realio-network/precompile/feegrant"
 )
@@ -31,6 +32,9 @@ func (suite *EVMTestSuite) TestFeeGrantPrecompile() {
 	granteePriv := suite.keyring.GetPrivKey(1)
 	grantee := suite.keyring.GetKey(1)
 	granteeAddr := grantee.AccAddr
+
+	// Gen new empty addr
+	empAcc := testkeyring.NewKey().AccAddr
 
 	baseDenom := suite.network.GetBaseDenom()
 
@@ -67,6 +71,38 @@ func (suite *EVMTestSuite) TestFeeGrantPrecompile() {
 	// Verify the grant was created in the feegrant module state
 	feegrantClient := suite.network.GetFeeGrantClient()
 	allowanceRes, err := feegrantClient.Allowance(suite.network.GetContext(), &feegranttypes.QueryAllowanceRequest{
+		Granter: granterAddr.String(),
+		Grantee: granteeAddr.String(),
+	})
+	suite.Require().NoError(err)
+	suite.Require().NotNil(allowanceRes.Allowance, "fee grant allowance should exist")
+
+	// Grant to empty addr
+	grantRes, err = suite.factory.ExecuteContractCall(
+		granterPriv,
+		evmtypes.EvmTxArgs{
+			To: &feegrantPrecompileAddr,
+		},
+		testutiltypes.CallArgs{
+			ContractABI: feegrantABI,
+			MethodName:  "grant",
+			Args: []interface{}{
+				common.BytesToAddress(empAcc), // grantee address
+				"",           // spendLimit (empty = unlimited)
+				"",           // expiration (empty = no expiration)
+				int64(0),     // period (0 = no periodic allowance)
+				"",           // periodLimit (empty)
+				[]string{},   // allowedMessages (empty = all messages)
+			},
+		},
+	)
+	suite.Require().NoError(err)
+	suite.Require().True(grantRes.IsOK(), "grant via precompile should have succeeded", grantRes.GetLog())
+	suite.Require().NoError(suite.network.NextBlock())
+
+	// Verify the grant was created in the feegrant module state
+	feegrantClient = suite.network.GetFeeGrantClient()
+	allowanceRes, err = feegrantClient.Allowance(suite.network.GetContext(), &feegranttypes.QueryAllowanceRequest{
 		Granter: granterAddr.String(),
 		Grantee: granteeAddr.String(),
 	})
