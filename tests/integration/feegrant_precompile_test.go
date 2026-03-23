@@ -9,10 +9,10 @@ import (
 	feegranttypes "cosmossdk.io/x/feegrant"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	"github.com/cosmos/evm/contracts"
+	testkeyring "github.com/cosmos/evm/testutil/keyring"
 	testutiltypes "github.com/cosmos/evm/testutil/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	"github.com/ethereum/go-ethereum/common"
-	testkeyring "github.com/cosmos/evm/testutil/keyring"
 
 	precompileFeegrant "github.com/realiotech/realio-network/precompile/feegrant"
 )
@@ -88,11 +88,11 @@ func (suite *EVMTestSuite) TestFeeGrantPrecompile() {
 			MethodName:  "grant",
 			Args: []interface{}{
 				common.BytesToAddress(empAcc), // grantee address
-				"",           // spendLimit (empty = unlimited)
-				"",           // expiration (empty = no expiration)
-				int64(0),     // period (0 = no periodic allowance)
-				"",           // periodLimit (empty)
-				[]string{},   // allowedMessages (empty = all messages)
+				"",                            // spendLimit (empty = unlimited)
+				"",                            // expiration (empty = no expiration)
+				int64(0),                      // period (0 = no periodic allowance)
+				"",                            // periodLimit (empty)
+				[]string{},                    // allowedMessages (empty = all messages)
 			},
 		},
 	)
