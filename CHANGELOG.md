@@ -43,6 +43,8 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 - (feat) [333](https://github.com/realiotech/realio-network/pull/333): Use evm/x/feesponsor module and add feegrant precompile
 
+- (docs) [350](https://github.com/realiotech/realio-network/pull/350): Document and example for feegrant precompile
+
 ### Bug Fixes
 
 - (fix) [#351](https://github.com/realiotech/realio-network/pull/351): Inject BankKeeper into FeegrantKeeper
