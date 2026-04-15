@@ -1,6 +1,9 @@
 package types
 
 import (
+	"fmt"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"gopkg.in/yaml.v2"
 )
 
@@ -20,7 +23,12 @@ func DefaultParams() Params {
 
 // validate params
 func (p Params) Validate() error {
-	// TODO: validate
+	if p.Authority == "" {
+		return fmt.Errorf("authority cannot be empty")
+	}
+	if _, err := sdk.AccAddressFromBech32(p.Authority); err != nil {
+		return fmt.Errorf("invalid authority address: %w", err)
+	}
 	return nil
 }
 
