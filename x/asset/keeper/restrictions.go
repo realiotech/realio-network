@@ -8,10 +8,18 @@ import (
 	"github.com/realiotech/realio-network/x/asset/types"
 )
 
+// AssetSendRestriction enforces token authorization checks on all coin transfers.
+// It is registered as a bank send restriction in app.go via BankKeeper.AppendSendRestriction.
+//
+// The allowAddrs list is populated at keeper construction with all module account addresses
+// (via app.ModuleAccountAddrs()). These addresses — e.g. x/distribution, x/gov, x/staking,
+// x/bridge — are exempt from authorization checks so that protocol-level transfers (fee
+// collection, governance, bridging) are never blocked. The list is set once at startup and
+// is never modified at runtime, so no governance path can add arbitrary addresses to it.
 func (k Keeper) AssetSendRestriction(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) (newToAddr sdk.AccAddress, err error) {
 	newToAddr = toAddr
 
-	// module whitelisted addresses can send coins without restrictions
+	// Module accounts in allowAddrs skip authorization checks (see doc above).
 	if allow := k.AllowAddr(fromAddr) || k.AllowAddr(toAddr); allow {
 		return newToAddr, nil
 	}
