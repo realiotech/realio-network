@@ -18,17 +18,22 @@ import (
 func (ms msgServer) TransferToken(goCtx context.Context, msg *types.MsgTransferToken) (*types.MsgTransferTokenResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
-	var fromAddress, toAddress sdk.AccAddress
 	isAuthorizedFrom, isAuthorizedTo := true, true
 
 	lowerCaseSymbol := strings.ToLower(msg.Symbol)
 
-	fromAddress, _ = sdk.AccAddressFromBech32(msg.From)
-	toAddress, _ = sdk.AccAddressFromBech32(msg.To)
+	fromAddress, err := sdk.AccAddressFromBech32(msg.From)
+	if err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid from address: %s", err)
+	}
+	toAddress, err := sdk.AccAddressFromBech32(msg.To)
+	if err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid to address: %s", err)
+	}
 	// Check if the value already exists
 	token, err := ms.Token.Get(
 		ctx,
-		types.TokenKey(msg.Symbol),
+		types.TokenKey(lowerCaseSymbol),
 	)
 	if err != nil {
 		return nil, errorsmod.Wrapf(sdkerrors.ErrKeyNotFound, "token %s not found: %s", lowerCaseSymbol, err.Error())

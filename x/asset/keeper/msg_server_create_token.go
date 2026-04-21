@@ -57,18 +57,21 @@ func (ms msgServer) CreateToken(goCtx context.Context, msg *types.MsgCreateToken
 
 	// mint coins for the current module
 	// normalize into chains 10^18 denomination
-	totalInt, _ := math.NewIntFromString(msg.Total)
+	totalInt, ok := math.NewIntFromString(msg.Total)
+	if !ok {
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "invalid total amount")
+	}
 	canonicalAmount := totalInt.Mul(realionetworktypes.PowerReduction)
 	coin := sdk.Coins{{Denom: baseDenom, Amount: canonicalAmount}}
 
 	err = ms.bankKeeper.MintCoins(ctx, types.ModuleName, coin)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	err = ms.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, managerAccAddress, coin)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	ctx.EventManager().EmitEvent(
