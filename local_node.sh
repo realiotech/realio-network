@@ -1,4 +1,4 @@
-CHAINID="${CHAIN_ID:-realionetwork_3301-1}"
+CHAINID="${CHAIN_ID:-realionetworklocal_7777-1}"
 MONIKER="realionetworklocal"
 
 echo "Starting local node with chain ID: $CHAINID and moniker: $MONIKER"
@@ -114,12 +114,19 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	USER4_KEY="dev3"
 	USER4_MNEMONIC="doll midnight silk carpet brush boring pluck office gown inquiry duck chief aim exit gain never tennis crime fragile ship cloud surface exotic patch"
 
+	# Hardhat default account #0 — publicly known test key, LOCAL DEV ONLY.
+	# Address: 0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266
+	HARDHAT0_KEY="hardhat0"
+	HARDHAT0_PRIVKEY="ac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"
+
 	# Import keys from mnemonics
 	echo "$VAL_MNEMONIC" | realio-networkd keys add "$VAL_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
 	echo "$USER1_MNEMONIC" | realio-networkd keys add "$USER1_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
 	echo "$USER2_MNEMONIC" | realio-networkd keys add "$USER2_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
 	echo "$USER3_MNEMONIC" | realio-networkd keys add "$USER3_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
 	echo "$USER4_MNEMONIC" | realio-networkd keys add "$USER4_KEY" --recover --keyring-backend "$KEYRING" --algo "$KEYALGO" --home "$HOMEDIR"
+	# unsafe-import-eth-key prompts for a passphrase (>=8 chars) on stdin even under the `test` backend.
+	printf '12345678\n12345678\n' | realio-networkd keys unsafe-import-eth-key "$HARDHAT0_KEY" "$HARDHAT0_PRIVKEY" --keyring-backend "$KEYRING" --home "$HOMEDIR"
 
 	# Set moniker and chain-id for the example chain (Moniker can be anything, chain-id must be an integer)
 	realio-networkd init $MONIKER -o --chain-id "$CHAINID" --home "$HOMEDIR"
@@ -137,31 +144,11 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	jq '.app_state["evm"]["params"]["access_control"]["create"]["access_control_list"]=[]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["evm"]["params"]["access_control"]["create"]["access_type"]="ACCESS_TYPE_PERMISSIONLESS"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["evm"]["params"]["active_static_precompiles"]=[]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["allow_unprotected_txs"]=false' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["arrow_glacier_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["berlin_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["byzantium_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["cancun_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["chain_id"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["constantinople_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["dao_fork_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["dao_fork_support"]=true' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["decimals"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["denom"]=""' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["eip150_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["eip150_hash"]="0x0000000000000000000000000000000000000000000000000000000000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["eip155_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["eip158_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["gray_glacier_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["homestead_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["istanbul_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["london_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["merge_netsplit_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["muir_glacier_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["petersburg_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
-	jq '.app_state["evm"]["params"]["chain_config"]["shanghai_block"]="0"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["evm"]["params"]["evm_channels"]=[]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["evm"]["params"]["extra_eips"]=["3855"]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+
+	# Bridge authority defaults to empty string, which fails validate-genesis. Set it to the gov module address.
+	jq '.app_state["bridge"]["params"]["authority"]="realio10d07y265gmmuvt4z0w9aw880jnsr700jnhh02f"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
 	# Configure fee market module parameters
 	jq '.app_state["feemarket"]["params"]["base_fee"]="100.000000000000000000"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
@@ -236,6 +223,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	realio-networkd genesis add-genesis-account "$USER2_KEY" 1000000000000000000000ario --keyring-backend "$KEYRING" --home "$HOMEDIR"
 	realio-networkd genesis add-genesis-account "$USER3_KEY" 1000000000000000000000ario --keyring-backend "$KEYRING" --home "$HOMEDIR"
 	realio-networkd genesis add-genesis-account "$USER4_KEY" 1000000000000000000000ario --keyring-backend "$KEYRING" --home "$HOMEDIR"
+	realio-networkd genesis add-genesis-account "$HARDHAT0_KEY" 100000000000000000000000ario --keyring-backend "$KEYRING" --home "$HOMEDIR"
 
 	# Sign genesis transaction
 	realio-networkd genesis gentx "$VAL_KEY" 1000000000000000000000ario --gas-prices ${BASEFEE}ario --keyring-backend "$KEYRING" --chain-id "$CHAINID" --home "$HOMEDIR"
@@ -247,7 +235,7 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	## 5. Copy the `gentx-*` folders under `~/.clonedOsd/config/gentx/` folders into the original `~/.realio-networkd/config/gentx`
 
 	# Collect genesis tx
-	./build/realio-networkd genesis collect-gentxs --home "$HOMEDIR"
+	realio-networkd genesis collect-gentxs --home "$HOMEDIR"
 
 	# Run this to ensure everything worked and that the genesis file is setup correctly
 	realio-networkd genesis validate-genesis --home "$HOMEDIR"
@@ -258,10 +246,13 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 fi
 
 # Start the node
+# 8545 is the default EVM JSON-RPC port but often collides with a local Hardhat node, so use 8547 instead.
 realio-networkd start "$TRACE" \
 	--log_level $LOGLEVEL \
 	--minimum-gas-prices=0.0001ario \
 	--home "$HOMEDIR" \
+	--json-rpc.address=127.0.0.1:8547 \
+	--json-rpc.ws-address=127.0.0.1:8548 \
 	--json-rpc.api eth,txpool,personal,net,debug,web3 \
 	--chain-id "$CHAINID"
 
