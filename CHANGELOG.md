@@ -37,7 +37,7 @@ Ref: https://keepachangelog.com/en/1.0.0/
 
 # Changelog
 
-## [v1.6.0](https://github.com/realiotech/realio-network/releases/tag/v1.6.0) - 2026-03-18
+## [v1.6.0](https://github.com/realiotech/realio-network/releases/tag/v1.6.0) - 2026-04-24
 
 ### Improvements
 
@@ -48,6 +48,8 @@ Ref: https://keepachangelog.com/en/1.0.0/
 ### Bug Fixes
 
 - (fix) [#351](https://github.com/realiotech/realio-network/pull/351): Inject BankKeeper into FeegrantKeeper
+
+- (fix) [#364](https://github.com/realiotech/realio-network/pull/364): Apply fixes from security audit
 
 ## [v1.5.0](https://github.com/realiotech/realio-network/releases/tag/v1.5.0) - 2026-02-03
 
