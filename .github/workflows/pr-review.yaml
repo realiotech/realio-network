@@ -1,0 +1,30 @@
+# Calls the org reusable PR reviewer (realiotech/pr-reviewer via realiotech/workflows).
+# Auto-reviews PRs; reply "@realio-pr-reviewer <explain|fix|dismiss|re-review> ..."
+# in a PR comment to drive follow-ups. Advisory only — does not gate merges.
+name: pr-review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created]
+
+# Least-privilege: the reviewer writes via its GitHub App token, not GITHUB_TOKEN.
+permissions:
+  contents: read
+
+# Coalesce rapid pushes / repeated comments; cancel superseded runs (per PR + event).
+concurrency:
+  group: pr-review-${{ github.event.pull_request.number || github.event.issue.number }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    # PRs always; PR comments only when they actually mention the bot — so a
+    # casual comment doesn't spin up a secret-bearing runner just to no-op.
+    if: ${{ github.event_name != 'issue_comment' || (github.event.issue.pull_request && contains(github.event.comment.body, '@realio-pr-reviewer')) }}
+    uses: realiotech/workflows/.github/workflows/pr-review.yaml@main
+    secrets:
+      PR_REVIEWER_APP_ID: ${{ secrets.PR_REVIEWER_APP_ID }}
+      PR_REVIEWER_PRIVATE_KEY: ${{ secrets.PR_REVIEWER_PRIVATE_KEY }}
+      PARASAIL_API_KEY: ${{ secrets.PARASAIL_API_KEY }}
