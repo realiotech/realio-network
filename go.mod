@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	cosmossdk.io/api v0.9.2
-	cosmossdk.io/client/v2 v2.0.0-beta.7
+	cosmossdk.io/client/v2 v2.0.0-beta.9
 	cosmossdk.io/collections v1.4.0
 	cosmossdk.io/core v0.11.3
 	cosmossdk.io/errors v1.1.0
@@ -25,6 +25,7 @@ require (
 	github.com/cosmos/evm v0.5.1
 	github.com/cosmos/gogoproto v1.7.2
 	github.com/cosmos/ibc-go/modules/capability v1.0.1
+	github.com/cosmos/ibc-go/modules/light-clients/08-wasm/v10 v10.5.0
 	github.com/cosmos/ibc-go/v10 v10.5.0
 	github.com/cosmos/rosetta v0.50.10
 	github.com/ethereum/go-ethereum v1.17.0
@@ -57,7 +58,7 @@ require (
 	cloud.google.com/go/storage v1.50.0 // indirect
 	cosmossdk.io/depinject v1.2.1 // indirect
 	cosmossdk.io/schema v1.1.0 // indirect
-	cosmossdk.io/x/circuit v0.1.1 // indirect
+	cosmossdk.io/x/circuit v0.2.0 // indirect
 	cosmossdk.io/x/nft v0.2.0 // indirect
 	filippo.io/edwards25519 v1.1.1 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
@@ -119,7 +120,7 @@ require (
 	github.com/dgraph-io/ristretto v0.2.0 // indirect
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/dlclark/regexp2 v1.7.0 // indirect
-	github.com/dop251/goja v0.0.0-20230605162241-28ee0ee714f3 // indirect
+	github.com/dop251/goja v0.0.0-20230806174421-c933cf95e127 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
 	github.com/dvsekhvalnov/jose2go v1.7.0 // indirect
 	github.com/emicklei/dot v1.6.2 // indirect
@@ -174,6 +175,7 @@ require (
 	github.com/hashicorp/golang-lru/v2 v2.0.7 // indirect
 	github.com/hashicorp/yamux v0.1.2 // indirect
 	github.com/hdevalence/ed25519consensus v0.2.0 // indirect
+	github.com/herumi/bls-eth-go-binary v1.31.0 // indirect
 	github.com/holiman/bloomfilter/v2 v2.0.3 // indirect
 	github.com/holiman/uint256 v1.3.2 // indirect
 	github.com/huandu/skiplist v1.2.1 // indirect
@@ -196,9 +198,10 @@ require (
 	github.com/mattn/go-runewidth v0.0.15 // indirect
 	github.com/mdp/qrterminal/v3 v3.2.1 // indirect
 	github.com/minio/highwayhash v1.0.3 // indirect
-	github.com/minio/sha256-simd v1.0.0 // indirect
+	github.com/minio/sha256-simd v1.0.1 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/mtibben/percent v0.2.1 // indirect
 	github.com/munnerz/goautoneg v0.0.0-20191010083416-a7dc8b61c822 // indirect
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
@@ -207,18 +210,22 @@ require (
 	github.com/opencontainers/go-digest v1.0.0 // indirect
 	github.com/pelletier/go-toml/v2 v2.2.4 // indirect
 	github.com/petermattis/goid v0.0.0-20240813172612-4fcff4a6cae7 // indirect
-	github.com/pion/dtls/v2 v2.2.7 // indirect
+	github.com/pion/dtls/v2 v2.2.12 // indirect
 	github.com/pion/logging v0.2.2 // indirect
 	github.com/pion/stun/v2 v2.0.0 // indirect
-	github.com/pion/transport/v2 v2.2.1 // indirect
+	github.com/pion/transport/v2 v2.2.10 // indirect
 	github.com/pion/transport/v3 v3.0.1 // indirect
 	github.com/planetscale/vtprotobuf v0.6.1-0.20240319094008-0393e58bdf10 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
 	github.com/prometheus/client_model v0.6.2 // indirect
 	github.com/prometheus/common v0.67.5 // indirect
 	github.com/prometheus/procfs v0.19.2 // indirect
+	github.com/prysmaticlabs/fastssz v0.0.0-20241008181541-518c4ce73516 // indirect
+	github.com/prysmaticlabs/go-bitfield v0.0.0-20240328144219-a1caa50c3a1e // indirect
+	github.com/prysmaticlabs/gohashtree v0.0.4-beta.0.20240624100937-73632381301b // indirect
+	github.com/prysmaticlabs/prysm/v5 v5.3.0 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
-	github.com/rivo/uniseg v0.2.0 // indirect
+	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/go-internal v1.14.1 // indirect
 	github.com/rs/cors v1.11.1 // indirect
 	github.com/rs/zerolog v1.34.0 // indirect
@@ -226,6 +233,7 @@ require (
 	github.com/sasha-s/go-deadlock v0.3.5 // indirect
 	github.com/shamaton/msgpack/v2 v2.2.3 // indirect
 	github.com/shirou/gopsutil v3.21.11+incompatible // indirect
+	github.com/sirupsen/logrus v1.9.3 // indirect
 	github.com/sourcegraph/conc v0.3.1-0.20240121214520-5f936abd7ae8 // indirect
 	github.com/spf13/afero v1.15.0 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
@@ -234,6 +242,7 @@ require (
 	github.com/supranational/blst v0.3.14 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/tendermint/go-amino v0.16.0 // indirect
+	github.com/thomaso-mirodin/intmath v0.0.0-20160323211736-5dc6d854e46e // indirect
 	github.com/tidwall/btree v1.8.1 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
