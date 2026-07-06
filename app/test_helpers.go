@@ -2,6 +2,7 @@ package app
 
 import (
 	"encoding/json"
+	"os"
 	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -38,6 +39,7 @@ import (
 	"github.com/realiotech/realio-network/types"
 	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
 func init() {
@@ -96,6 +98,7 @@ func Setup(
 	// Reset EVMConfig each test
 	configurator := evmtypes.NewEVMConfigurator()
 	configurator.ResetTestConfig()
+	emptyWasmOpts := []wasmkeeper.Option{}
 
 	encCdc := MakeEncodingConfig(MainnetEVMChainID)
 
@@ -111,7 +114,14 @@ func Setup(
 
 	db := dbm.NewMemDB()
 	opt := baseapp.SetChainID(types.MainnetChainID + "-1")
-	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, simtestutil.EmptyAppOptions{}, opt)
+	// each app instance needs its own wasmvm cache dir: wasmvm takes an exclusive
+	// file lock on <home>/wasm, so reusing DefaultNodeHome across test apps in the
+	// same process panics on the second Setup() call ("Could not lock exclusive.lock")
+	homeDir, err := os.MkdirTemp("", ".realio-network-test")
+	if err != nil {
+		panic(err)
+	}
+	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, homeDir, 5, simtestutil.EmptyAppOptions{}, emptyWasmOpts, opt)
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
 		genesisState := NewDefaultGenesisState(encCdc.Codec)
@@ -307,7 +317,13 @@ func NewDefaultGenesisState(cdc codec.JSONCodec) simapp.GenesisState {
 func SetupTestingApp() (ibctesting.TestingApp, map[string]json.RawMessage) {
 	db := dbm.NewMemDB()
 	cfg := MakeEncodingConfig(MainnetEVMChainID)
-	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, simtestutil.EmptyAppOptions{})
+	emptyWasmOpts := []wasmkeeper.Option{}
+	// see Setup() above: each app instance needs its own wasmvm cache dir
+	homeDir, err := os.MkdirTemp("", ".realio-network-test")
+	if err != nil {
+		panic(err)
+	}
+	app := New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, homeDir, 5, simtestutil.EmptyAppOptions{}, emptyWasmOpts)
 	return app, NewDefaultGenesisState(cfg.Codec)
 }
 
