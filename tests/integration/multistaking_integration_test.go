@@ -2,6 +2,7 @@ package integration
 
 import (
 	"encoding/base64"
+	"fmt"
 	"math/big"
 
 	"cosmossdk.io/math"
@@ -16,6 +17,8 @@ import (
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	integrationutils "github.com/realiotech/realio-network/testutil/integration/utils"
@@ -464,6 +467,103 @@ func (suite *EVMTestSuite) TestMultistakingRemoveToken() {
 	suite.Require().Contains(err.Error(), "not found")
 }
 
+func (suite *EVMTestSuite) TestMultistakingDelegateReward() {
+	senderPriv := suite.keyring.GetPrivKey(0)
+	senderKey := suite.keyring.GetKey(0)
+	delPriv := suite.keyring.GetPrivKey(1)
+	delKey := suite.keyring.GetKey(1)
+	constructorArgs := []interface{}{"StakeToken", "STAKE", uint8(18)}
+	compiledContract := contracts.ERC20MinterBurnerDecimalsContract
+
+	var err error
+	factoryy := factory.New(suite.network, grpc.NewIntegrationHandler(suite.network))
+	contractAddr, err := factoryy.DeployContract(
+		senderPriv,
+		evmtypes.EvmTxArgs{},
+		testutiltypes.ContractDeploymentData{
+			Contract:        compiledContract,
+			ConstructorArgs: constructorArgs,
+		},
+	)
+	suite.Require().NoError(err)
+	suite.NotEqual(contractAddr, common.Address{})
+
+	err = suite.network.NextBlock()
+	suite.Require().NoError(err)
+
+	suite.mintERC20(contractAddr, senderKey.Addr, mintAmount, senderPriv)
+	suite.mintERC20(contractAddr, delKey.Addr, mintAmount, senderPriv)
+
+	bondWeightDec, err := math.LegacyNewDecFromStr(multistakingBondWeight)
+	suite.Require().NoError(err)
+	err = integrationutils.RegisterMultistakingEVMBondDenom(
+		integrationutils.UpdateParamsInput{
+			Tf:      factoryy,
+			Network: suite.network,
+			Pk:      senderPriv,
+		},
+		contractAddr.Hex(),
+		bondWeightDec,
+		senderKey.AccAddr,
+	)
+	suite.Require().NoError(err)
+	suite.Require().NoError(suite.network.NextBlock())
+
+	// Create validator
+	validator1Address := sdk.ValAddress(senderKey.AccAddr).String()
+	suite.createValidator(contractAddr, senderPriv, validator1Address)
+
+	suite.delegate(contractAddr, delPriv, delKey.AccAddr.String(), validator1Address)
+
+	// Advance blocks to accumulate rewards
+	for i := 0; i < 10; i++ {
+		suite.Require().NoError(suite.network.NextBlock())
+	}
+
+	// Check delegation rewards
+	distrClient := suite.network.GetDistrClient()
+	rewardsRes, err := distrClient.DelegationRewards(suite.network.GetContext(), &distrtypes.QueryDelegationRewardsRequest{
+		DelegatorAddress: delKey.AccAddr.String(),
+		ValidatorAddress: validator1Address,
+	})
+	suite.Require().NoError(err)
+
+	fmt.Println("reward res", rewardsRes.Rewards)
+
+	// Withdraw delegation rewards
+	withdrawRes, err := suite.factory.ExecuteCosmosTx(delPriv, commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&distrtypes.MsgWithdrawDelegatorReward{
+			DelegatorAddress: delKey.AccAddr.String(),
+			ValidatorAddress: validator1Address,
+		}},
+	})
+	suite.Require().NoError(err)
+	suite.Require().True(withdrawRes.IsOK(), "withdraw reward should have succeeded", withdrawRes.GetLog())
+	suite.Require().NoError(suite.network.NextBlock())
+
+	// Get bank balance after reward withdrawal (rewards are in native ario)
+	bankClient := suite.network.GetBankClient()
+	balanceRes, err := bankClient.Balance(suite.network.GetContext(), &banktypes.QueryBalanceRequest{
+		Address: delKey.AccAddr.String(),
+		Denom:   suite.network.GetBaseDenom(),
+	})
+	suite.Require().NoError(err)
+	rewardBalance := balanceRes.Balance.Amount
+	suite.Require().True(rewardBalance.IsPositive(), "reward balance should be positive after withdrawal")
+
+	// Delegate all bank balance (reward) to a genesis validator
+	genesisValidator := suite.network.GetValidators()[0]
+	delegateRewardRes, err := suite.factory.ExecuteCosmosTx(delPriv, commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&stakingtypes.MsgDelegate{
+			DelegatorAddress: delKey.AccAddr.String(),
+			ValidatorAddress: genesisValidator.OperatorAddress,
+			Amount:           sdk.NewCoin(suite.network.GetBaseDenom(), rewardBalance),
+		}},
+	})
+	suite.Require().NoError(err)
+	suite.Require().True(delegateRewardRes.IsOK(), "delegate reward should have succeeded", delegateRewardRes.GetLog())
+}
+
 func (suite *EVMTestSuite) mintERC20(contractAddr common.Address, to common.Address, amount int64, privKey cryptotypes.PrivKey) {
 	mintTxArgs := evmtypes.EvmTxArgs{To: &contractAddr}
 	mintArgs := testutiltypes.CallArgs{
@@ -494,6 +594,27 @@ func (suite *EVMTestSuite) createEVMValidator(contractAddr common.Address, sende
 			Pubkey:            pkAny,
 			ContractAddress:   contractAddr.Hex(),
 			Value:             math.NewInt(1_000_000),
+		}},
+	})
+	suite.Require().NoError(err)
+	suite.Require().True(res.IsOK(), "register ERC20 should have succeeded", res.GetLog())
+	suite.Require().NoError(suite.network.NextBlock())
+}
+
+func (suite *EVMTestSuite) createValidator(contractAddr common.Address, senderPriv cryptotypes.PrivKey, valAddr string) {
+	pk := secp256k1.GenPrivKey().PubKey()
+	pkAny, err := codectypes.NewAnyWithValue(pk)
+	suite.Require().NoError(err)
+
+	// Create validator
+	res, err := suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&stakingtypes.MsgCreateValidator{
+			Description:       stakingtypes.NewDescription("Test Validator", "test-identity", "https://test-validator.com", "security@test-validator.com", "Test validator for multistaking"),
+			Commission:        stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(1, 2), math.LegacyNewDecWithPrec(2, 1), math.LegacyNewDecWithPrec(1, 2)),
+			MinSelfDelegation: math.NewInt(1),
+			ValidatorAddress:  valAddr,
+			Pubkey:            pkAny,
+			Value:             sdk.NewCoin("ario", math.NewInt(1_000_000)),
 		}},
 	})
 	suite.Require().NoError(err)
@@ -580,6 +701,20 @@ func (suite *EVMTestSuite) delegateEVM(contractAddr common.Address, senderPriv c
 	suite.Require().NoError(suite.network.NextBlock())
 }
 
+func (suite *EVMTestSuite) delegate(contractAddr common.Address, senderPriv cryptotypes.PrivKey, delAddr, valAddr string) {
+	// delegateAmount := math.NewInt(500_000) // 500K tokens
+	delegateResponse, err := suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&stakingtypes.MsgDelegate{
+			DelegatorAddress: delAddr,
+			ValidatorAddress: valAddr,
+			Amount:           sdk.NewCoin("ario", math.NewInt(delegateAmount)),
+		}},
+	})
+	suite.Require().NoError(err)
+	suite.Require().True(delegateResponse.IsOK(), "delegate should have succeeded", delegateResponse.GetLog())
+	suite.Require().NoError(suite.network.NextBlock())
+}
+
 func (suite *EVMTestSuite) delegateEVMByPrecompile(contractAddr common.Address, senderPriv cryptotypes.PrivKey, senderAddr sdk.AccAddress, valAddr string) {
 	abi, err := precompileMultiStaking.LoadABI()
 	suite.Require().NoError(err)
@@ -633,6 +768,8 @@ func (suite *EVMTestSuite) delegateEVMByPrecompile(contractAddr common.Address, 
 	suite.Require().NoError(suite.network.NextBlock())
 	suite.Require().Equal(del.Balance.Amount, math.NewInt(delegateAmount).BigInt())
 }
+
+
 
 func (suite *EVMTestSuite) redelegateEVM(contractAddr common.Address, senderPriv cryptotypes.PrivKey, delAddr, oldValAddr, newValAddr string) {
 	reDelegateResponse, err := suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{

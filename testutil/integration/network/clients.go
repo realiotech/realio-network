@@ -1,6 +1,8 @@
 package network
 
 import (
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	precisebanktypes "github.com/cosmos/evm/x/precisebank/types"
@@ -121,4 +123,10 @@ func (n *IntegrationNetwork) GetFeeGrantClient() feegranttypes.QueryClient {
 	queryHelper := getQueryHelper(n.GetContext(), n.GetEncodingConfig())
 	feegranttypes.RegisterQueryServer(queryHelper, &n.app.FeeGrantKeeper)
 	return feegranttypes.NewQueryClient(queryHelper)
+}
+
+func (n *IntegrationNetwork) GetWasmClient() wasmtypes.QueryClient {
+	queryHelper := getQueryHelper(n.GetContext(), n.GetEncodingConfig())
+	wasmtypes.RegisterQueryServer(queryHelper, wasmkeeper.Querier(&n.app.WasmKeeper))
+	return wasmtypes.NewQueryClient(queryHelper)
 }
