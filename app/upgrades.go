@@ -13,6 +13,7 @@ import (
 	v4 "github.com/realiotech/realio-network/app/upgrades/v1.4"
 	v5 "github.com/realiotech/realio-network/app/upgrades/v1.5"
 	v6 "github.com/realiotech/realio-network/app/upgrades/v1.6"
+	v7 "github.com/realiotech/realio-network/app/upgrades/v1.7"
 
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -103,6 +104,15 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 		),
 	)
 
+	app.UpgradeKeeper.SetUpgradeHandler(
+		v7.UpgradeName,
+		v7.CreateUpgradeHandler(
+			app.mm,
+			app.configurator,
+			app.WasmKeeper,
+		),
+	)
+
 	upgradeInfo, err := app.UpgradeKeeper.ReadUpgradeInfoFromDisk()
 	if err != nil {
 		panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
@@ -112,7 +122,7 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 		return
 	}
 
-	if upgradeInfo.Name == v6.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &v6.V6StoreUpgrades))
+	if upgradeInfo.Name == v7.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &v7.V7StoreUpgrades))
 	}
 }
