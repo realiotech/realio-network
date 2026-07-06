@@ -182,6 +182,10 @@ import (
 	ibccallbacks "github.com/cosmos/ibc-go/v10/modules/apps/callbacks"
 	precompileFeeGrant "github.com/realiotech/realio-network/precompile/feegrant"
 	precompileMultistaking "github.com/realiotech/realio-network/precompile/multistaking"
+
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 )
 
 const (
@@ -230,6 +234,7 @@ var (
 		bridgemodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		transfer.AppModuleBasic{AppModuleBasic: &ibctransfer.AppModuleBasic{}},
+		wasm.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -247,6 +252,7 @@ var (
 		bridgemoduletypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		multistakingtypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		erc20types.ModuleName:          {authtypes.Minter, authtypes.Burner},
+		wasmtypes.ModuleName:           {authtypes.Burner},
 		// this line is used by starport scaffolding # stargate/app/maccPerms
 	}
 )
@@ -256,6 +262,9 @@ var (
 	_ servertypes.Application = (*RealioNetwork)(nil)
 	_ ibctesting.TestingApp   = (*RealioNetwork)(nil)
 )
+
+// EmptyWasmOptions is a stub implementing Wasmkeeper Option
+var EmptyWasmOptions []wasmkeeper.Option
 
 func init() {
 	userHomeDir, err := os.UserHomeDir()
@@ -309,6 +318,7 @@ type RealioNetwork struct {
 	TransferKeeper        transferkeeper.Keeper
 	ConsensusParamsKeeper consensusparamkeeper.Keeper
 	CallbackKeeper        ibccallbackskeeper.ContractKeeper
+	WasmKeeper            wasmkeeper.Keeper
 
 	// Ethermint keepers
 	EvmKeeper        *evmkeeper.Keeper
@@ -345,6 +355,7 @@ func New(
 	homePath string,
 	invCheckPeriod uint,
 	appOpts servertypes.AppOptions,
+	wasmOpts []wasmkeeper.Option,
 	baseAppOptions ...func(*baseapp.BaseApp),
 ) *RealioNetwork {
 	evmChainID := cast.ToUint64(appOpts.Get(srvflags.EVMChainID))
@@ -366,6 +377,7 @@ func New(
 		govtypes.StoreKey, paramstypes.StoreKey, upgradetypes.StoreKey, feegrant.StoreKey,
 		evidencetypes.StoreKey, capabilitytypes.StoreKey, authzkeeper.StoreKey,
 		consensusparamtypes.StoreKey,
+		wasmtypes.StoreKey,
 		// ibc keys
 		ibcexported.StoreKey, ibctransfertypes.StoreKey,
 		// realio network keys
@@ -658,6 +670,32 @@ func New(
 		),
 	)
 
+	wasmDir := homePath
+	wasmConfig, err := wasm.ReadNodeConfig(appOpts)
+	if err != nil {
+		panic("error while reading wasm config: " + err.Error())
+	}
+
+	app.WasmKeeper = wasmkeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[wasmtypes.StoreKey]),
+		app.AccountKeeper,
+		app.BankKeeper,
+		app.StakingKeeper,
+		distrkeeper.NewQuerier(app.DistrKeeper),
+		app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.ChannelKeeper,
+		app.TransferKeeper,
+		bApp.MsgServiceRouter(),
+		bApp.GRPCQueryRouter(),
+		wasmDir,
+		wasmConfig,
+		wasmtypes.VMConfig{},
+		wasmkeeper.BuiltInCapabilities(),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		wasmOpts...,
+	)
+
 	/****  Module Options ****/
 
 	// NOTE: we may consider parsing `appOpts` inside module constructors. For the moment
@@ -700,6 +738,7 @@ func New(
 		// realio network
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper, app.GetSubspace(assetmoduletypes.ModuleName)),
 		bridgemodule.NewAppModule(appCodec, app.BridgeKeeper),
+		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
 	)
 
 	// NOTE: upgrade module is required to be prioritized
@@ -738,6 +777,7 @@ func New(
 		vestingtypes.ModuleName,
 		assetmoduletypes.ModuleName,
 		bridgemoduletypes.ModuleName,
+		wasmtypes.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -767,6 +807,7 @@ func New(
 		// realio modules
 		assetmoduletypes.ModuleName,
 		bridgemoduletypes.ModuleName,
+		wasmtypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -804,6 +845,7 @@ func New(
 		assetmoduletypes.ModuleName,
 		bridgemoduletypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		wasmtypes.ModuleName,
 	)
 
 	app.mm.SetOrderExportGenesis(
@@ -836,10 +878,11 @@ func New(
 		assetmoduletypes.ModuleName,
 		bridgemoduletypes.ModuleName,
 		consensusparamtypes.ModuleName,
+		wasmtypes.ModuleName,
 	)
 
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
-	err := app.mm.RegisterServices(app.configurator)
+	err = app.mm.RegisterServices(app.configurator)
 	if err != nil {
 		panic(err)
 	}
@@ -886,6 +929,8 @@ func New(
 		ExtensionOptionChecker: antetypes.HasDynamicFeeExtensionOption,
 		DynamicFeeChecker:      true,
 		PendingTxListener:      app.onPendingTx,
+		WasmConfig:             &wasmConfig,
+		TXCounterStoreService:  runtime.NewKVStoreService(app.keys[wasmtypes.StoreKey]),
 	}
 
 	if err := options.Validate(); err != nil {
@@ -1250,6 +1295,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(evmtypes.ModuleName)
 	paramsKeeper.Subspace(feemarkettypes.ModuleName)
 	paramsKeeper.Subspace(erc20types.ModuleName)
+	paramsKeeper.Subspace(wasmtypes.ModuleName)
 	// this line is used by starport scaffolding # stargate/app/paramSubspace
 
 	return paramsKeeper
