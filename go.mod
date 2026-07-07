@@ -1,6 +1,6 @@
 module github.com/realiotech/realio-network
 
-go 1.24.0
+go 1.24.1
 
 require (
 	cosmossdk.io/api v0.9.2
