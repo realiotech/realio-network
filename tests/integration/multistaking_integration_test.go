@@ -501,6 +501,27 @@ func (suite *EVMTestSuite) createEVMValidator(contractAddr common.Address, sende
 	suite.Require().NoError(suite.network.NextBlock())
 }
 
+func (suite *EVMTestSuite) createValidator(contractAddr common.Address, senderPriv cryptotypes.PrivKey, valAddr string) {
+	pk := secp256k1.GenPrivKey().PubKey()
+	pkAny, err := codectypes.NewAnyWithValue(pk)
+	suite.Require().NoError(err)
+
+	// Create validator
+	res, err := suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&stakingtypes.MsgCreateValidator{
+			Description:       stakingtypes.NewDescription("Test Validator", "test-identity", "https://test-validator.com", "security@test-validator.com", "Test validator for multistaking"),
+			Commission:        stakingtypes.NewCommissionRates(math.LegacyNewDecWithPrec(1, 2), math.LegacyNewDecWithPrec(2, 1), math.LegacyNewDecWithPrec(1, 2)),
+			MinSelfDelegation: math.NewInt(1),
+			ValidatorAddress:  valAddr,
+			Pubkey:            pkAny,
+			Value:             sdk.NewCoin("ario", math.NewInt(1_000_000)),
+		}},
+	})
+	suite.Require().NoError(err)
+	suite.Require().True(res.IsOK(), "register ERC20 should have succeeded", res.GetLog())
+	suite.Require().NoError(suite.network.NextBlock())
+}
+
 func (suite *EVMTestSuite) createEVMValidatorByPrecompile(contractAddr common.Address, senderPriv cryptotypes.PrivKey, senderAddr sdk.AccAddress) precompileMultiStaking.ValidatorOutput {
 	base64Pk := base64.StdEncoding.EncodeToString(ed25519.GenPrivKey().PubKey().(*ed25519.PubKey).Bytes())
 	abi, err := precompileMultiStaking.LoadABI()
@@ -573,6 +594,20 @@ func (suite *EVMTestSuite) delegateEVM(contractAddr common.Address, senderPriv c
 			ValidatorAddress: valAddr,
 			ContractAddress:  contractAddr.Hex(),
 			Amount:           math.NewInt(delegateAmount),
+		}},
+	})
+	suite.Require().NoError(err)
+	suite.Require().True(delegateResponse.IsOK(), "delegate should have succeeded", delegateResponse.GetLog())
+	suite.Require().NoError(suite.network.NextBlock())
+}
+
+func (suite *EVMTestSuite) delegate(contractAddr common.Address, senderPriv cryptotypes.PrivKey, delAddr, valAddr string) {
+	// delegateAmount := math.NewInt(500_000) // 500K tokens
+	delegateResponse, err := suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
+		Msgs: []sdk.Msg{&stakingtypes.MsgDelegate{
+			DelegatorAddress: delAddr,
+			ValidatorAddress: valAddr,
+			Amount:           sdk.NewCoin("ario", math.NewInt(delegateAmount)),
 		}},
 	})
 	suite.Require().NoError(err)

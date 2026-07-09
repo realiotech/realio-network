@@ -2,6 +2,7 @@ package network
 
 import (
 	"fmt"
+	"os"
 	"slices"
 	"time"
 
@@ -182,15 +183,24 @@ func createTestingApp(chainID string, customBaseAppOptions ...func(*baseapp.Base
 	}
 	baseAppOptions := append(customBaseAppOptions, baseapp.SetChainID(chainID)) //nolint:gocritic
 
+	// each app instance needs its own wasmvm cache dir: wasmvm takes an exclusive
+	// file lock on <home>/wasm, so a shared/empty home dir panics on the second
+	// createTestingApp() call in the same process ("Could not lock exclusive.lock")
+	homeDir, err := os.MkdirTemp("", ".realio-network-test")
+	if err != nil {
+		panic(err)
+	}
+
 	return app.New(
 		logger,
 		db,
 		nil,
 		loadLatest,
 		map[int64]bool{},
-		"",
+		homeDir,
 		5,
 		appOptions,
+		app.EmptyWasmOptions,
 		baseAppOptions...,
 	)
 }
