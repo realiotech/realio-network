@@ -2,6 +2,7 @@ package multistaking
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"math/big"
 
@@ -9,8 +10,10 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	cmn "github.com/cosmos/evm/precompiles/common"
+	"github.com/cosmos/evm/x/vm/statedb"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/vm"
 
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -23,6 +26,7 @@ import (
 // This method converts ERC20 tokens to SDK coins and delegates them.
 func (p Precompile) DelegateEVM(
 	ctx sdk.Context,
+	stateDB vm.StateDB,
 	sender common.Address,
 	method *abi.Method,
 	args []interface{},
@@ -37,18 +41,42 @@ func (p Precompile) DelegateEVM(
 	if err != nil {
 		return nil, err
 	}
-	// Create multistaking delegation message
 
-	msg := &mstypes.MsgDelegateEVM{
+	stateDBExp, ok := stateDB.(*statedb.StateDB)
+	if !ok {
+		return nil, errors.New(cmn.ErrNotRunInEvm)
+	}
+
+	// Convert ERC20 tokens into coins reusing the current stateDB, so the EVM
+	// transfer is journaled within the outer transaction instead of being
+	// committed on a fresh stateDB.
+	if _, err := p.erc20Keeper.ConvertERC20IntoCoinsForNativeToken(
+		ctx,
+		stateDBExp,
+		erc20Token,
+		math.NewIntFromBigInt(amount),
+		sender.Bytes(),
+		sender,
+		true, // commit
+		true, // callFromPrecompile
+	); err != nil {
+		return nil, err
+	}
+
+	tokenDenom, err := p.erc20Keeper.GetTokenDenom(ctx, erc20Token)
+	if err != nil {
+		return nil, err
+	}
+
+	msg := &stakingtypes.MsgDelegate{
 		DelegatorAddress: delAddr,
 		ValidatorAddress: validatorAddress,
-		Amount:           math.NewIntFromBigInt(amount),
-		ContractAddress:  erc20Token.Hex(),
+		Amount:           sdk.NewCoin(tokenDenom, math.NewIntFromBigInt(amount)),
 	}
 
 	// Execute delegation using multistaking msgServer
 	msgServer := multistakingkeeper.NewMsgServerImpl(p.multiStakingKeeper)
-	_, err = msgServer.DelegateEVM(ctx, msg)
+	_, err = msgServer.Delegate(ctx, msg)
 	if err != nil {
 		return nil, err
 	}
@@ -177,6 +205,7 @@ func (p Precompile) CancelUnbondingEVMDelegation(
 // CreateValidator creates a new erc20 validator using the multistaking module.
 func (p Precompile) CreateEVMValidator(
 	ctx sdk.Context,
+	stateDB vm.StateDB,
 	origin common.Address,
 	method *abi.Method,
 	args []interface{},
@@ -200,19 +229,44 @@ func (p Precompile) CreateEVMValidator(
 		return nil, err
 	}
 
-	msg := &mstypes.MsgCreateEVMValidator{
+	stateDBExp, ok := stateDB.(*statedb.StateDB)
+	if !ok {
+		return nil, errors.New(cmn.ErrNotRunInEvm)
+	}
+
+	// Convert ERC20 tokens into coins reusing the current stateDB, so the EVM
+	// transfer is journaled within the outer transaction instead of being
+	// committed on a fresh stateDB.
+	if _, err := p.erc20Keeper.ConvertERC20IntoCoinsForNativeToken(
+		ctx,
+		stateDBExp,
+		contractAddress,
+		math.NewIntFromBigInt(amount),
+		origin.Bytes(),
+		origin,
+		true, // commit
+		true, // callFromPrecompile
+	); err != nil {
+		return nil, err
+	}
+
+	tokenDenom, err := p.erc20Keeper.GetTokenDenom(ctx, contractAddress)
+	if err != nil {
+		return nil, err
+	}
+
+	msg := &stakingtypes.MsgCreateValidator{
 		Description:       description,
 		Commission:        commission,
 		MinSelfDelegation: minSelfDelegation,
 		ValidatorAddress:  validatorAddress,
 		Pubkey:            pkAny,
-		ContractAddress:   contractAddress.Hex(),
-		Value:             math.NewIntFromBigInt(amount),
+		Value:             sdk.NewCoin(tokenDenom, math.NewIntFromBigInt(amount)),
 	}
 
 	// Execute create validator using multistaking msgServer
 	msgServer := multistakingkeeper.NewMsgServerImpl(p.multiStakingKeeper)
-	_, err = msgServer.CreateEVMValidator(ctx, msg)
+	_, err = msgServer.CreateValidator(ctx, msg)
 	if err != nil {
 		return nil, fmt.Errorf("multistaking create validator failed: %v", err)
 	}

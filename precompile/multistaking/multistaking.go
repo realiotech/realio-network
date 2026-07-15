@@ -96,12 +96,12 @@ func (p Precompile) RequiredGas(input []byte) uint64 {
 // Run executes the precompiled contract multistaking methods defined in the ABI.
 func (p Precompile) Run(evm *vm.EVM, contract *vm.Contract, readOnly bool) (bz []byte, err error) {
 	return p.RunNativeAction(evm, contract, func(ctx sdk.Context) ([]byte, error) {
-		return p.Execute(ctx, contract, readOnly)
+		return p.Execute(ctx, evm.StateDB, contract, readOnly)
 	})
 }
 
 // Execute executes the precompiled contract bank query methods defined in the ABI.
-func (p Precompile) Execute(ctx sdk.Context, contract *vm.Contract, readOnly bool) ([]byte, error) {
+func (p Precompile) Execute(ctx sdk.Context, stateDB vm.StateDB, contract *vm.Contract, readOnly bool) ([]byte, error) {
 	method, args, err := cmn.SetupABI(p.ABI, contract, readOnly, p.IsTransaction)
 	if err != nil {
 		return nil, err
@@ -111,7 +111,7 @@ func (p Precompile) Execute(ctx sdk.Context, contract *vm.Contract, readOnly boo
 	switch method.Name {
 	// Transactions
 	case DelegateMethod:
-		bz, err = p.DelegateEVM(ctx, contract.Caller(), method, args)
+		bz, err = p.DelegateEVM(ctx, stateDB, contract.Caller(), method, args)
 	case UndelegateMethod:
 		bz, err = p.UndelegateEVM(ctx, contract.Caller(), method, args)
 	case RedelegateMethod:
@@ -119,7 +119,7 @@ func (p Precompile) Execute(ctx sdk.Context, contract *vm.Contract, readOnly boo
 	case CancelUnbondingDelegationMethod:
 		bz, err = p.CancelUnbondingEVMDelegation(ctx, contract.Caller(), method, args)
 	case CreateValidatorMethod:
-		bz, err = p.CreateEVMValidator(ctx, contract.Caller(), method, args)
+		bz, err = p.CreateEVMValidator(ctx, stateDB, contract.Caller(), method, args)
 	case DelegationMethod:
 		bz, err = p.Delegation(ctx, contract, method, args)
 	case UnbondingDelegationMethod:
