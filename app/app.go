@@ -60,7 +60,6 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
 	// NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens
-	"github.com/cosmos/evm/x/ibc/transfer"
 
 	"github.com/gorilla/mux"
 
@@ -134,6 +133,7 @@ import (
 	capabilitykeeper "github.com/cosmos/ibc-go/modules/capability/keeper"
 	capabilitytypes "github.com/cosmos/ibc-go/modules/capability/types"
 	ibctransfer "github.com/cosmos/ibc-go/v10/modules/apps/transfer"
+	transferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
 	ibctransfertypes "github.com/cosmos/ibc-go/v10/modules/apps/transfer/types"
 	ibc "github.com/cosmos/ibc-go/v10/modules/core"
 	porttypes "github.com/cosmos/ibc-go/v10/modules/core/05-port/types"
@@ -169,7 +169,6 @@ import (
 	realionetworktypes "github.com/realiotech/realio-network/types"
 	// this line is used by starport scaffolding # stargate/app/moduleImport
 
-	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
 	"github.com/ethereum/go-ethereum/common"
 
 	// Force-load the tracer engines to trigger registration due to Go-Ethereum v1.10.15 changes
@@ -229,7 +228,7 @@ var (
 		assetmodule.AppModuleBasic{},
 		bridgemodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
-		transfer.AppModuleBasic{AppModuleBasic: &ibctransfer.AppModuleBasic{}},
+		ibctransfer.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -602,21 +601,21 @@ func New(
 	app.TransferKeeper = transferkeeper.NewKeeper(
 		appCodec,
 		runtime.NewKVStoreService(keys[ibctransfertypes.StoreKey]),
+		nil,
 		app.IBCKeeper.ChannelKeeper,
 		app.IBCKeeper.ChannelKeeper,
 		app.MsgServiceRouter(),
 		app.AccountKeeper,
 		app.BankKeeper,
-		app.Erc20Keeper, // Add ERC20 Keeper for ERC20 transfers
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 	app.TransferKeeper.SetAddressCodec(evmaddress.NewEvmCodec(sdk.GetConfig().GetBech32AccountAddrPrefix()))
 
-	transferModule := transfer.NewAppModule(app.TransferKeeper)
+	transferModule := ibctransfer.NewAppModule(app.TransferKeeper)
 
 	// create IBC module from top to bottom of stack
 	var transferStack porttypes.IBCModule
-	transferStack = transfer.NewIBCModule(app.TransferKeeper)
+	transferStack = ibctransfer.NewIBCModule(app.TransferKeeper)
 	maxCallbackGas := uint64(1_000_000)
 	transferStack = erc20.NewIBCMiddleware(app.Erc20Keeper, transferStack)
 	app.CallbackKeeper = ibccallbackskeeper.NewKeeper(

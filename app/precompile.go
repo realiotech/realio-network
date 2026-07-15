@@ -7,7 +7,7 @@ import (
 	"github.com/ethereum/go-ethereum/core/vm"
 
 	erc20Keeper "github.com/cosmos/evm/x/erc20/keeper"
-	transferkeeper "github.com/cosmos/evm/x/ibc/transfer/keeper"
+	transferkeeper "github.com/cosmos/ibc-go/v10/modules/apps/transfer/keeper"
 	channelkeeper "github.com/cosmos/ibc-go/v10/modules/core/04-channel/keeper"
 
 	"cosmossdk.io/core/address"
