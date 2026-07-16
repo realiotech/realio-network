@@ -150,6 +150,8 @@ if [[ $overwrite == "y" || $overwrite == "Y" ]]; then
 	# Change mint denom to ario
 	jq '.app_state["mint"]["params"]["mint_denom"]="ario"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
+	jq '.app_state["bridge"]["params"]["authority"]="realio1cml96vmptgw99syqrrz8az79xer2pcgpvp5f6p"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
+
     jq '.app_state["multistaking"]["multi_staking_coin_info"]=[{"denom": "ario", "bond_weight": "1.000000000000000000"}, {"denom": "arst", "bond_weight": "1.000000000000000000"}]' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 	jq '.app_state["mint"]["params"]["mint_denom"]="ario"' "$GENESIS" >"$TMP_GENESIS" && mv "$TMP_GENESIS" "$GENESIS"
 
