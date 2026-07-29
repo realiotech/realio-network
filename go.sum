@@ -1590,8 +1590,8 @@ github.com/rakyll/statik v0.1.7/go.mod h1:AlZONWzMtEnMs7W4e/1LURLiI49pIMmp6V9Ung
 github.com/rcrowley/go-metrics v0.0.0-20181016184325-3113b8401b8a/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:N/ElC8H3+5XpJzTSTfLsJV/mx9Q9g7kxmchpfZyxgzM=
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
-github.com/realiotech/evm v0.5.4-0.20260714061854-14bff2d4100e h1:Bwwxe5XouaXf/0ZzxPHUGrzpyh8ggmrTV9hKrtaTSVk=
-github.com/realiotech/evm v0.5.4-0.20260714061854-14bff2d4100e/go.mod h1:QnaJDtxqon2mywiYqxM8VwW8FKeFazi0au0qzVpFAG8=
+github.com/realiotech/evm v0.6.1 h1:6VShOwHAD/MMzr4uJHFAG8WW+RFd3Opv/sxkatI+PtM=
+github.com/realiotech/evm v0.6.1/go.mod h1:QnaJDtxqon2mywiYqxM8VwW8FKeFazi0au0qzVpFAG8=
 github.com/realiotech/multi-staking v1.2.1-0.20260716074438-69a8e93831b0 h1:03wnmGq94LgBze4k+8NDIn46c1NyJSAGrtomJzAOIg0=
 github.com/realiotech/multi-staking v1.2.1-0.20260716074438-69a8e93831b0/go.mod h1:scfI0dfs2Ei+wyJ5ngIFOQGZoUcs8DqnJZcZ8pCFEHI=
 github.com/regen-network/protobuf v1.3.3-alpha.regen.1 h1:OHEc+q5iIAXpqiqFKeLpu5NwTIkVXUs48vFMwzqpqY4=
