@@ -332,7 +332,7 @@ func createEIP712CosmosTx(
 
 	fee := legacytx.NewStdFee(gas, amount) //nolint
 
-	data := legacytx.StdSignBytes(realionetworktypes.MainnetChainID+"-1", 0, 0, 0, fee, msgs, "")
+	data := legacytx.StdSignBytes(realionetworktypes.MainnetChainID+"-1", 0, 0, 0, fee, msgs, "") //nolint
 
 	typedData, err := eip712.LegacyWrapTxToTypedData(ethermintCodec, app.MainnetEVMChainID, msgs[0], data, &eip712.FeeDelegationOptions{
 		FeePayer: from,
