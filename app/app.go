@@ -50,6 +50,7 @@ import (
 	evmosvm "github.com/ethereum/go-ethereum/core/vm"
 
 	"github.com/cosmos/evm/x/erc20"
+	erc20v2 "github.com/cosmos/evm/x/erc20/v2"
 	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	"github.com/cosmos/evm/x/feemarket"
@@ -685,6 +686,7 @@ func New(
 	// Create IBCv2 Transfer Stack
 	var transferStackV2 ibcapi.IBCModule
 	transferStackV2 = transferv2.NewIBCModule(*app.TransferKeeper.Keeper)
+	transferStackV2 = erc20v2.NewIBCMiddleware(transferStackV2, app.Erc20Keeper)
 
 	wasmDir := homePath
 	wasmConfig, err := wasm.ReadNodeConfig(appOpts)
