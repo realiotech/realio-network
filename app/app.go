@@ -245,6 +245,7 @@ var (
 		transfer.AppModuleBasic{AppModuleBasic: &ibctransfer.AppModuleBasic{}},
 		wasm.AppModuleBasic{},
 		ibcwasm.AppModuleBasic{},
+		erc20.AppModuleBasic{},
 		// this line is used by starport scaffolding # stargate/app/moduleBasic
 	)
 
@@ -802,6 +803,7 @@ func New(
 		bridgemodule.NewAppModule(appCodec, app.BridgeKeeper),
 		wasm.NewAppModule(appCodec, &app.WasmKeeper, app.StakingKeeper, app.AccountKeeper, app.BankKeeper, app.MsgServiceRouter(), app.GetSubspace(wasmtypes.ModuleName)),
 		ibcwasm.NewAppModule(app.WasmClientKeeper),
+		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper),
 	)
 
 	// NOTE: upgrade module is required to be prioritized
@@ -842,6 +844,7 @@ func New(
 		bridgemoduletypes.ModuleName,
 		wasmtypes.ModuleName,
 		ibcwasmtypes.ModuleName,
+		erc20types.ModuleName,
 		// this line is used by starport scaffolding # stargate/app/beginBlockers
 	)
 
@@ -873,6 +876,7 @@ func New(
 		bridgemoduletypes.ModuleName,
 		wasmtypes.ModuleName,
 		ibcwasmtypes.ModuleName,
+		erc20types.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -912,6 +916,7 @@ func New(
 		consensusparamtypes.ModuleName,
 		wasmtypes.ModuleName,
 		ibcwasmtypes.ModuleName,
+		erc20types.ModuleName,
 	)
 
 	app.mm.SetOrderExportGenesis(
@@ -946,6 +951,7 @@ func New(
 		consensusparamtypes.ModuleName,
 		wasmtypes.ModuleName,
 		ibcwasmtypes.ModuleName,
+		erc20types.ModuleName,
 	)
 
 	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
