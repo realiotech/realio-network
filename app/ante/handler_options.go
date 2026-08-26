@@ -34,6 +34,7 @@ type HandlerOptions struct {
 	SignModeHandler        *txsigning.HandlerMap
 	SigGasConsumer         func(meter storetypes.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
 	MaxTxGasWanted         uint64
+	BlacklistKeeper        BlacklistKeeper
 	// use dynamic fee checker or the cosmos-sdk default one for native transactions
 	DynamicFeeChecker bool
 	PendingTxListener PendingTxListener
@@ -74,6 +75,7 @@ func newEthAnteHandler(ctx sdk.Context, options HandlerOptions) sdk.AnteHandler 
 	feemarketParams := options.FeeMarketKeeper.GetParams(ctx)
 	decorators := []sdk.AnteDecorator{
 		evmante.NewEVMMonoDecorator(options.AccountKeeper, options.FeeMarketKeeper, options.EvmKeeper, options.FeegrantKeeper, options.FeesponsorKeeper, options.MaxTxGasWanted, &evmParams, &feemarketParams), // outermost AnteDecorator. SetUpContext must be called first
+		NewEVMBlacklistDecorator(options.BlacklistKeeper),
 	}
 
 	if options.PendingTxListener != nil {
@@ -93,6 +95,7 @@ func newCosmosAnteHandler(ctx sdk.Context, options HandlerOptions) sdk.AnteHandl
 
 	return sdk.ChainAnteDecorators(
 		evmosantecosmos.RejectMessagesDecorator{}, // reject MsgEthereumTxs
+		NewCosmosBlacklistDecorator(options.BlacklistKeeper),
 		NewAuthzLimiterDecorator( // disable the Msg types that cannot be included on an authz.MsgExec msgs field
 			sdk.MsgTypeURL(&evmtypes.MsgEthereumTx{}),
 			sdk.MsgTypeURL(&sdkvesting.MsgCreateVestingAccount{}),

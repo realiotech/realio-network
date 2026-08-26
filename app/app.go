@@ -157,6 +157,10 @@ import (
 	assetmodulekeeper "github.com/realiotech/realio-network/x/asset/keeper"
 	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
 
+	blacklistmodule "github.com/realiotech/realio-network/x/blacklist"
+	blacklistmodulekeeper "github.com/realiotech/realio-network/x/blacklist/keeper"
+	blacklistmoduletypes "github.com/realiotech/realio-network/x/blacklist/types"
+
 	evmante "github.com/cosmos/evm/ante"
 	bridgemodule "github.com/realiotech/realio-network/x/bridge"
 	bridgemodulekeeper "github.com/realiotech/realio-network/x/bridge/keeper"
@@ -226,6 +230,7 @@ var (
 		feemarket.AppModuleBasic{},
 		feesponsor.AppModuleBasic{},
 		assetmodule.AppModuleBasic{},
+		blacklistmodule.AppModuleBasic{},
 		bridgemodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		ibctransfer.AppModuleBasic{},
@@ -321,8 +326,9 @@ type RealioNetwork struct {
 	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
 
 	// Realio Network keepers
-	AssetKeeper  assetmodulekeeper.Keeper
-	BridgeKeeper bridgemodulekeeper.Keeper
+	AssetKeeper     assetmodulekeeper.Keeper
+	BridgeKeeper    bridgemodulekeeper.Keeper
+	BlacklistKeeper blacklistmodulekeeper.Keeper
 
 	// mm is the module manager
 	mm *module.Manager
@@ -368,7 +374,7 @@ func New(
 		// ibc keys
 		ibcexported.StoreKey, ibctransfertypes.StoreKey,
 		// realio network keys
-		assetmoduletypes.StoreKey, bridgemoduletypes.StoreKey,
+		assetmoduletypes.StoreKey, bridgemoduletypes.StoreKey, blacklistmoduletypes.StoreKey,
 		// ethermint keys
 		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, feesponsortypes.StoreKey,
 		// multi-staking keys
@@ -560,6 +566,10 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
+	app.BlacklistKeeper = blacklistmodulekeeper.NewKeeper(
+		runtime.NewKVStoreService(keys[blacklistmoduletypes.StoreKey]),
+	)
+
 	// Add transfer restriction
 	app.BankKeeper.AppendSendRestriction(app.AssetKeeper.AssetSendRestriction)
 
@@ -699,6 +709,7 @@ func New(
 		// realio network
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper, app.GetSubspace(assetmoduletypes.ModuleName)),
 		bridgemodule.NewAppModule(appCodec, app.BridgeKeeper),
+		blacklistmodule.NewAppModule(app.BlacklistKeeper),
 	)
 
 	// NOTE: upgrade module is required to be prioritized
@@ -802,6 +813,7 @@ func New(
 		// realio modules
 		assetmoduletypes.ModuleName,
 		bridgemoduletypes.ModuleName,
+		blacklistmoduletypes.ModuleName,
 		consensusparamtypes.ModuleName,
 	)
 
@@ -834,6 +846,7 @@ func New(
 		// realio modules
 		assetmoduletypes.ModuleName,
 		bridgemoduletypes.ModuleName,
+		blacklistmoduletypes.ModuleName,
 		consensusparamtypes.ModuleName,
 	)
 
@@ -885,6 +898,7 @@ func New(
 		ExtensionOptionChecker: antetypes.HasDynamicFeeExtensionOption,
 		DynamicFeeChecker:      true,
 		PendingTxListener:      app.onPendingTx,
+		BlacklistKeeper:        app.BlacklistKeeper,
 	}
 
 	if err := options.Validate(); err != nil {
