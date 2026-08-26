@@ -2,10 +2,11 @@ package app
 
 import (
 	"encoding/csv"
+	"encoding/hex"
 	"encoding/json"
+	"math/big"
 	"os"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -22,7 +23,10 @@ import (
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 
+	"github.com/cosmos/evm/contracts"
 	srvflags "github.com/cosmos/evm/server/flags"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/ethereum/go-ethereum/common"
 
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
@@ -34,9 +38,21 @@ import (
 
 // SetupWithGenFile boots a RealioNetwork app straight from a full exported
 // genesis file (chain_id, initial_height and app_state are all taken from
-// the file itself), instead of the synthetic genesis built by Setup().
-func SetupWithGenFile(t *testing.T, genFile string) *RealioNetwork {
+// the file itself), instead of the synthetic genesis built by Setup(). It
+// also returns the consensus address of the genesis's first validator, which
+// callers need to set as the block header's ProposerAddress — without it,
+// the EVM keeper's COINBASE lookup fails ("validator does not exist") on
+// every single EVM call (including read-only ones like ERC20 balanceOf),
+// since a real node's FinalizeBlock always carries a real proposer and a
+// hand-built test context otherwise leaves it empty.
+func SetupWithGenFile(t *testing.T, genFile string) (*RealioNetwork, []byte) {
 	t.Helper()
+
+	// Required whenever this runs alongside other tests in the package (e.g.
+	// TestFork, TestCommissionUpgrade via Setup()): the EVM coin info is a
+	// process-global set-once value, and InitGenesis panics on a second set
+	// without this reset.
+	evmtypes.NewEVMConfigurator().ResetTestConfig()
 
 	genData, err := os.ReadFile(genFile)
 	require.NoError(t, err, "failed to read genesis file")
@@ -60,6 +76,18 @@ func SetupWithGenFile(t *testing.T, genFile string) *RealioNetwork {
 		initialHeight = int64(v)
 	}
 
+	consensus, ok := genesisDoc["consensus"].(map[string]interface{})
+	require.True(t, ok, "failed to extract consensus from genesis")
+	validators, ok := consensus["validators"].([]interface{})
+	require.True(t, ok, "failed to extract consensus.validators from genesis")
+	require.NotEmpty(t, validators, "expected at least one genesis validator")
+	firstVal, ok := validators[0].(map[string]interface{})
+	require.True(t, ok)
+	proposerAddrHex, ok := firstVal["address"].(string)
+	require.True(t, ok, "failed to extract consensus.validators[0].address from genesis")
+	proposerAddr, err := hex.DecodeString(proposerAddrHex)
+	require.NoError(t, err, "failed to decode proposer address %q", proposerAddrHex)
+
 	db := dbm.NewMemDB()
 	opt := baseapp.SetChainID(chainID)
 	appOpts := simtestutil.AppOptionsMap{srvflags.EVMChainID: MainnetEVMChainID}
@@ -80,13 +108,14 @@ func SetupWithGenFile(t *testing.T, genFile string) *RealioNetwork {
 	require.NoError(t, err, "failed to init chain")
 
 	_, err = realioApp.FinalizeBlock(&abci.RequestFinalizeBlock{
-		Height: initialHeight,
-		Time:   genesisTime,
-		Txs:    [][]byte{},
+		Height:          initialHeight,
+		Time:            genesisTime,
+		Txs:             [][]byte{},
+		ProposerAddress: proposerAddr,
 	})
 	require.NoError(t, err, "failed to finalize first block")
 
-	return realioApp
+	return realioApp, proposerAddr
 }
 
 // loadRotatedAddresses reads the address,replace CSV produced for the key
@@ -121,8 +150,23 @@ func loadRotatedAddresses(t *testing.T, csvFile string) map[string]string {
 //  2. a brand-new delegator using one of the ROTATED addresses can submit a
 //     fresh MsgUndelegate and have it mature and pay out normally, and
 //  3. a plain bank transfer between two rotated addresses works normally.
+// dstrxContract is the real "Districts Token" (DSTRX) ERC20 contract from
+// the recovered mainnet genesis, registered as an erc20-backed multistaking
+// coin (denom "erc20:0xb841F365..."). Several of the addresses being rotated
+// hold DSTRX both as raw ERC20 balance and as a pending multistaking unlock;
+// this test verifies the multistaking-unlock side actually pays out to the
+// ROTATED address at the real contract, not just in bank bookkeeping.
+var dstrxContract = common.HexToAddress("0xb841F365D5221Bed66d60E69094418D8C2aa5A44")
+
+func erc20BalanceOf(t *testing.T, realioApp *RealioNetwork, ctx sdk.Context, contract, holder common.Address) *big.Int {
+	t.Helper()
+	bal := realioApp.Erc20Keeper.BalanceOf(ctx, contracts.ERC20MinterBurnerDecimalsContract.ABI, contract, holder)
+	require.NotNil(t, bal, "balanceOf(%s) on %s returned nil (EVM call failed)", holder, contract)
+	return bal
+}
+
 func TestRotatedAddressesLifecycle(t *testing.T) {
-	realioApp := SetupWithGenFile(t, filepath.Join("testdata", "recover_genesis_edited.json"))
+	realioApp, proposerAddr := SetupWithGenFile(t, filepath.Join("testdata", "recover_genesis_edited.json"))
 	rotated := loadRotatedAddresses(t, filepath.Join("testdata", "wallet-active-addresses-replaced.csv"))
 	newAddrSet := make(map[string]bool, len(rotated))
 	for _, newAddr := range rotated {
@@ -130,20 +174,26 @@ func TestRotatedAddressesLifecycle(t *testing.T) {
 	}
 
 	startHeight := realioApp.LastBlockHeight() + 1
-	ctx := realioApp.BaseApp.NewContextLegacy(false, tmproto.Header{Height: startHeight, Time: time.Now()}).
-		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
+	ctx := realioApp.BaseApp.NewContextLegacy(false, tmproto.Header{
+		Height:          startHeight,
+		Time:            time.Now(),
+		ProposerAddress: proposerAddr,
+	}).WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 
 	qServer := multistakingkeeper.NewQueryServerImpl(realioApp.MultiStakingKeeper)
 
-	// ---- Phase 1: pre-existing unbonding delegations still mature normally ----
+	// ---- Phase 1: pre-existing unbonding delegations still mature normally,
+	//      for BOTH native coins and the real erc20-backed DSTRX coin ----
 	unlocksRes, err := qServer.MultiStakingUnlocks(ctx, &multistakingtypes.QueryMultiStakingUnlocksRequest{})
 	require.NoError(t, err)
 	require.NotEmpty(t, unlocksRes.Unlocks, "expected pre-existing unlocks carried over from the recovered genesis")
 
 	type pendingUnbond struct {
-		delAddr sdk.AccAddress
-		denom   string
-		before  sdk.Coin
+		delAddr      sdk.AccAddress
+		denom        string
+		before       sdk.Coin
+		isDSTRX      bool
+		dstrxBefore  *big.Int
 	}
 
 	var maxCompletion time.Time
@@ -171,29 +221,31 @@ func TestRotatedAddressesLifecycle(t *testing.T) {
 		}
 
 		denom := unlock.Entries[0].UnlockingCoin.Denom
-		if strings.HasPrefix(denom, "erc20:") {
-			// The erc20-backed multistaking coin routes its balance/mint
-			// through the EVM (a real contract call) on maturity. That path
-			// panics in this lightweight test harness (missing EVM/precompile
-			// wiring) independently of address rotation — reproduces the same
-			// way on the ORIGINAL, unedited genesis. Excluded here so it
-			// doesn't block verifying the native (bank-only) unbonding path;
-			// see the conversation notes on EVM/erc20 storage for the
-			// separate, real risk this denom carries.
-			t.Logf("skipping erc20-backed unlock %s/%s (denom=%s): known EVM-call limitation of this test harness, unrelated to rotation",
-				unlock.UnlockID.MultiStakerAddr, unlock.UnlockID.ValAddr, denom)
-			continue
-		}
+		isDSTRX := denom == "erc20:0xb841F365D5221Bed66d60E69094418D8C2aa5A44"
 
 		completion := ubd.Entries[len(ubd.Entries)-1].CompletionTime
 		if completion.After(maxCompletion) {
 			maxCompletion = completion
 		}
 
-		before := realioApp.BankKeeper.GetBalance(ctx, delAddr, denom)
-		pendings = append(pendings, pendingUnbond{delAddr: delAddr, denom: denom, before: before})
+		p := pendingUnbond{delAddr: delAddr, denom: denom, isDSTRX: isDSTRX}
+		p.before = realioApp.BankKeeper.GetBalance(ctx, delAddr, denom)
+		if isDSTRX {
+			p.dstrxBefore = erc20BalanceOf(t, realioApp, ctx, dstrxContract, common.BytesToAddress(delAddr.Bytes()))
+			t.Logf("rotated address %s (DSTRX unlock): bank(%s)=%s, contract balanceOf=%s",
+				unlock.UnlockID.MultiStakerAddr, denom, p.before, p.dstrxBefore)
+		}
+		pendings = append(pendings, p)
 	}
-	require.NotEmpty(t, pendings, "expected at least one native-denom pending unbond to test maturity with")
+	require.NotEmpty(t, pendings, "expected at least one pending unbond to test maturity with")
+	require.True(t, func() bool {
+		for _, p := range pendings {
+			if p.isDSTRX {
+				return true
+			}
+		}
+		return false
+	}(), "expected at least one pending DSTRX unlock to test")
 
 	// Advance block time/height past the latest maturity for ALL pending unbonds.
 	ctx = ctx.WithBlockTime(maxCompletion.Add(time.Second)).WithBlockHeight(ctx.BlockHeight() + 1)
@@ -204,10 +256,26 @@ func TestRotatedAddressesLifecycle(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, p := range pendings {
-		after := realioApp.BankKeeper.GetBalance(ctx, p.delAddr, p.denom)
-		require.Truef(t, p.before.IsLT(after),
-			"expected balance increase for %s (%s) after pre-existing unbonding matured: before=%s after=%s",
-			p.delAddr, p.denom, p.before, after)
+		if !p.isDSTRX {
+			// The erc20-backed unlock does NOT credit the "erc20:0x..." denom
+			// through the bank module at all (GetBalance stays 0 for it) —
+			// the payout lands directly in the real ERC20 contract's storage
+			// instead, verified separately below via balanceOf. Only assert
+			// the bank-balance increase for genuinely bank-tracked denoms.
+			after := realioApp.BankKeeper.GetBalance(ctx, p.delAddr, p.denom)
+			require.Truef(t, p.before.IsLT(after),
+				"expected balance increase for %s (%s) after pre-existing unbonding matured: before=%s after=%s",
+				p.delAddr, p.denom, p.before, after)
+		}
+
+		if p.isDSTRX {
+			dstrxAfter := erc20BalanceOf(t, realioApp, ctx, dstrxContract, common.BytesToAddress(p.delAddr.Bytes()))
+			require.Truef(t, p.dstrxBefore.Cmp(dstrxAfter) < 0,
+				"expected DSTRX contract balanceOf(%s) to increase after unbonding matured: before=%s after=%s",
+				p.delAddr, p.dstrxBefore, dstrxAfter)
+			t.Logf("rotated address %s: DSTRX contract balanceOf increased %s -> %s after unbonding matured",
+				p.delAddr, p.dstrxBefore, dstrxAfter)
+		}
 	}
 
 	msgServer := multistakingkeeper.NewMsgServerImpl(realioApp.MultiStakingKeeper)
@@ -251,15 +319,8 @@ func TestRotatedAddressesLifecycle(t *testing.T) {
 	afterStakeBal := realioApp.BankKeeper.GetBalance(ctx, stakerAddr, stakeDenom)
 	require.Equal(t, stakerFreeBal.Amount.Sub(stakeAmount), afterStakeBal.Amount)
 
-	// ---- Phase 3: the SAME rotated address submits a FRESH undelegate ----
-	// Only the submission (msg handling + correctly-scheduled completion) is
-	// asserted here, not full maturity: pending erc20-backed unlocks already
-	// in genesis mature a few days after these native ones (see the earlier
-	// timestamp survey), and this delegation's own 7-day unbonding period
-	// would run past that point, dragging the still-broken erc20/EVM path
-	// (see Phase 1) into this EndBlocker call. Phase 1 already proves
-	// maturity/payout works for native coins; this phase proves a rotated
-	// address can successfully originate a brand-new unstake request.
+	// ---- Phase 3: the SAME rotated address submits a FRESH undelegate and
+	//      it matures and pays out normally ----
 	valAddr, err := sdk.ValAddressFromBech32(stakeValidator)
 	require.NoError(t, err)
 
@@ -288,6 +349,19 @@ func TestRotatedAddressesLifecycle(t *testing.T) {
 	afterUnbondBal := realioApp.BankKeeper.GetBalance(ctx, stakerAddr, stakeDenom)
 	require.Equal(t, beforeUnbondBal.Amount, afterUnbondBal.Amount,
 		"undelegate should not release funds before the unbonding period matures")
+
+	// advance past this fresh undelegate's own completion and confirm it pays out too.
+	ctx = ctx.WithBlockTime(entry.CompletionTime.Add(time.Second)).WithBlockHeight(ctx.BlockHeight() + 1)
+	_, err = realioApp.EndBlocker(ctx)
+	require.NoError(t, err)
+	ctx = ctx.WithBlockTime(ctx.BlockTime().Add(time.Second)).WithBlockHeight(ctx.BlockHeight() + 1)
+	_, err = realioApp.EndBlocker(ctx)
+	require.NoError(t, err)
+
+	maturedUnbondBal := realioApp.BankKeeper.GetBalance(ctx, stakerAddr, stakeDenom)
+	require.Truef(t, beforeUnbondBal.IsLT(maturedUnbondBal),
+		"expected rotated address %s balance to increase after its fresh undelegate matured: before=%s after=%s",
+		stakerAddr, beforeUnbondBal, maturedUnbondBal)
 
 	// ---- Phase 4: plain bank transfer between two rotated addresses ----
 	senderAddr := stakerAddr
