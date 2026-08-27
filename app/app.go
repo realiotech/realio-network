@@ -568,6 +568,7 @@ func New(
 
 	app.BlacklistKeeper = blacklistmodulekeeper.NewKeeper(
 		runtime.NewKVStoreService(keys[blacklistmoduletypes.StoreKey]),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
 	// Add transfer restriction

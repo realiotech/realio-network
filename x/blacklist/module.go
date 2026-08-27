@@ -1,6 +1,7 @@
 package blacklist
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -14,6 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 
+	"github.com/realiotech/realio-network/x/blacklist/client/cli"
 	"github.com/realiotech/realio-network/x/blacklist/keeper"
 	"github.com/realiotech/realio-network/x/blacklist/types"
 )
@@ -27,23 +29,30 @@ var (
 // ConsensusVersion defines the current x/blacklist module consensus version.
 const ConsensusVersion = 1
 
-// AppModuleBasic implements the module.AppModuleBasic interface. This module
-// has no Msg/Query service and no CLI commands: it is state (a set of
-// blocked addresses) checked directly by the ante handler, never mutated by
-// a user-submitted transaction.
+// AppModuleBasic implements the module.AppModuleBasic interface. The
+// blacklist itself (a set of blocked addresses, checked directly by the
+// ante handler) can only be mutated by genesis or by the gov-gated
+// MsgUpdateBlacklist — never by an ordinary user-submitted transaction. The
+// Query/IsBlacklisted RPC, however, is open to anyone.
 type AppModuleBasic struct{}
 
 func (AppModuleBasic) Name() string { return types.ModuleName }
 
 func (AppModuleBasic) RegisterLegacyAminoCodec(*codec.LegacyAmino) {}
 
-func (AppModuleBasic) RegisterInterfaces(cdctypes.InterfaceRegistry) {}
+func (AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
+	types.RegisterInterfaces(reg)
+}
 
-func (AppModuleBasic) RegisterGRPCGatewayRoutes(client.Context, *runtime.ServeMux) {}
+func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
+	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
+		panic(err)
+	}
+}
 
 func (AppModuleBasic) GetTxCmd() *cobra.Command { return nil }
 
-func (AppModuleBasic) GetQueryCmd() *cobra.Command { return nil }
+func (AppModuleBasic) GetQueryCmd() *cobra.Command { return cli.GetQueryCmd() }
 
 func (AppModuleBasic) DefaultGenesis(codec.JSONCodec) json.RawMessage {
 	bz, err := json.Marshal(types.DefaultGenesis())
@@ -78,8 +87,11 @@ func NewAppModule(k keeper.Keeper) AppModule {
 func (AppModule) IsOnePerModuleType() {}
 func (AppModule) IsAppModule()        {}
 
-// RegisterServices is a no-op: this module registers no Msg/Query service.
-func (am AppModule) RegisterServices(module.Configurator) {}
+// RegisterServices registers the module's Msg and Query gRPC services.
+func (am AppModule) RegisterServices(cfg module.Configurator) {
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServerImpl(am.keeper))
+}
 
 // ConsensusVersion implements module.HasConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return ConsensusVersion }

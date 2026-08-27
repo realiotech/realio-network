@@ -16,15 +16,23 @@ import (
 var blacklistedFlag = []byte{1}
 
 // Keeper stores the set of blacklisted account addresses, keyed by their raw
-// bytes (sdk.AccAddress). It intentionally has no Msg service: entries are
-// only ever added by genesis or by a chain upgrade handler calling
-// SetBlacklisted directly, never by a user-submitted transaction.
+// bytes (sdk.AccAddress). Entries are added by genesis or by the gov-gated
+// MsgUpdateBlacklist — never by an ordinary user-submitted transaction.
 type Keeper struct {
 	storeService corestore.KVStoreService
+
+	// authority is the address permitted to call MsgUpdateBlacklist
+	// (the x/gov module account, unless overridden).
+	authority string
 }
 
-func NewKeeper(storeService corestore.KVStoreService) Keeper {
-	return Keeper{storeService: storeService}
+func NewKeeper(storeService corestore.KVStoreService, authority string) Keeper {
+	return Keeper{storeService: storeService, authority: authority}
+}
+
+// GetAuthority returns the x/blacklist module's authority.
+func (k Keeper) GetAuthority() string {
+	return k.authority
 }
 
 // SetBlacklisted adds an address to the blacklist.
