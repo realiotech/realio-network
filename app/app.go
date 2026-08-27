@@ -971,7 +971,22 @@ func (app *RealioNetwork) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) 
 
 // EndBlocker updates every end block
 func (app *RealioNetwork) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
-	return app.mm.EndBlock(ctx)
+	res, err := app.mm.EndBlock(ctx)
+	if err != nil {
+		return res, err
+	}
+
+	// Validator rotation fork (see app/validator_rotation.go): the staking
+	// module's own EndBlock above already emitted the "new key" half of any
+	// rotation performed this block; append the "old key -> power 0" half,
+	// which nothing else knows to emit once the old identity has been
+	// removed from every index.
+	if len(pendingValidatorZeroUpdates) > 0 {
+		res.ValidatorUpdates = append(res.ValidatorUpdates, pendingValidatorZeroUpdates...)
+		pendingValidatorZeroUpdates = nil
+	}
+
+	return res, nil
 }
 
 // GetSubspace returns a param subspace for a given module name.
