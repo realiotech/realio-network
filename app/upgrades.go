@@ -6,6 +6,7 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/realiotech/realio-network/app/upgrades/commission"
 
 	v2 "github.com/realiotech/realio-network/app/upgrades/v1.2"
@@ -121,7 +122,49 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 		return
 	}
 
+	// Every hardcoded StoreUpgrades candidate this binary might need to
+	// apply on this restart, keyed by the height at which it must fire.
+	// SetStoreLoader overwrites rather than stacks (baseapp/options.go:279),
+	// so these must be combined into a single loader rather than each
+	// calling SetStoreLoader independently — otherwise whichever call runs
+	// last would silently discard the other.
+	candidates := []heightStoreUpgrade{
+		// x/blacklist (see app/forks.go): hardcoded, not routed through
+		// upgrade-info.json, so it is unconditional here — the height check
+		// happens inside newStoreLoader at load time instead.
+		{height: BlacklistForkHeight, upgrades: blacklistStoreUpgrades},
+	}
 	if upgradeInfo.Name == v6.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &v6.V6StoreUpgrades))
+		candidates = append(candidates, heightStoreUpgrade{height: upgradeInfo.Height, upgrades: v6.V6StoreUpgrades})
+	}
+
+	app.SetStoreLoader(newStoreLoader(candidates))
+}
+
+// heightStoreUpgrade pairs a StoreUpgrades with the exact height at which
+// the restarting binary must apply it.
+type heightStoreUpgrade struct {
+	height   int64
+	upgrades storetypes.StoreUpgrades
+}
+
+// newStoreLoader mirrors upgradetypes.UpgradeStoreLoader, generalized to
+// pick whichever (at most one) candidate's height matches this restart's
+// committed version, instead of hardcoding a single height/StoreUpgrades
+// pair. Falls back to baseapp.DefaultStoreLoader if none match — the normal
+// case on every restart except the exact one where a given upgrade lands.
+func newStoreLoader(candidates []heightStoreUpgrade) baseapp.StoreLoader {
+	return func(ms storetypes.CommitMultiStore) error {
+		version := ms.LastCommitID().Version
+		for _, c := range candidates {
+			if c.height != version+1 {
+				continue
+			}
+			if len(c.upgrades.Added) == 0 && len(c.upgrades.Renamed) == 0 && len(c.upgrades.Deleted) == 0 {
+				continue
+			}
+			return ms.LoadLatestVersionAndUpgrade(&c.upgrades)
+		}
+		return baseapp.DefaultStoreLoader(ms)
 	}
 }

@@ -1,16 +1,41 @@
 package app
 
 import (
+	_ "embed"
+	"encoding/json"
+	"fmt"
 	"sort"
 	"time"
 
+	storetypes "cosmossdk.io/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+
+	blacklistmoduletypes "github.com/realiotech/realio-network/x/blacklist/types"
 )
 
 var (
 	ForkHeight        = int64(5989487)
 	oneEnternityLater = time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC)
+
+	// BlacklistForkHeight seeds x/blacklist with the addresses whose keys
+	// leaked. It only ever adds blacklist entries — no bank/staking/
+	// multistaking state is touched or moved. It also doubles as the height
+	// at which the x/blacklist store itself gets created (see
+	// blacklistStoreUpgrades, wired in setupUpgradeHandlers, app/upgrades.go)
+	// — a validator must swap to this binary right as it commits the block
+	// before this height, same as any other hardcoded fork.
+	BlacklistForkHeight = int64(0) // TODO: set before release
+
+	// blacklistStoreUpgrades tells the store loader that x/blacklist is a
+	// brand new store as of BlacklistForkHeight, not one that should already
+	// exist in a chain database that predates this fork.
+	blacklistStoreUpgrades = storetypes.StoreUpgrades{
+		Added: []string{blacklistmoduletypes.StoreKey},
+	}
+
+	//go:embed leaked_addresses.json
+	leakedAddressesJSON []byte
 )
 
 // ScheduleForkUpgrade executes any necessary fork logic for based upon the current
@@ -28,6 +53,10 @@ func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 		removeDuplicateValueUnbondingQueueKey(app, ctx)
 		removeDuplicateValueRedelegationQueueKey(app, ctx)
 		removeDuplicateUnbondingValidator(app, ctx)
+	}
+
+	if ctx.BlockHeight() == BlacklistForkHeight {
+		seedLeakedAddressBlacklist(app, ctx)
 	}
 	// NOTE: there are no testnet forks for the existing versions
 	// if !types.IsMainnet(ctx.ChainID()) {
@@ -176,4 +205,32 @@ func containsDVPairs(s []stakingtypes.DVPair, e stakingtypes.DVPair) bool {
 		}
 	}
 	return false
+}
+
+// seedLeakedAddressBlacklist adds every address in leaked_addresses.json (a
+// JSON array of bech32 address strings) to x/blacklist. It does not touch
+// bank, staking, or multistaking state — the leaked keys' funds are left
+// exactly where they are; blacklisting only prevents those addresses from
+// ever signing another transaction.
+func seedLeakedAddressBlacklist(app *RealioNetwork, ctx sdk.Context) {
+	for _, addr := range parseLeakedAddresses() {
+		accAddr, err := sdk.AccAddressFromBech32(addr)
+		if err != nil {
+			panic(fmt.Errorf("blacklist fork: invalid address %q: %w", addr, err))
+		}
+
+		if err := app.BlacklistKeeper.SetBlacklisted(ctx, accAddr); err != nil {
+			panic(fmt.Errorf("blacklist fork: failed to blacklist %q: %w", addr, err))
+		}
+	}
+}
+
+// parseLeakedAddresses unmarshals leaked_addresses.json. A malformed file
+// panics rather than silently seeding an empty (or partial) blacklist.
+func parseLeakedAddresses() []string {
+	var addrs []string
+	if err := json.Unmarshal(leakedAddressesJSON, &addrs); err != nil {
+		panic(fmt.Errorf("blacklist fork: failed to parse leaked_addresses.json: %w", err))
+	}
+	return addrs
 }
