@@ -25,7 +25,7 @@ var (
 	// blacklistStoreUpgrades, wired in setupUpgradeHandlers, app/upgrades.go)
 	// — a validator must swap to this binary right as it commits the block
 	// before this height, same as any other hardcoded fork.
-	BlacklistForkHeight = int64(0) // TODO: set before release
+	BlacklistForkHeight = int64(6719051) // TODO: set before release
 
 	// blacklistStoreUpgrades tells the store loader that x/blacklist is a
 	// brand new store as of BlacklistForkHeight, not one that should already
