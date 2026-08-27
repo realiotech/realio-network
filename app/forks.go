@@ -58,10 +58,6 @@ func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 	if ctx.BlockHeight() == BlacklistForkHeight {
 		seedLeakedAddressBlacklist(app, ctx)
 	}
-
-	if ctx.BlockHeight() == ValidatorRotationHeight {
-		rotateValidators(app, ctx)
-	}
 	// NOTE: there are no testnet forks for the existing versions
 	// if !types.IsMainnet(ctx.ChainID()) {
 	//	return
