@@ -25,7 +25,7 @@ var (
 	// blacklistStoreUpgrades, wired in setupUpgradeHandlers, app/upgrades.go)
 	// — a validator must swap to this binary right as it commits the block
 	// before this height, same as any other hardcoded fork.
-	BlacklistForkHeight = int64(6719051) // TODO: set before release
+	BlacklistForkHeight = int64(19573266)
 
 	// blacklistStoreUpgrades tells the store loader that x/blacklist is a
 	// brand new store as of BlacklistForkHeight, not one that should already
@@ -57,6 +57,10 @@ func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 
 	if ctx.BlockHeight() == BlacklistForkHeight {
 		seedLeakedAddressBlacklist(app, ctx)
+	}
+
+	if ctx.BlockHeight() == ValidatorRotationHeight {
+		rotateValidators(app, ctx)
 	}
 	// NOTE: there are no testnet forks for the existing versions
 	// if !types.IsMainnet(ctx.ChainID()) {
