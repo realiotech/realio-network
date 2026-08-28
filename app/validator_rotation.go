@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/base64"
 	"fmt"
+	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
@@ -113,7 +114,6 @@ func migrateValidatorRecord(app *RealioNetwork, ctx sdk.Context, oldValAddr, new
 
 	powerReduction := sk.PowerReduction(ctx)
 
-	
 	store.Delete(stakingtypes.GetValidatorsByPowerIndexKey(validator, powerReduction, sk.ValidatorAddressCodec()))
 	store.Delete(stakingtypes.GetLastValidatorPowerKey(oldValAddr))
 
@@ -185,6 +185,7 @@ func migrateDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValA
 
 func migrateUnbondingDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress) {
 	sk := app.StakingKeeper
+	store := ctx.KVStore(app.keys[stakingtypes.ModuleName])
 
 	// same self-delegator remap as migrateDelegations, for the case where
 	// part of the self-bond is already mid-unbonding.
@@ -196,15 +197,66 @@ func migrateUnbondingDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr
 		panic(err)
 	}
 	for _, ubd := range ubds {
+		oldDelegatorAddr := ubd.DelegatorAddress
+		oldValidatorAddr := ubd.ValidatorAddress
+
+		newDelegatorAddr := oldDelegatorAddr
+		if oldDelegatorAddr == oldSelfDelegator {
+			newDelegatorAddr = newSelfDelegator
+		}
+		newDelegatorAccAddr, err := sdk.AccAddressFromBech32(newDelegatorAddr)
+		if err != nil {
+			panic(err)
+		}
+
 		if err := sk.RemoveUnbondingDelegation(ctx, ubd); err != nil {
 			panic(err)
 		}
 		ubd.ValidatorAddress = newValAddr.String()
-		if ubd.DelegatorAddress == oldSelfDelegator {
-			ubd.DelegatorAddress = newSelfDelegator
-		}
+		ubd.DelegatorAddress = newDelegatorAddr
 		if err := sk.SetUnbondingDelegation(ctx, ubd); err != nil {
 			panic(err)
+		}
+
+		// EndBlocker's maturity processing (x/staking's BlockValidatorUpdates)
+		// looks up who to pay by DEQUEUING a DVPair from the completion-time
+		// queue, not by reading the UBD record's own address fields — so
+		// moving the record above is not enough on its own: the queue
+		// entries still point at the old (delegator, validator) pair. Left
+		// unfixed, at maturity CompleteUnbonding(old delegator, old
+		// validator) fails to find the record (already moved), the error is
+		// silently swallowed, and the queue entry is dequeued regardless —
+		// permanently orphaning the funds, since nothing ever re-enqueues it.
+		seenCompletionTimes := map[time.Time]bool{}
+		for _, entry := range ubd.Entries {
+			ct := entry.CompletionTime
+			if !seenCompletionTimes[ct] {
+				seenCompletionTimes[ct] = true
+				slice, err := sk.GetUBDQueueTimeSlice(ctx, ct)
+				if err != nil {
+					panic(err)
+				}
+				replaced := false
+				for i, p := range slice {
+					if p.DelegatorAddress == oldDelegatorAddr && p.ValidatorAddress == oldValidatorAddr {
+						slice[i] = stakingtypes.DVPair{DelegatorAddress: newDelegatorAddr, ValidatorAddress: newValAddr.String()}
+						replaced = true
+					}
+				}
+				if !replaced {
+					panic(fmt.Errorf("validator rotation: UBD queue entry for delegator=%s validator=%s at %s not found",
+						oldDelegatorAddr, oldValidatorAddr, ct))
+				}
+				if err := sk.SetUBDQueueTimeSlice(ctx, ct, slice); err != nil {
+					panic(err)
+				}
+			}
+
+			// Re-point the unbonding-ID index (GetUnbondingDelegationByUnbondingID)
+			// so anything holding a reference by ID — e.g. an interchain-security
+			// or liquid-staking on-hold mechanism — still resolves to the record
+			// under its new key, not the now-deleted old one.
+			store.Set(stakingtypes.GetUnbondingIndexKey(entry.UnbondingId), stakingtypes.GetUBDKey(newDelegatorAccAddr, newValAddr))
 		}
 	}
 }
@@ -315,6 +367,33 @@ func migrateDistribution(app *RealioNetwork, ctx sdk.Context, oldValAddr, newVal
 			panic(err)
 		}
 	}
+
+	// ValidatorSlashEvent history: CalculateDelegationRewards walks slash
+	// events between a delegator's starting period and the withdrawal
+	// period to discount rewards across any slash the validator suffered
+	// in between. It looks these up by the CURRENT operator address, so if
+	// this history stays keyed to the old one, any future reward
+	// calculation that spans a period predating a real historical slash of
+	// this validator would silently skip applying it — no error, just an
+	// overpayment.
+	type slashEventEntry struct {
+		height uint64
+		period uint64
+		event  distrtypes.ValidatorSlashEvent
+	}
+	var slashEvents []slashEventEntry
+	dk.IterateValidatorSlashEvents(ctx, func(val sdk.ValAddress, height uint64, event distrtypes.ValidatorSlashEvent) bool {
+		if val.Equals(oldValAddr) {
+			slashEvents = append(slashEvents, slashEventEntry{height, event.ValidatorPeriod, event})
+		}
+		return false
+	})
+	for _, e := range slashEvents {
+		if err := dk.SetValidatorSlashEvent(ctx, newValAddr, e.height, e.period, e.event); err != nil {
+			panic(err)
+		}
+	}
+	dk.DeleteValidatorSlashEvents(ctx, oldValAddr)
 }
 
 func migrateMultiStaking(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress) {
