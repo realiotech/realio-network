@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/base64"
 	"testing"
+	"time"
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -14,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -73,6 +75,9 @@ func TestRotateValidator(t *testing.T) {
 	require.NoError(t, dk.SetDelegatorStartingInfo(ctx, oldValAddr, otherDelegator, distrtypes.DelegatorStartingInfo{
 		PreviousPeriod: 0, Stake: math.LegacyNewDec(1_000_000), Height: 1,
 	}))
+	require.NoError(t, dk.SetValidatorSlashEvent(ctx, oldValAddr, 1, 0, distrtypes.ValidatorSlashEvent{
+		ValidatorPeriod: 0, Fraction: math.LegacyNewDecWithPrec(5, 2),
+	}))
 
 	oldLocks := lockCount(msk, ctx, oldValAddr.String())
 	require.Equal(t, 2, oldLocks, "expected self + other delegator lock before rotation")
@@ -116,6 +121,15 @@ func TestRotateValidator(t *testing.T) {
 	oldCommission, err := dk.GetValidatorAccumulatedCommission(ctx, oldValAddr)
 	require.NoError(t, err)
 	require.True(t, oldCommission.Commission.IsZero())
+	var oldSlashEventsRemain bool
+	dk.IterateValidatorSlashEvents(ctx, func(val sdk.ValAddress, _ uint64, _ distrtypes.ValidatorSlashEvent) bool {
+		if val.Equals(oldValAddr) {
+			oldSlashEventsRemain = true
+			return true
+		}
+		return false
+	})
+	require.False(t, oldSlashEventsRemain, "old validator's slash-event history must be cleared, not left orphaned under the old address")
 
 	// new identity carries everything over unchanged except operator/pubkey
 	newValidator, err := sk.GetValidator(ctx, newValAddr)
@@ -165,6 +179,10 @@ func TestRotateValidator(t *testing.T) {
 	startInfo, err := dk.GetDelegatorStartingInfo(ctx, newValAddr, otherDelegator)
 	require.NoError(t, err)
 	require.True(t, startInfo.Stake.Equal(math.LegacyNewDec(1_000_000)))
+	newSlashEvent, found, err := dk.GetValidatorSlashEvent(ctx, newValAddr, 1, 0)
+	require.NoError(t, err)
+	require.True(t, found, "slash-event history must have moved to the new validator address")
+	require.True(t, newSlashEvent.Fraction.Equal(math.LegacyNewDecWithPrec(5, 2)))
 
 	// multistaking locks moved, coin amounts untouched
 	require.Equal(t, oldLocks, lockCount(msk, ctx, newValAddr.String()))
@@ -339,6 +357,90 @@ func TestRotateValidatorPanicsOnRedelegation(t *testing.T) {
 	// runs before any mutation
 	_, err = sk.GetValidator(ctx, oldValAddr)
 	require.NoError(t, err)
+}
+
+// TestRotateValidatorMigratesInFlightUnbonding proves an unbonding delegation
+// already in progress at rotation time actually pays out at maturity,
+// instead of being silently orphaned. migrateUnbondingDelegations moves the
+// UnbondingDelegation record itself, but x/staking's EndBlocker maturity
+// processing (BlockValidatorUpdates) doesn't look at that record's fields —
+// it dequeues a DVPair{delegator, validator} from the completion-time queue
+// and looks up the record by THAT pair. If the queue still names the old
+// validator after the record has moved, CompleteUnbonding fails to find it,
+// the error is silently swallowed (`if err != nil { continue }` in the SDK),
+// and the queue entry is dequeued anyway — permanently orphaning the funds,
+// since nothing ever re-enqueues it. This drives the real queue-dequeue and
+// CompleteUnbonding path (not just checking the record exists) to prove
+// that doesn't happen.
+func TestRotateValidatorMigratesInFlightUnbonding(t *testing.T) {
+	realio := Setup(false, nil, 1)
+	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1}).
+		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
+
+	sk := realio.StakingKeeper
+	validators, err := sk.GetValidators(ctx, 10)
+	require.NoError(t, err)
+	oldValidator := validators[0]
+	oldValAddr, err := sdk.ValAddressFromBech32(oldValidator.OperatorAddress)
+	require.NoError(t, err)
+
+	delegator := testutil.GenAddress()
+	realio.AccountKeeper.SetAccount(ctx, realio.AccountKeeper.NewAccountWithAddress(ctx, delegator))
+	completionTime := ctx.BlockTime().Add(time.Hour)
+	newUbd, err := sk.SetUnbondingDelegationEntry(ctx, delegator, oldValAddr, ctx.BlockHeight(), completionTime, math.NewInt(4242))
+	require.NoError(t, err)
+	require.NoError(t, sk.InsertUBDQueue(ctx, newUbd, completionTime))
+
+	// sanity: before rotation, the queue names the OLD validator
+	sliceBefore, err := sk.GetUBDQueueTimeSlice(ctx, completionTime)
+	require.NoError(t, err)
+	require.Len(t, sliceBefore, 1)
+	require.Equal(t, oldValidator.OperatorAddress, sliceBefore[0].ValidatorAddress)
+
+	newValAddr := sdk.ValAddress(testutil.GenAddress())
+	newConsPriv := ed25519.GenPrivKey()
+	origRotations := validatorRotations
+	t.Cleanup(func() { validatorRotations = origRotations; pendingValidatorZeroUpdates = nil })
+	validatorRotations = []struct {
+		OldOperator      string
+		NewOperator      string
+		NewConsPubKeyB64 string
+	}{
+		{
+			OldOperator:      oldValidator.OperatorAddress,
+			NewOperator:      newValAddr.String(),
+			NewConsPubKeyB64: pubKeyB64(t, newConsPriv.PubKey().(*ed25519.PubKey)),
+		},
+	}
+
+	rotateValidators(realio, ctx)
+
+	// the queue must now name the NEW validator — this is the actual bug:
+	// without the fix, this slice is still empty (nothing to replace) or
+	// still names the old validator, and maturity would silently swallow it
+	sliceAfter, err := sk.GetUBDQueueTimeSlice(ctx, completionTime)
+	require.NoError(t, err)
+	require.Len(t, sliceAfter, 1)
+	require.Equal(t, newValAddr.String(), sliceAfter[0].ValidatorAddress)
+	require.Equal(t, delegator.String(), sliceAfter[0].DelegatorAddress)
+
+	// prove it end-to-end: dequeue at maturity exactly like EndBlocker does,
+	// and complete it for real — funds must actually reach the delegator.
+	matureTime := completionTime.Add(time.Second)
+	require.NoError(t, realio.BankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 4242))))
+	require.NoError(t, realio.BankKeeper.SendCoinsFromModuleToModule(ctx, minttypes.ModuleName, stakingtypes.NotBondedPoolName, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 4242))))
+
+	matureCtx := ctx.WithBlockTime(matureTime)
+	matured, err := sk.DequeueAllMatureUBDQueue(matureCtx, matureTime)
+	require.NoError(t, err)
+	require.Len(t, matured, 1, "the matured queue entry must be the migrated (new validator) one")
+	require.Equal(t, newValAddr.String(), matured[0].ValidatorAddress)
+
+	balanceBefore := realio.BankKeeper.GetBalance(matureCtx, delegator, sdk.DefaultBondDenom)
+	_, err = sk.CompleteUnbonding(matureCtx, delegator, newValAddr)
+	require.NoError(t, err, "CompleteUnbonding must succeed against the migrated record — this is what silently failed before the fix")
+	balanceAfter := realio.BankKeeper.GetBalance(matureCtx, delegator, sdk.DefaultBondDenom)
+	require.Equal(t, int64(4242), balanceAfter.Amount.Sub(balanceBefore.Amount).Int64(), "funds must actually reach the delegator")
 }
 
 func lockCount(msk multistakingkeeper.Keeper, ctx sdk.Context, valAddr string) int {
