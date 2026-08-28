@@ -966,7 +966,15 @@ func (app *RealioNetwork) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlo
 func (app *RealioNetwork) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 	// Perform any scheduled forks before executing the modules logic
 	app.ScheduleForkUpgrade(ctx)
-	return app.mm.BeginBlock(ctx)
+
+	res, err := app.mm.BeginBlock(ctx)
+	if err != nil {
+		return res, err
+	}
+
+	app.ScheduleValidatorRotation(ctx)
+
+	return res, nil
 }
 
 // EndBlocker updates every end block

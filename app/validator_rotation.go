@@ -20,7 +20,7 @@ import (
 // are migrated to their replacement operator address + consensus key. Same
 // mechanism as the blacklist fork: no genesis edit, no chain halt — the
 // binary swap at this height carries the migration.
-var ValidatorRotationHeight = int64(0) // TODO: set before release
+var ValidatorRotationHeight = int64(15) // TODO(local test): validator1 -> validator4 on the local 4-node devnet
 
 // validatorRotations lists each leaked validator's old operator address and
 // its replacement identity. NewConsPubKeyB64 is the raw 32-byte ed25519
@@ -31,16 +31,12 @@ var validatorRotations = []struct {
 	NewOperator      string
 	NewConsPubKeyB64 string
 }{
-	// {
-	// 	OldOperator:      "realiovaloper18a32el4maw3pqr8xh3yrl9ja4lejs265a5nxtm",
-	// 	NewOperator:      "realiovaloper1...",
-	// 	NewConsPubKeyB64: "...",
-	// },
-	// {
-	// 	OldOperator:      "realiovaloper13jrrtkfuuvzdak6zxmr95hek9c228ug50sdsvs",
-	// 	NewOperator:      "realiovaloper1...",
-	// 	NewConsPubKeyB64: "...",
-	// },
+	{
+		// validator1 -> validator4, local devnet (~/.realio-network)
+		OldOperator:      "realiovaloper1jyrr9ga485mzdw6u7w7vcvcmhz8h6zq86p0un6",
+		NewOperator:      "realiovaloper146c3zdp37vwl2sex4ks3zvlpa0j994r4r5ecst",
+		NewConsPubKeyB64: "NelhkCuwkm52wsQ/WA+HsQApI5DN8DQ8CIKQH66LckY=",
+	},
 }
 
 // pendingValidatorZeroUpdates holds the "old consensus pubkey, power 0" ABCI
@@ -115,16 +111,9 @@ func migrateValidatorRecord(app *RealioNetwork, ctx sdk.Context, oldValAddr, new
 	// capture "old key -> power 0" BEFORE mutating anything
 	pendingValidatorZeroUpdates = append(pendingValidatorZeroUpdates, validator.ABCIValidatorUpdateZero())
 
-	oldConsAddrBytes, err := validator.GetConsAddr()
-	if err != nil {
-		panic(err)
-	}
-	oldConsAddr := sdk.ConsAddress(oldConsAddrBytes)
 	powerReduction := sk.PowerReduction(ctx)
 
-	// delete every old index entry
-	store.Delete(stakingtypes.GetValidatorKey(oldValAddr))
-	store.Delete(stakingtypes.GetValidatorByConsAddrKey(oldConsAddr))
+	
 	store.Delete(stakingtypes.GetValidatorsByPowerIndexKey(validator, powerReduction, sk.ValidatorAddressCodec()))
 	store.Delete(stakingtypes.GetLastValidatorPowerKey(oldValAddr))
 
@@ -161,6 +150,21 @@ func migrateValidatorRecord(app *RealioNetwork, ctx sdk.Context, oldValAddr, new
 func migrateDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress) {
 	sk := app.StakingKeeper
 
+	// A validator's own self-delegation is a Delegation record whose
+	// DelegatorAddress is literally its operator address' account form
+	// (same 20 bytes, "realio1..." instead of "realiovaloper1...") — that's
+	// how self-delegation is identified everywhere in x/staking (e.g. the
+	// MinSelfDelegation check). Third-party delegators keep their own
+	// address untouched below; the self-delegation is the one case that
+	// must be re-pointed to the NEW operator's account too — otherwise
+	// it stays permanently attributed to the leaked old account, which is
+	// presumably being blacklisted right alongside this rotation, meaning
+	// nobody could ever manage that stake again (not even the legitimate
+	// new validator identity this whole migration exists to hand control
+	// to).
+	oldSelfDelegator := sdk.AccAddress(oldValAddr).String()
+	newSelfDelegator := sdk.AccAddress(newValAddr).String()
+
 	delegations, err := sk.GetValidatorDelegations(ctx, oldValAddr)
 	if err != nil {
 		panic(err)
@@ -170,6 +174,9 @@ func migrateDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValA
 			panic(err)
 		}
 		del.ValidatorAddress = newValAddr.String()
+		if del.DelegatorAddress == oldSelfDelegator {
+			del.DelegatorAddress = newSelfDelegator
+		}
 		if err := sk.SetDelegation(ctx, del); err != nil {
 			panic(err)
 		}
@@ -178,6 +185,11 @@ func migrateDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValA
 
 func migrateUnbondingDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress) {
 	sk := app.StakingKeeper
+
+	// same self-delegator remap as migrateDelegations, for the case where
+	// part of the self-bond is already mid-unbonding.
+	oldSelfDelegator := sdk.AccAddress(oldValAddr).String()
+	newSelfDelegator := sdk.AccAddress(newValAddr).String()
 
 	ubds, err := sk.GetUnbondingDelegationsFromValidator(ctx, oldValAddr)
 	if err != nil {
@@ -188,6 +200,9 @@ func migrateUnbondingDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr
 			panic(err)
 		}
 		ubd.ValidatorAddress = newValAddr.String()
+		if ubd.DelegatorAddress == oldSelfDelegator {
+			ubd.DelegatorAddress = newSelfDelegator
+		}
 		if err := sk.SetUnbondingDelegation(ctx, ubd); err != nil {
 			panic(err)
 		}
@@ -270,6 +285,13 @@ func migrateDistribution(app *RealioNetwork, ctx sdk.Context, oldValAddr, newVal
 	}
 	dk.DeleteValidatorHistoricalRewards(ctx, oldValAddr)
 
+	// same self-delegator remap as migrateDelegations — must stay in sync
+	// with it, or the Delegation record (now under the new account) and its
+	// DelegatorStartingInfo (reward accounting) end up keyed to different
+	// delegator addresses for the same stake.
+	oldSelfDelegator := sdk.AccAddress(oldValAddr)
+	newSelfDelegator := sdk.AccAddress(newValAddr)
+
 	type startingInfoEntry struct {
 		del  sdk.AccAddress
 		info distrtypes.DelegatorStartingInfo
@@ -282,7 +304,11 @@ func migrateDistribution(app *RealioNetwork, ctx sdk.Context, oldValAddr, newVal
 		return false
 	})
 	for _, s := range starts {
-		if err := dk.SetDelegatorStartingInfo(ctx, newValAddr, s.del, s.info); err != nil {
+		newDel := s.del
+		if newDel.Equals(oldSelfDelegator) {
+			newDel = newSelfDelegator
+		}
+		if err := dk.SetDelegatorStartingInfo(ctx, newValAddr, newDel, s.info); err != nil {
 			panic(err)
 		}
 		if err := dk.DeleteDelegatorStartingInfo(ctx, oldValAddr, s.del); err != nil {
@@ -294,6 +320,13 @@ func migrateDistribution(app *RealioNetwork, ctx sdk.Context, oldValAddr, newVal
 func migrateMultiStaking(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress) {
 	msk := app.MultiStakingKeeper
 	store := ctx.KVStore(app.keys[multistakingtypes.ModuleName])
+
+	// same self-staker remap as migrateDelegations: MultiStakingLock/Unlock
+	// are keyed by {MultiStakerAddr, ValAddr} exactly like a Delegation is
+	// keyed by {DelegatorAddress, ValidatorAddress} — the self-bond lock
+	// must move to the new account, not stay under the old (leaked) one.
+	oldSelfStaker := sdk.AccAddress(oldValAddr).String()
+	newSelfStaker := sdk.AccAddress(newValAddr).String()
 
 	if denom := msk.GetValidatorMultiStakingCoin(ctx, oldValAddr); denom != "" {
 		msk.SetValidatorMultiStakingCoin(ctx, newValAddr, denom)
@@ -313,6 +346,9 @@ func migrateMultiStaking(app *RealioNetwork, ctx sdk.Context, oldValAddr, newVal
 	for _, l := range locks {
 		msk.RemoveMultiStakingLock(ctx, l.lock.LockID)
 		l.lock.LockID.ValAddr = newValAddr.String()
+		if l.lock.LockID.MultiStakerAddr == oldSelfStaker {
+			l.lock.LockID.MultiStakerAddr = newSelfStaker
+		}
 		msk.SetMultiStakingLock(ctx, l.lock)
 	}
 
@@ -329,6 +365,9 @@ func migrateMultiStaking(app *RealioNetwork, ctx sdk.Context, oldValAddr, newVal
 	for _, u := range unlocks {
 		msk.DeleteMultiStakingUnlock(ctx, u.unlock.UnlockID)
 		u.unlock.UnlockID.ValAddr = newValAddr.String()
+		if u.unlock.UnlockID.MultiStakerAddr == oldSelfStaker {
+			u.unlock.UnlockID.MultiStakerAddr = newSelfStaker
+		}
 		msk.SetMultiStakingUnlock(ctx, u.unlock)
 	}
 }

@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"testing"
 
+	abci "github.com/cometbft/cometbft/abci/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/stretchr/testify/require"
 
@@ -13,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
@@ -100,9 +102,12 @@ func TestRotateValidator(t *testing.T) {
 
 	rotateValidators(realio, ctx)
 
-	// old identity is gone
+	// old identity's economic state (delegations, distribution,
+	// multistaking) has moved off, but the plain Validator record itself is
+	// deliberately kept resolvable (see TestBeginBlockerRotationOrdering
+	// for why) — it's just gone from consensus-power accounting.
 	_, err = sk.GetValidator(ctx, oldValAddr)
-	require.Error(t, err)
+	require.NoError(t, err, "old validator record is kept in place indefinitely, not deleted")
 	require.Empty(t, lockCount(msk, ctx, oldValAddr.String()))
 	require.Empty(t, msk.GetValidatorMultiStakingCoin(ctx, oldValAddr))
 	oldCurRewards, err := dk.GetValidatorCurrentRewards(ctx, oldValAddr)
@@ -126,14 +131,23 @@ func TestRotateValidator(t *testing.T) {
 	newDelegations, err := sk.GetValidatorDelegations(ctx, newValAddr)
 	require.NoError(t, err)
 	require.Len(t, newDelegations, 2)
-	foundOther := false
+	foundOther, foundSelf := false, false
+	newSelfDelegator := sdk.AccAddress(newValAddr).String()
+	oldSelfDelegator := sdk.AccAddress(oldValAddr).String()
 	for _, del := range newDelegations {
 		if del.DelegatorAddress == otherDelegator.String() {
 			foundOther = true
 			require.True(t, del.Shares.Equal(math.LegacyNewDec(1_000_000)))
 		}
+		if del.DelegatorAddress == newSelfDelegator {
+			foundSelf = true
+			require.True(t, del.Shares.Equal(oldValidator.DelegatorShares))
+		}
+		require.NotEqual(t, oldSelfDelegator, del.DelegatorAddress,
+			"self-delegation must move to the NEW operator's own account, not stay under the old (leaked) one")
 	}
 	require.True(t, foundOther, "other delegator's delegation must have moved to the new validator")
+	require.True(t, foundSelf, "self-delegation must be re-keyed to the new operator's own account")
 
 	// distribution state moved
 	curRewards, err := dk.GetValidatorCurrentRewards(ctx, newValAddr)
@@ -176,6 +190,105 @@ func TestRotateValidator(t *testing.T) {
 	}
 	require.True(t, sawZeroForOld, "EndBlocker must emit a zero-power update for the old consensus key")
 	require.True(t, sawPowerForNew, "staking's own EndBlocker must emit a power update for the new consensus key")
+}
+
+// TestBeginBlockerRotationOrdering reproduces two real consensus failures
+// hit on a live 4-node devnet, both "validator does not exist"
+// (types.ErrNoValidatorFound) crashing every node.
+//
+// x/slashing's BeginBlocker processes the PREVIOUS block's vote info
+// (CometBFT's LastCommitInfo is always one block behind). Per the ABCI
+// spec, validator_updates returned at height H don't fully take effect
+// until H+3: NextValidatorsHash updates at H+1, the new set starts
+// proposing/voting at H+2, and LastCommitInfo first reflects the new set
+// at H+3. That means the OLD validator keeps signing blocks H and H+1, so
+// its votes still show up in LastCommitInfo as late as H+2's BeginBlocker.
+//
+//   - 1st crash: rotation ran before app.mm.BeginBlock, so the old
+//     validator's ValidatorByConsAddr index was already gone when
+//     x/slashing tried to process the fork block's OWN preceding vote.
+//     Fixed by running the rotation after app.mm.BeginBlock.
+//   - 2nd crash: even with that fix, migrateValidatorRecord still deleted
+//     the old validator's plain record immediately at the fork height —
+//     which broke x/slashing at H+1 and H+2, since the old validator's
+//     votes for blocks H and H+1 are processed there and it no longer
+//     existed. Fixed by leaving the old Validator/ValidatorByConsAddr
+//     record in place indefinitely (only removing it from the power
+//     index, so it stops participating going forward) rather than trying
+//     to time a deferred cleanup.
+//
+// This drives three consecutive real app.BeginBlocker calls (H, H+1, H+2),
+// each with vote info still referencing the old validator — exactly the
+// full window a live chain goes through — and confirms none of them error.
+func TestBeginBlockerRotationOrdering(t *testing.T) {
+	realio := Setup(false, nil, 1)
+
+	baseCtx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1})
+	validators, err := realio.StakingKeeper.GetValidators(baseCtx, 10)
+	require.NoError(t, err)
+	oldValidator := validators[0]
+	oldValAddr, err := sdk.ValAddressFromBech32(oldValidator.OperatorAddress)
+	require.NoError(t, err)
+	oldConsAddrBytes, err := oldValidator.GetConsAddr()
+	require.NoError(t, err)
+	oldPower := oldValidator.ConsensusPower(realio.StakingKeeper.PowerReduction(baseCtx))
+
+	// Setup() doesn't seed x/slashing signing info for its genesis
+	// validator the way a real chain (bonded via a real InitGenesis flow)
+	// always does — seed it here so this test's vote-info processing
+	// matches what x/slashing actually sees on a live chain.
+	require.NoError(t, realio.SlashingKeeper.SetValidatorSigningInfo(baseCtx, sdk.ConsAddress(oldConsAddrBytes), slashingtypes.ValidatorSigningInfo{
+		Address:     sdk.ConsAddress(oldConsAddrBytes).String(),
+		StartHeight: 0,
+	}))
+
+	newValAddr := sdk.ValAddress(testutil.GenAddress())
+	newConsPriv := ed25519.GenPrivKey()
+
+	origRotations, origHeight := validatorRotations, ValidatorRotationHeight
+	t.Cleanup(func() {
+		validatorRotations, ValidatorRotationHeight = origRotations, origHeight
+		pendingValidatorZeroUpdates = nil
+	})
+	const rotationHeight = int64(2)
+	ValidatorRotationHeight = rotationHeight
+	validatorRotations = []struct {
+		OldOperator      string
+		NewOperator      string
+		NewConsPubKeyB64 string
+	}{
+		{
+			OldOperator:      oldValidator.OperatorAddress,
+			NewOperator:      newValAddr.String(),
+			NewConsPubKeyB64: pubKeyB64(t, newConsPriv.PubKey().(*ed25519.PubKey)),
+		},
+	}
+
+	oldVoteInfo := []abci.VoteInfo{
+		{
+			Validator:   abci.Validator{Address: oldConsAddrBytes, Power: oldPower},
+			BlockIdFlag: tmproto.BlockIDFlagCommit,
+		},
+	}
+
+	// H, H+1, H+2: the old validator's votes for the prior 3 blocks are
+	// still being processed here, per the ABCI delay above.
+	for height := rotationHeight; height <= rotationHeight+2; height++ {
+		ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: height}).
+			WithBlockGasMeter(storetypes.NewInfiniteGasMeter()).
+			WithVoteInfos(oldVoteInfo)
+
+		require.NotPanicsf(t, func() {
+			_, beginErr := realio.BeginBlocker(ctx)
+			require.NoErrorf(t, beginErr, "BeginBlocker failed at height %d", height)
+		}, "BeginBlocker panicked at height %d", height)
+	}
+
+	finalCtx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: rotationHeight + 2})
+	_, err = realio.StakingKeeper.GetValidator(finalCtx, newValAddr)
+	require.NoError(t, err, "rotation must actually have run")
+	_, err = realio.StakingKeeper.GetValidator(finalCtx, oldValAddr)
+	require.NoError(t, err, "old validator record is kept in place indefinitely, not deleted")
 }
 
 // TestRotateValidatorPanicsOnRedelegation proves checkNoRedelegations
