@@ -21,24 +21,32 @@ import (
 // are migrated to their replacement operator address + consensus key. Same
 // mechanism as the blacklist fork: no genesis edit, no chain halt — the
 // binary swap at this height carries the migration.
-var ValidatorRotationHeight = int64(15) // TODO(local test): validator1 -> validator4 on the local 4-node devnet
+//
+// TODO(mainnet deploy): set to the real target height once the replacement
+// validators' new operator addresses and consensus keys are known, and
+// populate validatorRotations below to match. Until then this must stay
+// unreachable/inert — ScheduleValidatorRotation runs unconditionally out of
+// every BeginBlocker, so any real (non-placeholder) value here or below
+// would fire against every other test and devnet in this repo, not just the
+// real deployment.
+var ValidatorRotationHeight = int64(-1)
 
 // validatorRotations lists each leaked validator's old operator address and
 // its replacement identity. NewConsPubKeyB64 is the raw 32-byte ed25519
 // consensus pubkey (base64), taken from the new priv_validator_key.json the
 // validator operator generates for the replacement node.
+//
+// Deliberately empty until the real replacement identities for
+// realiovaloper18a32el4maw3pqr8xh3yrl9ja4lejs265a5nxtm and
+// realiovaloper13jrrtkfuuvzdak6zxmr95hek9c228ug50sdsvs are known — see the
+// TODO on ValidatorRotationHeight above. rotateValidators is a no-op when
+// this is empty, so it's safe to leave in place across every other test in
+// this repo (and it must stay that way until real values are filled in).
 var validatorRotations = []struct {
 	OldOperator      string
 	NewOperator      string
 	NewConsPubKeyB64 string
-}{
-	{
-		// validator1 -> validator4, local devnet (~/.realio-network)
-		OldOperator:      "realiovaloper1jyrr9ga485mzdw6u7w7vcvcmhz8h6zq86p0un6",
-		NewOperator:      "realiovaloper146c3zdp37vwl2sex4ks3zvlpa0j994r4r5ecst",
-		NewConsPubKeyB64: "NelhkCuwkm52wsQ/WA+HsQApI5DN8DQ8CIKQH66LckY=",
-	},
-}
+}{}
 
 // pendingValidatorZeroUpdates holds the "old consensus pubkey, power 0" ABCI
 // updates captured while migrating validators in BeginBlocker. The staking
