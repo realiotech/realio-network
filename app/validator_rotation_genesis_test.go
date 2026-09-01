@@ -96,6 +96,19 @@ func SetupWithRealGenesis(t *testing.T) (realioApp *RealioNetwork, chainID strin
 
 	blockTime = time.Now()
 
+	// This genesis's initial_height is the real chain's actual halt height —
+	// which may legitimately equal BlacklistForkHeight's current production
+	// value (it does today: both are 19573266, since this genesis IS the
+	// real halt-block export). Neutralize every height-triggered fork for
+	// the duration of this one FinalizeBlock call, so none of them fire
+	// here by coincidence before a test gets a chance to control it
+	// explicitly. Callers that want to exercise a fork opt in afterwards by
+	// setting the relevant height themselves and driving
+	// BeginBlocker/EndBlocker directly, same as the rest of this file does.
+	origBlacklistHeight, origRotationHeight := BlacklistForkHeight, ValidatorRotationHeight
+	BlacklistForkHeight, ValidatorRotationHeight = -1, -1
+	defer func() { BlacklistForkHeight, ValidatorRotationHeight = origBlacklistHeight, origRotationHeight }()
+
 	// Deliberately not calling Commit() here: doing so tears down
 	// finalizeBlockState, and BaseApp.NewContextLegacy(false, ...) — used
 	// throughout this test to build ad-hoc contexts for direct
