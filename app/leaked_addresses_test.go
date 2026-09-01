@@ -41,10 +41,14 @@ func TestLeakedAddressesJSONIsValid(t *testing.T) {
 func TestBlacklistFork(t *testing.T) {
 	realio := Setup(false, nil, 1)
 
-	origJSON, origHeight := leakedAddressesJSON, BlacklistForkHeight
+	origJSON, origHeight, origAssetRotations := leakedAddressesJSON, BlacklistForkHeight, assetManagerRotations
 	t.Cleanup(func() {
-		leakedAddressesJSON, BlacklistForkHeight = origJSON, origHeight
+		leakedAddressesJSON, BlacklistForkHeight, assetManagerRotations = origJSON, origHeight, origAssetRotations
 	})
+
+	// isolate from rotateAssetManagers, which also runs at BlacklistForkHeight
+	// (see forks.go) - this test is about the blacklist seeding, not that.
+	assetManagerRotations = nil
 
 	leaked := testutil.GenAddress()
 	untouched := testutil.GenAddress()
