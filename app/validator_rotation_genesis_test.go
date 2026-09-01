@@ -51,7 +51,7 @@ type consensusValidatorEntry struct {
 func SetupWithRealGenesis(t *testing.T) (realioApp *RealioNetwork, chainID string, initialHeight int64, proposerAddr []byte, blockTime time.Time) {
 	t.Helper()
 
-	raw, err := os.ReadFile(realGenesisPath)
+	raw, err := os.ReadFile(realGenesisPath) //nolint:staticcheck // SA4006 false positive: raw is read at json.Unmarshal(raw, &doc) below
 	if err != nil {
 		t.Skipf("real genesis fixture not present at %s, skipping: %v", realGenesisPath, err)
 		return nil, "", 0, nil, time.Time{}
