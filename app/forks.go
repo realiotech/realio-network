@@ -58,6 +58,7 @@ func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 	if ctx.BlockHeight() == BlacklistForkHeight {
 		seedLeakedAddressBlacklist(app, ctx)
 		rotateAssetManagers(app, ctx)
+		unauthorizeLeakedAddresses(app, ctx)
 	}
 	// NOTE: there are no testnet forks for the existing versions
 	// if !types.IsMainnet(ctx.ChainID()) {

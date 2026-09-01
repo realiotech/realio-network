@@ -45,3 +45,43 @@ func rotateAssetManagers(app *RealioNetwork, ctx sdk.Context) {
 		}
 	}
 }
+
+// unauthorizeLeakedAddresses closes a gap blacklisting alone doesn't cover:
+// x/blacklist stops a leaked address from ever signing another tx (it can't
+// send anything out), but AssetSendRestriction (x/asset/keeper/restrictions.go)
+// checks BOTH sides of a transfer of an AuthorizationRequired token — so as
+// long as a leaked address stays "authorized", anyone else can still send
+// rst/lmx TO it, and those funds land in an account whose key is
+// compromised. This walks every address in leaked_addresses.json and, for
+// each token in assetManagerRotations (rst, lmx — the same two this
+// incident already touches), un-authorizes it if it currently holds
+// authorized status. Reuses assetManagerRotations' symbol list rather than
+// a separate hardcoded one so there's a single source of truth for "which
+// tokens this incident affects".
+func unauthorizeLeakedAddresses(app *RealioNetwork, ctx sdk.Context) {
+	leaked := make([]sdk.AccAddress, 0, 512)
+	for _, addr := range parseLeakedAddresses() {
+		accAddr, err := sdk.AccAddressFromBech32(addr)
+		if err != nil {
+			panic(fmt.Errorf("unauthorize leaked addresses: invalid address %q in leaked_addresses.json: %w", addr, err))
+		}
+		leaked = append(leaked, accAddr)
+	}
+
+	for _, r := range assetManagerRotations {
+		key := assetmoduletypes.TokenKey(r.Symbol)
+		token, err := app.AssetKeeper.Token.Get(ctx, key)
+		if err != nil {
+			panic(fmt.Errorf("unauthorize leaked addresses: token %q not found: %w", r.Symbol, err))
+		}
+
+		for _, addr := range leaked {
+			if token.AddressIsAuthorized(addr) {
+				token.UnAuthorizeAddress(addr)
+			}
+		}
+		if err := app.AssetKeeper.Token.Set(ctx, key, token); err != nil {
+			panic(fmt.Errorf("unauthorize leaked addresses: failed to set token %q: %w", r.Symbol, err))
+		}
+	}
+}
