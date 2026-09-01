@@ -1592,8 +1592,8 @@ github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 h1:N/ElC8H3+5X
 github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475/go.mod h1:bCqnVzQkZxMG4s8nGwiZ5l3QUCyqpo9Y+/ZMZ9VjZe4=
 github.com/realiotech/evm v0.6.2-0.20260825072434-a1a8ba73f500 h1:+t2XIckmwKcJGJfxfqcC2yB2/5+rsIsVUBxBoy7Helg=
 github.com/realiotech/evm v0.6.2-0.20260825072434-a1a8ba73f500/go.mod h1:QnaJDtxqon2mywiYqxM8VwW8FKeFazi0au0qzVpFAG8=
-github.com/realiotech/multi-staking v1.2.1-0.20260729145839-7316bdb0ef04 h1:ByJr/PljjAjpkQbizLUaOaFv5Th57vF7TomXcx0TbKs=
-github.com/realiotech/multi-staking v1.2.1-0.20260729145839-7316bdb0ef04/go.mod h1:RwvvV8nhGXrEDBNdJHPmiBPrwX1b2wkSnwOKWr1z9MI=
+github.com/realiotech/multi-staking v1.2.1-0.20260901090728-9da510ce46da h1:J9A8ZtNY2E8kJOH2As6aSkdIqufSB5lr1rQssyEoQ4g=
+github.com/realiotech/multi-staking v1.2.1-0.20260901090728-9da510ce46da/go.mod h1:FSf6ka1uPFnbO5zmL1dQYgTKphVC0KsSy8MdFnY50Xc=
 github.com/regen-network/protobuf v1.3.3-alpha.regen.1 h1:OHEc+q5iIAXpqiqFKeLpu5NwTIkVXUs48vFMwzqpqY4=
 github.com/regen-network/protobuf v1.3.3-alpha.regen.1/go.mod h1:2DjTFR1HhMQhiWC5sZ4OhQ3+NtdbZ6oBDKQwq5Ou+FI=
 github.com/remyoudompheng/bigfft v0.0.0-20200410134404-eec4a21b6bb0/go.mod h1:qqbHyh8v60DhA7CoWK5oRCqLrMHRGoxYCSS9EjAz6Eo=
