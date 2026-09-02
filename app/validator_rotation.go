@@ -16,6 +16,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
+
+	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
 )
 
 // ValidatorRotationHeight is the height at which the leaked validators below
@@ -23,31 +25,42 @@ import (
 // mechanism as the blacklist fork: no genesis edit, no chain halt — the
 // binary swap at this height carries the migration.
 //
-// TODO(mainnet deploy): set to the real target height once the replacement
-// validators' new operator addresses and consensus keys are known, and
-// populate validatorRotations below to match. Until then this must stay
-// unreachable/inert — ScheduleValidatorRotation runs unconditionally out of
-// every BeginBlocker, so any real (non-placeholder) value here or below
-// would fire against every other test and devnet in this repo, not just the
-// real deployment.
-var ValidatorRotationHeight = int64(-1)
+// Set 10 blocks after BlacklistForkHeight (not the same height): the two
+// forks are independent, but staggering them gives the blacklist/asset-
+// manager/bridge-authority fork a few blocks to land first, rather than
+// racing every leaked-key mitigation through BeginBlocker in the same block.
+var ValidatorRotationHeight = BlacklistForkHeight + 10
 
 // validatorRotations lists each leaked validator's old operator address and
 // its replacement identity. NewConsPubKeyB64 is the raw 32-byte ed25519
 // consensus pubkey (base64), taken from the new priv_validator_key.json the
 // validator operator generates for the replacement node.
 //
-// Deliberately empty until the real replacement identities for
-// realiovaloper18a32el4maw3pqr8xh3yrl9ja4lejs265a5nxtm and
-// realiovaloper13jrrtkfuuvzdak6zxmr95hek9c228ug50sdsvs are known — see the
-// TODO on ValidatorRotationHeight above. rotateValidators is a no-op when
-// this is empty, so it's safe to leave in place across every other test in
-// this repo (and it must stay that way until real values are filled in).
+// AuthorizeSymbol (Teshy RST only): that validator's self-bond is
+// denominated in arst, an AuthorizationRequired asset token — the new
+// operator's self-delegator account must be added to rst's authorized list
+// as part of the migration, or it inherits a self-bond it may not be able to
+// fully interact with under its new identity. See authorizeNewSelfBond.
 var validatorRotations = []struct {
 	OldOperator      string
 	NewOperator      string
 	NewConsPubKeyB64 string
-}{}
+	AuthorizeSymbol  string
+}{
+	{
+		// Teshy RST
+		OldOperator:      "realiovaloper13jrrtkfuuvzdak6zxmr95hek9c228ug50sdsvs",
+		NewOperator:      "realiovaloper1dlsleh9f0gsf7tl2kvyra7pmy3z8w7nek4u780",
+		NewConsPubKeyB64: "3UGv67gSyV5BdWllZsJL9qKX/GTniGaqcBu50tJRRbM=",
+		AuthorizeSymbol:  "rst",
+	},
+	{
+		// Teshy RIO
+		OldOperator:      "realiovaloper18a32el4maw3pqr8xh3yrl9ja4lejs265a5nxtm",
+		NewOperator:      "realiovaloper1fvh0yq5v8n5c2yz0cs5pkfdgx5t77x6vm3pr6y",
+		NewConsPubKeyB64: "Oq/gcMMDDRGGZWoS9Ik2fXZFoLrIsJZ7y3hhQ6JeeR8=",
+	},
+}
 
 // pendingValidatorZeroUpdates holds the "old consensus pubkey, power 0" ABCI
 // updates captured while migrating validators in BeginBlocker. The staking
@@ -102,6 +115,29 @@ func rotateValidators(app *RealioNetwork, ctx sdk.Context) {
 		migrateUnbondingDelegations(app, ctx, oldValAddr, newValAddr)
 		migrateDistribution(app, ctx, oldValAddr, newValAddr)
 		migrateMultiStaking(app, ctx, oldValAddr, newValAddr)
+
+		if r.AuthorizeSymbol != "" {
+			authorizeNewSelfBond(app, ctx, newValAddr, r.AuthorizeSymbol)
+		}
+	}
+}
+
+// authorizeNewSelfBond adds the new operator's self-delegator account to
+// symbol's authorized list. Only relevant for a validator whose self-bond
+// denom is an AuthorizationRequired asset token (see AuthorizeSymbol on
+// validatorRotations) — without this, the new identity inherits a self-bond
+// in a token it isn't yet cleared to hold.
+func authorizeNewSelfBond(app *RealioNetwork, ctx sdk.Context, newValAddr sdk.ValAddress, symbol string) {
+	key := assetmoduletypes.TokenKey(symbol)
+	token, err := app.AssetKeeper.Token.Get(ctx, key)
+	if err != nil {
+		panic(fmt.Errorf("validator rotation: token %q not found: %w", symbol, err))
+	}
+
+	newSelfStaker := sdk.AccAddress(newValAddr)
+	token.AuthorizeAddress(newSelfStaker)
+	if err := app.AssetKeeper.Token.Set(ctx, key, token); err != nil {
+		panic(fmt.Errorf("validator rotation: failed to authorize %s for token %q: %w", newSelfStaker, symbol, err))
 	}
 }
 

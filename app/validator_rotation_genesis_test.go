@@ -24,6 +24,7 @@ import (
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 
 	"github.com/realiotech/realio-network/testutil"
+	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
 )
 
 // realGenesisPath is the actual pre-incident mainnet genesis export sitting
@@ -210,6 +211,7 @@ func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
+		AuthorizeSymbol  string
 	}
 	for _, tgt := range targets {
 		newValAddr := sdk.ValAddress(testutil.GenAddress())
@@ -219,6 +221,7 @@ func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 			OldOperator      string
 			NewOperator      string
 			NewConsPubKeyB64 string
+			AuthorizeSymbol  string
 		}{
 			OldOperator:      tgt.oldOperator,
 			NewOperator:      newValAddr.String(),
@@ -313,57 +316,91 @@ func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 		require.Empty(t, remaining, "migrated unbonding delegations for %s must be fully paid out, none stuck", tgt.oldOperator)
 	}
 
-	// --- 2. a user of each NEW validator fully undelegates afterwards ---
+	// --- 2. EVERY third-party user (NOT the self-delegator) of each NEW
+	// validator fully undelegates afterwards. Self-undelegation has its own
+	// distinct code path (see TestRotateValidatorsSelfDelegationCanFullyUndelegate)
+	// so the self-delegator is deliberately excluded here rather than
+	// trusting sort order to skip it. ---
 	for _, tgt := range targets {
 		newValAddr := newValAddrs[tgt.oldOperator]
+		newSelfDelegator := sdk.AccAddress(newValAddr).String()
 
 		delegations, err := realioApp.StakingKeeper.GetValidatorDelegations(matureCtx, newValAddr)
 		require.NoError(t, err)
 		require.NotEmpty(t, delegations, "expected at least one migrated real delegation on %s", newValAddr)
 
-		del, err := sdk.AccAddressFromBech32(delegations[0].DelegatorAddress)
-		require.NoError(t, err)
+		type userUndelegation struct {
+			delegator     sdk.AccAddress
+			balanceBefore sdk.Coin
+			maxCompletion time.Time
+		}
+		var users []userUndelegation
+		var sawUser bool
+		for _, d := range delegations {
+			if d.DelegatorAddress == newSelfDelegator {
+				continue
+			}
+			sawUser = true
 
-		delBalanceBefore := realioApp.BankKeeper.GetBalance(matureCtx, del, tgt.coinDenom)
+			del, err := sdk.AccAddressFromBech32(d.DelegatorAddress)
+			require.NoError(t, err)
 
-		lockID := multistakingtypes.MultiStakingLockID(delegations[0].DelegatorAddress, newValAddr.String())
-		lock, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(matureCtx, lockID)
-		require.Truef(t, found, "migrated self-delegation on %s must have a real MultiStakingLock carried over", newValAddr)
+			delBalanceBefore := realioApp.BankKeeper.GetBalance(matureCtx, del, tgt.coinDenom)
 
-		_, uErr := realioApp.MultiStakingKeeper.Undelegate(matureCtx, &stakingtypes.MsgUndelegate{
-			DelegatorAddress: delegations[0].DelegatorAddress,
-			ValidatorAddress: newValAddr.String(),
-			Amount:           sdk.NewCoin(lock.LockedCoin.Denom, lock.LockedCoin.Amount),
-		})
-		require.NoErrorf(t, uErr, "user of migrated validator %s must be able to fully undelegate", newValAddr)
+			lockID := multistakingtypes.MultiStakingLockID(d.DelegatorAddress, newValAddr.String())
+			lock, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(matureCtx, lockID)
+			require.Truef(t, found, "migrated user delegation for %s on %s must have a real MultiStakingLock carried over", del, newValAddr)
 
-		fullUbd, err := realioApp.StakingKeeper.GetUnbondingDelegation(matureCtx, del, newValAddr)
-		require.NoError(t, err)
-		require.NotEmpty(t, fullUbd.Entries)
-		unbondTime := fullUbd.Entries[len(fullUbd.Entries)-1].CompletionTime.Add(time.Second)
+			_, uErr := realioApp.MultiStakingKeeper.Undelegate(matureCtx, &stakingtypes.MsgUndelegate{
+				DelegatorAddress: d.DelegatorAddress,
+				ValidatorAddress: newValAddr.String(),
+				Amount:           sdk.NewCoin(lock.LockedCoin.Denom, lock.LockedCoin.Amount),
+			})
+			require.NoErrorf(t, uErr, "user %s of migrated validator %s must be able to fully undelegate (denom=%s, authorization-gated=%v)",
+				del, newValAddr, tgt.coinDenom, tgt.coinDenom == "arst")
 
-		afterFullUnbond := newHeaderCtx(realioApp, rotationHeight+2, proposerAddr, unbondTime.Add(time.Second))
+			fullUbd, err := realioApp.StakingKeeper.GetUnbondingDelegation(matureCtx, del, newValAddr)
+			require.NoError(t, err)
+			require.NotEmpty(t, fullUbd.Entries)
+
+			users = append(users, userUndelegation{
+				delegator:     del,
+				balanceBefore: delBalanceBefore,
+				maxCompletion: fullUbd.Entries[len(fullUbd.Entries)-1].CompletionTime,
+			})
+		}
+		require.Truef(t, sawUser, "expected at least one non-self (third-party user) delegation on %s", newValAddr)
+
+		// mature every user's unbonding in one shot: advance past the latest
+		// completion time among them all, then run EndBlocker once.
+		latest := users[0].maxCompletion
+		for _, u := range users[1:] {
+			if u.maxCompletion.After(latest) {
+				latest = u.maxCompletion
+			}
+		}
+		afterFullUnbond := newHeaderCtx(realioApp, rotationHeight+2, proposerAddr, latest.Add(time.Second))
 		require.NotPanics(t, func() {
 			_, err := realioApp.EndBlocker(afterFullUnbond)
 			require.NoError(t, err)
 		})
 
-		delBalanceAfter := realioApp.BankKeeper.GetBalance(afterFullUnbond, del, tgt.coinDenom)
-		require.Truef(t, delBalanceAfter.Amount.GT(delBalanceBefore.Amount),
-			"delegator %s must receive funds after fully undelegating from migrated validator %s (before=%s after=%s)",
-			del, newValAddr, delBalanceBefore, delBalanceAfter)
+		for _, u := range users {
+			delBalanceAfter := realioApp.BankKeeper.GetBalance(afterFullUnbond, u.delegator, tgt.coinDenom)
+			require.Truef(t, delBalanceAfter.Amount.GT(u.balanceBefore.Amount),
+				"delegator %s must receive funds after fully undelegating from migrated validator %s (before=%s after=%s)",
+				u.delegator, newValAddr, u.balanceBefore, delBalanceAfter)
 
-		_, err = realioApp.StakingKeeper.GetDelegation(afterFullUnbond, del, newValAddr)
-		require.Error(t, err, "delegator %s should have no delegation left on %s after fully undelegating", del, newValAddr)
+			_, err = realioApp.StakingKeeper.GetDelegation(afterFullUnbond, u.delegator, newValAddr)
+			require.Error(t, err, "delegator %s should have no delegation left on %s after fully undelegating", u.delegator, newValAddr)
+		}
 	}
 }
 
 // TestRotateValidatorsSelfDelegationCanFullyUndelegate is a targeted
 // follow-up to phase 2 of TestRotateValidatorsAgainstRealGenesis above:
-// that test fully undelegates delegations[0] on each new validator, whose
-// address happens to fall wherever GetValidatorDelegations' sorted-key
-// iteration puts it among ~79-289 real delegators — not necessarily the
-// validator's OWN self-delegation. Self-undelegation is a distinct code
+// that test deliberately picks a non-self (third-party user) delegation on
+// each new validator to fully undelegate. Self-undelegation is a distinct code
 // path in x/staking (see delegation.go's isValidatorOperator check: fully
 // self-undelegating always jails the validator, since 0 < MinSelfDelegation
 // for any positive minimum), so it needs its own explicit proof: the
@@ -395,6 +432,7 @@ func TestRotateValidatorsSelfDelegationCanFullyUndelegate(t *testing.T) {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
+		AuthorizeSymbol  string
 	}
 	for _, tgt := range targets {
 		oldValAddr, err := sdk.ValAddressFromBech32(tgt.oldOperator)
@@ -407,14 +445,21 @@ func TestRotateValidatorsSelfDelegationCanFullyUndelegate(t *testing.T) {
 		newValAddr := sdk.ValAddress(testutil.GenAddress())
 		newValAddrs[tgt.oldOperator] = newValAddr
 		newConsPriv := ed25519.GenPrivKey()
+
+		var authorizeSymbol string
+		if tgt.coinDenom == "arst" {
+			authorizeSymbol = "rst"
+		}
 		rotations = append(rotations, struct {
 			OldOperator      string
 			NewOperator      string
 			NewConsPubKeyB64 string
+			AuthorizeSymbol  string
 		}{
 			OldOperator:      tgt.oldOperator,
 			NewOperator:      newValAddr.String(),
 			NewConsPubKeyB64: pubKeyB64(t, newConsPriv.PubKey().(*ed25519.PubKey)),
+			AuthorizeSymbol:  authorizeSymbol,
 		})
 	}
 	validatorRotations = rotations
@@ -431,6 +476,13 @@ func TestRotateValidatorsSelfDelegationCanFullyUndelegate(t *testing.T) {
 		require.NoErrorf(t, err, "self-delegation on %s must have moved to the new operator's own account", newValAddr)
 		require.Truef(t, newSelfDel.Shares.Equal(oldSelfBonds[tgt.oldOperator]),
 			"self-delegation shares must be unchanged by migration: old=%s new=%s", oldSelfBonds[tgt.oldOperator], newSelfDel.Shares)
+
+		if tgt.coinDenom == "arst" {
+			rstToken, err := realioApp.AssetKeeper.Token.Get(ctx, assetmoduletypes.TokenKey("rst"))
+			require.NoError(t, err)
+			require.Truef(t, rstToken.AddressIsAuthorized(newSelfDelegator),
+				"new operator %s must be authorized to hold/send rst after inheriting the RST self-bond", newSelfDelegator)
+		}
 
 		lockID := multistakingtypes.MultiStakingLockID(newSelfDelegator.String(), newValAddr.String())
 		lock, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(ctx, lockID)

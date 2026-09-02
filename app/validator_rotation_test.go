@@ -97,6 +97,7 @@ func TestRotateValidator(t *testing.T) {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
+		AuthorizeSymbol  string
 	}{
 		{
 			OldOperator:      oldValidator.OperatorAddress,
@@ -282,6 +283,7 @@ func TestBeginBlockerRotationOrdering(t *testing.T) {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
+		AuthorizeSymbol  string
 	}{
 		{
 			OldOperator:      oldValidator.OperatorAddress,
@@ -351,6 +353,7 @@ func TestRotateValidatorPanicsOnRedelegation(t *testing.T) {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
+		AuthorizeSymbol  string
 	}{
 		{
 			OldOperator:      oldValidator.OperatorAddress,
@@ -413,6 +416,7 @@ func TestRotateValidatorMigratesInFlightUnbonding(t *testing.T) {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
+		AuthorizeSymbol  string
 	}{
 		{
 			OldOperator:      oldValidator.OperatorAddress,
@@ -506,6 +510,7 @@ func TestRotateValidatorMigratesGenesisImportedUnbondingType(t *testing.T) {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
+		AuthorizeSymbol  string
 	}{
 		{
 			OldOperator:      oldValidator.OperatorAddress,
@@ -554,6 +559,7 @@ func TestRotateValidatorGhostRejectsNewDelegations(t *testing.T) {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
+		AuthorizeSymbol  string
 	}{
 		{
 			OldOperator:      oldValidator.OperatorAddress,
@@ -605,6 +611,7 @@ func TestRotateValidatorExportGenesisRoundTrip(t *testing.T) {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
+		AuthorizeSymbol  string
 	}{
 		{
 			OldOperator:      oldValidator.OperatorAddress,
