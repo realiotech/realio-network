@@ -370,6 +370,105 @@ func TestRotateValidatorPanicsOnRedelegation(t *testing.T) {
 	require.NoError(t, err)
 }
 
+// TestRotateValidatorPanicsOnSelfCollision guards against a data-entry
+// mistake in validatorRotations: NewOperator accidentally equal to
+// OldOperator. Without the guard, migrateValidatorRecord's final write (the
+// zeroed-Tokens ghost, keyed by the OLD address) lands on the SAME key as
+// the just-migrated real record, silently zeroing out the validator's real
+// stake instead of migrating it — a self-inflicted, undetected corruption
+// far worse than a clean panic.
+func TestRotateValidatorPanicsOnSelfCollision(t *testing.T) {
+	realio := Setup(false, nil, 1)
+	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1}).
+		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
+
+	sk := realio.StakingKeeper
+	validators, err := sk.GetValidators(ctx, 10)
+	require.NoError(t, err)
+	oldValidator := validators[0]
+	oldValAddr, err := sdk.ValAddressFromBech32(oldValidator.OperatorAddress)
+	require.NoError(t, err)
+	tokensBefore := oldValidator.Tokens
+
+	newConsPriv := ed25519.GenPrivKey()
+	origRotations := validatorRotations
+	t.Cleanup(func() { validatorRotations = origRotations; pendingValidatorZeroUpdates = nil })
+	validatorRotations = []struct {
+		OldOperator      string
+		NewOperator      string
+		NewConsPubKeyB64 string
+		AuthorizeSymbol  string
+	}{
+		{
+			OldOperator:      oldValidator.OperatorAddress,
+			NewOperator:      oldValidator.OperatorAddress, // mistake: same as OldOperator
+			NewConsPubKeyB64: pubKeyB64(t, newConsPriv.PubKey().(*ed25519.PubKey)),
+		},
+	}
+
+	require.Panics(t, func() { rotateValidators(realio, ctx) })
+
+	// nothing should have been mutated — the guard runs before any write
+	stillThere, err := sk.GetValidator(ctx, oldValAddr)
+	require.NoError(t, err)
+	require.Truef(t, stillThere.Tokens.Equal(tokensBefore),
+		"validator's real tokens must be untouched, not zeroed by a self-collision (before=%s after=%s)",
+		tokensBefore, stillThere.Tokens)
+}
+
+// TestRotateValidatorPanicsOnExistingNewOperator guards against a
+// data-entry mistake in validatorRotations: NewOperator accidentally
+// pointing at an address that's already a registered validator. Without the
+// guard, migrateValidatorRecord's SetValidator calls silently overwrite
+// that unrelated validator's entire record with the migrated one.
+func TestRotateValidatorPanicsOnExistingNewOperator(t *testing.T) {
+	realio := Setup(false, nil, 1)
+	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1}).
+		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
+
+	sk := realio.StakingKeeper
+	validators, err := sk.GetValidators(ctx, 10)
+	require.NoError(t, err)
+	oldValidator := validators[0]
+
+	// a second, unrelated real validator that NewOperator will mistakenly
+	// point at
+	collidingValAddr := sdk.ValAddress(testutil.GenAddress())
+	collidingConsPriv := ed25519.GenPrivKey()
+	collidingValidator, err := stakingtypes.NewValidator(collidingValAddr.String(), collidingConsPriv.PubKey(), stakingtypes.Description{Moniker: "colliding"})
+	require.NoError(t, err)
+	collidingValidator.Tokens = math.NewInt(12345)
+	collidingValidator.DelegatorShares = math.LegacyNewDec(12345)
+	require.NoError(t, sk.SetValidator(ctx, collidingValidator))
+	collidingTokensBefore := collidingValidator.Tokens
+
+	newConsPriv := ed25519.GenPrivKey()
+	origRotations := validatorRotations
+	t.Cleanup(func() { validatorRotations = origRotations; pendingValidatorZeroUpdates = nil })
+	validatorRotations = []struct {
+		OldOperator      string
+		NewOperator      string
+		NewConsPubKeyB64 string
+		AuthorizeSymbol  string
+	}{
+		{
+			OldOperator:      oldValidator.OperatorAddress,
+			NewOperator:      collidingValidator.OperatorAddress, // mistake: already a real validator
+			NewConsPubKeyB64: pubKeyB64(t, newConsPriv.PubKey().(*ed25519.PubKey)),
+		},
+	}
+
+	require.Panics(t, func() { rotateValidators(realio, ctx) })
+
+	// the colliding validator must be completely untouched
+	stillThere, err := sk.GetValidator(ctx, collidingValAddr)
+	require.NoError(t, err)
+	require.Equal(t, collidingValidator.ConsensusPubkey.Value, stillThere.ConsensusPubkey.Value,
+		"colliding validator's consensus pubkey must be untouched")
+	require.Truef(t, stillThere.Tokens.Equal(collidingTokensBefore),
+		"colliding validator's tokens must be untouched (before=%s after=%s)", collidingTokensBefore, stillThere.Tokens)
+}
+
 // TestRotateValidatorMigratesInFlightUnbonding proves an unbonding delegation
 // already in progress at rotation time actually pays out at maturity,
 // instead of being silently orphaned. migrateUnbondingDelegations moves the

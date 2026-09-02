@@ -101,6 +101,22 @@ func rotateValidators(app *RealioNetwork, ctx sdk.Context) {
 			panic(err)
 		}
 
+		// Guard against a data-entry mistake in validatorRotations above: if
+		// NewOperator ever matched OldOperator, migrateValidatorRecord's final
+		// write (the zeroed-Tokens ghost, keyed by the OLD address) would land
+		// on the SAME key as the just-migrated real record and silently
+		// clobber it back to Tokens=0 — corrupting the validator instead of
+		// migrating it. Likewise, if NewOperator already exists as a
+		// validator, SetValidator below would silently overwrite an unrelated
+		// validator's record. Both fail loudly here, before anything is
+		// touched, rather than corrupting state.
+		if newValAddr.Equals(oldValAddr) {
+			panic(fmt.Errorf("validator rotation: new operator %q must differ from old operator %q", r.NewOperator, r.OldOperator))
+		}
+		if _, err := app.StakingKeeper.GetValidator(ctx, newValAddr); err == nil {
+			panic(fmt.Errorf("validator rotation: new operator %q already exists as a validator", r.NewOperator))
+		}
+
 		// Redelegations (as either src or dst) are not migrated below — as
 		// of writing, the target validators have none (verified against
 		// the genesis export). That can change before this fork actually
