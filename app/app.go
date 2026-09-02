@@ -570,6 +570,7 @@ func New(
 		runtime.NewKVStoreService(keys[blacklistmoduletypes.StoreKey]),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
+	app.EvmKeeper.SetHooks(NewEVMTokenBlacklistHook(app.BlacklistKeeper))
 
 	// Add transfer restriction
 	app.BankKeeper.AppendSendRestriction(app.AssetKeeper.AssetSendRestriction)
