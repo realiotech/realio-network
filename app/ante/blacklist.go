@@ -12,11 +12,11 @@ import (
 
 // BlacklistKeeper is the subset of x/blacklist's keeper both decorators
 // below need: a single membership check against on-chain state (a KVStore
-// set), not a compiled-in list. Addresses are added via genesis or a
-// chain-upgrade handler — the module has no Msg service, so a compromised
-// key can never remove itself from the blacklist. Checked by raw address
-// bytes, not the bech32 string, to avoid an encode/decode round trip on
-// every tx.
+// set), not a compiled-in list. Addresses are added via genesis, a
+// chain-upgrade handler, or MsgUpdateBlacklist — the latter is gated to the
+// module's authority (x/gov by default), so a compromised key can never
+// remove itself from the blacklist. Checked by raw address bytes, not the
+// bech32 string, to avoid an encode/decode round trip on every tx.
 type BlacklistKeeper interface {
 	IsBlacklisted(ctx context.Context, addr sdk.AccAddress) bool
 }

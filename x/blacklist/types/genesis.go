@@ -3,9 +3,9 @@ package types
 import "fmt"
 
 // GenesisState is a plain (non-protobuf) JSON-serializable genesis state:
-// this module has no Msg/Query service, so there is no need for generated
-// types — InitGenesis/ExportGenesis decode/encode this struct directly with
-// encoding/json.
+// it's just a list of addresses, simple enough that hand-writing it was
+// sufficient — InitGenesis/ExportGenesis decode/encode this struct directly
+// with encoding/json.
 type GenesisState struct {
 	// Addresses is the list of bech32 account addresses to seed the
 	// blacklist with at genesis (or at chain-upgrade time, via an upgrade
