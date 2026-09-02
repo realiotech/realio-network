@@ -111,7 +111,6 @@ func rotateValidators(app *RealioNetwork, ctx sdk.Context) {
 // update (the new key's update is left to EndBlocker's normal diffing).
 func migrateValidatorRecord(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress, newConsPubKeyAny *codectypes.Any) {
 	sk := app.StakingKeeper
-	store := ctx.KVStore(app.keys[stakingtypes.ModuleName])
 
 	validator, err := sk.GetValidator(ctx, oldValAddr)
 	if err != nil {
@@ -139,10 +138,12 @@ func migrateValidatorRecord(app *RealioNetwork, ctx sdk.Context, oldValAddr, new
 	oldValidatorGhost := validator
 	oldValidatorGhost.Tokens = math.ZeroInt()
 
-	powerReduction := sk.PowerReduction(ctx)
-
-	store.Delete(stakingtypes.GetValidatorsByPowerIndexKey(validator, powerReduction, sk.ValidatorAddressCodec()))
-	store.Delete(stakingtypes.GetLastValidatorPowerKey(oldValAddr))
+	if err := sk.DeleteValidatorByPowerIndex(ctx, validator); err != nil {
+		panic(err)
+	}
+	if err := sk.DeleteLastValidatorPower(ctx, oldValAddr); err != nil {
+		panic(err)
+	}
 
 	// same validator data, new identity
 	validator.OperatorAddress = newValAddr.String()
@@ -221,7 +222,6 @@ func migrateDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValA
 
 func migrateUnbondingDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress) {
 	sk := app.StakingKeeper
-	store := ctx.KVStore(app.keys[stakingtypes.ModuleName])
 
 	// same self-delegator remap as migrateDelegations, for the case where
 	// part of the self-bond is already mid-unbonding.
@@ -239,10 +239,6 @@ func migrateUnbondingDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr
 		newDelegatorAddr := oldDelegatorAddr
 		if oldDelegatorAddr == oldSelfDelegator {
 			newDelegatorAddr = newSelfDelegator
-		}
-		newDelegatorAccAddr, err := sdk.AccAddressFromBech32(newDelegatorAddr)
-		if err != nil {
-			panic(err)
 		}
 
 		if err := sk.RemoveUnbondingDelegation(ctx, ubd); err != nil {
@@ -288,11 +284,21 @@ func migrateUnbondingDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr
 				}
 			}
 
-			// Re-point the unbonding-ID index (GetUnbondingDelegationByUnbondingID)
-			// so anything holding a reference by ID — e.g. an interchain-security
-			// or liquid-staking on-hold mechanism — still resolves to the record
-			// under its new key, not the now-deleted old one.
-			store.Set(stakingtypes.GetUnbondingIndexKey(entry.UnbondingId), stakingtypes.GetUBDKey(newDelegatorAccAddr, newValAddr))
+			// Re-point the unbonding-ID index so anything holding a reference
+			// by ID — e.g. an interchain-security or liquid-staking on-hold
+			// mechanism — still resolves to the record under its new key,
+			// not the now-moved old one. Using the keeper's own method
+			// rather than hand-rolling the pointer index: it also sets the
+			// companion "unbonding type" index (UnbondingType_UnbondingDelegation)
+			// that PutUnbondingOnHold/UnbondingCanComplete key off of —
+			// genesis-imported UBDs never get either index set by
+			// InitGenesis in the first place (it only calls
+			// SetUnbondingDelegation + InsertUBDQueue), so hand-rolling just
+			// the pointer half here would leave a lookup-succeeds-but-type-
+			// missing inconsistency that's worse than both being absent.
+			if err := sk.SetUnbondingDelegationByUnbondingID(ctx, ubd, entry.UnbondingId); err != nil {
+				panic(err)
+			}
 		}
 	}
 }

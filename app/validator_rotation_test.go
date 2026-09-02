@@ -451,6 +451,82 @@ func TestRotateValidatorMigratesInFlightUnbonding(t *testing.T) {
 	require.Equal(t, int64(4242), balanceAfter.Amount.Sub(balanceBefore.Amount).Int64(), "funds must actually reach the delegator")
 }
 
+// TestRotateValidatorMigratesGenesisImportedUnbondingType proves a subtler
+// variant of the bug above: an unbonding delegation that came from a real
+// genesis import (x/staking's own InitGenesis only ever calls
+// SetUnbondingDelegation + InsertUBDQueue for those — never
+// SetUnbondingDelegationByUnbondingID) has NEITHER the unbonding-ID pointer
+// index nor its companion "type" index set at all. Migrating such an entry
+// by hand-rolling just the pointer index (as an earlier version of this
+// code did) leaves a WORSE state than before: the pointer now resolves, but
+// PutUnbondingOnHold/UnbondingCanComplete (which key off the type index)
+// still fail. Using the keeper's own SetUnbondingDelegationByUnbondingID
+// sets both together, matching what a live Undelegate call would produce.
+func TestRotateValidatorMigratesGenesisImportedUnbondingType(t *testing.T) {
+	realio := Setup(false, nil, 1)
+	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1}).
+		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
+
+	sk := realio.StakingKeeper
+	validators, err := sk.GetValidators(ctx, 10)
+	require.NoError(t, err)
+	oldValidator := validators[0]
+	oldValAddr, err := sdk.ValAddressFromBech32(oldValidator.OperatorAddress)
+	require.NoError(t, err)
+
+	delegator := testutil.GenAddress()
+	realio.AccountKeeper.SetAccount(ctx, realio.AccountKeeper.NewAccountWithAddress(ctx, delegator))
+	completionTime := ctx.BlockTime().Add(time.Hour)
+	const unbondingID = uint64(999)
+
+	// mirror x/staking's own InitGenesis exactly: SetUnbondingDelegation +
+	// InsertUBDQueue only — no SetUnbondingDelegationByUnbondingID, same as
+	// a real genesis-imported UBD gets.
+	ubd := stakingtypes.UnbondingDelegation{
+		DelegatorAddress: delegator.String(),
+		ValidatorAddress: oldValAddr.String(),
+		Entries: []stakingtypes.UnbondingDelegationEntry{
+			stakingtypes.NewUnbondingDelegationEntry(ctx.BlockHeight(), completionTime, math.NewInt(4242), unbondingID),
+		},
+	}
+	require.NoError(t, sk.SetUnbondingDelegation(ctx, ubd))
+	require.NoError(t, sk.InsertUBDQueue(ctx, ubd, completionTime))
+
+	// sanity: matches real InitGenesis behavior — neither index exists yet
+	_, err = sk.GetUnbondingDelegationByUnbondingID(ctx, unbondingID)
+	require.Error(t, err, "sanity: genesis import never sets the pointer index")
+	_, err = sk.GetUnbondingType(ctx, unbondingID)
+	require.Error(t, err, "sanity: genesis import never sets the type index either")
+
+	newValAddr := sdk.ValAddress(testutil.GenAddress())
+	newConsPriv := ed25519.GenPrivKey()
+	origRotations := validatorRotations
+	t.Cleanup(func() { validatorRotations = origRotations; pendingValidatorZeroUpdates = nil })
+	validatorRotations = []struct {
+		OldOperator      string
+		NewOperator      string
+		NewConsPubKeyB64 string
+	}{
+		{
+			OldOperator:      oldValidator.OperatorAddress,
+			NewOperator:      newValAddr.String(),
+			NewConsPubKeyB64: pubKeyB64(t, newConsPriv.PubKey().(*ed25519.PubKey)),
+		},
+	}
+
+	rotateValidators(realio, ctx)
+
+	unbondingType, err := sk.GetUnbondingType(ctx, unbondingID)
+	require.NoErrorf(t, err, "type index must be set by migration, not just the pointer — "+
+		"otherwise PutUnbondingOnHold/UnbondingCanComplete break for this entry")
+	require.Equal(t, stakingtypes.UnbondingType_UnbondingDelegation, unbondingType)
+
+	migrated, err := sk.GetUnbondingDelegationByUnbondingID(ctx, unbondingID)
+	require.NoError(t, err)
+	require.Equal(t, newValAddr.String(), migrated.ValidatorAddress)
+	require.Equal(t, delegator.String(), migrated.DelegatorAddress)
+}
+
 // TestRotateValidatorGhostRejectsNewDelegations proves the zeroed-Tokens
 // ghost left under the old operator address can't accept fresh delegations
 // by accident: Tokens=0 with positive DelegatorShares makes
