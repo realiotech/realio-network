@@ -1,4 +1,4 @@
-package app
+package migrations
 
 import (
 	"encoding/base64"
@@ -25,9 +25,25 @@ import (
 // mechanism as the blacklist fork: no genesis edit, no chain halt — the
 // binary swap at this height carries the migration.
 //
+// Set equal to BlacklistForkHeight, not N blocks after it. Any gap N>0 opens
+// a window of N blocks, after the chain resumes but before rotation runs,
+// where ordinary transactions get delivered — and checkNoRedelegations
+// panics in BeginBlocker if either target picks up a redelegation as src or
+// dst in that window. That panic doesn't corrupt anything (it fires before
+// any mutation), but it repeats deterministically on every restart at that
+// height, so clearing it needs a new binary — turning a single restart into
+// a second incident. Blacklisting doesn't close this: 30 of the 73
+// delegators on the two targets aren't on the leaked list and can redelegate
+// out, and anyone can redelegate in. Running both forks in the very same
+// BeginBlocker collapses that window to zero — BeginBlock runs before any
+// tx in that block is delivered, so nothing can create a redelegation
+// involving either target before rotation has already run. The two forks
+// still execute in the same relative order either way (ScheduleForkUpgrade,
+// then module BeginBlockers, then ScheduleValidatorRotation) — same height
+// just removes the gap, it doesn't reorder anything.
 var ValidatorRotationHeight = BlacklistForkHeight
 
-// validatorRotations lists each leaked validator's old operator address and
+// ValidatorRotations lists each leaked validator's old operator address and
 // its replacement identity. NewConsPubKeyB64 is the raw 32-byte ed25519
 // consensus pubkey (base64), taken from the new priv_validator_key.json the
 // validator operator generates for the replacement node.
@@ -37,7 +53,7 @@ var ValidatorRotationHeight = BlacklistForkHeight
 // operator's self-delegator account must be added to rst's authorized list
 // as part of the migration, or it inherits a self-bond it may not be able to
 // fully interact with under its new identity. See authorizeNewSelfBond.
-var validatorRotations = []struct {
+var ValidatorRotations = []struct {
 	OldOperator      string
 	NewOperator      string
 	NewConsPubKeyB64 string
@@ -58,16 +74,7 @@ var validatorRotations = []struct {
 	},
 }
 
-// pendingValidatorZeroUpdates holds the "old consensus pubkey, power 0" ABCI
-// updates captured while migrating validators in BeginBlocker. The staking
-// module's own EndBlocker naturally emits the "new pubkey, power N" half (the
-// new operator address is genuinely new to the power index, so the normal
-// diff picks it up) — but it has no way to know the old identity needs
-// zeroing, since by the time EndBlocker runs it has already been removed
-// from every index. EndBlocker (app/app.go) appends these to its result.
-var pendingValidatorZeroUpdates []abci.ValidatorUpdate
-
-// rotateValidators migrates every entry in validatorRotations from its old
+// RotateValidators migrates every entry in ValidatorRotations from its old
 // operator address + consensus key to the new one, carrying over every
 // piece of state tied to that validator identity: the Validator record
 // itself, all delegations (not just self-delegation — every delegator
@@ -75,10 +82,18 @@ var pendingValidatorZeroUpdates []abci.ValidatorUpdate
 // commission history, and the multistaking lock/unlock/bond-denom records.
 // Nothing about token amounts, delegator addresses, or shares changes —
 // only the validator identity they point at.
-func rotateValidators(app *RealioNetwork, ctx sdk.Context) {
-	pendingValidatorZeroUpdates = nil
+//
+// Returns the "old consensus pubkey, power 0" ABCI updates captured while
+// migrating (the staking module's own EndBlocker naturally emits the "new
+// pubkey, power N" half — the new operator address is genuinely new to the
+// power index, so the normal diff picks it up — but it has no way to know
+// the old identity needs zeroing, since by the time EndBlocker runs it has
+// already been removed from every index). The caller (app/app.go's
+// EndBlocker) appends these to its own result.
+func RotateValidators(k Keepers, ctx sdk.Context) []abci.ValidatorUpdate {
+	var pendingZeroUpdates []abci.ValidatorUpdate
 
-	for _, r := range validatorRotations {
+	for _, r := range ValidatorRotations {
 		oldValAddr, err := sdk.ValAddressFromBech32(r.OldOperator)
 		if err != nil {
 			panic(fmt.Errorf("validator rotation: invalid old operator %q: %w", r.OldOperator, err))
@@ -97,7 +112,7 @@ func rotateValidators(app *RealioNetwork, ctx sdk.Context) {
 			panic(err)
 		}
 
-		// Guard against a data-entry mistake in validatorRotations above: if
+		// Guard against a data-entry mistake in ValidatorRotations above: if
 		// NewOperator ever matched OldOperator, migrateValidatorRecord's final
 		// write (the zeroed-Tokens ghost, keyed by the OLD address) would land
 		// on the SAME key as the just-migrated real record and silently
@@ -109,7 +124,7 @@ func rotateValidators(app *RealioNetwork, ctx sdk.Context) {
 		if newValAddr.Equals(oldValAddr) {
 			panic(fmt.Errorf("validator rotation: new operator %q must differ from old operator %q", r.NewOperator, r.OldOperator))
 		}
-		if _, err := app.StakingKeeper.GetValidator(ctx, newValAddr); err == nil {
+		if _, err := k.StakingKeeper.GetValidator(ctx, newValAddr); err == nil {
 			panic(fmt.Errorf("validator rotation: new operator %q already exists as a validator", r.NewOperator))
 		}
 
@@ -120,45 +135,48 @@ func rotateValidators(app *RealioNetwork, ctx sdk.Context) {
 		// fail loudly here, before touching anything, rather than silently
 		// leaving a redelegation record pointing at a validator identity
 		// that's about to stop existing.
-		checkNoRedelegations(app, ctx, oldValAddr)
+		checkNoRedelegations(k, ctx, oldValAddr)
 
-		migrateValidatorRecord(app, ctx, oldValAddr, newValAddr, newConsPubKeyAny)
-		migrateDelegations(app, ctx, oldValAddr, newValAddr)
-		migrateUnbondingDelegations(app, ctx, oldValAddr, newValAddr)
-		migrateDistribution(app, ctx, oldValAddr, newValAddr)
-		migrateMultiStaking(app, ctx, oldValAddr, newValAddr)
+		zeroUpdate := migrateValidatorRecord(k, ctx, oldValAddr, newValAddr, newConsPubKeyAny)
+		pendingZeroUpdates = append(pendingZeroUpdates, zeroUpdate)
+		migrateDelegations(k, ctx, oldValAddr, newValAddr)
+		migrateUnbondingDelegations(k, ctx, oldValAddr, newValAddr)
+		migrateDistribution(k, ctx, oldValAddr, newValAddr)
+		migrateMultiStaking(k, ctx, oldValAddr, newValAddr)
 
 		if r.AuthorizeSymbol != "" {
-			authorizeNewSelfBond(app, ctx, newValAddr, r.AuthorizeSymbol)
+			authorizeNewSelfBond(k, ctx, newValAddr, r.AuthorizeSymbol)
 		}
 	}
+
+	return pendingZeroUpdates
 }
 
 // authorizeNewSelfBond adds the new operator's self-delegator account to
 // symbol's authorized list. Only relevant for a validator whose self-bond
 // denom is an AuthorizationRequired asset token (see AuthorizeSymbol on
-// validatorRotations) — without this, the new identity inherits a self-bond
+// ValidatorRotations) — without this, the new identity inherits a self-bond
 // in a token it isn't yet cleared to hold.
-func authorizeNewSelfBond(app *RealioNetwork, ctx sdk.Context, newValAddr sdk.ValAddress, symbol string) {
+func authorizeNewSelfBond(k Keepers, ctx sdk.Context, newValAddr sdk.ValAddress, symbol string) {
 	key := assetmoduletypes.TokenKey(symbol)
-	token, err := app.AssetKeeper.Token.Get(ctx, key)
+	token, err := k.AssetKeeper.Token.Get(ctx, key)
 	if err != nil {
 		panic(fmt.Errorf("validator rotation: token %q not found: %w", symbol, err))
 	}
 
 	newSelfStaker := sdk.AccAddress(newValAddr)
 	token.AuthorizeAddress(newSelfStaker)
-	if err := app.AssetKeeper.Token.Set(ctx, key, token); err != nil {
+	if err := k.AssetKeeper.Token.Set(ctx, key, token); err != nil {
 		panic(fmt.Errorf("validator rotation: failed to authorize %s for token %q: %w", newSelfStaker, symbol, err))
 	}
 }
 
 // migrateValidatorRecord moves the Validator record itself: copies it under
 // the new operator address with the new consensus pubkey, fixes up the
-// power/cons-address indexes, and captures the "zero out the old key" ABCI
+// power/cons-address indexes, and returns the "zero out the old key" ABCI
 // update (the new key's update is left to EndBlocker's normal diffing).
-func migrateValidatorRecord(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress, newConsPubKeyAny *codectypes.Any) {
-	sk := app.StakingKeeper
+func migrateValidatorRecord(k Keepers, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress, newConsPubKeyAny *codectypes.Any) abci.ValidatorUpdate {
+	sk := k.StakingKeeper
 
 	validator, err := sk.GetValidator(ctx, oldValAddr)
 	if err != nil {
@@ -166,7 +184,7 @@ func migrateValidatorRecord(app *RealioNetwork, ctx sdk.Context, oldValAddr, new
 	}
 
 	// capture "old key -> power 0" BEFORE mutating anything
-	pendingValidatorZeroUpdates = append(pendingValidatorZeroUpdates, validator.ABCIValidatorUpdateZero())
+	zeroUpdate := validator.ABCIValidatorUpdateZero()
 
 	// The old record is kept in place below (not deleted — see the comment
 	// on SetValidator further down for why), but its Tokens must not stay
@@ -224,16 +242,18 @@ func migrateValidatorRecord(app *RealioNetwork, ctx sdk.Context, oldValAddr, new
 		panic(err)
 	}
 	newConsAddr := sdk.ConsAddress(newConsAddrBytes)
-	if err := app.SlashingKeeper.SetValidatorSigningInfo(ctx, newConsAddr, slashingtypes.ValidatorSigningInfo{
+	if err := k.SlashingKeeper.SetValidatorSigningInfo(ctx, newConsAddr, slashingtypes.ValidatorSigningInfo{
 		Address:     newConsAddr.String(),
 		StartHeight: ctx.BlockHeight(),
 	}); err != nil {
 		panic(err)
 	}
+
+	return zeroUpdate
 }
 
-func migrateDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress) {
-	sk := app.StakingKeeper
+func migrateDelegations(k Keepers, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress) {
+	sk := k.StakingKeeper
 
 	// A validator's own self-delegation is a Delegation record whose
 	// DelegatorAddress is literally its operator address' account form
@@ -268,8 +288,8 @@ func migrateDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValA
 	}
 }
 
-func migrateUnbondingDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress) {
-	sk := app.StakingKeeper
+func migrateUnbondingDelegations(k Keepers, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress) {
+	sk := k.StakingKeeper
 
 	// same self-delegator remap as migrateDelegations, for the case where
 	// part of the self-bond is already mid-unbonding.
@@ -356,8 +376,8 @@ func migrateUnbondingDelegations(app *RealioNetwork, ctx sdk.Context, oldValAddr
 // implemented — this exists so that gap fails loudly at fork time instead
 // of silently leaving a redelegation record pointing at a validator
 // identity that migrateValidatorRecord is about to delete.
-func checkNoRedelegations(app *RealioNetwork, ctx sdk.Context, valAddr sdk.ValAddress) {
-	sk := app.StakingKeeper
+func checkNoRedelegations(k Keepers, ctx sdk.Context, valAddr sdk.ValAddress) {
+	sk := k.StakingKeeper
 	valAddrStr := valAddr.String()
 
 	var matches []stakingtypes.Redelegation
@@ -379,8 +399,8 @@ func checkNoRedelegations(app *RealioNetwork, ctx sdk.Context, valAddr sdk.ValAd
 	}
 }
 
-func migrateDistribution(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress) {
-	dk := app.DistrKeeper
+func migrateDistribution(k Keepers, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress) {
+	dk := k.DistrKeeper
 
 	if rewards, err := dk.GetValidatorCurrentRewards(ctx, oldValAddr); err == nil {
 		if err := dk.SetValidatorCurrentRewards(ctx, newValAddr, rewards); err != nil {
@@ -486,9 +506,9 @@ func migrateDistribution(app *RealioNetwork, ctx sdk.Context, oldValAddr, newVal
 	dk.DeleteValidatorSlashEvents(ctx, oldValAddr)
 }
 
-func migrateMultiStaking(app *RealioNetwork, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress) {
-	msk := app.MultiStakingKeeper
-	store := ctx.KVStore(app.keys[multistakingtypes.ModuleName])
+func migrateMultiStaking(k Keepers, ctx sdk.Context, oldValAddr, newValAddr sdk.ValAddress) {
+	msk := k.MultiStakingKeeper
+	store := ctx.KVStore(k.MultiStakingStoreKey)
 
 	// same self-staker remap as migrateDelegations: MultiStakingLock/Unlock
 	// are keyed by {MultiStakerAddr, ValAddr} exactly like a Delegation is

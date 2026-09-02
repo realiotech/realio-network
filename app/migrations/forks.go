@@ -1,4 +1,4 @@
-package app
+package migrations
 
 import (
 	_ "embed"
@@ -8,6 +8,7 @@ import (
 	"time"
 
 	storetypes "cosmossdk.io/store/types"
+	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -15,27 +16,27 @@ import (
 )
 
 var (
-	ForkHeight        = int64(5989487)
-	oneEnternityLater = time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC)
+	ForkHeight       = int64(5989487)
+	OneEternityLater = time.Date(9999, 9, 9, 9, 9, 9, 9, time.UTC)
 
 	// BlacklistForkHeight seeds x/blacklist with the addresses whose keys
 	// leaked. It only ever adds blacklist entries — no bank/staking/
 	// multistaking state is touched or moved. It also doubles as the height
 	// at which the x/blacklist store itself gets created (see
-	// blacklistStoreUpgrades, wired in setupUpgradeHandlers, app/upgrades.go)
+	// BlacklistStoreUpgrades, wired in setupUpgradeHandlers, app/upgrades.go)
 	// — a validator must swap to this binary right as it commits the block
 	// before this height, same as any other hardcoded fork.
 	BlacklistForkHeight = int64(19573266)
 
-	// blacklistStoreUpgrades tells the store loader that x/blacklist is a
+	// BlacklistStoreUpgrades tells the store loader that x/blacklist is a
 	// brand new store as of BlacklistForkHeight, not one that should already
 	// exist in a chain database that predates this fork.
-	blacklistStoreUpgrades = storetypes.StoreUpgrades{
+	BlacklistStoreUpgrades = storetypes.StoreUpgrades{
 		Added: []string{blacklistmoduletypes.StoreKey},
 	}
 
 	//go:embed leaked_addresses.json
-	leakedAddressesJSON []byte
+	LeakedAddressesJSON []byte
 )
 
 // ScheduleForkUpgrade executes any necessary fork logic for based upon the current
@@ -46,13 +47,13 @@ var (
 //
 //  1. Release a non-breaking patch version so that the chain can set the scheduled upgrade plan at upgrade-height.
 //  2. Release the software defined in the upgrade-info
-func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
+func ScheduleForkUpgrade(ctx sdk.Context, k Keepers) {
 	if ctx.BlockHeight() == ForkHeight {
 
 		// remove duplicate UnbondingQueueKey
-		removeDuplicateValueUnbondingQueueKey(app, ctx)
-		removeDuplicateValueRedelegationQueueKey(app, ctx)
-		removeDuplicateUnbondingValidator(app, ctx)
+		removeDuplicateValueUnbondingQueueKey(k, ctx)
+		removeDuplicateValueRedelegationQueueKey(k, ctx)
+		removeDuplicateUnbondingValidator(k, ctx)
 	}
 
 	if ctx.BlockHeight() == BlacklistForkHeight {
@@ -62,59 +63,32 @@ func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 		// pure repeated work for no benefit.
 		leaked := decodeLeakedAddresses()
 
-		seedLeakedAddressBlacklist(app, ctx, leaked)
-		rotateAssetManagers(app, ctx)
-		unauthorizeLeakedAddresses(app, ctx, leaked)
-		rotateBridgeAuthority(app, ctx)
-		revokeLeakedAuthzGrants(app, ctx, leaked)
+		seedLeakedAddressBlacklist(k, ctx, leaked)
+		rotateAssetManagers(k, ctx)
+		unauthorizeLeakedAddresses(k, ctx, leaked)
+		rotateBridgeAuthority(k, ctx)
+		revokeLeakedAuthzGrants(k, ctx, leaked)
 	}
-	// NOTE: there are no testnet forks for the existing versions
-	// if !types.IsMainnet(ctx.ChainID()) {
-	//	return
-	//}
-	//
-	// upgradePlan := upgradetypes.Plan{
-	//	Height: ctx.BlockHeight(),
-	//}
-	//
-	//// handle mainnet forks with their corresponding upgrade name and info
-	// switch ctx.BlockHeight() {
-	// case v2.MainnetUpgradeHeight:
-	//	upgradePlan.Name = v2.UpgradeName
-	//	upgradePlan.Info = v2.UpgradeInfo
-	//default:
-	//	// No-op
-	//	return
-	//}
-	//
-	//// schedule the upgrade plan to the current block height, effectively performing
-	//// a hard fork that uses the upgrade handler to manage the migration.
-	// if err := app.UpgradeKeeper.ScheduleUpgrade(ctx, upgradePlan); err != nil {
-	//	panic(
-	//		fmt.Errorf(
-	//			"failed to schedule upgrade %s during BeginBlock at height %d: %w",
-	//			upgradePlan.Name, ctx.BlockHeight(), err,
-	//		),
-	//	)
-	//}
 }
 
 // ScheduleValidatorRotation runs the validator-rotation fork (see
-// app/validator_rotation.go). It must be called AFTER app.mm.BeginBlock —
-// see the comment on that call site in app/app.go's BeginBlocker for why.
-func (app *RealioNetwork) ScheduleValidatorRotation(ctx sdk.Context) {
+// validator_rotation.go) and returns any ABCI validator updates it produced
+// (the "old key -> power 0" half of a rotation — see RotateValidators). It
+// must be called AFTER the module manager's BeginBlock — see the comment on
+// the call site in app/app.go's BeginBlocker for why.
+func ScheduleValidatorRotation(ctx sdk.Context, k Keepers) []abci.ValidatorUpdate {
 	if ctx.BlockHeight() == ValidatorRotationHeight {
-		rotateValidators(app, ctx)
+		return RotateValidators(k, ctx)
 	}
+	return nil
 }
 
-func removeDuplicateValueRedelegationQueueKey(app *RealioNetwork, ctx sdk.Context) {
-	// Get Staking keeper, codec and staking store
-	sk := app.StakingKeeper
-	cdc := app.AppCodec()
-	store := ctx.KVStore(app.keys[stakingtypes.ModuleName])
+func removeDuplicateValueRedelegationQueueKey(k Keepers, ctx sdk.Context) {
+	sk := k.StakingKeeper
+	cdc := k.Codec
+	store := ctx.KVStore(k.StakingStoreKey)
 
-	redelegationTimesliceIterator, err := sk.RedelegationQueueIterator(ctx, oneEnternityLater) // make sure to iterate all queue
+	redelegationTimesliceIterator, err := sk.RedelegationQueueIterator(ctx, OneEternityLater) // make sure to iterate all queue
 	if err != nil {
 		panic(err)
 	}
@@ -154,8 +128,8 @@ func containsDVVTriplets(s []stakingtypes.DVVTriplet, e stakingtypes.DVVTriplet)
 	return false
 }
 
-func removeDuplicateUnbondingValidator(app *RealioNetwork, ctx sdk.Context) {
-	valIter, err := app.StakingKeeper.ValidatorQueueIterator(ctx, oneEnternityLater, 99999999999999)
+func removeDuplicateUnbondingValidator(k Keepers, ctx sdk.Context) {
+	valIter, err := k.StakingKeeper.ValidatorQueueIterator(ctx, OneEternityLater, 99999999999999)
 	if err != nil {
 		panic(err)
 	}
@@ -164,7 +138,7 @@ func removeDuplicateUnbondingValidator(app *RealioNetwork, ctx sdk.Context) {
 
 	for ; valIter.Valid(); valIter.Next() {
 		addrs := stakingtypes.ValAddresses{}
-		app.appCodec.MustUnmarshal(valIter.Value(), &addrs)
+		k.Codec.MustUnmarshal(valIter.Value(), &addrs)
 
 		vals := map[string]bool{}
 		for _, valAddr := range addrs.Addresses {
@@ -177,17 +151,16 @@ func removeDuplicateUnbondingValidator(app *RealioNetwork, ctx sdk.Context) {
 		}
 		sort.Strings(uniqueAddrs)
 
-		ctx.KVStore(app.GetKey(stakingtypes.StoreKey)).Set(valIter.Key(), app.appCodec.MustMarshal(&stakingtypes.ValAddresses{Addresses: uniqueAddrs}))
+		ctx.KVStore(k.StakingStoreKey).Set(valIter.Key(), k.Codec.MustMarshal(&stakingtypes.ValAddresses{Addresses: uniqueAddrs}))
 	}
 }
 
-func removeDuplicateValueUnbondingQueueKey(app *RealioNetwork, ctx sdk.Context) {
-	// Get Staking keeper, codec and staking store
-	sk := app.StakingKeeper
-	cdc := app.AppCodec()
-	store := ctx.KVStore(app.keys[stakingtypes.ModuleName])
+func removeDuplicateValueUnbondingQueueKey(k Keepers, ctx sdk.Context) {
+	sk := k.StakingKeeper
+	cdc := k.Codec
+	store := ctx.KVStore(k.StakingStoreKey)
 
-	unbondingTimesliceIterator, err := sk.UBDQueueIterator(ctx, oneEnternityLater) // make sure to iterate all queue
+	unbondingTimesliceIterator, err := sk.UBDQueueIterator(ctx, OneEternityLater) // make sure to iterate all queue
 	if err != nil {
 		panic(err)
 	}
@@ -230,20 +203,20 @@ func containsDVPairs(s []stakingtypes.DVPair, e stakingtypes.DVPair) bool {
 // does not touch bank, staking, or multistaking state — the leaked keys'
 // funds are left exactly where they are; blacklisting only prevents those
 // addresses from ever signing another transaction.
-func seedLeakedAddressBlacklist(app *RealioNetwork, ctx sdk.Context, leaked []sdk.AccAddress) {
+func seedLeakedAddressBlacklist(k Keepers, ctx sdk.Context, leaked []sdk.AccAddress) {
 	for _, accAddr := range leaked {
-		if err := app.BlacklistKeeper.SetBlacklisted(ctx, accAddr); err != nil {
+		if err := k.BlacklistKeeper.SetBlacklisted(ctx, accAddr); err != nil {
 			panic(fmt.Errorf("blacklist fork: failed to blacklist %q: %w", accAddr, err))
 		}
 	}
 }
 
-// parseLeakedAddresses unmarshals leaked_addresses.json into its raw bech32
+// ParseLeakedAddresses unmarshals leaked_addresses.json into its raw bech32
 // strings. A malformed file panics rather than silently seeding an empty
 // (or partial) blacklist.
-func parseLeakedAddresses() []string {
+func ParseLeakedAddresses() []string {
 	var addrs []string
-	if err := json.Unmarshal(leakedAddressesJSON, &addrs); err != nil {
+	if err := json.Unmarshal(LeakedAddressesJSON, &addrs); err != nil {
 		panic(fmt.Errorf("blacklist fork: failed to parse leaked_addresses.json: %w", err))
 	}
 	return addrs
@@ -256,7 +229,7 @@ func parseLeakedAddresses() []string {
 // parsed+decoded copy instead of each re-parsing and re-decoding the same
 // 33k+-entry file independently.
 func decodeLeakedAddresses() []sdk.AccAddress {
-	raw := parseLeakedAddresses()
+	raw := ParseLeakedAddresses()
 	addrs := make([]sdk.AccAddress, len(raw))
 	for i, addr := range raw {
 		accAddr, err := sdk.AccAddressFromBech32(addr)

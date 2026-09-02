@@ -1,4 +1,4 @@
-package app
+package migrations_test
 
 import (
 	"encoding/json"
@@ -9,6 +9,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/realiotech/realio-network/app"
+	"github.com/realiotech/realio-network/app/migrations"
 	"github.com/realiotech/realio-network/testutil"
 	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
 )
@@ -19,28 +21,28 @@ import (
 // to the new address — with everything else about the token (name, total
 // supply, authorization flag) untouched.
 func TestRotateAssetManagers(t *testing.T) {
-	realio := Setup(false, nil, 1)
+	realio := app.Setup(false, nil, 1)
 	ak := realio.AssetKeeper
 
-	origHeight, origRotations, origJSON := BlacklistForkHeight, assetManagerRotations, leakedAddressesJSON
+	origHeight, origRotations, origJSON := migrations.BlacklistForkHeight, migrations.AssetManagerRotations, migrations.LeakedAddressesJSON
 	t.Cleanup(func() {
-		BlacklistForkHeight, assetManagerRotations, leakedAddressesJSON = origHeight, origRotations, origJSON
+		migrations.BlacklistForkHeight, migrations.AssetManagerRotations, migrations.LeakedAddressesJSON = origHeight, origRotations, origJSON
 	})
 
 	// isolate from the real leaked_addresses.json embed - not what this test is about
-	leakedAddressesJSON, _ = json.Marshal([]string{})
-	BlacklistForkHeight = 12345
+	migrations.LeakedAddressesJSON, _ = json.Marshal([]string{})
+	migrations.BlacklistForkHeight = 12345
 
 	oldManager := testutil.GenAddress().String()
 	newManager := testutil.GenAddress().String()
-	assetManagerRotations = []struct {
+	migrations.AssetManagerRotations = []struct {
 		Symbol     string
 		NewManager string
 	}{
 		{Symbol: "rst", NewManager: newManager},
 	}
 
-	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: BlacklistForkHeight})
+	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: migrations.BlacklistForkHeight})
 
 	require.NoError(t, ak.Token.Set(ctx, assetmoduletypes.TokenKey("rst"), assetmoduletypes.Token{
 		Name:                  "Realio Security Token",
@@ -61,16 +63,20 @@ func TestRotateAssetManagers(t *testing.T) {
 }
 
 // TestRotateAssetManagersPanicsOnMissingToken proves a typo'd or
-// not-yet-created symbol in assetManagerRotations fails loudly at fork time
+// not-yet-created symbol in AssetManagerRotations fails loudly at fork time
 // (chain halt, caught immediately) rather than silently skipping a manager
 // rotation that was supposed to happen.
 func TestRotateAssetManagersPanicsOnMissingToken(t *testing.T) {
-	realio := Setup(false, nil, 1)
+	realio := app.Setup(false, nil, 1)
 
-	origRotations := assetManagerRotations
-	t.Cleanup(func() { assetManagerRotations = origRotations })
+	origHeight, origRotations, origJSON := migrations.BlacklistForkHeight, migrations.AssetManagerRotations, migrations.LeakedAddressesJSON
+	t.Cleanup(func() {
+		migrations.BlacklistForkHeight, migrations.AssetManagerRotations, migrations.LeakedAddressesJSON = origHeight, origRotations, origJSON
+	})
 
-	assetManagerRotations = []struct {
+	migrations.LeakedAddressesJSON, _ = json.Marshal([]string{})
+	migrations.BlacklistForkHeight = 1
+	migrations.AssetManagerRotations = []struct {
 		Symbol     string
 		NewManager string
 	}{
@@ -78,7 +84,7 @@ func TestRotateAssetManagersPanicsOnMissingToken(t *testing.T) {
 	}
 
 	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1})
-	require.Panics(t, func() { rotateAssetManagers(realio, ctx) })
+	require.Panics(t, func() { realio.ScheduleForkUpgrade(ctx) })
 }
 
 // TestUnauthorizeLeakedAddresses exercises ScheduleForkUpgrade end-to-end at
@@ -89,28 +95,28 @@ func TestRotateAssetManagersPanicsOnMissingToken(t *testing.T) {
 // receiving side for addresses actually on the leak list, not a blanket
 // wipe of every authorization.
 func TestUnauthorizeLeakedAddresses(t *testing.T) {
-	realio := Setup(false, nil, 1)
+	realio := app.Setup(false, nil, 1)
 	ak := realio.AssetKeeper
 
-	origHeight, origJSON, origRotations := BlacklistForkHeight, leakedAddressesJSON, assetManagerRotations
+	origHeight, origJSON, origRotations := migrations.BlacklistForkHeight, migrations.LeakedAddressesJSON, migrations.AssetManagerRotations
 	t.Cleanup(func() {
-		BlacklistForkHeight, leakedAddressesJSON, assetManagerRotations = origHeight, origJSON, origRotations
+		migrations.BlacklistForkHeight, migrations.LeakedAddressesJSON, migrations.AssetManagerRotations = origHeight, origJSON, origRotations
 	})
 
 	leakedAuthorized := testutil.GenAddress()
 	leakedNeverAuthorized := testutil.GenAddress()
 	notLeakedAuthorized := testutil.GenAddress()
 
-	leakedAddressesJSON, _ = json.Marshal([]string{leakedAuthorized.String(), leakedNeverAuthorized.String()})
-	BlacklistForkHeight = 12345
-	assetManagerRotations = []struct {
+	migrations.LeakedAddressesJSON, _ = json.Marshal([]string{leakedAuthorized.String(), leakedNeverAuthorized.String()})
+	migrations.BlacklistForkHeight = 12345
+	migrations.AssetManagerRotations = []struct {
 		Symbol     string
 		NewManager string
 	}{
 		{Symbol: "rst", NewManager: testutil.GenAddress().String()},
 	}
 
-	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: BlacklistForkHeight})
+	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: migrations.BlacklistForkHeight})
 
 	token := assetmoduletypes.Token{
 		Name:                  "Realio Security Token",
@@ -141,14 +147,14 @@ func TestUnauthorizeLeakedAddresses(t *testing.T) {
 // distinction actually holds against production data, not just synthetic
 // fixtures.
 func TestUnauthorizeLeakedAddressesAgainstRealGenesis(t *testing.T) {
-	realioApp, _, initialHeight, proposerAddr, blockTime := SetupWithRealGenesis(t)
+	realioApp, _, initialHeight, proposerAddr, blockTime := app.SetupWithRealGenesis(t)
 	ak := realioApp.AssetKeeper
 
-	origHeight := BlacklistForkHeight
-	t.Cleanup(func() { BlacklistForkHeight = origHeight })
+	origHeight := migrations.BlacklistForkHeight
+	t.Cleanup(func() { migrations.BlacklistForkHeight = origHeight })
 
 	rotationHeight := initialHeight + 1
-	BlacklistForkHeight = rotationHeight
+	migrations.BlacklistForkHeight = rotationHeight
 
 	type addrCheck struct {
 		symbol    string
@@ -174,7 +180,7 @@ func TestUnauthorizeLeakedAddressesAgainstRealGenesis(t *testing.T) {
 		},
 	}
 
-	baseCtx := newHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
+	baseCtx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
 	for _, c := range checks {
 		token, err := ak.Token.Get(baseCtx, assetmoduletypes.TokenKey(c.symbol))
 		require.NoErrorf(t, err, "expected token %q to exist in the real genesis", c.symbol)
@@ -187,7 +193,7 @@ func TestUnauthorizeLeakedAddressesAgainstRealGenesis(t *testing.T) {
 	// before the fork so the "must all be gone after" check below actually
 	// means something.
 	leakedAddrs := make([]sdk.AccAddress, 0, 512)
-	for _, bech32 := range parseLeakedAddresses() {
+	for _, bech32 := range migrations.ParseLeakedAddresses() {
 		leakedAddrs = append(leakedAddrs, mustAddr(t, bech32))
 	}
 	countAuthorized := func(ctx sdk.Context, symbol string) int {
@@ -206,7 +212,7 @@ func TestUnauthorizeLeakedAddressesAgainstRealGenesis(t *testing.T) {
 	require.Greater(t, beforeLmx, 100, "sanity: expected the real genesis to have a large lmx overlap")
 	require.Greater(t, beforeRst, 100, "sanity: expected the real genesis to have a large rst overlap")
 
-	ctx := newHeaderCtx(realioApp, rotationHeight, proposerAddr, baseCtx.BlockTime())
+	ctx := app.NewHeaderCtx(realioApp, rotationHeight, proposerAddr, baseCtx.BlockTime())
 	_, err := realioApp.BeginBlocker(ctx)
 	require.NoError(t, err)
 
@@ -223,25 +229,24 @@ func TestUnauthorizeLeakedAddressesAgainstRealGenesis(t *testing.T) {
 }
 
 // TestRotateAssetManagersAgainstRealGenesis is the end-to-end test against
-// the real pre-incident genesis export (see validator_rotation_genesis_test.go
-// for SetupWithRealGenesis/newHeaderCtx): InitChain with the real state
-// (real rst/lmx Token records, real old managers), run the real fork
-// dispatch through BeginBlocker, and confirm the Manager field on each
-// token actually moved to its replacement address.
+// the real pre-incident genesis export: InitChain with the real state (real
+// rst/lmx Token records, real old managers), run the real fork dispatch
+// through BeginBlocker, and confirm the Manager field on each token
+// actually moved to its replacement address.
 func TestRotateAssetManagersAgainstRealGenesis(t *testing.T) {
-	realioApp, _, initialHeight, proposerAddr, blockTime := SetupWithRealGenesis(t)
+	realioApp, _, initialHeight, proposerAddr, blockTime := app.SetupWithRealGenesis(t)
 	ak := realioApp.AssetKeeper
 
-	origHeight := BlacklistForkHeight
-	t.Cleanup(func() { BlacklistForkHeight = origHeight })
+	origHeight := migrations.BlacklistForkHeight
+	t.Cleanup(func() { migrations.BlacklistForkHeight = origHeight })
 
 	rotationHeight := initialHeight + 1
-	BlacklistForkHeight = rotationHeight
+	migrations.BlacklistForkHeight = rotationHeight
 
-	baseCtx := newHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
+	baseCtx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
 
-	oldManagers := make(map[string]string, len(assetManagerRotations))
-	for _, r := range assetManagerRotations {
+	oldManagers := make(map[string]string, len(migrations.AssetManagerRotations))
+	for _, r := range migrations.AssetManagerRotations {
 		token, err := ak.Token.Get(baseCtx, assetmoduletypes.TokenKey(r.Symbol))
 		require.NoErrorf(t, err, "expected token %q to exist in the real genesis", r.Symbol)
 		require.NotEqualf(t, r.NewManager, token.Manager,
@@ -250,11 +255,11 @@ func TestRotateAssetManagersAgainstRealGenesis(t *testing.T) {
 	}
 	require.NotEmpty(t, oldManagers, "expected at least one real rst/lmx token in the genesis to rotate")
 
-	ctx := newHeaderCtx(realioApp, rotationHeight, proposerAddr, baseCtx.BlockTime())
+	ctx := app.NewHeaderCtx(realioApp, rotationHeight, proposerAddr, baseCtx.BlockTime())
 	_, err := realioApp.BeginBlocker(ctx)
 	require.NoError(t, err)
 
-	for _, r := range assetManagerRotations {
+	for _, r := range migrations.AssetManagerRotations {
 		token, err := ak.Token.Get(ctx, assetmoduletypes.TokenKey(r.Symbol))
 		require.NoError(t, err)
 		require.Equalf(t, r.NewManager, token.Manager, "token %q's manager must have moved to the replacement address", r.Symbol)

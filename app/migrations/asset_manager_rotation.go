@@ -1,4 +1,4 @@
-package app
+package migrations
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
 )
 
-// assetManagerRotations lists each asset token's replacement manager
+// AssetManagerRotations lists each asset token's replacement manager
 // (called "issuer" by token holders), keyed by symbol. Runs alongside
 // seedLeakedAddressBlacklist at BlacklistForkHeight (see forks.go) — the old
 // manager keys for these tokens are believed to have leaked along with the
@@ -16,8 +16,8 @@ import (
 // stay deterministic across every validator, though in this particular case
 // each entry only touches its own symbol so iteration order wouldn't
 // actually change the result — kept as a slice anyway to match the same
-// discipline as validatorRotations.
-var assetManagerRotations = []struct {
+// discipline as ValidatorRotations.
+var AssetManagerRotations = []struct {
 	Symbol     string
 	NewManager string
 }{
@@ -26,21 +26,21 @@ var assetManagerRotations = []struct {
 }
 
 // rotateAssetManagers replaces the Manager field on each token in
-// assetManagerRotations. Nothing else about the token (name, symbol, total
+// AssetManagerRotations. Nothing else about the token (name, symbol, total
 // supply, authorization list) changes — only who can administer it going
 // forward. x/asset's own MsgUpdateToken deliberately never lets the manager
 // field itself change (it requires the CURRENT manager's signature and
 // always re-writes Manager: existing.Manager), so this can only be done via
 // a fork touching keeper state directly, the same as validator rotation.
-func rotateAssetManagers(app *RealioNetwork, ctx sdk.Context) {
-	for _, r := range assetManagerRotations {
+func rotateAssetManagers(k Keepers, ctx sdk.Context) {
+	for _, r := range AssetManagerRotations {
 		key := assetmoduletypes.TokenKey(r.Symbol)
-		token, err := app.AssetKeeper.Token.Get(ctx, key)
+		token, err := k.AssetKeeper.Token.Get(ctx, key)
 		if err != nil {
 			panic(fmt.Errorf("asset manager rotation: token %q not found: %w", r.Symbol, err))
 		}
 		token.Manager = r.NewManager
-		if err := app.AssetKeeper.Token.Set(ctx, key, token); err != nil {
+		if err := k.AssetKeeper.Token.Set(ctx, key, token); err != nil {
 			panic(fmt.Errorf("asset manager rotation: failed to set token %q: %w", r.Symbol, err))
 		}
 	}
@@ -53,15 +53,15 @@ func rotateAssetManagers(app *RealioNetwork, ctx sdk.Context) {
 // long as a leaked address stays "authorized", anyone else can still send
 // rst/lmx TO it, and those funds land in an account whose key is
 // compromised. This walks every address in leaked_addresses.json and, for
-// each token in assetManagerRotations (rst, lmx — the same two this
+// each token in AssetManagerRotations (rst, lmx — the same two this
 // incident already touches), un-authorizes it if it currently holds
-// authorized status. Reuses assetManagerRotations' symbol list rather than
+// authorized status. Reuses AssetManagerRotations' symbol list rather than
 // a separate hardcoded one so there's a single source of truth for "which
 // tokens this incident affects".
-func unauthorizeLeakedAddresses(app *RealioNetwork, ctx sdk.Context, leaked []sdk.AccAddress) {
-	for _, r := range assetManagerRotations {
+func unauthorizeLeakedAddresses(k Keepers, ctx sdk.Context, leaked []sdk.AccAddress) {
+	for _, r := range AssetManagerRotations {
 		key := assetmoduletypes.TokenKey(r.Symbol)
-		token, err := app.AssetKeeper.Token.Get(ctx, key)
+		token, err := k.AssetKeeper.Token.Get(ctx, key)
 		if err != nil {
 			panic(fmt.Errorf("unauthorize leaked addresses: token %q not found: %w", r.Symbol, err))
 		}
@@ -71,7 +71,7 @@ func unauthorizeLeakedAddresses(app *RealioNetwork, ctx sdk.Context, leaked []sd
 				token.UnAuthorizeAddress(addr)
 			}
 		}
-		if err := app.AssetKeeper.Token.Set(ctx, key, token); err != nil {
+		if err := k.AssetKeeper.Token.Set(ctx, key, token); err != nil {
 			panic(fmt.Errorf("unauthorize leaked addresses: failed to set token %q: %w", r.Symbol, err))
 		}
 	}

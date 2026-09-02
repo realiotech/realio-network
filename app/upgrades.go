@@ -7,6 +7,7 @@ import (
 
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/realiotech/realio-network/app/migrations"
 	"github.com/realiotech/realio-network/app/upgrades/commission"
 
 	v2 "github.com/realiotech/realio-network/app/upgrades/v1.2"
@@ -132,7 +133,7 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 		// x/blacklist (see app/forks.go): hardcoded, not routed through
 		// upgrade-info.json, so it is unconditional here — the height check
 		// happens inside newStoreLoader at load time instead.
-		{height: BlacklistForkHeight, upgrades: blacklistStoreUpgrades},
+		{height: migrations.BlacklistForkHeight, upgrades: migrations.BlacklistStoreUpgrades},
 	}
 	if upgradeInfo.Name == v6.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 		candidates = append(candidates, heightStoreUpgrade{height: upgradeInfo.Height, upgrades: v6.V6StoreUpgrades})

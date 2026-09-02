@@ -1,4 +1,4 @@
-package app
+package migrations_test
 
 import (
 	"encoding/base64"
@@ -21,10 +21,13 @@ import (
 
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
+
+	"github.com/realiotech/realio-network/app"
+	"github.com/realiotech/realio-network/app/migrations"
 	"github.com/realiotech/realio-network/testutil"
 )
 
-// TestRotateValidator exercises rotateValidators end-to-end against a real
+// TestRotateValidator exercises RotateValidators end-to-end against a real
 // app: a validator with two delegators (self + one other, mirroring the
 // "72 other delegators" shape found in the real leaked-validator genesis),
 // distribution history, and multistaking locks, migrated to a brand new
@@ -32,7 +35,7 @@ import (
 // identity must move — nothing about delegator addresses, shares, or coin
 // amounts should change.
 func TestRotateValidator(t *testing.T) {
-	realio := Setup(false, nil, 1)
+	realio := app.Setup(false, nil, 1)
 	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1}).
 		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 
@@ -57,7 +60,7 @@ func TestRotateValidator(t *testing.T) {
 	)))
 
 	otherLockID := multistakingtypes.MultiStakingLockID(otherDelegator.String(), oldValAddr.String())
-	msk.SetMultiStakingLock(ctx, multistakingtypes.NewMultiStakingLock(otherLockID, MultiStakingCoinA))
+	msk.SetMultiStakingLock(ctx, multistakingtypes.NewMultiStakingLock(otherLockID, app.MultiStakingCoinA))
 
 	// distribution state tied to the old validator identity
 	require.NoError(t, dk.SetValidatorCurrentRewards(ctx, oldValAddr, distrtypes.ValidatorCurrentRewards{
@@ -91,9 +94,10 @@ func TestRotateValidator(t *testing.T) {
 
 	oldConsPubKey := oldValidator.ConsensusPubkey
 
-	origRotations := validatorRotations
-	t.Cleanup(func() { validatorRotations = origRotations; pendingValidatorZeroUpdates = nil })
-	validatorRotations = []struct {
+	origRotations, origHeight := migrations.ValidatorRotations, migrations.ValidatorRotationHeight
+	t.Cleanup(func() { migrations.ValidatorRotations, migrations.ValidatorRotationHeight = origRotations, origHeight })
+	migrations.ValidatorRotationHeight = ctx.BlockHeight()
+	migrations.ValidatorRotations = []struct {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
@@ -106,7 +110,9 @@ func TestRotateValidator(t *testing.T) {
 		},
 	}
 
-	rotateValidators(realio, ctx)
+	// drives the exact same path production code takes: ScheduleValidatorRotation
+	// (height-gated) capturing the pending zero-update for EndBlocker to drain.
+	realio.ScheduleValidatorRotation(ctx)
 
 	// old identity's economic state (delegations, distribution,
 	// multistaking) has moved off, but the plain Validator record itself is
@@ -197,14 +203,10 @@ func TestRotateValidator(t *testing.T) {
 	require.Equal(t, oldLocks, lockCount(msk, ctx, newValAddr.String()))
 	require.NotEmpty(t, msk.GetValidatorMultiStakingCoin(ctx, newValAddr))
 
-	// captured ABCI "zero out old key" update
-	require.Len(t, pendingValidatorZeroUpdates, 1)
-	require.EqualValues(t, 0, pendingValidatorZeroUpdates[0].Power)
-
-	// EndBlocker appends it alongside the naturally-emitted "new key" update
+	// EndBlocker appends the captured "zero out old key" update alongside
+	// the naturally-emitted "new key" update
 	res, err := realio.EndBlocker(ctx)
 	require.NoError(t, err)
-	require.Empty(t, pendingValidatorZeroUpdates, "EndBlocker must drain the pending queue")
 
 	var sawZeroForOld, sawPowerForNew bool
 	for _, u := range res.ValidatorUpdates {
@@ -248,7 +250,7 @@ func TestRotateValidator(t *testing.T) {
 // each with vote info still referencing the old validator — exactly the
 // full window a live chain goes through — and confirms none of them error.
 func TestBeginBlockerRotationOrdering(t *testing.T) {
-	realio := Setup(false, nil, 1)
+	realio := app.Setup(false, nil, 1)
 
 	baseCtx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1})
 	validators, err := realio.StakingKeeper.GetValidators(baseCtx, 10)
@@ -272,14 +274,13 @@ func TestBeginBlockerRotationOrdering(t *testing.T) {
 	newValAddr := sdk.ValAddress(testutil.GenAddress())
 	newConsPriv := ed25519.GenPrivKey()
 
-	origRotations, origHeight := validatorRotations, ValidatorRotationHeight
+	origRotations, origHeight := migrations.ValidatorRotations, migrations.ValidatorRotationHeight
 	t.Cleanup(func() {
-		validatorRotations, ValidatorRotationHeight = origRotations, origHeight
-		pendingValidatorZeroUpdates = nil
+		migrations.ValidatorRotations, migrations.ValidatorRotationHeight = origRotations, origHeight
 	})
 	const rotationHeight = int64(2)
-	ValidatorRotationHeight = rotationHeight
-	validatorRotations = []struct {
+	migrations.ValidatorRotationHeight = rotationHeight
+	migrations.ValidatorRotations = []struct {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
@@ -325,7 +326,7 @@ func TestBeginBlockerRotationOrdering(t *testing.T) {
 // loudly rather than leave an orphaned record behind once the old
 // validator identity is deleted.
 func TestRotateValidatorPanicsOnRedelegation(t *testing.T) {
-	realio := Setup(false, nil, 1)
+	realio := app.Setup(false, nil, 1)
 	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1}).
 		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 
@@ -347,9 +348,9 @@ func TestRotateValidatorPanicsOnRedelegation(t *testing.T) {
 	}))
 
 	newConsPriv := ed25519.GenPrivKey()
-	origRotations := validatorRotations
-	t.Cleanup(func() { validatorRotations = origRotations; pendingValidatorZeroUpdates = nil })
-	validatorRotations = []struct {
+	origRotations := migrations.ValidatorRotations
+	t.Cleanup(func() { migrations.ValidatorRotations = origRotations })
+	migrations.ValidatorRotations = []struct {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
@@ -362,7 +363,7 @@ func TestRotateValidatorPanicsOnRedelegation(t *testing.T) {
 		},
 	}
 
-	require.Panics(t, func() { rotateValidators(realio, ctx) })
+	require.Panics(t, func() { migrations.RotateValidators(realio.MigrationKeepers(), ctx) })
 
 	// and the validator record must be untouched — checkNoRedelegations
 	// runs before any mutation
@@ -371,14 +372,14 @@ func TestRotateValidatorPanicsOnRedelegation(t *testing.T) {
 }
 
 // TestRotateValidatorPanicsOnSelfCollision guards against a data-entry
-// mistake in validatorRotations: NewOperator accidentally equal to
+// mistake in ValidatorRotations: NewOperator accidentally equal to
 // OldOperator. Without the guard, migrateValidatorRecord's final write (the
 // zeroed-Tokens ghost, keyed by the OLD address) lands on the SAME key as
 // the just-migrated real record, silently zeroing out the validator's real
 // stake instead of migrating it — a self-inflicted, undetected corruption
 // far worse than a clean panic.
 func TestRotateValidatorPanicsOnSelfCollision(t *testing.T) {
-	realio := Setup(false, nil, 1)
+	realio := app.Setup(false, nil, 1)
 	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1}).
 		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 
@@ -391,9 +392,9 @@ func TestRotateValidatorPanicsOnSelfCollision(t *testing.T) {
 	tokensBefore := oldValidator.Tokens
 
 	newConsPriv := ed25519.GenPrivKey()
-	origRotations := validatorRotations
-	t.Cleanup(func() { validatorRotations = origRotations; pendingValidatorZeroUpdates = nil })
-	validatorRotations = []struct {
+	origRotations := migrations.ValidatorRotations
+	t.Cleanup(func() { migrations.ValidatorRotations = origRotations })
+	migrations.ValidatorRotations = []struct {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
@@ -406,7 +407,7 @@ func TestRotateValidatorPanicsOnSelfCollision(t *testing.T) {
 		},
 	}
 
-	require.Panics(t, func() { rotateValidators(realio, ctx) })
+	require.Panics(t, func() { migrations.RotateValidators(realio.MigrationKeepers(), ctx) })
 
 	// nothing should have been mutated — the guard runs before any write
 	stillThere, err := sk.GetValidator(ctx, oldValAddr)
@@ -417,12 +418,12 @@ func TestRotateValidatorPanicsOnSelfCollision(t *testing.T) {
 }
 
 // TestRotateValidatorPanicsOnExistingNewOperator guards against a
-// data-entry mistake in validatorRotations: NewOperator accidentally
+// data-entry mistake in ValidatorRotations: NewOperator accidentally
 // pointing at an address that's already a registered validator. Without the
 // guard, migrateValidatorRecord's SetValidator calls silently overwrite
 // that unrelated validator's entire record with the migrated one.
 func TestRotateValidatorPanicsOnExistingNewOperator(t *testing.T) {
-	realio := Setup(false, nil, 1)
+	realio := app.Setup(false, nil, 1)
 	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1}).
 		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 
@@ -443,9 +444,9 @@ func TestRotateValidatorPanicsOnExistingNewOperator(t *testing.T) {
 	collidingTokensBefore := collidingValidator.Tokens
 
 	newConsPriv := ed25519.GenPrivKey()
-	origRotations := validatorRotations
-	t.Cleanup(func() { validatorRotations = origRotations; pendingValidatorZeroUpdates = nil })
-	validatorRotations = []struct {
+	origRotations := migrations.ValidatorRotations
+	t.Cleanup(func() { migrations.ValidatorRotations = origRotations })
+	migrations.ValidatorRotations = []struct {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
@@ -458,7 +459,7 @@ func TestRotateValidatorPanicsOnExistingNewOperator(t *testing.T) {
 		},
 	}
 
-	require.Panics(t, func() { rotateValidators(realio, ctx) })
+	require.Panics(t, func() { migrations.RotateValidators(realio.MigrationKeepers(), ctx) })
 
 	// the colliding validator must be completely untouched
 	stillThere, err := sk.GetValidator(ctx, collidingValAddr)
@@ -483,7 +484,7 @@ func TestRotateValidatorPanicsOnExistingNewOperator(t *testing.T) {
 // CompleteUnbonding path (not just checking the record exists) to prove
 // that doesn't happen.
 func TestRotateValidatorMigratesInFlightUnbonding(t *testing.T) {
-	realio := Setup(false, nil, 1)
+	realio := app.Setup(false, nil, 1)
 	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1}).
 		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 
@@ -509,9 +510,9 @@ func TestRotateValidatorMigratesInFlightUnbonding(t *testing.T) {
 
 	newValAddr := sdk.ValAddress(testutil.GenAddress())
 	newConsPriv := ed25519.GenPrivKey()
-	origRotations := validatorRotations
-	t.Cleanup(func() { validatorRotations = origRotations; pendingValidatorZeroUpdates = nil })
-	validatorRotations = []struct {
+	origRotations := migrations.ValidatorRotations
+	t.Cleanup(func() { migrations.ValidatorRotations = origRotations })
+	migrations.ValidatorRotations = []struct {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
@@ -524,7 +525,7 @@ func TestRotateValidatorMigratesInFlightUnbonding(t *testing.T) {
 		},
 	}
 
-	rotateValidators(realio, ctx)
+	migrations.RotateValidators(realio.MigrationKeepers(), ctx)
 
 	// the queue must now name the NEW validator — this is the actual bug:
 	// without the fix, this slice is still empty (nothing to replace) or
@@ -566,7 +567,7 @@ func TestRotateValidatorMigratesInFlightUnbonding(t *testing.T) {
 // still fail. Using the keeper's own SetUnbondingDelegationByUnbondingID
 // sets both together, matching what a live Undelegate call would produce.
 func TestRotateValidatorMigratesGenesisImportedUnbondingType(t *testing.T) {
-	realio := Setup(false, nil, 1)
+	realio := app.Setup(false, nil, 1)
 	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1}).
 		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 
@@ -603,9 +604,9 @@ func TestRotateValidatorMigratesGenesisImportedUnbondingType(t *testing.T) {
 
 	newValAddr := sdk.ValAddress(testutil.GenAddress())
 	newConsPriv := ed25519.GenPrivKey()
-	origRotations := validatorRotations
-	t.Cleanup(func() { validatorRotations = origRotations; pendingValidatorZeroUpdates = nil })
-	validatorRotations = []struct {
+	origRotations := migrations.ValidatorRotations
+	t.Cleanup(func() { migrations.ValidatorRotations = origRotations })
+	migrations.ValidatorRotations = []struct {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
@@ -618,7 +619,7 @@ func TestRotateValidatorMigratesGenesisImportedUnbondingType(t *testing.T) {
 		},
 	}
 
-	rotateValidators(realio, ctx)
+	migrations.RotateValidators(realio.MigrationKeepers(), ctx)
 
 	unbondingType, err := sk.GetUnbondingType(ctx, unbondingID)
 	require.NoErrorf(t, err, "type index must be set by migration, not just the pointer — "+
@@ -639,7 +640,7 @@ func TestRotateValidatorMigratesGenesisImportedUnbondingType(t *testing.T) {
 // bonded validator in a query response ends up with funds stuck earning
 // nothing under a rotated-away identity.
 func TestRotateValidatorGhostRejectsNewDelegations(t *testing.T) {
-	realio := Setup(false, nil, 1)
+	realio := app.Setup(false, nil, 1)
 	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1}).
 		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 
@@ -652,9 +653,9 @@ func TestRotateValidatorGhostRejectsNewDelegations(t *testing.T) {
 
 	newValAddr := sdk.ValAddress(testutil.GenAddress())
 	newConsPriv := ed25519.GenPrivKey()
-	origRotations := validatorRotations
-	t.Cleanup(func() { validatorRotations = origRotations; pendingValidatorZeroUpdates = nil })
-	validatorRotations = []struct {
+	origRotations := migrations.ValidatorRotations
+	t.Cleanup(func() { migrations.ValidatorRotations = origRotations })
+	migrations.ValidatorRotations = []struct {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
@@ -667,7 +668,7 @@ func TestRotateValidatorGhostRejectsNewDelegations(t *testing.T) {
 		},
 	}
 
-	rotateValidators(realio, ctx)
+	migrations.RotateValidators(realio.MigrationKeepers(), ctx)
 
 	oldGhost, err := sk.GetValidator(ctx, oldValAddr)
 	require.NoError(t, err)
@@ -693,7 +694,7 @@ func TestRotateValidatorGhostRejectsNewDelegations(t *testing.T) {
 // trip, so it's a faithful, minimal reproduction of the real bug without
 // needing to spin up a second app.
 func TestRotateValidatorExportGenesisRoundTrip(t *testing.T) {
-	realio := Setup(false, nil, 1)
+	realio := app.Setup(false, nil, 1)
 	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1}).
 		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 
@@ -704,9 +705,9 @@ func TestRotateValidatorExportGenesisRoundTrip(t *testing.T) {
 
 	newValAddr := sdk.ValAddress(testutil.GenAddress())
 	newConsPriv := ed25519.GenPrivKey()
-	origRotations := validatorRotations
-	t.Cleanup(func() { validatorRotations = origRotations; pendingValidatorZeroUpdates = nil })
-	validatorRotations = []struct {
+	origRotations := migrations.ValidatorRotations
+	t.Cleanup(func() { migrations.ValidatorRotations = origRotations })
+	migrations.ValidatorRotations = []struct {
 		OldOperator      string
 		NewOperator      string
 		NewConsPubKeyB64 string
@@ -719,7 +720,7 @@ func TestRotateValidatorExportGenesisRoundTrip(t *testing.T) {
 		},
 	}
 
-	rotateValidators(realio, ctx)
+	migrations.RotateValidators(realio.MigrationKeepers(), ctx)
 
 	exported := sk.ExportGenesis(ctx)
 	require.NotPanics(t, func() {
