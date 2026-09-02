@@ -33,6 +33,11 @@ import (
 // not present (e.g. on CI, or a fresh checkout).
 const realGenesisPath = "../recover_genesis.json"
 
+// arstDenom is the RST validator's self-bond denom — an AuthorizationRequired
+// asset token, which is why it needs the AuthorizeSymbol handling the other
+// (ario-denominated) rotation target doesn't.
+const arstDenom = "arst"
+
 // consensusValidatorEntry mirrors the top-level consensus.validators[] shape
 // in the exported genesis (hex address + base64 ed25519 pubkey + power),
 // just enough to pick a ProposerAddress for FinalizeBlock.
@@ -179,7 +184,7 @@ func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 		{
 			oldOperator:      "realiovaloper13jrrtkfuuvzdak6zxmr95hek9c228ug50sdsvs", // Teshy 136k Self Bonded RST
 			multiStakerAddr:  "realio13nxg9kc48lrvzm5ms5xanup5hnexzppla4dfnh",
-			coinDenom:        "arst",
+			coinDenom:        arstDenom,
 			undelegateAmount: math.NewIntFromUint64(1_000).MulRaw(1_000_000_000_000_000_000),
 		},
 	}
@@ -357,7 +362,7 @@ func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 				Amount:           sdk.NewCoin(lock.LockedCoin.Denom, lock.LockedCoin.Amount),
 			})
 			require.NoErrorf(t, uErr, "user %s of migrated validator %s must be able to fully undelegate (denom=%s, authorization-gated=%v)",
-				del, newValAddr, tgt.coinDenom, tgt.coinDenom == "arst")
+				del, newValAddr, tgt.coinDenom, tgt.coinDenom == arstDenom)
 
 			fullUbd, err := realioApp.StakingKeeper.GetUnbondingDelegation(matureCtx, del, newValAddr)
 			require.NoError(t, err)
@@ -416,8 +421,8 @@ func TestRotateValidatorsSelfDelegationCanFullyUndelegate(t *testing.T) {
 		oldOperator string
 		coinDenom   string
 	}{
-		{oldOperator: "realiovaloper18a32el4maw3pqr8xh3yrl9ja4lejs265a5nxtm", coinDenom: "ario"}, // Teshy 103k Bonded RIO
-		{oldOperator: "realiovaloper13jrrtkfuuvzdak6zxmr95hek9c228ug50sdsvs", coinDenom: "arst"}, // Teshy 136k Self Bonded RST
+		{oldOperator: "realiovaloper18a32el4maw3pqr8xh3yrl9ja4lejs265a5nxtm", coinDenom: "ario"},    // Teshy 103k Bonded RIO
+		{oldOperator: "realiovaloper13jrrtkfuuvzdak6zxmr95hek9c228ug50sdsvs", coinDenom: arstDenom}, // Teshy 136k Self Bonded RST
 	}
 
 	origRotations, origHeight := validatorRotations, ValidatorRotationHeight
@@ -447,7 +452,7 @@ func TestRotateValidatorsSelfDelegationCanFullyUndelegate(t *testing.T) {
 		newConsPriv := ed25519.GenPrivKey()
 
 		var authorizeSymbol string
-		if tgt.coinDenom == "arst" {
+		if tgt.coinDenom == arstDenom {
 			authorizeSymbol = "rst"
 		}
 		rotations = append(rotations, struct {
@@ -477,7 +482,7 @@ func TestRotateValidatorsSelfDelegationCanFullyUndelegate(t *testing.T) {
 		require.Truef(t, newSelfDel.Shares.Equal(oldSelfBonds[tgt.oldOperator]),
 			"self-delegation shares must be unchanged by migration: old=%s new=%s", oldSelfBonds[tgt.oldOperator], newSelfDel.Shares)
 
-		if tgt.coinDenom == "arst" {
+		if tgt.coinDenom == arstDenom {
 			rstToken, err := realioApp.AssetKeeper.Token.Get(ctx, assetmoduletypes.TokenKey("rst"))
 			require.NoError(t, err)
 			require.Truef(t, rstToken.AddressIsAuthorized(newSelfDelegator),
