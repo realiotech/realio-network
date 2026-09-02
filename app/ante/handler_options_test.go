@@ -128,6 +128,25 @@ func (suite *AnteTestSuite) TestValidateHandlerOptions() {
 			false,
 		},
 		{
+			"fail - empty blacklist keeper",
+			ante.HandlerOptions{
+				AccountKeeper:          suite.app.AccountKeeper,
+				BankKeeper:             suite.app.BankKeeper,
+				ExtensionOptionChecker: antetypes.HasDynamicFeeExtensionOption,
+				EvmKeeper:              suite.app.EvmKeeper,
+				FeegrantKeeper:         suite.app.FeeGrantKeeper,
+				IBCKeeper:              suite.app.IBCKeeper,
+				FeeMarketKeeper:        suite.app.FeeMarketKeeper,
+				SignModeHandler:        encoding.MakeConfig(app.MainnetEVMChainID).TxConfig.SignModeHandler(),
+				SigGasConsumer:         evmosante.SigVerificationGasConsumer,
+				MaxTxGasWanted:         40000000,
+				DynamicFeeChecker:      true,
+				PendingTxListener:      testStream.ListenPendingTx,
+				BlacklistKeeper:        nil,
+			},
+			false,
+		},
+		{
 			"success - default app options",
 			ante.HandlerOptions{
 				AccountKeeper:          suite.app.AccountKeeper,
@@ -142,6 +161,7 @@ func (suite *AnteTestSuite) TestValidateHandlerOptions() {
 				MaxTxGasWanted:         40000000,
 				DynamicFeeChecker:      true,
 				PendingTxListener:      testStream.ListenPendingTx,
+				BlacklistKeeper:        suite.app.BlacklistKeeper,
 			},
 			true,
 		},

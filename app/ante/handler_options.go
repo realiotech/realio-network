@@ -66,6 +66,9 @@ func (options HandlerOptions) Validate() error {
 	if options.PendingTxListener == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "pending tx listener is required for AnteHandler")
 	}
+	if options.BlacklistKeeper == nil {
+		return errorsmod.Wrap(errortypes.ErrLogic, "blacklist keeper is required for AnteHandler")
+	}
 	return nil
 }
 
