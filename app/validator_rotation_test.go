@@ -111,8 +111,16 @@ func TestRotateValidator(t *testing.T) {
 	// multistaking) has moved off, but the plain Validator record itself is
 	// deliberately kept resolvable (see TestBeginBlockerRotationOrdering
 	// for why) — it's just gone from consensus-power accounting.
-	_, err = sk.GetValidator(ctx, oldValAddr)
+	oldGhost, err := sk.GetValidator(ctx, oldValAddr)
 	require.NoError(t, err, "old validator record is kept in place indefinitely, not deleted")
+	require.Truef(t, oldGhost.Tokens.IsZero(),
+		"old validator's Tokens must be zeroed — otherwise a genesis export sums it alongside the new "+
+			"validator's Tokens against a bonded pool that only actually backs one of them, and InitGenesis panics")
+	require.True(t, oldGhost.DelegatorShares.IsPositive(),
+		"DelegatorShares must be left untouched (Tokens=0 + positive shares makes InvalidExRate() true, "+
+			"which is what blocks new delegations into the old identity)")
+	require.True(t, oldGhost.InvalidExRate(), "sanity: the zeroed-Tokens ghost must read as an invalid exchange rate")
+	require.Equal(t, stakingtypes.Bonded, oldGhost.Status, "status is deliberately left untouched")
 	require.Empty(t, lockCount(msk, ctx, oldValAddr.String()))
 	require.Empty(t, msk.GetValidatorMultiStakingCoin(ctx, oldValAddr))
 	oldCurRewards, err := dk.GetValidatorCurrentRewards(ctx, oldValAddr)
@@ -441,6 +449,100 @@ func TestRotateValidatorMigratesInFlightUnbonding(t *testing.T) {
 	require.NoError(t, err, "CompleteUnbonding must succeed against the migrated record — this is what silently failed before the fix")
 	balanceAfter := realio.BankKeeper.GetBalance(matureCtx, delegator, sdk.DefaultBondDenom)
 	require.Equal(t, int64(4242), balanceAfter.Amount.Sub(balanceBefore.Amount).Int64(), "funds must actually reach the delegator")
+}
+
+// TestRotateValidatorGhostRejectsNewDelegations proves the zeroed-Tokens
+// ghost left under the old operator address can't accept fresh delegations
+// by accident: Tokens=0 with positive DelegatorShares makes
+// Validator.InvalidExRate() true, which x/staking's own Delegate keeper
+// method rejects outright — nobody delegating to what looks like a normal
+// bonded validator in a query response ends up with funds stuck earning
+// nothing under a rotated-away identity.
+func TestRotateValidatorGhostRejectsNewDelegations(t *testing.T) {
+	realio := Setup(false, nil, 1)
+	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1}).
+		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
+
+	sk := realio.StakingKeeper
+	validators, err := sk.GetValidators(ctx, 10)
+	require.NoError(t, err)
+	oldValidator := validators[0]
+	oldValAddr, err := sdk.ValAddressFromBech32(oldValidator.OperatorAddress)
+	require.NoError(t, err)
+
+	newValAddr := sdk.ValAddress(testutil.GenAddress())
+	newConsPriv := ed25519.GenPrivKey()
+	origRotations := validatorRotations
+	t.Cleanup(func() { validatorRotations = origRotations; pendingValidatorZeroUpdates = nil })
+	validatorRotations = []struct {
+		OldOperator      string
+		NewOperator      string
+		NewConsPubKeyB64 string
+	}{
+		{
+			OldOperator:      oldValidator.OperatorAddress,
+			NewOperator:      newValAddr.String(),
+			NewConsPubKeyB64: pubKeyB64(t, newConsPriv.PubKey().(*ed25519.PubKey)),
+		},
+	}
+
+	rotateValidators(realio, ctx)
+
+	oldGhost, err := sk.GetValidator(ctx, oldValAddr)
+	require.NoError(t, err)
+
+	newDelegator := testutil.GenAddress()
+	realio.AccountKeeper.SetAccount(ctx, realio.AccountKeeper.NewAccountWithAddress(ctx, newDelegator))
+	require.NoError(t, realio.BankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000))))
+	require.NoError(t, realio.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, newDelegator, sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000))))
+
+	_, err = sk.Delegate(ctx, newDelegator, math.NewInt(1000), stakingtypes.Unbonded, oldGhost, true)
+	require.ErrorIsf(t, err, stakingtypes.ErrDelegatorShareExRateInvalid,
+		"delegating fresh funds into the rotated-away identity must be rejected, not silently accepted")
+}
+
+// TestRotateValidatorExportGenesisRoundTrip is the direct reproduction of
+// the export→import failure a reviewer flagged: before the Tokens=0 fix,
+// exporting genesis after a rotation and re-importing it panicked with
+// "bonded pool balance is different from bonded coins", because the old
+// (ghost) and new validator records both claimed the full Tokens amount
+// while the bonded pool only ever actually held one share of it. This
+// re-imports the export against the SAME context right after rotating —
+// the bonded pool's real bank balance doesn't change across that round
+// trip, so it's a faithful, minimal reproduction of the real bug without
+// needing to spin up a second app.
+func TestRotateValidatorExportGenesisRoundTrip(t *testing.T) {
+	realio := Setup(false, nil, 1)
+	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1}).
+		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
+
+	sk := realio.StakingKeeper
+	validators, err := sk.GetValidators(ctx, 10)
+	require.NoError(t, err)
+	oldValidator := validators[0]
+
+	newValAddr := sdk.ValAddress(testutil.GenAddress())
+	newConsPriv := ed25519.GenPrivKey()
+	origRotations := validatorRotations
+	t.Cleanup(func() { validatorRotations = origRotations; pendingValidatorZeroUpdates = nil })
+	validatorRotations = []struct {
+		OldOperator      string
+		NewOperator      string
+		NewConsPubKeyB64 string
+	}{
+		{
+			OldOperator:      oldValidator.OperatorAddress,
+			NewOperator:      newValAddr.String(),
+			NewConsPubKeyB64: pubKeyB64(t, newConsPriv.PubKey().(*ed25519.PubKey)),
+		},
+	}
+
+	rotateValidators(realio, ctx)
+
+	exported := sk.ExportGenesis(ctx)
+	require.NotPanics(t, func() {
+		sk.InitGenesis(ctx, exported)
+	}, "re-importing a genesis exported after rotation must not panic on a bonded-pool/bonded-coins mismatch")
 }
 
 func lockCount(msk multistakingkeeper.Keeper, ctx sdk.Context, valAddr string) int {

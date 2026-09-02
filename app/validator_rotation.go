@@ -7,6 +7,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
+	"cosmossdk.io/math"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -120,6 +121,24 @@ func migrateValidatorRecord(app *RealioNetwork, ctx sdk.Context, oldValAddr, new
 	// capture "old key -> power 0" BEFORE mutating anything
 	pendingValidatorZeroUpdates = append(pendingValidatorZeroUpdates, validator.ABCIValidatorUpdateZero())
 
+	// The old record is kept in place below (not deleted — see the comment
+	// on SetValidator further down for why), but its Tokens must not stay
+	// at the pre-rotation value: after this point nothing backs it (the
+	// self-delegation moved to the new operator, not duplicated), so a
+	// genesis exported after this fork would sum BOTH the old and new
+	// records' Tokens against a bonded pool that only actually holds the
+	// new record's share — x/staking's InitGenesis panics on that mismatch
+	// ("bonded pool balance is different from bonded coins"). Zeroing it
+	// here avoids that.
+	//
+	// DelegatorShares is deliberately left untouched: Tokens=0 with
+	// positive DelegatorShares makes Validator.InvalidExRate() true, which
+	// x/staking's own Delegate keeper method already rejects with
+	// ErrDelegatorShareExRateInvalid — so this also stops anyone from
+	// accidentally delegating fresh funds into the old identity, for free.
+	oldValidatorGhost := validator
+	oldValidatorGhost.Tokens = math.ZeroInt()
+
 	powerReduction := sk.PowerReduction(ctx)
 
 	store.Delete(stakingtypes.GetValidatorsByPowerIndexKey(validator, powerReduction, sk.ValidatorAddressCodec()))
@@ -136,6 +155,15 @@ func migrateValidatorRecord(app *RealioNetwork, ctx sdk.Context, oldValAddr, new
 		panic(err)
 	}
 	if err := sk.SetValidatorByPowerIndex(ctx, validator); err != nil {
+		panic(err)
+	}
+	// write the zeroed-Tokens ghost back under the OLD key — it is
+	// intentionally never deleted, only ever overwritten here: x/slashing's
+	// BeginBlocker still needs GetValidatorByConsAddr(oldConsAddr) to
+	// resolve for a couple more blocks after this (see the comment on
+	// ScheduleValidatorRotation's call site in app.go's BeginBlocker), and
+	// deleting the record breaks that lookup outright.
+	if err := sk.SetValidator(ctx, oldValidatorGhost); err != nil {
 		panic(err)
 	}
 

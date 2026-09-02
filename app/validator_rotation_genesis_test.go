@@ -357,3 +357,121 @@ func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 		require.Error(t, err, "delegator %s should have no delegation left on %s after fully undelegating", del, newValAddr)
 	}
 }
+
+// TestRotateValidatorsSelfDelegationCanFullyUndelegate is a targeted
+// follow-up to phase 2 of TestRotateValidatorsAgainstRealGenesis above:
+// that test fully undelegates delegations[0] on each new validator, whose
+// address happens to fall wherever GetValidatorDelegations' sorted-key
+// iteration puts it among ~79-289 real delegators — not necessarily the
+// validator's OWN self-delegation. Self-undelegation is a distinct code
+// path in x/staking (see delegation.go's isValidatorOperator check: fully
+// self-undelegating always jails the validator, since 0 < MinSelfDelegation
+// for any positive minimum), so it needs its own explicit proof: the
+// self-delegation must have actually moved to the NEW operator's own
+// account (not stayed under the old, leaked one), for the same amount as
+// before, and undelegating all of it must succeed exactly like any other
+// delegator's — the validator ending up jailed afterwards is the normal,
+// expected consequence of self-undelegating to zero, not a migration bug.
+func TestRotateValidatorsSelfDelegationCanFullyUndelegate(t *testing.T) {
+	realioApp, _, initialHeight, proposerAddr, setupTime := SetupWithRealGenesis(t)
+
+	targets := []struct {
+		oldOperator string
+		coinDenom   string
+	}{
+		{oldOperator: "realiovaloper18a32el4maw3pqr8xh3yrl9ja4lejs265a5nxtm", coinDenom: "ario"}, // Teshy 103k Bonded RIO
+		{oldOperator: "realiovaloper13jrrtkfuuvzdak6zxmr95hek9c228ug50sdsvs", coinDenom: "arst"}, // Teshy 136k Self Bonded RST
+	}
+
+	origRotations, origHeight := validatorRotations, ValidatorRotationHeight
+	t.Cleanup(func() { validatorRotations, ValidatorRotationHeight = origRotations, origHeight })
+
+	rotationHeight := initialHeight + 1
+	ValidatorRotationHeight = rotationHeight
+
+	newValAddrs := make(map[string]sdk.ValAddress, len(targets))
+	oldSelfBonds := make(map[string]math.LegacyDec, len(targets))
+	var rotations []struct {
+		OldOperator      string
+		NewOperator      string
+		NewConsPubKeyB64 string
+	}
+	for _, tgt := range targets {
+		oldValAddr, err := sdk.ValAddressFromBech32(tgt.oldOperator)
+		require.NoError(t, err)
+		baseCtx := newHeaderCtx(realioApp, initialHeight, proposerAddr, setupTime)
+		oldSelfDel, err := realioApp.StakingKeeper.GetDelegation(baseCtx, sdk.AccAddress(oldValAddr), oldValAddr)
+		require.NoErrorf(t, err, "expected a real self-delegation on %s in the genesis", tgt.oldOperator)
+		oldSelfBonds[tgt.oldOperator] = oldSelfDel.Shares
+
+		newValAddr := sdk.ValAddress(testutil.GenAddress())
+		newValAddrs[tgt.oldOperator] = newValAddr
+		newConsPriv := ed25519.GenPrivKey()
+		rotations = append(rotations, struct {
+			OldOperator      string
+			NewOperator      string
+			NewConsPubKeyB64 string
+		}{
+			OldOperator:      tgt.oldOperator,
+			NewOperator:      newValAddr.String(),
+			NewConsPubKeyB64: pubKeyB64(t, newConsPriv.PubKey().(*ed25519.PubKey)),
+		})
+	}
+	validatorRotations = rotations
+
+	ctx := newHeaderCtx(realioApp, rotationHeight, proposerAddr, setupTime)
+	_, err := realioApp.BeginBlocker(ctx)
+	require.NoError(t, err)
+
+	for _, tgt := range targets {
+		newValAddr := newValAddrs[tgt.oldOperator]
+		newSelfDelegator := sdk.AccAddress(newValAddr)
+
+		newSelfDel, err := realioApp.StakingKeeper.GetDelegation(ctx, newSelfDelegator, newValAddr)
+		require.NoErrorf(t, err, "self-delegation on %s must have moved to the new operator's own account", newValAddr)
+		require.Truef(t, newSelfDel.Shares.Equal(oldSelfBonds[tgt.oldOperator]),
+			"self-delegation shares must be unchanged by migration: old=%s new=%s", oldSelfBonds[tgt.oldOperator], newSelfDel.Shares)
+
+		lockID := multistakingtypes.MultiStakingLockID(newSelfDelegator.String(), newValAddr.String())
+		lock, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(ctx, lockID)
+		require.Truef(t, found, "self-delegation's MultiStakingLock must have moved to the new operator's own account on %s", newValAddr)
+
+		newValidatorBefore, err := realioApp.StakingKeeper.GetValidator(ctx, newValAddr)
+		require.NoError(t, err)
+		require.False(t, newValidatorBefore.Jailed, "sanity: must not already be jailed before self-undelegating")
+
+		selfBalanceBefore := realioApp.BankKeeper.GetBalance(ctx, newSelfDelegator, tgt.coinDenom)
+
+		_, uErr := realioApp.MultiStakingKeeper.Undelegate(ctx, &stakingtypes.MsgUndelegate{
+			DelegatorAddress: newSelfDelegator.String(),
+			ValidatorAddress: newValAddr.String(),
+			Amount:           sdk.NewCoin(lock.LockedCoin.Denom, lock.LockedCoin.Amount),
+		})
+		require.NoErrorf(t, uErr, "the new validator %s must be able to fully undelegate its own self-stake", newValAddr)
+
+		newValidatorAfter, err := realioApp.StakingKeeper.GetValidator(ctx, newValAddr)
+		require.NoError(t, err)
+		require.True(t, newValidatorAfter.Jailed,
+			"fully self-undelegating drops self-bond to zero, which is always below MinSelfDelegation — the validator "+
+				"getting jailed here is x/staking's normal behavior for ANY validator, not something migration broke")
+
+		fullUbd, err := realioApp.StakingKeeper.GetUnbondingDelegation(ctx, newSelfDelegator, newValAddr)
+		require.NoError(t, err)
+		require.NotEmpty(t, fullUbd.Entries)
+		unbondTime := fullUbd.Entries[len(fullUbd.Entries)-1].CompletionTime.Add(time.Second)
+
+		afterFullUnbond := newHeaderCtx(realioApp, rotationHeight+1, proposerAddr, unbondTime)
+		require.NotPanics(t, func() {
+			_, err := realioApp.EndBlocker(afterFullUnbond)
+			require.NoError(t, err)
+		})
+
+		selfBalanceAfter := realioApp.BankKeeper.GetBalance(afterFullUnbond, newSelfDelegator, tgt.coinDenom)
+		require.Truef(t, selfBalanceAfter.Amount.GT(selfBalanceBefore.Amount),
+			"new operator %s must receive its own funds back after fully self-undelegating (before=%s after=%s)",
+			newSelfDelegator, selfBalanceBefore, selfBalanceAfter)
+
+		_, err = realioApp.StakingKeeper.GetDelegation(afterFullUnbond, newSelfDelegator, newValAddr)
+		require.Error(t, err, "self-delegation on %s must be fully gone after complete self-undelegate", newValAddr)
+	}
+}
