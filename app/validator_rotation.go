@@ -25,11 +25,7 @@ import (
 // mechanism as the blacklist fork: no genesis edit, no chain halt — the
 // binary swap at this height carries the migration.
 //
-// Set 10 blocks after BlacklistForkHeight (not the same height): the two
-// forks are independent, but staggering them gives the blacklist/asset-
-// manager/bridge-authority fork a few blocks to land first, rather than
-// racing every leaked-key mitigation through BeginBlocker in the same block.
-var ValidatorRotationHeight = BlacklistForkHeight + 10
+var ValidatorRotationHeight = BlacklistForkHeight
 
 // validatorRotations lists each leaked validator's old operator address and
 // its replacement identity. NewConsPubKeyB64 is the raw 32-byte ed25519

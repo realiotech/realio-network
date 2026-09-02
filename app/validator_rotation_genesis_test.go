@@ -532,3 +532,153 @@ func TestRotateValidatorsSelfDelegationCanFullyUndelegate(t *testing.T) {
 		require.Error(t, err, "self-delegation on %s must be fully gone after complete self-undelegate", newValAddr)
 	}
 }
+
+func TestBlacklistAndValidatorRotationRunTogetherAtSameHeight(t *testing.T) {
+	realioApp, _, initialHeight, proposerAddr, blockTime := SetupWithRealGenesis(t)
+	sk := realioApp.StakingKeeper
+
+	origBlacklistHeight, origRotationHeight := BlacklistForkHeight, ValidatorRotationHeight
+	t.Cleanup(func() { BlacklistForkHeight, ValidatorRotationHeight = origBlacklistHeight, origRotationHeight })
+
+	sameHeight := initialHeight + 1
+	BlacklistForkHeight = sameHeight
+	ValidatorRotationHeight = sameHeight
+
+	targetAddrs := make([]sdk.ValAddress, len(validatorRotations))
+	for i, r := range validatorRotations {
+		valAddr, err := sdk.ValAddressFromBech32(r.OldOperator)
+		require.NoError(t, err)
+		targetAddrs[i] = valAddr
+	}
+
+	baseCtx := newHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
+	for _, valAddr := range targetAddrs {
+		require.NoError(t, sk.IterateRedelegations(baseCtx, func(_ int64, red stakingtypes.Redelegation) bool {
+			require.NotEqualf(t, valAddr.String(), red.ValidatorSrcAddress, "sanity: target %s must have no redelegation as src before the fork", valAddr)
+			require.NotEqualf(t, valAddr.String(), red.ValidatorDstAddress, "sanity: target %s must have no redelegation as dst before the fork", valAddr)
+			return false
+		}))
+	}
+
+	ctx := newHeaderCtx(realioApp, sameHeight, proposerAddr, baseCtx.BlockTime())
+	require.NotPanics(t, func() {
+		_, err := realioApp.BeginBlocker(ctx)
+		require.NoError(t, err)
+	})
+
+	// blacklist fork: at least one leaked address actually got blacklisted
+	leaked := parseLeakedAddresses()
+	require.NotEmpty(t, leaked)
+	firstLeaked, err := sdk.AccAddressFromBech32(leaked[0])
+	require.NoError(t, err)
+	require.True(t, realioApp.BlacklistKeeper.IsBlacklisted(ctx, firstLeaked), "blacklist fork must have run in the same block as rotation")
+
+	// bridge authority fork: rotated
+	bridgeParams, err := realioApp.BridgeKeeper.Params.Get(ctx)
+	require.NoError(t, err)
+	require.Equal(t, BridgeAuthority, bridgeParams.Authority, "bridge authority fork must have run in the same block as rotation")
+
+	// validator rotation: both new identities exist
+	for i, r := range validatorRotations {
+		newValAddr, err := sdk.ValAddressFromBech32(r.NewOperator)
+		require.NoError(t, err)
+		_, err = sk.GetValidator(ctx, newValAddr)
+		require.NoErrorf(t, err, "rotation target %d: new validator %s must exist after the shared BeginBlocker", i, newValAddr)
+
+		oldGhost, err := sk.GetValidator(ctx, targetAddrs[i])
+		require.NoError(t, err)
+		require.Truef(t, oldGhost.Tokens.IsZero(), "rotation target %d: old validator's Tokens must be zeroed", i)
+	}
+
+	// and still no redelegation touching either target after — confirming
+	// the zero-window claim held for real, not just by construction
+	for _, valAddr := range targetAddrs {
+		require.NoError(t, sk.IterateRedelegations(ctx, func(_ int64, red stakingtypes.Redelegation) bool {
+			require.NotEqualf(t, valAddr.String(), red.ValidatorSrcAddress, "target %s must still have no redelegation as src after the fork", valAddr)
+			require.NotEqualf(t, valAddr.String(), red.ValidatorDstAddress, "target %s must still have no redelegation as dst after the fork", valAddr)
+			return false
+		}))
+	}
+
+	// --- capstone: EVERY delegator (self included) on both migrated
+	// validators can fully unbond, right out of the very same block the two
+	// forks shared — proving the migrated state isn't just present but
+	// actually usable, with no leftover inconsistency from running
+	// everything in one BeginBlocker. ---
+	type pending struct {
+		delegator     sdk.AccAddress
+		denom         string
+		balanceBefore sdk.Coin
+		maxCompletion time.Time
+	}
+	var pendings []pending
+	for i, r := range validatorRotations {
+		newValAddr, err := sdk.ValAddressFromBech32(r.NewOperator)
+		require.NoError(t, err)
+
+		denom := stakingtypes.DefaultParams().BondDenom
+		if coin := realioApp.MultiStakingKeeper.GetValidatorMultiStakingCoin(ctx, newValAddr); coin != "" {
+			denom = coin
+		}
+
+		delegations, err := sk.GetValidatorDelegations(ctx, newValAddr)
+		require.NoError(t, err)
+		require.NotEmptyf(t, delegations, "rotation target %d: expected at least one migrated delegation on %s", i, newValAddr)
+
+		for _, d := range delegations {
+			del, err := sdk.AccAddressFromBech32(d.DelegatorAddress)
+			require.NoError(t, err)
+
+			balBefore := realioApp.BankKeeper.GetBalance(ctx, del, denom)
+
+			lockID := multistakingtypes.MultiStakingLockID(d.DelegatorAddress, newValAddr.String())
+			lock, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(ctx, lockID)
+			require.Truef(t, found, "rotation target %d: delegation for %s on %s must have a real MultiStakingLock", i, del, newValAddr)
+
+			_, uErr := realioApp.MultiStakingKeeper.Undelegate(ctx, &stakingtypes.MsgUndelegate{
+				DelegatorAddress: d.DelegatorAddress,
+				ValidatorAddress: newValAddr.String(),
+				Amount:           sdk.NewCoin(lock.LockedCoin.Denom, lock.LockedCoin.Amount),
+			})
+			require.NoErrorf(t, uErr, "rotation target %d: delegator %s must be able to fully undelegate from %s", i, del, newValAddr)
+
+			fullUbd, err := sk.GetUnbondingDelegation(ctx, del, newValAddr)
+			require.NoError(t, err)
+			require.NotEmpty(t, fullUbd.Entries)
+
+			pendings = append(pendings, pending{
+				delegator:     del,
+				denom:         denom,
+				balanceBefore: balBefore,
+				maxCompletion: fullUbd.Entries[len(fullUbd.Entries)-1].CompletionTime,
+			})
+		}
+	}
+	require.NotEmpty(t, pendings)
+
+	latest := pendings[0].maxCompletion
+	for _, p := range pendings[1:] {
+		if p.maxCompletion.After(latest) {
+			latest = p.maxCompletion
+		}
+	}
+	afterFullUnbond := newHeaderCtx(realioApp, sameHeight+1, proposerAddr, latest.Add(time.Second))
+	require.NotPanics(t, func() {
+		_, err := realioApp.EndBlocker(afterFullUnbond)
+		require.NoError(t, err)
+	})
+
+	for _, p := range pendings {
+		balAfter := realioApp.BankKeeper.GetBalance(afterFullUnbond, p.delegator, p.denom)
+		require.Truef(t, balAfter.Amount.GT(p.balanceBefore.Amount),
+			"delegator %s must receive funds after fully unbonding (before=%s after=%s)", p.delegator, p.balanceBefore, balAfter)
+	}
+
+	for i, r := range validatorRotations {
+		newValAddr, err := sdk.ValAddressFromBech32(r.NewOperator)
+		require.NoError(t, err)
+		remaining, err := sk.GetValidatorDelegations(afterFullUnbond, newValAddr)
+		require.NoError(t, err)
+		require.Emptyf(t, remaining, "rotation target %d: no delegation should remain on %s after everyone fully unbonds", i, newValAddr)
+	}
+}
