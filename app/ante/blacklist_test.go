@@ -75,3 +75,72 @@ func (suite *AnteTestSuite) TestBlacklistDecorator() {
 		})
 	}
 }
+
+// TestBlacklistDecoratorAuthzExec verifies that a clean grantee cannot use an
+// existing authz grant to execute a message on behalf of a blacklisted granter.
+func (suite *AnteTestSuite) TestBlacklistDecoratorAuthzExec() {
+	suite.SetupTest()
+
+	testPrivKeys, testAddresses, err := generatePrivKeyAddressPairs(3)
+	suite.Require().NoError(err)
+	blacklistedGranter := testAddresses[0]
+	cleanGrantee := testAddresses[1]
+	recipient := testAddresses[2]
+
+	checkCtx := suite.app.BaseApp.NewContextLegacy(true, suite.ctx.BlockHeader())
+	err = suite.app.BlacklistKeeper.SetBlacklisted(checkCtx, blacklistedGranter)
+	suite.Require().NoError(err)
+
+	testcases := []struct {
+		name        string
+		msg         sdk.Msg
+		expectBlock bool
+	}{
+		{
+			name: "clean grantee executing for blacklisted granter is rejected",
+			msg: newMsgExec(cleanGrantee, []sdk.Msg{
+				banktypes.NewMsgSend(blacklistedGranter, recipient, sdk.NewCoins(sdk.NewInt64Coin(suite.denom, 1))),
+			}),
+			expectBlock: true,
+		},
+		{
+			name: "nested MsgExec for blacklisted granter is rejected",
+			msg: createNestedMsgExec(cleanGrantee, 2, []sdk.Msg{
+				banktypes.NewMsgSend(blacklistedGranter, recipient, sdk.NewCoins(sdk.NewInt64Coin(suite.denom, 1))),
+			}),
+			expectBlock: true,
+		},
+		{
+			name: "clean grantee executing for clean granter is not rejected as blacklisted",
+			msg: newMsgExec(cleanGrantee, []sdk.Msg{
+				banktypes.NewMsgSend(cleanGrantee, recipient, sdk.NewCoins(sdk.NewInt64Coin(suite.denom, 1))),
+			}),
+			expectBlock: false,
+		},
+	}
+
+	for _, tc := range testcases {
+		suite.Run(tc.name, func() {
+			tx, err := createTx(testPrivKeys[1], tc.msg)
+			suite.Require().NoError(err)
+
+			txEncoder := suite.clientCtx.TxConfig.TxEncoder()
+			bz, err := txEncoder(tx)
+			suite.Require().NoError(err)
+
+			resCheckTx, err := suite.app.CheckTx(&abci.RequestCheckTx{
+				Tx:   bz,
+				Type: abci.CheckTxType_New,
+			})
+			suite.Require().NoError(err)
+
+			if tc.expectBlock {
+				suite.Require().Equal(sdkerrors.ErrUnauthorized.ABCICode(), resCheckTx.Code, resCheckTx.Log)
+				suite.Require().Contains(resCheckTx.Log, blacklistedGranter.String())
+				suite.Require().Contains(resCheckTx.Log, "blacklisted")
+			} else {
+				suite.Require().NotContains(resCheckTx.Log, "blacklisted")
+			}
+		})
+	}
+}

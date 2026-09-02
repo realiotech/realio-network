@@ -886,6 +886,7 @@ func New(
 
 	maxGasWanted := cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted))
 	options := ante.HandlerOptions{
+		Codec:                  app.appCodec,
 		AccountKeeper:          app.AccountKeeper,
 		BankKeeper:             app.BankKeeper,
 		SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),

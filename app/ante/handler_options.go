@@ -4,6 +4,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
 	txsigning "cosmossdk.io/x/tx/signing"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -23,6 +24,7 @@ import (
 // Right now this is using only the Ethermint handlers and can be expanded to add internal checks
 // AnteHandler decorators.
 type HandlerOptions struct {
+	Codec                  codec.Codec
 	AccountKeeper          evmtypes.AccountKeeper
 	BankKeeper             evmtypes.BankKeeper
 	ExtensionOptionChecker ante.ExtensionOptionChecker
@@ -42,6 +44,9 @@ type HandlerOptions struct {
 
 // Validate checks if the keepers are defined
 func (options HandlerOptions) Validate() error {
+	if options.Codec == nil {
+		return errorsmod.Wrap(errortypes.ErrLogic, "codec is required for AnteHandler")
+	}
 	if options.AccountKeeper == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "account keeper is required for AnteHandler")
 	}
@@ -98,7 +103,7 @@ func newCosmosAnteHandler(ctx sdk.Context, options HandlerOptions) sdk.AnteHandl
 
 	return sdk.ChainAnteDecorators(
 		evmosantecosmos.RejectMessagesDecorator{}, // reject MsgEthereumTxs
-		NewCosmosBlacklistDecorator(options.BlacklistKeeper),
+		NewCosmosBlacklistDecorator(options.BlacklistKeeper, options.Codec),
 		NewAuthzLimiterDecorator( // disable the Msg types that cannot be included on an authz.MsgExec msgs field
 			sdk.MsgTypeURL(&evmtypes.MsgEthereumTx{}),
 			sdk.MsgTypeURL(&sdkvesting.MsgCreateVestingAccount{}),

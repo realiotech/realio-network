@@ -149,6 +149,7 @@ func (suite *AnteTestSuite) TestValidateHandlerOptions() {
 		{
 			"success - default app options",
 			ante.HandlerOptions{
+				Codec:                  suite.app.AppCodec(),
 				AccountKeeper:          suite.app.AccountKeeper,
 				BankKeeper:             suite.app.BankKeeper,
 				ExtensionOptionChecker: antetypes.HasDynamicFeeExtensionOption,
