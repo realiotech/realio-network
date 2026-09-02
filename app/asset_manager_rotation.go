@@ -58,16 +58,7 @@ func rotateAssetManagers(app *RealioNetwork, ctx sdk.Context) {
 // authorized status. Reuses assetManagerRotations' symbol list rather than
 // a separate hardcoded one so there's a single source of truth for "which
 // tokens this incident affects".
-func unauthorizeLeakedAddresses(app *RealioNetwork, ctx sdk.Context) {
-	leaked := make([]sdk.AccAddress, 0, 512)
-	for _, addr := range parseLeakedAddresses() {
-		accAddr, err := sdk.AccAddressFromBech32(addr)
-		if err != nil {
-			panic(fmt.Errorf("unauthorize leaked addresses: invalid address %q in leaked_addresses.json: %w", addr, err))
-		}
-		leaked = append(leaked, accAddr)
-	}
-
+func unauthorizeLeakedAddresses(app *RealioNetwork, ctx sdk.Context, leaked []sdk.AccAddress) {
 	for _, r := range assetManagerRotations {
 		key := assetmoduletypes.TokenKey(r.Symbol)
 		token, err := app.AssetKeeper.Token.Get(ctx, key)

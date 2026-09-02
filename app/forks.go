@@ -56,10 +56,17 @@ func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 	}
 
 	if ctx.BlockHeight() == BlacklistForkHeight {
-		seedLeakedAddressBlacklist(app, ctx)
+		// Parsed once and threaded through below — every one of these needs
+		// the same decoded address list, and re-parsing/re-decoding
+		// leaked_addresses.json (33k+ entries) independently in each was
+		// pure repeated work for no benefit.
+		leaked := decodeLeakedAddresses()
+
+		seedLeakedAddressBlacklist(app, ctx, leaked)
 		rotateAssetManagers(app, ctx)
-		unauthorizeLeakedAddresses(app, ctx)
+		unauthorizeLeakedAddresses(app, ctx, leaked)
 		rotateBridgeAuthority(app, ctx)
+		revokeLeakedAuthzGrants(app, ctx, leaked)
 	}
 	// NOTE: there are no testnet forks for the existing versions
 	// if !types.IsMainnet(ctx.ChainID()) {
@@ -219,30 +226,44 @@ func containsDVPairs(s []stakingtypes.DVPair, e stakingtypes.DVPair) bool {
 	return false
 }
 
-// seedLeakedAddressBlacklist adds every address in leaked_addresses.json (a
-// JSON array of bech32 address strings) to x/blacklist. It does not touch
-// bank, staking, or multistaking state — the leaked keys' funds are left
-// exactly where they are; blacklisting only prevents those addresses from
-// ever signing another transaction.
-func seedLeakedAddressBlacklist(app *RealioNetwork, ctx sdk.Context) {
-	for _, addr := range parseLeakedAddresses() {
-		accAddr, err := sdk.AccAddressFromBech32(addr)
-		if err != nil {
-			panic(fmt.Errorf("blacklist fork: invalid address %q: %w", addr, err))
-		}
-
+// seedLeakedAddressBlacklist adds every address in leaked to x/blacklist. It
+// does not touch bank, staking, or multistaking state — the leaked keys'
+// funds are left exactly where they are; blacklisting only prevents those
+// addresses from ever signing another transaction.
+func seedLeakedAddressBlacklist(app *RealioNetwork, ctx sdk.Context, leaked []sdk.AccAddress) {
+	for _, accAddr := range leaked {
 		if err := app.BlacklistKeeper.SetBlacklisted(ctx, accAddr); err != nil {
-			panic(fmt.Errorf("blacklist fork: failed to blacklist %q: %w", addr, err))
+			panic(fmt.Errorf("blacklist fork: failed to blacklist %q: %w", accAddr, err))
 		}
 	}
 }
 
-// parseLeakedAddresses unmarshals leaked_addresses.json. A malformed file
-// panics rather than silently seeding an empty (or partial) blacklist.
+// parseLeakedAddresses unmarshals leaked_addresses.json into its raw bech32
+// strings. A malformed file panics rather than silently seeding an empty
+// (or partial) blacklist.
 func parseLeakedAddresses() []string {
 	var addrs []string
 	if err := json.Unmarshal(leakedAddressesJSON, &addrs); err != nil {
 		panic(fmt.Errorf("blacklist fork: failed to parse leaked_addresses.json: %w", err))
+	}
+	return addrs
+}
+
+// decodeLeakedAddresses parses leaked_addresses.json and decodes every
+// entry to sdk.AccAddress once, so every fork function that needs the
+// leaked-address list at BlacklistForkHeight (seedLeakedAddressBlacklist,
+// unauthorizeLeakedAddresses, revokeLeakedAuthzGrants) can share a single
+// parsed+decoded copy instead of each re-parsing and re-decoding the same
+// 33k+-entry file independently.
+func decodeLeakedAddresses() []sdk.AccAddress {
+	raw := parseLeakedAddresses()
+	addrs := make([]sdk.AccAddress, len(raw))
+	for i, addr := range raw {
+		accAddr, err := sdk.AccAddressFromBech32(addr)
+		if err != nil {
+			panic(fmt.Errorf("blacklist fork: invalid address %q: %w", addr, err))
+		}
+		addrs[i] = accAddr
 	}
 	return addrs
 }
