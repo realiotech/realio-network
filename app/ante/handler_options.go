@@ -82,8 +82,8 @@ func newEthAnteHandler(ctx sdk.Context, options HandlerOptions) sdk.AnteHandler 
 	evmParams := options.EvmKeeper.GetParams(ctx)
 	feemarketParams := options.FeeMarketKeeper.GetParams(ctx)
 	decorators := []sdk.AnteDecorator{
-		NewEVMBlacklistDecorator(options.BlacklistKeeper),
 		evmante.NewEVMMonoDecorator(options.AccountKeeper, options.FeeMarketKeeper, options.EvmKeeper, options.FeegrantKeeper, options.FeesponsorKeeper, options.MaxTxGasWanted, &evmParams, &feemarketParams), // outermost AnteDecorator. SetUpContext must be called first
+		NewEVMBlacklistDecorator(options.BlacklistKeeper),
 	}
 
 	if options.PendingTxListener != nil {
