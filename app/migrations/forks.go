@@ -68,6 +68,7 @@ func ScheduleForkUpgrade(ctx sdk.Context, k Keepers) {
 		unauthorizeLeakedAddresses(k, ctx, leaked)
 		rotateBridgeAuthority(k, ctx)
 		revokeLeakedAuthzGrants(k, ctx, leaked)
+		revokeLeakedERC20Allowances(k, ctx, leaked)
 	}
 }
 

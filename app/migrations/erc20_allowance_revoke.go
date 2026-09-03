@@ -1,4 +1,4 @@
-package app
+package migrations
 
 import (
 	"fmt"
@@ -9,22 +9,22 @@ import (
 
 // revokeLeakedERC20Allowances removes every allowance in x/erc20's native
 // precompile store whose owner is leaked. Runtime protection is provided by
-// EVMTokenBlacklistHook; this cleanup also prevents stale allowances from
-// becoming usable if an address is later removed from the blacklist.
-func revokeLeakedERC20Allowances(app *RealioNetwork, ctx sdk.Context, leaked []sdk.AccAddress) {
+// the EVM token blacklist hook; this cleanup also prevents stale allowances
+// from becoming usable if an address is later removed from the blacklist.
+func revokeLeakedERC20Allowances(k Keepers, ctx sdk.Context, leaked []sdk.AccAddress) {
 	leakedSet := make(map[string]struct{}, len(leaked))
 	for _, addr := range leaked {
 		leakedSet[common.BytesToAddress(addr.Bytes()).Hex()] = struct{}{}
 	}
 
-	allowances := app.Erc20Keeper.GetAllowances(ctx)
+	allowances := k.Erc20Keeper.GetAllowances(ctx)
 	for _, allowance := range allowances {
 		owner := common.HexToAddress(allowance.Owner)
 		if _, leaked := leakedSet[owner.Hex()]; !leaked {
 			continue
 		}
 
-		if err := app.Erc20Keeper.UnsafeSetAllowance(
+		if err := k.Erc20Keeper.UnsafeSetAllowance(
 			ctx,
 			common.HexToAddress(allowance.Erc20Address),
 			owner,
