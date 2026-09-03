@@ -256,6 +256,70 @@ func (suite *AnteTestSuite) TestEVMBlacklistDecoratorSetCodeAuthority() {
 			} else {
 				suite.Require().NoError(err)
 				suite.Require().True(next.WasCalled)
+// TestBlacklistDecoratorFeeGranter verifies that a tx whose AuthInfo.Fee.Granter
+// is a blacklisted address is rejected, even though the granter never signs
+// this tx — the msg signer (grantee) is a clean, unrelated address. This is
+// the gap BlacklistSendRestriction deliberately leaves open (it exempts
+// module-account destinations, and the fee-collector is one), closed here
+// instead: DeductFeeDecorator (x/auth/ante/fee.go) reads this same field and
+// debits the granter regardless of whether the granter signed anything.
+func (suite *AnteTestSuite) TestBlacklistDecoratorFeeGranter() {
+	suite.SetupTest()
+
+	testPrivKeys, testAddresses, err := generatePrivKeyAddressPairs(3)
+	suite.Require().NoError(err)
+	blacklistedGranter := testAddresses[0]
+	cleanGrantee := testAddresses[1]
+	recipient := testAddresses[2]
+
+	checkCtx := suite.app.BaseApp.NewContextLegacy(true, suite.ctx.BlockHeader())
+	err = suite.app.BlacklistKeeper.SetBlacklisted(checkCtx, blacklistedGranter)
+	suite.Require().NoError(err)
+
+	testcases := []struct {
+		name        string
+		granter     sdk.AccAddress
+		expectBlock bool
+	}{
+		{
+			name:        "tx fee-granted by a blacklisted address is rejected",
+			granter:     blacklistedGranter,
+			expectBlock: true,
+		},
+		{
+			name:        "tx fee-granted by a clean address is not rejected as blacklisted",
+			granter:     cleanGrantee,
+			expectBlock: false,
+		},
+		{
+			name:        "tx with no fee granter at all is not rejected as blacklisted",
+			granter:     nil,
+			expectBlock: false,
+		},
+	}
+
+	for _, tc := range testcases {
+		suite.Run(tc.name, func() {
+			msg := banktypes.NewMsgSend(cleanGrantee, recipient, sdk.NewCoins(sdk.NewInt64Coin(suite.denom, 1)))
+			tx, err := createTxWithFeeGranter(testPrivKeys[1], tc.granter, msg)
+			suite.Require().NoError(err)
+
+			txEncoder := suite.clientCtx.TxConfig.TxEncoder()
+			bz, err := txEncoder(tx)
+			suite.Require().NoError(err)
+
+			resCheckTx, err := suite.app.CheckTx(&abci.RequestCheckTx{
+				Tx:   bz,
+				Type: abci.CheckTxType_New,
+			})
+			suite.Require().NoError(err)
+
+			if tc.expectBlock {
+				suite.Require().Equal(sdkerrors.ErrUnauthorized.ABCICode(), resCheckTx.Code, resCheckTx.Log)
+				suite.Require().Contains(resCheckTx.Log, blacklistedGranter.String())
+				suite.Require().Contains(resCheckTx.Log, "blacklisted")
+			} else {
+				suite.Require().NotContains(resCheckTx.Log, "blacklisted")
 			}
 		})
 	}

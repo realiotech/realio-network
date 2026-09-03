@@ -1,4 +1,4 @@
-package app
+package migrations
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ import (
 // bypassing the blacklist. Revoking every grant with a leaked granter here
 // closes that regardless of whether the ante handler is ever taught to
 // recurse into MsgExec.
-func revokeLeakedAuthzGrants(app *RealioNetwork, ctx sdk.Context, leaked []sdk.AccAddress) {
+func revokeLeakedAuthzGrants(k Keepers, ctx sdk.Context, leaked []sdk.AccAddress) {
 	leakedSet := make(map[string]bool, len(leaked))
 	for _, accAddr := range leaked {
 		leakedSet[accAddr.String()] = true
@@ -28,7 +28,7 @@ func revokeLeakedAuthzGrants(app *RealioNetwork, ctx sdk.Context, leaked []sdk.A
 		msgType          string
 	}
 	var toRevoke []grantToRevoke
-	app.AuthzKeeper.IterateGrants(ctx, func(granterAddr, granteeAddr sdk.AccAddress, grant authz.Grant) bool {
+	k.AuthzKeeper.IterateGrants(ctx, func(granterAddr, granteeAddr sdk.AccAddress, grant authz.Grant) bool {
 		if !leakedSet[granterAddr.String()] {
 			return false
 		}
@@ -44,7 +44,7 @@ func revokeLeakedAuthzGrants(app *RealioNetwork, ctx sdk.Context, leaked []sdk.A
 	// collect first (same pattern as migrateMultiStaking's lock/unlock
 	// iterators) and delete afterwards.
 	for _, g := range toRevoke {
-		if err := app.AuthzKeeper.DeleteGrant(ctx, g.grantee, g.granter, g.msgType); err != nil {
+		if err := k.AuthzKeeper.DeleteGrant(ctx, g.grantee, g.granter, g.msgType); err != nil {
 			panic(fmt.Errorf("revoke leaked authz grants: failed to delete grant granter=%s grantee=%s msgType=%s: %w",
 				g.granter, g.grantee, g.msgType, err))
 		}

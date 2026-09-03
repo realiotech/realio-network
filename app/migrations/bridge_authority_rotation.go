@@ -1,4 +1,4 @@
-package app
+package migrations
 
 import (
 	"fmt"
@@ -23,8 +23,8 @@ import (
 // just an inconvenience.
 var BridgeAuthority = "realio1usws4ccu3m7ln6m5gesc3m8jqcl0fqagq32kv6"
 
-func rotateBridgeAuthority(app *RealioNetwork, ctx sdk.Context) {
-	params, err := app.BridgeKeeper.Params.Get(ctx)
+func rotateBridgeAuthority(k Keepers, ctx sdk.Context) {
+	params, err := k.BridgeKeeper.Params.Get(ctx)
 	if err != nil {
 		panic(fmt.Errorf("bridge authority rotation: failed to get params: %w", err))
 	}
@@ -34,7 +34,7 @@ func rotateBridgeAuthority(app *RealioNetwork, ctx sdk.Context) {
 		panic(fmt.Errorf("bridge authority rotation: invalid new authority %q: %w", BridgeAuthority, err))
 	}
 
-	if err := app.BridgeKeeper.Params.Set(ctx, params); err != nil {
+	if err := k.BridgeKeeper.Params.Set(ctx, params); err != nil {
 		panic(fmt.Errorf("bridge authority rotation: failed to set params: %w", err))
 	}
 }

@@ -1,143 +1,27 @@
-package app
+package migrations_test
 
 import (
-	"encoding/hex"
-	"encoding/json"
-	"os"
 	"testing"
 	"time"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	dbm "github.com/cosmos/cosmos-db"
 	"github.com/stretchr/testify/require"
 
-	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	evmtypes "github.com/cosmos/evm/x/vm/types"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 
+	"github.com/realiotech/realio-network/app"
+	"github.com/realiotech/realio-network/app/migrations"
 	"github.com/realiotech/realio-network/testutil"
 	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
 )
-
-// realGenesisPath is the actual pre-incident mainnet genesis export sitting
-// at the repo root — the same file the leaked-validator rotation is meant
-// to run against for real. Committed nowhere; this test is skipped if it's
-// not present (e.g. on CI, or a fresh checkout).
-const realGenesisPath = "../recover_genesis.json"
 
 // arstDenom is the RST validator's self-bond denom — an AuthorizationRequired
 // asset token, which is why it needs the AuthorizeSymbol handling the other
 // (ario-denominated) rotation target doesn't.
 const arstDenom = "arst"
-
-// consensusValidatorEntry mirrors the top-level consensus.validators[] shape
-// in the exported genesis (hex address + base64 ed25519 pubkey + power),
-// just enough to pick a ProposerAddress for FinalizeBlock.
-type consensusValidatorEntry struct {
-	Address string `json:"address"`
-}
-
-// SetupWithRealGenesis boots a full app against the real genesis export,
-// finalizing the first block at time.Now() — the same way a real node
-// resuming this chain today would. Any unbonding delegation whose
-// completion_time has already elapsed by "now" matures and pays out right
-// here, as part of this very first block's EndBlock, before the caller gets
-// a chance to inspect it as "pending". That's expected real-world behavior,
-// not a bug: overdue unbondings are settled at genesis load, and rotation
-// only needs to deal with whatever is still in flight afterwards.
-// Skips the test (rather than failing) if the file isn't present.
-func SetupWithRealGenesis(t *testing.T) (realioApp *RealioNetwork, chainID string, initialHeight int64, proposerAddr []byte, blockTime time.Time) {
-	t.Helper()
-
-	raw, err := os.ReadFile(realGenesisPath) //nolint:staticcheck // SA4006 false positive: raw is read at json.Unmarshal(raw, &doc) below
-	if err != nil {
-		t.Skipf("real genesis fixture not present at %s, skipping: %v", realGenesisPath, err)
-		return nil, "", 0, nil, time.Time{}
-	}
-
-	// The EVM module keeps its coin-info config in a process-global
-	// sync.Once (github.com/cosmos/evm/x/vm.SetGlobalConfigVariables), same
-	// as Setup() in test_helpers.go deals with — must reset it before this
-	// InitChain, or InitGenesis panics if any other test in this binary
-	// already initialized it first.
-	evmtypes.NewEVMConfigurator().ResetTestConfig()
-
-	var doc struct {
-		ChainID       string                     `json:"chain_id"`
-		InitialHeight int64                      `json:"initial_height"`
-		AppState      map[string]json.RawMessage `json:"app_state"`
-		Consensus     struct {
-			Validators []consensusValidatorEntry `json:"validators"`
-		} `json:"consensus"`
-	}
-	require.NoError(t, json.Unmarshal(raw, &doc))
-	require.NotEmpty(t, doc.Consensus.Validators)
-	require.NotZero(t, doc.InitialHeight)
-
-	proposerAddr, err = hex.DecodeString(doc.Consensus.Validators[0].Address)
-	require.NoError(t, err)
-
-	appStateBytes, err := json.Marshal(doc.AppState)
-	require.NoError(t, err)
-
-	db := dbm.NewMemDB()
-	realioApp = New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, simtestutil.EmptyAppOptions{},
-		baseapp.SetChainID(doc.ChainID))
-
-	_, err = realioApp.InitChain(&abci.RequestInitChain{
-		ChainId:         doc.ChainID,
-		InitialHeight:   doc.InitialHeight,
-		ConsensusParams: DefaultConsensusParams,
-		AppStateBytes:   appStateBytes,
-	})
-	require.NoError(t, err)
-
-	blockTime = time.Now()
-
-	// This genesis's initial_height is the real chain's actual halt height —
-	// which may legitimately equal BlacklistForkHeight's current production
-	// value (it does today: both are 19573266, since this genesis IS the
-	// real halt-block export). Neutralize every height-triggered fork for
-	// the duration of this one FinalizeBlock call, so none of them fire
-	// here by coincidence before a test gets a chance to control it
-	// explicitly. Callers that want to exercise a fork opt in afterwards by
-	// setting the relevant height themselves and driving
-	// BeginBlocker/EndBlocker directly, same as the rest of this file does.
-	origBlacklistHeight, origRotationHeight := BlacklistForkHeight, ValidatorRotationHeight
-	BlacklistForkHeight, ValidatorRotationHeight = -1, -1
-	defer func() { BlacklistForkHeight, ValidatorRotationHeight = origBlacklistHeight, origRotationHeight }()
-
-	// Deliberately not calling Commit() here: doing so tears down
-	// finalizeBlockState, and BaseApp.NewContextLegacy(false, ...) — used
-	// throughout this test to build ad-hoc contexts for direct
-	// BeginBlocker/EndBlocker calls, the same pattern the rest of this
-	// package's tests use against Setup() — reads from exactly that state.
-	// Setup() in test_helpers.go follows the same convention.
-	_, err = realioApp.FinalizeBlock(&abci.RequestFinalizeBlock{
-		Height:          doc.InitialHeight,
-		ProposerAddress: proposerAddr,
-		Time:            blockTime,
-	})
-	require.NoError(t, err)
-
-	return realioApp, doc.ChainID, doc.InitialHeight, proposerAddr, blockTime
-}
-
-func newHeaderCtx(realioApp *RealioNetwork, height int64, proposerAddr []byte, blockTime time.Time) sdk.Context {
-	return realioApp.BaseApp.NewContextLegacy(false, tmproto.Header{
-		Height:          height,
-		ProposerAddress: proposerAddr,
-		Time:            blockTime,
-	}).WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
-}
 
 // rotationTarget is one of the two real leaked validators, plus a real
 // genesis delegator (with a real MultiStakingLock on that validator) used to
@@ -172,7 +56,7 @@ type rotationTarget struct {
 //     the migrated identity is completely usable going forward, not just
 //     "doesn't crash".
 func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
-	realioApp, _, initialHeight, proposerAddr, setupTime := SetupWithRealGenesis(t)
+	realioApp, _, initialHeight, proposerAddr, setupTime := app.SetupWithRealGenesis(t)
 
 	targets := []rotationTarget{
 		{
@@ -189,7 +73,7 @@ func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 		},
 	}
 
-	baseCtx := newHeaderCtx(realioApp, initialHeight, proposerAddr, setupTime)
+	baseCtx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, setupTime)
 
 	// --- 0. the real pre-existing UBD in this genesis (for validator 1,
 	// completion_time 2026-08-27, already in the past relative to setupTime)
@@ -205,11 +89,11 @@ func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 	overdueBalance := realioApp.BankKeeper.GetBalance(baseCtx, overdueDelegator, targets[0].coinDenom)
 	require.Truef(t, overdueBalance.IsPositive(), "delegator of the overdue genesis UBD must have received its %s payout at genesis load", targets[0].coinDenom)
 
-	origRotations, origHeight := validatorRotations, ValidatorRotationHeight
-	t.Cleanup(func() { validatorRotations, ValidatorRotationHeight = origRotations, origHeight })
+	origRotations, origHeight := migrations.ValidatorRotations, migrations.ValidatorRotationHeight
+	t.Cleanup(func() { migrations.ValidatorRotations, migrations.ValidatorRotationHeight = origRotations, origHeight })
 
 	rotationHeight := initialHeight + 1
-	ValidatorRotationHeight = rotationHeight
+	migrations.ValidatorRotationHeight = rotationHeight
 
 	newValAddrs := make(map[string]sdk.ValAddress, len(targets))
 	var rotations []struct {
@@ -233,7 +117,7 @@ func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 			NewConsPubKeyB64: pubKeyB64(t, newConsPriv.PubKey().(*ed25519.PubKey)),
 		})
 	}
-	validatorRotations = rotations
+	migrations.ValidatorRotations = rotations
 
 	// --- 1a. create a genuinely in-flight UBD on each OLD validator right
 	// before rotation, via the real multistaking Undelegate path (real
@@ -255,7 +139,7 @@ func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 		require.Lenf(t, pending, 1, "expected exactly the freshly created in-flight UBD on %s", tgt.oldOperator)
 	}
 
-	ctx := newHeaderCtx(realioApp, rotationHeight, proposerAddr, baseCtx.BlockTime())
+	ctx := app.NewHeaderCtx(realioApp, rotationHeight, proposerAddr, baseCtx.BlockTime())
 	_, err = realioApp.BeginBlocker(ctx)
 	require.NoError(t, err)
 
@@ -300,7 +184,7 @@ func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 	// Advance well past every entry's completion_time (unbonding_time in
 	// this genesis is 7 days) and run the REAL EndBlocker.
 	farFuture := ctx.BlockTime().Add(30 * 24 * time.Hour)
-	matureCtx := newHeaderCtx(realioApp, rotationHeight+1, proposerAddr, farFuture)
+	matureCtx := app.NewHeaderCtx(realioApp, rotationHeight+1, proposerAddr, farFuture)
 	require.NotPanics(t, func() {
 		_, err := realioApp.EndBlocker(matureCtx)
 		require.NoError(t, err)
@@ -384,7 +268,7 @@ func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 				latest = u.maxCompletion
 			}
 		}
-		afterFullUnbond := newHeaderCtx(realioApp, rotationHeight+2, proposerAddr, latest.Add(time.Second))
+		afterFullUnbond := app.NewHeaderCtx(realioApp, rotationHeight+2, proposerAddr, latest.Add(time.Second))
 		require.NotPanics(t, func() {
 			_, err := realioApp.EndBlocker(afterFullUnbond)
 			require.NoError(t, err)
@@ -415,7 +299,7 @@ func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 // delegator's — the validator ending up jailed afterwards is the normal,
 // expected consequence of self-undelegating to zero, not a migration bug.
 func TestRotateValidatorsSelfDelegationCanFullyUndelegate(t *testing.T) {
-	realioApp, _, initialHeight, proposerAddr, setupTime := SetupWithRealGenesis(t)
+	realioApp, _, initialHeight, proposerAddr, setupTime := app.SetupWithRealGenesis(t)
 
 	targets := []struct {
 		oldOperator string
@@ -425,11 +309,11 @@ func TestRotateValidatorsSelfDelegationCanFullyUndelegate(t *testing.T) {
 		{oldOperator: "realiovaloper13jrrtkfuuvzdak6zxmr95hek9c228ug50sdsvs", coinDenom: arstDenom}, // Teshy 136k Self Bonded RST
 	}
 
-	origRotations, origHeight := validatorRotations, ValidatorRotationHeight
-	t.Cleanup(func() { validatorRotations, ValidatorRotationHeight = origRotations, origHeight })
+	origRotations, origHeight := migrations.ValidatorRotations, migrations.ValidatorRotationHeight
+	t.Cleanup(func() { migrations.ValidatorRotations, migrations.ValidatorRotationHeight = origRotations, origHeight })
 
 	rotationHeight := initialHeight + 1
-	ValidatorRotationHeight = rotationHeight
+	migrations.ValidatorRotationHeight = rotationHeight
 
 	newValAddrs := make(map[string]sdk.ValAddress, len(targets))
 	oldSelfBonds := make(map[string]math.LegacyDec, len(targets))
@@ -442,7 +326,7 @@ func TestRotateValidatorsSelfDelegationCanFullyUndelegate(t *testing.T) {
 	for _, tgt := range targets {
 		oldValAddr, err := sdk.ValAddressFromBech32(tgt.oldOperator)
 		require.NoError(t, err)
-		baseCtx := newHeaderCtx(realioApp, initialHeight, proposerAddr, setupTime)
+		baseCtx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, setupTime)
 		oldSelfDel, err := realioApp.StakingKeeper.GetDelegation(baseCtx, sdk.AccAddress(oldValAddr), oldValAddr)
 		require.NoErrorf(t, err, "expected a real self-delegation on %s in the genesis", tgt.oldOperator)
 		oldSelfBonds[tgt.oldOperator] = oldSelfDel.Shares
@@ -467,9 +351,9 @@ func TestRotateValidatorsSelfDelegationCanFullyUndelegate(t *testing.T) {
 			AuthorizeSymbol:  authorizeSymbol,
 		})
 	}
-	validatorRotations = rotations
+	migrations.ValidatorRotations = rotations
 
-	ctx := newHeaderCtx(realioApp, rotationHeight, proposerAddr, setupTime)
+	ctx := app.NewHeaderCtx(realioApp, rotationHeight, proposerAddr, setupTime)
 	_, err := realioApp.BeginBlocker(ctx)
 	require.NoError(t, err)
 
@@ -517,7 +401,7 @@ func TestRotateValidatorsSelfDelegationCanFullyUndelegate(t *testing.T) {
 		require.NotEmpty(t, fullUbd.Entries)
 		unbondTime := fullUbd.Entries[len(fullUbd.Entries)-1].CompletionTime.Add(time.Second)
 
-		afterFullUnbond := newHeaderCtx(realioApp, rotationHeight+1, proposerAddr, unbondTime)
+		afterFullUnbond := app.NewHeaderCtx(realioApp, rotationHeight+1, proposerAddr, unbondTime)
 		require.NotPanics(t, func() {
 			_, err := realioApp.EndBlocker(afterFullUnbond)
 			require.NoError(t, err)
@@ -530,5 +414,157 @@ func TestRotateValidatorsSelfDelegationCanFullyUndelegate(t *testing.T) {
 
 		_, err = realioApp.StakingKeeper.GetDelegation(afterFullUnbond, newSelfDelegator, newValAddr)
 		require.Error(t, err, "self-delegation on %s must be fully gone after complete self-undelegate", newValAddr)
+	}
+}
+
+func TestBlacklistAndValidatorRotationRunTogetherAtSameHeight(t *testing.T) {
+	realioApp, _, initialHeight, proposerAddr, blockTime := app.SetupWithRealGenesis(t)
+	sk := realioApp.StakingKeeper
+
+	origBlacklistHeight, origRotationHeight := migrations.BlacklistForkHeight, migrations.ValidatorRotationHeight
+	t.Cleanup(func() {
+		migrations.BlacklistForkHeight, migrations.ValidatorRotationHeight = origBlacklistHeight, origRotationHeight
+	})
+
+	sameHeight := initialHeight + 1
+	migrations.BlacklistForkHeight = sameHeight
+	migrations.ValidatorRotationHeight = sameHeight
+
+	targetAddrs := make([]sdk.ValAddress, len(migrations.ValidatorRotations))
+	for i, r := range migrations.ValidatorRotations {
+		valAddr, err := sdk.ValAddressFromBech32(r.OldOperator)
+		require.NoError(t, err)
+		targetAddrs[i] = valAddr
+	}
+
+	baseCtx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
+	for _, valAddr := range targetAddrs {
+		require.NoError(t, sk.IterateRedelegations(baseCtx, func(_ int64, red stakingtypes.Redelegation) bool {
+			require.NotEqualf(t, valAddr.String(), red.ValidatorSrcAddress, "sanity: target %s must have no redelegation as src before the fork", valAddr)
+			require.NotEqualf(t, valAddr.String(), red.ValidatorDstAddress, "sanity: target %s must have no redelegation as dst before the fork", valAddr)
+			return false
+		}))
+	}
+
+	ctx := app.NewHeaderCtx(realioApp, sameHeight, proposerAddr, baseCtx.BlockTime())
+	require.NotPanics(t, func() {
+		_, err := realioApp.BeginBlocker(ctx)
+		require.NoError(t, err)
+	})
+
+	// blacklist fork: at least one leaked address actually got blacklisted
+	leaked := migrations.ParseLeakedAddresses()
+	require.NotEmpty(t, leaked)
+	firstLeaked, err := sdk.AccAddressFromBech32(leaked[0])
+	require.NoError(t, err)
+	require.True(t, realioApp.BlacklistKeeper.IsBlacklisted(ctx, firstLeaked), "blacklist fork must have run in the same block as rotation")
+
+	// bridge authority fork: rotated
+	bridgeParams, err := realioApp.BridgeKeeper.Params.Get(ctx)
+	require.NoError(t, err)
+	require.Equal(t, migrations.BridgeAuthority, bridgeParams.Authority, "bridge authority fork must have run in the same block as rotation")
+
+	// validator rotation: both new identities exist
+	for i, r := range migrations.ValidatorRotations {
+		newValAddr, err := sdk.ValAddressFromBech32(r.NewOperator)
+		require.NoError(t, err)
+		_, err = sk.GetValidator(ctx, newValAddr)
+		require.NoErrorf(t, err, "rotation target %d: new validator %s must exist after the shared BeginBlocker", i, newValAddr)
+
+		oldGhost, err := sk.GetValidator(ctx, targetAddrs[i])
+		require.NoError(t, err)
+		require.Truef(t, oldGhost.Tokens.IsZero(), "rotation target %d: old validator's Tokens must be zeroed", i)
+	}
+
+	// and still no redelegation touching either target after — confirming
+	// the zero-window claim held for real, not just by construction
+	for _, valAddr := range targetAddrs {
+		require.NoError(t, sk.IterateRedelegations(ctx, func(_ int64, red stakingtypes.Redelegation) bool {
+			require.NotEqualf(t, valAddr.String(), red.ValidatorSrcAddress, "target %s must still have no redelegation as src after the fork", valAddr)
+			require.NotEqualf(t, valAddr.String(), red.ValidatorDstAddress, "target %s must still have no redelegation as dst after the fork", valAddr)
+			return false
+		}))
+	}
+
+	// --- capstone: EVERY delegator (self included) on both migrated
+	// validators can fully unbond, right out of the very same block the two
+	// forks shared — proving the migrated state isn't just present but
+	// actually usable, with no leftover inconsistency from running
+	// everything in one BeginBlocker. ---
+	type pending struct {
+		delegator     sdk.AccAddress
+		denom         string
+		balanceBefore sdk.Coin
+		maxCompletion time.Time
+	}
+	var pendings []pending
+	for i, r := range migrations.ValidatorRotations {
+		newValAddr, err := sdk.ValAddressFromBech32(r.NewOperator)
+		require.NoError(t, err)
+
+		denom := stakingtypes.DefaultParams().BondDenom
+		if coin := realioApp.MultiStakingKeeper.GetValidatorMultiStakingCoin(ctx, newValAddr); coin != "" {
+			denom = coin
+		}
+
+		delegations, err := sk.GetValidatorDelegations(ctx, newValAddr)
+		require.NoError(t, err)
+		require.NotEmptyf(t, delegations, "rotation target %d: expected at least one migrated delegation on %s", i, newValAddr)
+
+		for _, d := range delegations {
+			del, err := sdk.AccAddressFromBech32(d.DelegatorAddress)
+			require.NoError(t, err)
+
+			balBefore := realioApp.BankKeeper.GetBalance(ctx, del, denom)
+
+			lockID := multistakingtypes.MultiStakingLockID(d.DelegatorAddress, newValAddr.String())
+			lock, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(ctx, lockID)
+			require.Truef(t, found, "rotation target %d: delegation for %s on %s must have a real MultiStakingLock", i, del, newValAddr)
+
+			_, uErr := realioApp.MultiStakingKeeper.Undelegate(ctx, &stakingtypes.MsgUndelegate{
+				DelegatorAddress: d.DelegatorAddress,
+				ValidatorAddress: newValAddr.String(),
+				Amount:           sdk.NewCoin(lock.LockedCoin.Denom, lock.LockedCoin.Amount),
+			})
+			require.NoErrorf(t, uErr, "rotation target %d: delegator %s must be able to fully undelegate from %s", i, del, newValAddr)
+
+			fullUbd, err := sk.GetUnbondingDelegation(ctx, del, newValAddr)
+			require.NoError(t, err)
+			require.NotEmpty(t, fullUbd.Entries)
+
+			pendings = append(pendings, pending{
+				delegator:     del,
+				denom:         denom,
+				balanceBefore: balBefore,
+				maxCompletion: fullUbd.Entries[len(fullUbd.Entries)-1].CompletionTime,
+			})
+		}
+	}
+	require.NotEmpty(t, pendings)
+
+	latest := pendings[0].maxCompletion
+	for _, p := range pendings[1:] {
+		if p.maxCompletion.After(latest) {
+			latest = p.maxCompletion
+		}
+	}
+	afterFullUnbond := app.NewHeaderCtx(realioApp, sameHeight+1, proposerAddr, latest.Add(time.Second))
+	require.NotPanics(t, func() {
+		_, err := realioApp.EndBlocker(afterFullUnbond)
+		require.NoError(t, err)
+	})
+
+	for _, p := range pendings {
+		balAfter := realioApp.BankKeeper.GetBalance(afterFullUnbond, p.delegator, p.denom)
+		require.Truef(t, balAfter.Amount.GT(p.balanceBefore.Amount),
+			"delegator %s must receive funds after fully unbonding (before=%s after=%s)", p.delegator, p.balanceBefore, balAfter)
+	}
+
+	for i, r := range migrations.ValidatorRotations {
+		newValAddr, err := sdk.ValAddressFromBech32(r.NewOperator)
+		require.NoError(t, err)
+		remaining, err := sk.GetValidatorDelegations(afterFullUnbond, newValAddr)
+		require.NoError(t, err)
+		require.Emptyf(t, remaining, "rotation target %d: no delegation should remain on %s after everyone fully unbonds", i, newValAddr)
 	}
 }

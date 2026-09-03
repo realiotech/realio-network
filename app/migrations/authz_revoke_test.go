@@ -1,4 +1,4 @@
-package app
+package migrations_test
 
 import (
 	"encoding/json"
@@ -11,6 +11,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+	"github.com/realiotech/realio-network/app"
+	"github.com/realiotech/realio-network/app/migrations"
 	"github.com/realiotech/realio-network/testutil"
 )
 
@@ -20,12 +22,12 @@ import (
 // finishes. Seeds one grant from a leaked granter and one from a clean
 // granter, and checks only the leaked one is revoked.
 func TestRevokeLeakedAuthzGrants(t *testing.T) {
-	realio := Setup(false, nil, 1)
+	realio := app.Setup(false, nil, 1)
 	ak := realio.AuthzKeeper
 
-	origHeight, origJSON, origAssetRotations := BlacklistForkHeight, leakedAddressesJSON, assetManagerRotations
+	origHeight, origJSON, origAssetRotations := migrations.BlacklistForkHeight, migrations.LeakedAddressesJSON, migrations.AssetManagerRotations
 	t.Cleanup(func() {
-		BlacklistForkHeight, leakedAddressesJSON, assetManagerRotations = origHeight, origJSON, origAssetRotations
+		migrations.BlacklistForkHeight, migrations.LeakedAddressesJSON, migrations.AssetManagerRotations = origHeight, origJSON, origAssetRotations
 	})
 
 	leakedGranter := testutil.GenAddress()
@@ -34,11 +36,11 @@ func TestRevokeLeakedAuthzGrants(t *testing.T) {
 
 	leakedJSON, err := json.Marshal([]string{leakedGranter.String()})
 	require.NoError(t, err)
-	leakedAddressesJSON = leakedJSON
-	assetManagerRotations = nil
-	BlacklistForkHeight = 12345
+	migrations.LeakedAddressesJSON = leakedJSON
+	migrations.AssetManagerRotations = nil
+	migrations.BlacklistForkHeight = 12345
 
-	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: BlacklistForkHeight})
+	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: migrations.BlacklistForkHeight})
 
 	msgType := sdk.MsgTypeURL(&banktypes.MsgSend{})
 	require.NoError(t, ak.SaveGrant(ctx, grantee, leakedGranter, authz.NewGenericAuthorization(msgType), nil))
@@ -70,24 +72,24 @@ func TestRevokeLeakedAuthzGrants(t *testing.T) {
 // produce — while every grant from a clean (non-leaked) granter survives
 // untouched, so a check this thorough can't be satisfied by over-deleting.
 func TestRevokeLeakedAuthzGrantsAgainstRealGenesis(t *testing.T) {
-	realioApp, _, initialHeight, proposerAddr, blockTime := SetupWithRealGenesis(t)
+	realioApp, _, initialHeight, proposerAddr, blockTime := app.SetupWithRealGenesis(t)
 	ak := realioApp.AuthzKeeper
 
-	origHeight := BlacklistForkHeight
-	t.Cleanup(func() { BlacklistForkHeight = origHeight })
+	origHeight := migrations.BlacklistForkHeight
+	t.Cleanup(func() { migrations.BlacklistForkHeight = origHeight })
 
 	rotationHeight := initialHeight + 1
-	BlacklistForkHeight = rotationHeight
+	migrations.BlacklistForkHeight = rotationHeight
 
 	leaked := make(map[string]bool, 512)
-	for _, addr := range parseLeakedAddresses() {
+	for _, addr := range migrations.ParseLeakedAddresses() {
 		leaked[addr] = true
 	}
 
 	type grantKey struct {
 		granter, grantee, msgType string
 	}
-	baseCtx := newHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
+	baseCtx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
 	var leakedGrants, cleanGrants []grantKey
 	ak.IterateGrants(baseCtx, func(granterAddr, granteeAddr sdk.AccAddress, grant authz.Grant) bool {
 		auth, err := grant.GetAuthorization()
@@ -104,7 +106,7 @@ func TestRevokeLeakedAuthzGrantsAgainstRealGenesis(t *testing.T) {
 	require.NotEmptyf(t, cleanGrants, "sanity: the real genesis must have at least one authz grant from a non-leaked granter, or the survival check below is vacuous")
 	t.Logf("real genesis has %d authz grant(s) from a leaked granter and %d from a clean one, before the fork", len(leakedGrants), len(cleanGrants))
 
-	ctx := newHeaderCtx(realioApp, rotationHeight, proposerAddr, baseCtx.BlockTime())
+	ctx := app.NewHeaderCtx(realioApp, rotationHeight, proposerAddr, baseCtx.BlockTime())
 	_, err := realioApp.BeginBlocker(ctx)
 	require.NoError(t, err)
 

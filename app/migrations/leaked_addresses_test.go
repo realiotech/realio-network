@@ -1,4 +1,4 @@
-package app
+package migrations_test
 
 import (
 	"encoding/json"
@@ -9,6 +9,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/realiotech/realio-network/app"
+	"github.com/realiotech/realio-network/app/migrations"
 	"github.com/realiotech/realio-network/testutil"
 )
 
@@ -19,7 +21,7 @@ import (
 // possible time. Catching it here turns that into a normal CI failure
 // before the binary is ever built.
 func TestLeakedAddressesJSONIsValid(t *testing.T) {
-	addrs := parseLeakedAddresses()
+	addrs := migrations.ParseLeakedAddresses()
 
 	seen := make(map[string]int, len(addrs))
 	for i, addr := range addrs {
@@ -39,24 +41,24 @@ func TestLeakedAddressesJSONIsValid(t *testing.T) {
 // real dispatch path, and checks the address actually lands in
 // x/blacklist.
 func TestBlacklistFork(t *testing.T) {
-	realio := Setup(false, nil, 1)
+	realio := app.Setup(false, nil, 1)
 
-	origJSON, origHeight, origAssetRotations := leakedAddressesJSON, BlacklistForkHeight, assetManagerRotations
+	origJSON, origHeight, origAssetRotations := migrations.LeakedAddressesJSON, migrations.BlacklistForkHeight, migrations.AssetManagerRotations
 	t.Cleanup(func() {
-		leakedAddressesJSON, BlacklistForkHeight, assetManagerRotations = origJSON, origHeight, origAssetRotations
+		migrations.LeakedAddressesJSON, migrations.BlacklistForkHeight, migrations.AssetManagerRotations = origJSON, origHeight, origAssetRotations
 	})
 
 	// isolate from rotateAssetManagers, which also runs at BlacklistForkHeight
 	// (see forks.go) - this test is about the blacklist seeding, not that.
-	assetManagerRotations = nil
+	migrations.AssetManagerRotations = nil
 
 	leaked := testutil.GenAddress()
 	untouched := testutil.GenAddress()
 
-	leakedAddressesJSON, _ = json.Marshal([]string{leaked.String()})
-	BlacklistForkHeight = 12345
+	migrations.LeakedAddressesJSON, _ = json.Marshal([]string{leaked.String()})
+	migrations.BlacklistForkHeight = 12345
 
-	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: BlacklistForkHeight})
+	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: migrations.BlacklistForkHeight})
 	require.False(t, realio.BlacklistKeeper.IsBlacklisted(ctx, leaked))
 
 	realio.ScheduleForkUpgrade(ctx)
@@ -66,9 +68,9 @@ func TestBlacklistFork(t *testing.T) {
 
 	// Re-running at a different height (the normal, non-fork case) must
 	// not re-trigger the seed logic or otherwise touch the blacklist.
-	otherCtx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: BlacklistForkHeight + 1})
+	otherCtx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: migrations.BlacklistForkHeight + 1})
 	extra := testutil.GenAddress()
-	leakedAddressesJSON, _ = json.Marshal([]string{extra.String()})
+	migrations.LeakedAddressesJSON, _ = json.Marshal([]string{extra.String()})
 	realio.ScheduleForkUpgrade(otherCtx)
 	require.False(t, realio.BlacklistKeeper.IsBlacklisted(otherCtx, extra))
 }
