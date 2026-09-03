@@ -7,6 +7,7 @@ import (
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
 
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 
@@ -30,6 +31,7 @@ type Keepers struct {
 	BlacklistKeeper    blacklistmodulekeeper.Keeper
 	BridgeKeeper       bridgemodulekeeper.Keeper
 	AuthzKeeper        authzkeeper.Keeper
+	Erc20Keeper        erc20keeper.Keeper
 
 	Codec                codec.Codec
 	StakingStoreKey      *storetypes.KVStoreKey

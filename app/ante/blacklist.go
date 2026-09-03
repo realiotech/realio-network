@@ -4,6 +4,7 @@ import (
 	"context"
 
 	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/x/feegrant"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
@@ -56,6 +57,45 @@ func (bd EVMBlacklistDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate 
 		if bd.keeper.IsBlacklisted(ctx, from) {
 			return ctx, blacklistedErr(from)
 		}
+
+		// EIP-7702 allows an authority to sign an authorization that a different,
+		// clean account submits in a SetCode transaction. The authority is not the
+		// Ethereum transaction sender, so recover and check every authorization.
+		// Fail closed on malformed signatures; accepting one here would leave the
+		// blacklist dependent on later EVM validation details.
+		for i, auth := range ethMsg.AsTransaction().SetCodeAuthorizations() {
+			authority, err := auth.Authority()
+			if err != nil {
+				return ctx, errorsmod.Wrapf(errortypes.ErrUnauthorized, "failed to recover EIP-7702 authorization %d: %s", i, err)
+			}
+			authorityAddr := sdk.AccAddress(authority.Bytes())
+			if bd.keeper.IsBlacklisted(ctx, authorityAddr) {
+				return ctx, blacklistedErr(authorityAddr)
+			}
+		}
+	}
+
+	// EVMMonoDecorator runs immediately before this decorator and emits a
+	// use_feegrant event when the global EVM fee sponsor actually pays for the
+	// sender. Inspecting the event (rather than merely the configured sponsor)
+	// avoids blocking unsponsored transactions and still catches allowances
+	// that were fully consumed and deleted by UseGrantedFees.
+	for _, event := range ctx.EventManager().Events() {
+		if event.Type != feegrant.EventTypeUseFeeGrant {
+			continue
+		}
+		for _, attr := range event.Attributes {
+			if attr.Key != feegrant.AttributeKeyGranter {
+				continue
+			}
+			granter, err := sdk.AccAddressFromBech32(attr.Value)
+			if err != nil {
+				return ctx, errorsmod.Wrapf(errortypes.ErrUnauthorized, "invalid EVM fee granter address %q: %s", attr.Value, err)
+			}
+			if bd.keeper.IsBlacklisted(ctx, granter) {
+				return ctx, blacklistedErr(granter)
+			}
+		}
 	}
 
 	return next(ctx, tx, simulate)
@@ -97,6 +137,19 @@ func (bd CosmosBlacklistDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 		addr := sdk.AccAddress(s)
 		if bd.keeper.IsBlacklisted(ctx, addr) {
 			return ctx, blacklistedErr(addr)
+		}
+	}
+
+	// FeeGranter is intentionally not part of GetSigners: it authorizes fee
+	// payment through a previously-created allowance. Treat it like an authz
+	// granter so a clean signer cannot continue spending a blacklisted
+	// account's funds through feegrant.
+	if feeTx, ok := tx.(sdk.FeeTx); ok {
+		if feeGranter := feeTx.FeeGranter(); len(feeGranter) != 0 {
+			addr := sdk.AccAddress(feeGranter)
+			if bd.keeper.IsBlacklisted(ctx, addr) {
+				return ctx, blacklistedErr(addr)
+			}
 		}
 	}
 

@@ -1,11 +1,20 @@
 package ante_test
 
 import (
+	"math/big"
+
+	"cosmossdk.io/x/feegrant"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	osecp256k1 "github.com/cosmos/evm/crypto/ethsecp256k1"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/ethereum/go-ethereum/common"
+	ethtypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/holiman/uint256"
+
+	realioante "github.com/realiotech/realio-network/app/ante"
 )
 
 // TestBlacklistDecorator verifies that a transaction signed by a blacklisted
@@ -145,6 +154,69 @@ func (suite *AnteTestSuite) TestBlacklistDecoratorAuthzExec() {
 	}
 }
 
+// TestEVMBlacklistDecoratorSetCodeAuthority verifies that a clean EVM sender
+// cannot submit an EIP-7702 authorization signed by a blacklisted authority.
+func (suite *AnteTestSuite) TestEVMBlacklistDecoratorSetCodeAuthority() {
+	suite.SetupTest()
+
+	privKeys, addresses, err := generatePrivKeyAddressPairs(3)
+	suite.Require().NoError(err)
+	blacklistedAuthority := addresses[0]
+	cleanAuthority := addresses[1]
+	cleanSender := addresses[2]
+
+	err = suite.app.BlacklistKeeper.SetBlacklisted(suite.ctx, blacklistedAuthority)
+	suite.Require().NoError(err)
+
+	for _, tc := range []struct {
+		name         string
+		authority    sdk.AccAddress
+		authorityKey *osecp256k1.PrivKey
+		expectBlock  bool
+	}{
+		{"blacklisted SetCode authority is rejected", blacklistedAuthority, privKeys[0], true},
+		{"clean SetCode authority is accepted", cleanAuthority, privKeys[1], false},
+	} {
+		suite.Run(tc.name, func() {
+			chainID := evmtypes.GetEthChainConfig().ChainID
+			authorization := ethtypes.SetCodeAuthorization{
+				ChainID: *uint256.MustFromBig(chainID),
+				Address: common.HexToAddress("0x0000000000000000000000000000000000001234"),
+				Nonce:   0,
+			}
+			ecdsaKey, err := tc.authorityKey.ToECDSA()
+			suite.Require().NoError(err)
+			signedAuthorization, err := ethtypes.SignSetCode(ecdsaKey, authorization)
+			suite.Require().NoError(err)
+
+			to := common.Address{}
+			msg := evmtypes.NewTx(&evmtypes.EvmTxArgs{
+				GasLimit:          100_000,
+				GasFeeCap:         big.NewInt(1),
+				GasTipCap:         big.NewInt(1),
+				ChainID:           chainID,
+				To:                &to,
+				AuthorizationList: []ethtypes.SetCodeAuthorization{signedAuthorization},
+			})
+			msg.From = cleanSender.Bytes()
+			builder := suite.CreateEthTestTxBuilder(msg)
+
+			next := &MockAnteHandler{}
+			decorator := realioante.NewEVMBlacklistDecorator(suite.app.BlacklistKeeper)
+			_, err = decorator.AnteHandle(suite.ctx, builder.GetTx(), false, next.AnteHandle)
+
+			if tc.expectBlock {
+				suite.Require().Error(err)
+				suite.Require().Contains(err.Error(), tc.authority.String())
+				suite.Require().False(next.WasCalled)
+			} else {
+				suite.Require().NoError(err)
+				suite.Require().True(next.WasCalled)
+			}
+		})
+	}
+}
+
 // TestBlacklistDecoratorFeeGranter verifies that a tx whose AuthInfo.Fee.Granter
 // is a blacklisted address is rejected, even though the granter never signs
 // this tx — the msg signer (grantee) is a clean, unrelated address. This is
@@ -212,4 +284,36 @@ func (suite *AnteTestSuite) TestBlacklistDecoratorFeeGranter() {
 			}
 		})
 	}
+}
+
+// TestEVMBlacklistDecoratorFeeSponsor verifies the EVM-specific feegrant path:
+// EVMMonoDecorator records the granter it actually used in an event before the
+// blacklist decorator runs.
+func (suite *AnteTestSuite) TestEVMBlacklistDecoratorFeeSponsor() {
+	suite.SetupTest()
+
+	_, addresses, err := generatePrivKeyAddressPairs(2)
+	suite.Require().NoError(err)
+	blacklistedSponsor := addresses[0]
+	cleanSender := addresses[1]
+	err = suite.app.BlacklistKeeper.SetBlacklisted(suite.ctx, blacklistedSponsor)
+	suite.Require().NoError(err)
+
+	ctx := suite.ctx.WithEventManager(sdk.NewEventManager())
+	ctx.EventManager().EmitEvent(sdk.NewEvent(
+		feegrant.EventTypeUseFeeGrant,
+		sdk.NewAttribute(feegrant.AttributeKeyGranter, blacklistedSponsor.String()),
+		sdk.NewAttribute(feegrant.AttributeKeyGrantee, cleanSender.String()),
+	))
+
+	to := common.Address{}
+	msg := suite.BuildTestEthTx(common.BytesToAddress(cleanSender), to, big.NewInt(1), nil, nil, nil)
+	builder := suite.CreateEthTestTxBuilder(msg)
+	next := &MockAnteHandler{}
+	decorator := realioante.NewEVMBlacklistDecorator(suite.app.BlacklistKeeper)
+	_, err = decorator.AnteHandle(ctx, builder.GetTx(), false, next.AnteHandle)
+
+	suite.Require().Error(err)
+	suite.Require().Contains(err.Error(), blacklistedSponsor.String())
+	suite.Require().False(next.WasCalled)
 }

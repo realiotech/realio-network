@@ -360,6 +360,7 @@ func (app *RealioNetwork) MigrationKeepers() migrations.Keepers {
 		BlacklistKeeper:    app.BlacklistKeeper,
 		BridgeKeeper:       app.BridgeKeeper,
 		AuthzKeeper:        app.AuthzKeeper,
+		Erc20Keeper:        app.Erc20Keeper,
 
 		Codec:                app.appCodec,
 		StakingStoreKey:      app.keys[stakingtypes.StoreKey],
@@ -598,6 +599,7 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 		app.ModuleAccountAddrs(),
 	)
+	app.EvmKeeper.SetHooks(NewEVMTokenBlacklistHook(app.BlacklistKeeper))
 
 	// Add transfer restrictions
 	app.BankKeeper.AppendSendRestriction(app.AssetKeeper.AssetSendRestriction)
