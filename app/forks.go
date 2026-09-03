@@ -67,10 +67,8 @@ func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 		unauthorizeLeakedAddresses(app, ctx, leaked)
 		rotateBridgeAuthority(app, ctx)
 		revokeLeakedAuthzGrants(app, ctx, leaked)
-		revokeLeakedFeeGrants(app, ctx, leaked)
 		disableLeakedEVMFeeSponsor(app, ctx, leaked)
 		revokeLeakedERC20Allowances(app, ctx, leaked)
-		clearLeakedEIP7702Delegations(app, ctx, leaked)
 	}
 	// NOTE: there are no testnet forks for the existing versions
 	// if !types.IsMainnet(ctx.ChainID()) {
