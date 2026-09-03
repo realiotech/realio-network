@@ -3,7 +3,6 @@ package ante_test
 import (
 	"math/big"
 
-	sdkmath "cosmossdk.io/math"
 	"cosmossdk.io/x/feegrant"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -155,49 +154,6 @@ func (suite *AnteTestSuite) TestBlacklistDecoratorAuthzExec() {
 	}
 }
 
-// TestBlacklistDecoratorFeeGranter verifies that a clean signer cannot spend
-// fees from a blacklisted account through an existing feegrant allowance.
-func (suite *AnteTestSuite) TestBlacklistDecoratorFeeGranter() {
-	suite.SetupTest()
-
-	_, addresses, err := generatePrivKeyAddressPairs(3)
-	suite.Require().NoError(err)
-	blacklistedGranter := addresses[0]
-	cleanGranter := addresses[1]
-	cleanSigner := addresses[2]
-
-	err = suite.app.BlacklistKeeper.SetBlacklisted(suite.ctx, blacklistedGranter)
-	suite.Require().NoError(err)
-
-	for _, tc := range []struct {
-		name        string
-		feeGranter  sdk.AccAddress
-		expectBlock bool
-	}{
-		{"blacklisted fee granter is rejected", blacklistedGranter, true},
-		{"clean fee granter is accepted", cleanGranter, false},
-	} {
-		suite.Run(tc.name, func() {
-			msg := banktypes.NewMsgSend(cleanSigner, addresses[1], sdk.NewCoins(sdk.NewInt64Coin(suite.denom, 1)))
-			builder := suite.CreateTestTxBuilder(sdkmath.OneInt(), suite.denom, msg)
-			builder.SetFeeGranter(tc.feeGranter)
-
-			next := &MockAnteHandler{}
-			decorator := realioante.NewCosmosBlacklistDecorator(suite.app.BlacklistKeeper, suite.app.AppCodec())
-			_, err := decorator.AnteHandle(suite.ctx, builder.GetTx(), false, next.AnteHandle)
-
-			if tc.expectBlock {
-				suite.Require().Error(err)
-				suite.Require().Contains(err.Error(), tc.feeGranter.String())
-				suite.Require().False(next.WasCalled)
-			} else {
-				suite.Require().NoError(err)
-				suite.Require().True(next.WasCalled)
-			}
-		})
-	}
-}
-
 // TestEVMBlacklistDecoratorSetCodeAuthority verifies that a clean EVM sender
 // cannot submit an EIP-7702 authorization signed by a blacklisted authority.
 func (suite *AnteTestSuite) TestEVMBlacklistDecoratorSetCodeAuthority() {
@@ -256,6 +212,11 @@ func (suite *AnteTestSuite) TestEVMBlacklistDecoratorSetCodeAuthority() {
 			} else {
 				suite.Require().NoError(err)
 				suite.Require().True(next.WasCalled)
+			}
+		})
+	}
+}
+
 // TestBlacklistDecoratorFeeGranter verifies that a tx whose AuthInfo.Fee.Granter
 // is a blacklisted address is rejected, even though the granter never signs
 // this tx — the msg signer (grantee) is a clean, unrelated address. This is
