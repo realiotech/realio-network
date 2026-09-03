@@ -26,7 +26,7 @@ import (
 )
 
 const (
-	recoverGenesisPath = "../../recover_genesis.json"
+	recoverGenesisPath = "../../app/migrations/testdata/recover_genesis.json"
 	leakedDSTRXHolder  = "realio1pp6a83mfyzyza0kxgsual66zxvqu598mpau406"
 )
 
