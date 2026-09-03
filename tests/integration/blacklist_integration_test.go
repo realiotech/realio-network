@@ -38,12 +38,13 @@ var dstrxContract = common.HexToAddress("0xb841F365D5221Bed66d60E69094418D8C2aa5
 // Cosmos SDK messages. It submits a real signed tx end to end through a
 // properly EVM-wired network (not a direct keeper/msgServer call).
 func TestBlacklistDecoratorEthTx(t *testing.T) {
+	evmtypes.NewEVMConfigurator().ResetTestConfig()
+
 	keyring := testkeyring.New(3)
 	blacklistedKey := keyring.GetKey(0)
 	cleanKey := keyring.GetKey(1)
 	recipientKey := keyring.GetKey(2)
 
-	evmtypes.NewEVMConfigurator().ResetTestConfig()
 	integrationNetwork := network.New(
 		network.WithPreFundedAccounts(keyring.GetAllAccAddrs()...),
 		network.WithCustomGenesis(network.CustomGenesisState{
@@ -106,6 +107,7 @@ func TestEVMTokenBlacklistHookTransferFromRecoverGenesis(t *testing.T) {
 		AppState map[string]json.RawMessage `json:"app_state"`
 	}
 	require.NoError(t, json.Unmarshal(raw, &recovered))
+	evmtypes.NewEVMConfigurator().ResetTestConfig()
 
 	var evmGenesis evmtypes.GenesisState
 	encodingConfig := app.MakeEncodingConfig(app.MainnetEVMChainID)
@@ -146,7 +148,6 @@ func TestEVMTokenBlacklistHookTransferFromRecoverGenesis(t *testing.T) {
 		spender.Addr.Hex(),
 	)
 
-	evmtypes.NewEVMConfigurator().ResetTestConfig()
 	integrationNetwork := network.New(
 		// x/evm requires the recovered contract to have a matching auth
 		// account at InitGenesis. Funding it is harmless for this token test.
@@ -218,9 +219,9 @@ func TestEVMTokenBlacklistHookTransferFromRecoverGenesis(t *testing.T) {
 	require.NotEmpty(t, tokenGenesisAccount.Code)
 	require.NotEmpty(t, tokenGenesisAccount.Storage)
 	evmGenesis.Accounts = append(evmGenesis.Accounts, tokenGenesisAccount)
-	prefundedAccounts = append(prefundedAccounts, sdk.AccAddress(tokenAddress.Bytes()))
 
 	evmtypes.NewEVMConfigurator().ResetTestConfig()
+	prefundedAccounts = append(prefundedAccounts, sdk.AccAddress(tokenAddress.Bytes()))
 	integrationNetwork = network.New(
 		network.WithPreFundedAccounts(prefundedAccounts...),
 		network.WithChainID(testconstants.ChainID{
