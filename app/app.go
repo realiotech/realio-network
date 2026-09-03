@@ -1004,18 +1004,14 @@ func (app *RealioNetwork) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlo
 // BeginBlocker will schedule the upgrade plan and perform the state migration (if any).
 func (app *RealioNetwork) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 	// Perform any scheduled forks before executing the modules logic
-	fmt.Println("Start fork logic")
 	app.ScheduleForkUpgrade(ctx)
-	fmt.Println("Finish fork logic")
 
 	res, err := app.mm.BeginBlock(ctx)
 	if err != nil {
 		return res, err
 	}
 
-	fmt.Println("Start rotating validators")
 	app.ScheduleValidatorRotation(ctx)
-	fmt.Println("Finish rotating validators")
 
 	return res, nil
 }
