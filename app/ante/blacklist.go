@@ -157,26 +157,6 @@ func (bd CosmosBlacklistDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simula
 		return ctx, err
 	}
 
-	// AuthInfo.Fee.Granter is a top-level tx field, not a signer: a
-	// blacklisted address that granted a fee allowance before being
-	// blacklisted never needs to sign again for the grantee to keep
-	// drawing fees from it (DeductFeeDecorator reads this same field and
-	// debits the granter — x/auth/ante/fee.go). BlacklistSendRestriction
-	// (x/blacklist/keeper/restrictions.go) deliberately doesn't cover this
-	// case: its destination is the fee-collector module account, the same
-	// shape as every legitimate automatic protocol settlement it has to
-	// leave open. Checked here instead, where the account is unambiguously
-	// present as a real fee-granter, not overloaded with unrelated
-	// module-account traffic.
-	if feeTx, ok := tx.(sdk.FeeTx); ok {
-		if granter := feeTx.FeeGranter(); granter != nil {
-			addr := sdk.AccAddress(granter)
-			if bd.keeper.IsBlacklisted(ctx, addr) {
-				return ctx, blacklistedErr(addr)
-			}
-		}
-	}
-
 	return next(ctx, tx, simulate)
 }
 
