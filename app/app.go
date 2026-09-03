@@ -596,10 +596,19 @@ func New(
 	app.BlacklistKeeper = blacklistmodulekeeper.NewKeeper(
 		runtime.NewKVStoreService(keys[blacklistmoduletypes.StoreKey]),
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		app.ModuleAccountAddrs(),
 	)
 
-	// Add transfer restriction
+	// Add transfer restrictions
 	app.BankKeeper.AppendSendRestriction(app.AssetKeeper.AssetSendRestriction)
+	// Closes the authz MsgExec / feegrant / ERC-20 precompile transferFrom
+	// class of blacklist bypass: those all move coins whose owner never
+	// signs the outer transaction, so the ante-level blacklist decorators
+	// (which only inspect the outer tx's signers) never see them. A send
+	// restriction runs inside BankKeeper.SendCoins itself, so it catches
+	// the transfer regardless of what triggered it. See the comment on
+	// BlacklistSendRestriction for why it only checks the source address.
+	app.BankKeeper.AppendSendRestriction(app.BlacklistKeeper.BlacklistSendRestriction)
 
 	// IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(

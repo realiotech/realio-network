@@ -25,13 +25,20 @@ type Keeper struct {
 	// authority is the address permitted to call MsgUpdateBlacklist
 	// (the x/gov module account, unless overridden).
 	authority string
+
+	// allowAddrs holds every module account address, set once at
+	// construction (app.ModuleAccountAddrs()) and never modified at
+	// runtime. BlacklistSendRestriction skips the destination side of a
+	// transfer landing on one of these — see the comment there for why.
+	allowAddrs map[string]bool
 }
 
-func NewKeeper(storeService corestore.KVStoreService, authority string) Keeper {
+func NewKeeper(storeService corestore.KVStoreService, authority string, allowAddrs map[string]bool) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 	k := Keeper{
 		Blacklisted: collections.NewKeySet(sb, types.AddressKeyPrefix, "blacklisted", sdk.AccAddressKey),
 		authority:   authority,
+		allowAddrs:  allowAddrs,
 	}
 
 	schema, err := sb.Build()
