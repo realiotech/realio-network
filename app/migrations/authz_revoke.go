@@ -41,8 +41,7 @@ func revokeLeakedAuthzGrants(k Keepers, ctx sdk.Context, leaked []sdk.AccAddress
 	})
 
 	// Deleting while iterating would mutate the store mid-iteration, so
-	// collect first (same pattern as migrateMultiStaking's lock/unlock
-	// iterators) and delete afterwards.
+	// collect first and delete afterwards.
 	for _, g := range toRevoke {
 		if err := k.AuthzKeeper.DeleteGrant(ctx, g.grantee, g.granter, g.msgType); err != nil {
 			panic(fmt.Errorf("revoke leaked authz grants: failed to delete grant granter=%s grantee=%s msgType=%s: %w",

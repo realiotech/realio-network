@@ -8,7 +8,6 @@ import (
 	"time"
 
 	storetypes "cosmossdk.io/store/types"
-	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -70,18 +69,6 @@ func ScheduleForkUpgrade(ctx sdk.Context, k Keepers) {
 		revokeLeakedAuthzGrants(k, ctx, leaked)
 		revokeLeakedERC20Allowances(k, ctx, leaked)
 	}
-}
-
-// ScheduleValidatorRotation runs the validator-rotation fork (see
-// validator_rotation.go) and returns any ABCI validator updates it produced
-// (the "old key -> power 0" half of a rotation — see RotateValidators). It
-// must be called AFTER the module manager's BeginBlock — see the comment on
-// the call site in app/app.go's BeginBlocker for why.
-func ScheduleValidatorRotation(ctx sdk.Context, k Keepers) []abci.ValidatorUpdate {
-	if ctx.BlockHeight() == ValidatorRotationHeight {
-		return RotateValidators(k, ctx)
-	}
-	return nil
 }
 
 func removeDuplicateValueRedelegationQueueKey(k Keepers, ctx sdk.Context) {

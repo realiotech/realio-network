@@ -339,12 +339,6 @@ type RealioNetwork struct {
 
 	// the configurator
 	configurator module.Configurator
-
-	// pendingValidatorZeroUpdates holds the "old consensus pubkey, power 0"
-	// ABCI updates returned by migrations.ScheduleValidatorRotation during
-	// BeginBlocker, for EndBlocker to append to its own result (see the
-	// comment on that call site in EndBlocker for why).
-	pendingValidatorZeroUpdates []abci.ValidatorUpdate
 }
 
 // MigrationKeepers bundles the keepers app/migrations needs, by value, so
@@ -352,19 +346,15 @@ type RealioNetwork struct {
 // for why) — app is the only side allowed to depend on both.
 func (app *RealioNetwork) MigrationKeepers() migrations.Keepers {
 	return migrations.Keepers{
-		StakingKeeper:      app.StakingKeeper,
-		SlashingKeeper:     app.SlashingKeeper,
-		DistrKeeper:        app.DistrKeeper,
-		MultiStakingKeeper: app.MultiStakingKeeper,
-		AssetKeeper:        app.AssetKeeper,
-		BlacklistKeeper:    app.BlacklistKeeper,
-		BridgeKeeper:       app.BridgeKeeper,
-		AuthzKeeper:        app.AuthzKeeper,
-		Erc20Keeper:        app.Erc20Keeper,
+		StakingKeeper:   app.StakingKeeper,
+		AssetKeeper:     app.AssetKeeper,
+		BlacklistKeeper: app.BlacklistKeeper,
+		BridgeKeeper:    app.BridgeKeeper,
+		AuthzKeeper:     app.AuthzKeeper,
+		Erc20Keeper:     app.Erc20Keeper,
 
-		Codec:                app.appCodec,
-		StakingStoreKey:      app.keys[stakingtypes.StoreKey],
-		MultiStakingStoreKey: app.keys[multistakingtypes.ModuleName],
+		Codec:           app.appCodec,
+		StakingStoreKey: app.keys[stakingtypes.StoreKey],
 	}
 }
 
@@ -1011,8 +1001,6 @@ func (app *RealioNetwork) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) 
 		return res, err
 	}
 
-	app.ScheduleValidatorRotation(ctx)
-
 	return res, nil
 }
 
@@ -1023,30 +1011,12 @@ func (app *RealioNetwork) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
 		return res, err
 	}
 
-	// Validator rotation fork (see app/migrations/validator_rotation.go): the
-	// staking module's own EndBlock above already emitted the "new key" half
-	// of any rotation performed this block; append the "old key -> power 0"
-	// half, which nothing else knows to emit once the old identity has been
-	// removed from every index.
-	if len(app.pendingValidatorZeroUpdates) > 0 {
-		res.ValidatorUpdates = append(res.ValidatorUpdates, app.pendingValidatorZeroUpdates...)
-		app.pendingValidatorZeroUpdates = nil
-	}
-
 	return res, nil
 }
 
-// ScheduleForkUpgrade delegates to app/migrations — see the comment there
-// and on ValidatorRotationHeight for why validator rotation and the other
-// forks below run where they do relative to app.mm.BeginBlock.
+// ScheduleForkUpgrade delegates to app/migrations.
 func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
 	migrations.ScheduleForkUpgrade(ctx, app.MigrationKeepers())
-}
-
-// ScheduleValidatorRotation delegates to app/migrations. Must be called
-// AFTER app.mm.BeginBlock — see the comment on migrations.ValidatorRotationHeight.
-func (app *RealioNetwork) ScheduleValidatorRotation(ctx sdk.Context) {
-	app.pendingValidatorZeroUpdates = migrations.ScheduleValidatorRotation(ctx, app.MigrationKeepers())
 }
 
 // GetSubspace returns a param subspace for a given module name.

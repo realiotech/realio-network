@@ -107,10 +107,10 @@ func SetupWithRealGenesis(t *testing.T) (realioApp *RealioNetwork, chainID strin
 	// explicitly. Callers that want to exercise a fork opt in afterwards by
 	// setting the relevant height themselves and driving
 	// BeginBlocker/EndBlocker directly, same as the rest of this file does.
-	origBlacklistHeight, origRotationHeight := migrations.BlacklistForkHeight, migrations.ValidatorRotationHeight
-	migrations.BlacklistForkHeight, migrations.ValidatorRotationHeight = -1, -1
+	origBlacklistHeight := migrations.BlacklistForkHeight
+	migrations.BlacklistForkHeight = -1
 	defer func() {
-		migrations.BlacklistForkHeight, migrations.ValidatorRotationHeight = origBlacklistHeight, origRotationHeight
+		migrations.BlacklistForkHeight = origBlacklistHeight
 	}()
 
 	// Deliberately not calling Commit() here: doing so tears down

@@ -15,8 +15,7 @@ import (
 // validator keys. A slice, not a map: this runs in BeginBlocker and must
 // stay deterministic across every validator, though in this particular case
 // each entry only touches its own symbol so iteration order wouldn't
-// actually change the result — kept as a slice anyway to match the same
-// discipline as ValidatorRotations.
+// actually change the result.
 var AssetManagerRotations = []struct {
 	Symbol     string
 	NewManager string
