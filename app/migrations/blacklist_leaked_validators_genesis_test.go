@@ -103,6 +103,36 @@ func TestBlacklistForkAgainstRealGenesis(t *testing.T) {
 		require.Truef(t, val.IsBonded(), "%s must be bonded in this genesis for the test to be meaningful", lv.name)
 	}
 
+	// --- 0b. create two genuinely in-flight unbonding delegations on Teshy
+	// RIO, right before the fork runs, via the real multistaking Undelegate
+	// path — one from a real delegator who is ABOUT to be blacklisted by
+	// this same fork run (a separate leak from the validator's), one from a
+	// real delegator who stays clean. Both are real genesis delegators with
+	// real shares, not test-created ones. This is what "an undelegate
+	// that's already in progress on a leaked validator" means concretely:
+	// queued before the fork, maturing after it. ---
+	rioVal := addrs[leakedRealValidators[0].name].val
+	unbondingDelegatorLeaked, err := sdk.AccAddressFromBech32("realio1d2rjp2kxc7md7q9xmjmslmludexv5lvk338k6j")
+	require.NoError(t, err)
+	unbondingDelegatorClean, err := sdk.AccAddressFromBech32("realio1zkdk43nk7hjtdjsvj2kqvxu7k92vs9uk498wfp")
+	require.NoError(t, err)
+
+	require.False(t, realioApp.BlacklistKeeper.IsBlacklisted(ctx, unbondingDelegatorLeaked),
+		"fixture assumption broken: expected this delegator to still be clean before the fork runs")
+	require.False(t, realioApp.BlacklistKeeper.IsBlacklisted(ctx, unbondingDelegatorClean),
+		"fixture assumption broken: expected this delegator to never be on the leaked list")
+
+	unbondAmount := sdk.NewCoin("ario", sdkmath.NewIntFromUint64(100).MulRaw(1_000_000_000_000_000_000)) // 100 ario, well under either delegator's real balance
+	for _, delAddr := range []sdk.AccAddress{unbondingDelegatorLeaked, unbondingDelegatorClean} {
+		_, err := realioApp.MultiStakingKeeper.Undelegate(ctx, stakingtypes.NewMsgUndelegate(
+			delAddr.String(), rioVal.String(), unbondAmount))
+		require.NoErrorf(t, err, "creating a fresh in-flight unbonding delegation for %s must succeed", delAddr)
+	}
+
+	pendingUBDsBefore, err := realioApp.StakingKeeper.GetUnbondingDelegationsFromValidator(ctx, rioVal)
+	require.NoError(t, err)
+	require.GreaterOrEqualf(t, len(pendingUBDsBefore), 2, "expected at least the two freshly created in-flight unbondings")
+
 	// --- 1. run the real blacklist fork, at its real, unmodified height —
 	// no test-only override needed, since this genesis's initial_height is
 	// itself the real BlacklistForkHeight (see SetupWithRealGenesis). ---
@@ -263,4 +293,43 @@ func TestBlacklistForkAgainstRealGenesis(t *testing.T) {
 	_, err = blacklistDecorator.AnteHandle(nextCtx, unsignedUndelegateBuilder.GetTx(), false, noopNext)
 	require.Errorf(t, err, "a pre-existing delegator whose OWN account is separately blacklisted must still be blocked from undelegating")
 	require.Containsf(t, err.Error(), "is blacklisted", "got: %s", err.Error())
+
+	// --- 7. the two unbonding delegations queued back in step 0b — one for
+	// a delegator who is now blacklisted, one for a delegator who stayed
+	// clean — must both mature and pay out normally through the real
+	// EndBlocker, exactly as if nothing had happened. Maturity payout is an
+	// automatic per-block process (x/staking's own EndBlocker dequeuing the
+	// UBD queue), not a signed transaction, so it is never routed through
+	// the ante chain at all; and BlacklistSendRestriction only ever checks
+	// the SENDER of a transfer, never the recipient — deliberately, so the
+	// chain's own automatic payouts to a blacklisted address are never
+	// blocked (see x/blacklist/keeper/restrictions.go). Both properties
+	// combined mean an unbonding that was already in flight before the
+	// fork is completely unaffected by it, no matter which side of it
+	// ends up blacklisted. ---
+	balancesBeforeMaturity := make(map[string]sdk.Coin, 2)
+	for _, delAddr := range []sdk.AccAddress{unbondingDelegatorLeaked, unbondingDelegatorClean} {
+		balancesBeforeMaturity[delAddr.String()] = realioApp.BankKeeper.GetBalance(nextCtx, delAddr, bondDenom)
+	}
+
+	farFutureCtx := app.NewHeaderCtx(realioApp, initialHeight+2, proposerAddr, setupTime.Add(30*24*time.Hour))
+	require.NotPanics(t, func() {
+		_, err := realioApp.EndBlocker(farFutureCtx)
+		require.NoError(t, err)
+	})
+
+	require.Truef(t, realioApp.BlacklistKeeper.IsBlacklisted(farFutureCtx, unbondingDelegatorLeaked),
+		"sanity: this delegator must still be blacklisted at maturity time")
+
+	for _, delAddr := range []sdk.AccAddress{unbondingDelegatorLeaked, unbondingDelegatorClean} {
+		balAfter := realioApp.BankKeeper.GetBalance(farFutureCtx, delAddr, bondDenom)
+		before := balancesBeforeMaturity[delAddr.String()]
+		require.Truef(t, balAfter.Amount.GT(before.Amount),
+			"unbonding delegation for %s must mature and pay out normally regardless of blacklist status (before=%s after=%s)",
+			delAddr, before, balAfter)
+	}
+
+	remaining, err := realioApp.StakingKeeper.GetUnbondingDelegationsFromValidator(farFutureCtx, rioVal)
+	require.NoError(t, err)
+	require.Empty(t, remaining, "both unbonding delegations must be fully settled, none stuck")
 }
