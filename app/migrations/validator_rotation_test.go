@@ -683,6 +683,60 @@ func TestRotateValidatorGhostRejectsNewDelegations(t *testing.T) {
 		"delegating fresh funds into the rotated-away identity must be rejected, not silently accepted")
 }
 
+// TestRotateValidatorRegistersNewConsensusPubkeyForEquivocation proves the
+// new consensus key can actually be slashed for a double-sign after
+// rotation. AfterValidatorCreated — the only place x/slashing's
+// AddrPubkeyRelation ever gets written (via AddPubkey) — fires from the
+// normal MsgCreateValidator flow, not from a raw SetValidator call like
+// this migration makes; without migrateValidatorRecord explicitly calling
+// AddPubkey too, x/evidence's handleEquivocationEvidence would fail its
+// GetPubkey lookup and silently drop any future equivocation evidence
+// against the new key — no slash, no jail, no tombstone. Downtime slashing
+// is unaffected (it only needs SetValidatorSigningInfo, already covered
+// elsewhere) — this is specifically about the equivocation path, which
+// matters most for an incident whose entire premise is compromised
+// consensus keys.
+func TestRotateValidatorRegistersNewConsensusPubkeyForEquivocation(t *testing.T) {
+	realio := app.Setup(false, nil, 1)
+	ctx := realio.BaseApp.NewContextLegacy(false, tmproto.Header{Height: 1}).
+		WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
+
+	sk := realio.StakingKeeper
+	validators, err := sk.GetValidators(ctx, 10)
+	require.NoError(t, err)
+	oldValidator := validators[0]
+
+	newValAddr := sdk.ValAddress(testutil.GenAddress())
+	newConsPriv := ed25519.GenPrivKey()
+	newConsPubKey := newConsPriv.PubKey()
+
+	origRotations := migrations.ValidatorRotations
+	t.Cleanup(func() { migrations.ValidatorRotations = origRotations })
+	migrations.ValidatorRotations = []struct {
+		OldOperator      string
+		NewOperator      string
+		NewConsPubKeyB64 string
+		AuthorizeSymbol  string
+	}{
+		{
+			OldOperator:      oldValidator.OperatorAddress,
+			NewOperator:      newValAddr.String(),
+			NewConsPubKeyB64: pubKeyB64(t, newConsPubKey.(*ed25519.PubKey)),
+		},
+	}
+
+	// sanity: before rotation, nobody has registered this brand-new key yet
+	_, err = realio.SlashingKeeper.GetPubkey(ctx, newConsPubKey.Address().Bytes())
+	require.Error(t, err, "sanity: the new consensus pubkey must not be registered before rotation runs")
+
+	migrations.RotateValidators(realio.MigrationKeepers(), ctx)
+
+	resolved, err := realio.SlashingKeeper.GetPubkey(ctx, newConsPubKey.Address().Bytes())
+	require.NoErrorf(t, err, "the new consensus pubkey must be resolvable via GetPubkey after rotation — "+
+		"x/evidence's handleEquivocationEvidence depends on exactly this lookup to slash a future double-sign")
+	require.True(t, newConsPubKey.Equals(resolved), "the registered pubkey must be the actual new consensus key")
+}
+
 // TestRotateValidatorExportGenesisRoundTrip is the direct reproduction of
 // the export→import failure a reviewer flagged: before the Tokens=0 fix,
 // exporting genesis after a rotation and re-importing it panicked with

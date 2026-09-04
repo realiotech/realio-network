@@ -10,6 +10,7 @@ import (
 	"cosmossdk.io/math"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
@@ -246,6 +247,24 @@ func migrateValidatorRecord(k Keepers, ctx sdk.Context, oldValAddr, newValAddr s
 		Address:     newConsAddr.String(),
 		StartHeight: ctx.BlockHeight(),
 	}); err != nil {
+		panic(err)
+	}
+
+	// The address->pubkey relation x/evidence needs to handle equivocation
+	// by this new key is normally written by AfterValidatorCreated (fired
+	// from the MsgCreateValidator flow) — SetValidator above is a raw
+	// keeper write, so that hook never fires and the relation is never
+	// created. Without it, handleEquivocationEvidence's GetPubkey call
+	// fails "address not found" and the evidence is logged and silently
+	// dropped: no slash, no jail, no tombstone, ever, for a double-sign by
+	// the very key this whole migration exists to make safe. Downtime
+	// slashing is unaffected (it only needs the signing info set above,
+	// never calls GetPubkey) — this is specifically about equivocation.
+	newPubKey, ok := newConsPubKeyAny.GetCachedValue().(cryptotypes.PubKey)
+	if !ok {
+		panic(fmt.Errorf("validator rotation: new consensus pubkey for %s did not unwrap to a cryptotypes.PubKey", newValAddr))
+	}
+	if err := k.SlashingKeeper.AddPubkey(ctx, newPubKey); err != nil {
 		panic(err)
 	}
 
