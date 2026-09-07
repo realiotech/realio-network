@@ -1,0 +1,25 @@
+syntax = "proto3";
+package realionetwork.blacklist.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/realiotech/realio-network/x/blacklist/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // IsBlacklisted checks whether a given address is currently blacklisted.
+  rpc IsBlacklisted(QueryIsBlacklistedRequest) returns (QueryIsBlacklistedResponse) {
+    option (google.api.http).get = "/realionetwork/blacklist/v1/is_blacklisted/{address}";
+  }
+}
+
+// QueryIsBlacklistedRequest is request type for the Query/IsBlacklisted RPC method.
+message QueryIsBlacklistedRequest {
+  // address is the bech32 account address to check.
+  string address = 1;
+}
+
+// QueryIsBlacklistedResponse is response type for the Query/IsBlacklisted RPC method.
+message QueryIsBlacklistedResponse {
+  bool blacklisted = 1;
+}

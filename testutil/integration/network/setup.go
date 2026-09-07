@@ -1,6 +1,7 @@
 package network
 
 import (
+	"encoding/json"
 	"fmt"
 	"slices"
 	"time"
@@ -11,6 +12,7 @@ import (
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	"github.com/realiotech/realio-network/app"
 	"github.com/realiotech/realio-network/testutil/integration/constants"
+	blacklistmoduletypes "github.com/realiotech/realio-network/x/blacklist/types"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
 
 	dbm "github.com/cosmos/cosmos-db"
@@ -68,14 +70,15 @@ type defaultGenesisParams struct {
 // genesisSetupFunctions contains the available genesis setup functions
 // that can be used to customize the network genesis
 var genesisSetupFunctions = map[string]genSetupFn{
-	evmtypes.ModuleName:       genStateSetter[*evmtypes.GenesisState](evmtypes.ModuleName),
-	erc20types.ModuleName:     genStateSetter[*erc20types.GenesisState](erc20types.ModuleName),
-	govtypes.ModuleName:       genStateSetter[*govtypesv1.GenesisState](govtypes.ModuleName),
-	feemarkettypes.ModuleName: genStateSetter[*feemarkettypes.GenesisState](feemarkettypes.ModuleName),
-	distrtypes.ModuleName:     genStateSetter[*distrtypes.GenesisState](distrtypes.ModuleName),
-	minttypes.ModuleName:      genStateSetter[*minttypes.GenesisState](minttypes.ModuleName),
-	banktypes.ModuleName:      setBankGenesisState,
-	authtypes.ModuleName:      setAuthGenesisState,
+	evmtypes.ModuleName:             genStateSetter[*evmtypes.GenesisState](evmtypes.ModuleName),
+	erc20types.ModuleName:           genStateSetter[*erc20types.GenesisState](erc20types.ModuleName),
+	govtypes.ModuleName:             genStateSetter[*govtypesv1.GenesisState](govtypes.ModuleName),
+	feemarkettypes.ModuleName:       genStateSetter[*feemarkettypes.GenesisState](feemarkettypes.ModuleName),
+	distrtypes.ModuleName:           genStateSetter[*distrtypes.GenesisState](distrtypes.ModuleName),
+	minttypes.ModuleName:            genStateSetter[*minttypes.GenesisState](minttypes.ModuleName),
+	banktypes.ModuleName:            setBankGenesisState,
+	authtypes.ModuleName:            setAuthGenesisState,
+	blacklistmoduletypes.ModuleName: setBlacklistGenesisState,
 	consensustypes.ModuleName: func(_ *app.RealioNetwork, genesisState simapp.GenesisState, _ interface{}) (simapp.GenesisState, error) {
 		// no-op. Consensus does not have a genesis state on the application
 		// but the params are used on it
@@ -458,6 +461,24 @@ func setAuthGenesisState(cosmosEVMApp *app.RealioNetwork, genesisState simapp.Ge
 	authGen.Params = customGen.Params
 
 	genesisState[authtypes.ModuleName] = cosmosEVMApp.AppCodec().MustMarshalJSON(authGen)
+	return genesisState, nil
+}
+
+// setBlacklistGenesisState seeds x/blacklist's genesis. Unlike the other
+// setters here, this module's GenesisState is a plain (non-protobuf) struct
+// — it has no Msg/Query service — so this bypasses the app codec and just
+// uses encoding/json directly, matching how the module's own InitGenesis
+// decodes it.
+func setBlacklistGenesisState(_ *app.RealioNetwork, genesisState simapp.GenesisState, customGenesis interface{}) (simapp.GenesisState, error) {
+	customGen, ok := customGenesis.(*blacklistmoduletypes.GenesisState)
+	if !ok {
+		return nil, fmt.Errorf("invalid type %T for blacklist module genesis state", customGenesis)
+	}
+	bz, err := json.Marshal(customGen)
+	if err != nil {
+		return nil, err
+	}
+	genesisState[blacklistmoduletypes.ModuleName] = bz
 	return genesisState, nil
 }
 

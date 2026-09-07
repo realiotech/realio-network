@@ -4,6 +4,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
 	txsigning "cosmossdk.io/x/tx/signing"
+	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -23,6 +24,7 @@ import (
 // Right now this is using only the Ethermint handlers and can be expanded to add internal checks
 // AnteHandler decorators.
 type HandlerOptions struct {
+	Codec                  codec.Codec
 	AccountKeeper          evmtypes.AccountKeeper
 	BankKeeper             evmtypes.BankKeeper
 	ExtensionOptionChecker ante.ExtensionOptionChecker
@@ -34,6 +36,7 @@ type HandlerOptions struct {
 	SignModeHandler        *txsigning.HandlerMap
 	SigGasConsumer         func(meter storetypes.GasMeter, sig signing.SignatureV2, params authtypes.Params) error
 	MaxTxGasWanted         uint64
+	BlacklistKeeper        BlacklistKeeper
 	// use dynamic fee checker or the cosmos-sdk default one for native transactions
 	DynamicFeeChecker bool
 	PendingTxListener PendingTxListener
@@ -41,6 +44,9 @@ type HandlerOptions struct {
 
 // Validate checks if the keepers are defined
 func (options HandlerOptions) Validate() error {
+	if options.Codec == nil {
+		return errorsmod.Wrap(errortypes.ErrLogic, "codec is required for AnteHandler")
+	}
 	if options.AccountKeeper == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "account keeper is required for AnteHandler")
 	}
@@ -65,6 +71,9 @@ func (options HandlerOptions) Validate() error {
 	if options.PendingTxListener == nil {
 		return errorsmod.Wrap(errortypes.ErrLogic, "pending tx listener is required for AnteHandler")
 	}
+	if options.BlacklistKeeper == nil {
+		return errorsmod.Wrap(errortypes.ErrLogic, "blacklist keeper is required for AnteHandler")
+	}
 	return nil
 }
 
@@ -74,6 +83,7 @@ func newEthAnteHandler(ctx sdk.Context, options HandlerOptions) sdk.AnteHandler 
 	feemarketParams := options.FeeMarketKeeper.GetParams(ctx)
 	decorators := []sdk.AnteDecorator{
 		evmante.NewEVMMonoDecorator(options.AccountKeeper, options.FeeMarketKeeper, options.EvmKeeper, options.FeegrantKeeper, options.FeesponsorKeeper, options.MaxTxGasWanted, &evmParams, &feemarketParams), // outermost AnteDecorator. SetUpContext must be called first
+		NewEVMBlacklistDecorator(options.BlacklistKeeper),
 	}
 
 	if options.PendingTxListener != nil {
@@ -93,6 +103,7 @@ func newCosmosAnteHandler(ctx sdk.Context, options HandlerOptions) sdk.AnteHandl
 
 	return sdk.ChainAnteDecorators(
 		evmosantecosmos.RejectMessagesDecorator{}, // reject MsgEthereumTxs
+		NewCosmosBlacklistDecorator(options.BlacklistKeeper, options.Codec),
 		NewAuthzLimiterDecorator( // disable the Msg types that cannot be included on an authz.MsgExec msgs field
 			sdk.MsgTypeURL(&evmtypes.MsgEthereumTx{}),
 			sdk.MsgTypeURL(&sdkvesting.MsgCreateVestingAccount{}),
