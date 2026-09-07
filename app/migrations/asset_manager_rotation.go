@@ -21,7 +21,7 @@ var AssetManagerRotations = []struct {
 	NewManager string
 }{
 	{Symbol: "rst", NewManager: "realio1k8arezrrlq7zwv66cxn47kw0m9hvzufjcmtmxc"},
-	{Symbol: "lmx", NewManager: "realio1ewn7ftvnjyyep9w2x2jz3k977p3ys6e22c2hzj"},
+	// {Symbol: "lmx", NewManager: "realio1ewn7ftvnjyyep9w2x2jz3k977p3ys6e22c2hzj"},
 }
 
 // rotateAssetManagers replaces the Manager field on each token in
