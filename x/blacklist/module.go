@@ -38,7 +38,9 @@ type AppModuleBasic struct{}
 
 func (AppModuleBasic) Name() string { return types.ModuleName }
 
-func (AppModuleBasic) RegisterLegacyAminoCodec(*codec.LegacyAmino) {}
+func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
+	types.RegisterCodec(cdc)
+}
 
 func (AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(reg)
