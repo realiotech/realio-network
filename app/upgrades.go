@@ -119,6 +119,15 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 		panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
 	}
 
+	// No blanket IsSkipHeight early-return here on purpose: upgradeInfo.Height
+	// is whatever gov upgrade last applied — it doesn't get cleared after use,
+	// so a stale --unsafe-skip-upgrades flag left over from a past upgrade
+	// would otherwise match on every later restart and skip registering
+	// SetStoreLoader below entirely, including candidates (like
+	// BlacklistForkHeight) that have nothing to do with that flag. Each
+	// candidate below that legitimately needs to respect a skip flag (e.g.
+	// v6) checks IsSkipHeight itself, scoped to its own upgrade name/height.
+
 	// Every hardcoded StoreUpgrades candidate this binary might need to
 	// apply on this restart, keyed by the height at which it must fire.
 	// SetStoreLoader overwrites rather than stacks (baseapp/options.go:279),
