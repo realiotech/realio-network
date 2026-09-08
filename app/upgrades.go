@@ -135,9 +135,9 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 	// calling SetStoreLoader independently — otherwise whichever call runs
 	// last would silently discard the other.
 	candidates := []heightStoreUpgrade{
-		// x/blacklist (see app/forks.go): hardcoded, not routed through
-		// upgrade-info.json, so it is unconditional here — the height check
-		// happens inside newStoreLoader at load time instead.
+		// x/blacklist (see app/migrations/forks.go): hardcoded, not routed through
+		// upgrade-info.json or unsafe-skip-upgrades, so it is unconditional
+		// here — newStoreLoader checks the height at load time instead.
 		{height: migrations.BlacklistForkHeight, upgrades: migrations.BlacklistStoreUpgrades},
 	}
 	if upgradeInfo.Name == v6.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
@@ -159,6 +159,8 @@ type heightStoreUpgrade struct {
 // committed version, instead of hardcoding a single height/StoreUpgrades
 // pair. Falls back to baseapp.DefaultStoreLoader if none match — the normal
 // case on every restart except the exact one where a given upgrade lands.
+// Nodes missing a newly mounted store must use the old binary to reach that
+// upgrade's pre-fork height before restarting; see docs/blacklist-fork-runbook.md.
 func newStoreLoader(candidates []heightStoreUpgrade) baseapp.StoreLoader {
 	return func(ms storetypes.CommitMultiStore) error {
 		version := ms.LastCommitID().Version

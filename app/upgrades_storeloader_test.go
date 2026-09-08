@@ -1,6 +1,9 @@
 package app
 
 import (
+	"encoding/json"
+	"os"
+	"path/filepath"
 	"testing"
 
 	abci "github.com/cometbft/cometbft/abci/types"
@@ -10,9 +13,66 @@ import (
 	"cosmossdk.io/log"
 	pruningtypes "cosmossdk.io/store/pruning/types"
 	storetypes "cosmossdk.io/store/types"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
+	evmtypes "github.com/cosmos/evm/x/vm/types"
+	"github.com/realiotech/realio-network/app/migrations"
+	v6 "github.com/realiotech/realio-network/app/upgrades/v1.6"
+	blacklisttypes "github.com/realiotech/realio-network/x/blacklist/types"
 )
+
+// Exercise the actual registration path with skip heights that previously
+// returned before installing the hardcoded blacklist loader.
+func TestBlacklistStoreLoaderIgnoresSkipHeight(t *testing.T) {
+	const forkHeight = int64(5)
+	originalHeight := migrations.BlacklistForkHeight
+	migrations.BlacklistForkHeight = forkHeight
+	t.Cleanup(func() { migrations.BlacklistForkHeight = originalHeight })
+
+	for _, tc := range []struct {
+		name       string
+		skipHeight int64
+		writeInfo  bool
+	}{
+		{name: "no upgrade info with zero skip height", skipHeight: 0},
+		{name: "stale skipped v6 upgrade", skipHeight: 3, writeInfo: true},
+		{name: "skipped upgrade at fork height", skipHeight: forkHeight, writeInfo: true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			evmtypes.NewEVMConfigurator().ResetTestConfig()
+			home := t.TempDir()
+			if tc.writeInfo {
+				info, err := json.Marshal(upgradetypes.Plan{Name: v6.UpgradeName, Height: tc.skipHeight})
+				require.NoError(t, err)
+				require.NoError(t, os.MkdirAll(filepath.Join(home, "data"), 0o755))
+				require.NoError(t, os.WriteFile(filepath.Join(home, "data", upgradetypes.UpgradeInfoFilename), info, 0o600))
+			}
+
+			db := dbm.NewMemDB()
+			logger := log.NewTestLogger(t)
+			// Construct without loading so the old database can be seeded first.
+			app := New(logger, db, nil, false, map[int64]bool{tc.skipHeight: true}, home, 0, simtestutil.EmptyAppOptions{})
+			oldApp := baseapp.NewBaseApp(t.Name(), logger, db, nil)
+			for name := range app.keys {
+				if name != blacklisttypes.StoreKey {
+					oldApp.MountStores(storetypes.NewKVStoreKey(name))
+				}
+			}
+			require.NoError(t, oldApp.LoadLatestVersion())
+			for height := int64(1); height < forkHeight; height++ {
+				_, err := oldApp.FinalizeBlock(&abci.RequestFinalizeBlock{Height: height})
+				require.NoError(t, err)
+				_, err = oldApp.Commit()
+				require.NoError(t, err)
+			}
+
+			require.NoError(t, app.LoadLatestVersion())
+			require.Equal(t, forkHeight-1, app.LastBlockHeight())
+		})
+	}
+}
 
 // TestNewStoreLoaderAddsNewStore reproduces the exact scenario
 // newStoreLoader exists for: a chain database that predates x/blacklist
