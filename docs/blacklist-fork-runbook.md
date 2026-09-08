@@ -7,23 +7,26 @@ Confirm the height against the source for the release you deploy.
 
 ## Before the fork
 
-Keep the old binary available for nodes that are offline, catching up, restoring
-an older snapshot, or joining the network. Do not replace the only copy of it.
-Arrange for the old binary to stop after committing block 19,573,265, including
-when catching up after the rest of the network has already resumed.
+Existing nodes participating in the coordinated fork must reach committed block
+19,573,265 on the old binary, then stop, swap to the fork binary, and restart.
+
+A post-fork snapshot will be provided for late-joining and lagging nodes. These
+nodes should restore that snapshot and start the fork binary normally; they do
+not need to replay the fork or catch up on the old binary first.
 
 ## Choose the procedure by committed application height
 
 | Local state | Procedure |
 | --- | --- |
-| Below 19,573,265, without the blacklist store | Run the old binary until block 19,573,265 is committed, then stop, swap to the fork binary, and restart. |
+| Below 19,573,265, without the blacklist store, or joining later | Restore the provided post-fork snapshot at height 19,573,266 or later, then start the fork binary. |
 | Exactly 19,573,265 | Stop, swap to the fork binary, and restart. The loader adds the blacklist store for the fork block. |
-| At or above 19,573,266, with the blacklist store | Start the fork binary normally. This also applies to snapshots and state sync that include the committed post-fork store. |
+| At or above 19,573,266, with the blacklist store and completed fork migrations | Start the fork binary normally. The fork has already been applied and must not be rerun. |
 
 Check the **committed application height**, not the latest height advertised by
-peers or an uncommitted block. A pre-fork snapshot or a newly joining node still
-needs the old-binary catch-up procedure; installing the fork binary and letting
-it sync forward from an earlier height does not work.
+peers or an uncommitted block. The provided snapshot must contain committed state
+at height **19,573,266 or later**, including the `blacklist` store and completed
+fork migrations. A pre-fork snapshot does not meet this requirement; installing
+the fork binary and letting it sync forward from an earlier height does not work.
 
 The fork binary mounts `blacklist` at startup, but adds the store only when the
 last committed height is `BlacklistForkHeight - 1`. Starting it earlier against
@@ -33,8 +36,8 @@ an existing database without that store fails with an error such as:
 version of store blacklist mismatch root store's version; expected N got 0
 ```
 
-If this happens, stop the node and use the old binary to finish catching up to
-the swap point. Do not delete the database to resolve this error.
+If this happens, stop the node and follow the provided post-fork snapshot's
+restore instructions before restarting with the fork binary.
 
 ## Restarts and launch configuration
 
@@ -45,4 +48,5 @@ fork block commits, later restarts load the existing blacklist store normally.
 Review stale `--unsafe-skip-upgrades` entries in operator launch configuration.
 The blacklist store loader is registered independently of that flag because
 this is a hardcoded fork. Skip heights still apply to the scheduled v1.6 store
-upgrade; they do not bypass the blacklist fork or its required binary swap point.
+upgrade; they do not bypass the blacklist fork. Nodes using the provided
+post-fork snapshot have already passed the fork and need no store upgrade.

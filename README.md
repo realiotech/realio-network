@@ -41,7 +41,7 @@ Our documentation be found at [docs.realio.network](https://docs.realio.network)
 Head over there and check it out.
 
 Node operators preparing for the blacklist fork should follow the
-[blacklist fork runbook](./docs/blacklist-fork-runbook.md), including the catch-up procedure for lagging nodes.
+[blacklist fork runbook](./docs/blacklist-fork-runbook.md), including the post-fork snapshot procedure for late-joining and lagging nodes.
 
 **Note**: Requires [Go 1.22.5+](https://golang.org/dl/)
 
