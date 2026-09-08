@@ -260,10 +260,22 @@ func generatePrivKeyAddressPairs(accCount int) ([]*osecp256k1.PrivKey, []sdk.Acc
 }
 
 func createTx(priv *osecp256k1.PrivKey, msgs ...sdk.Msg) (sdk.Tx, error) {
+	return createTxWithFeeGranter(priv, nil, msgs...)
+}
+
+// createTxWithFeeGranter is createTx plus AuthInfo.Fee.Granter set before
+// signing (it's covered by the signature, same as every other AuthInfo
+// field) — lets a test build a tx that's fee-granted by an address other
+// than its own signer, the shape CosmosBlacklistDecorator's fee-granter
+// check exists for.
+func createTxWithFeeGranter(priv *osecp256k1.PrivKey, granter sdk.AccAddress, msgs ...sdk.Msg) (sdk.Tx, error) {
 	encodingConfig := encoding.MakeConfig(app.MainnetEVMChainID)
 	txBuilder := encodingConfig.TxConfig.NewTxBuilder()
 
 	txBuilder.SetGasLimit(1000000)
+	if granter != nil {
+		txBuilder.SetFeeGranter(granter)
+	}
 	if err := txBuilder.SetMsgs(msgs...); err != nil {
 		return nil, err
 	}

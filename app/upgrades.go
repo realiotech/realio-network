@@ -6,6 +6,8 @@ import (
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	storetypes "cosmossdk.io/store/types"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/realiotech/realio-network/app/migrations"
 	"github.com/realiotech/realio-network/app/upgrades/commission"
 
 	v2 "github.com/realiotech/realio-network/app/upgrades/v1.2"
@@ -117,11 +119,60 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 		panic(fmt.Errorf("failed to read upgrade info from disk: %w", err))
 	}
 
-	if app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		return
+	// No blanket IsSkipHeight early-return here on purpose: upgradeInfo.Height
+	// is whatever gov upgrade last applied — it doesn't get cleared after use,
+	// so a stale --unsafe-skip-upgrades flag left over from a past upgrade
+	// would otherwise match on every later restart and skip registering
+	// SetStoreLoader below entirely, including candidates (like
+	// BlacklistForkHeight) that have nothing to do with that flag. Each
+	// candidate below that legitimately needs to respect a skip flag (e.g.
+	// v6) checks IsSkipHeight itself, scoped to its own upgrade name/height.
+
+	// Every hardcoded StoreUpgrades candidate this binary might need to
+	// apply on this restart, keyed by the height at which it must fire.
+	// SetStoreLoader overwrites rather than stacks (baseapp/options.go:279),
+	// so these must be combined into a single loader rather than each
+	// calling SetStoreLoader independently — otherwise whichever call runs
+	// last would silently discard the other.
+	candidates := []heightStoreUpgrade{
+		// x/blacklist (see app/migrations/forks.go): hardcoded, not routed through
+		// upgrade-info.json or unsafe-skip-upgrades, so it is unconditional
+		// here — newStoreLoader checks the height at load time instead.
+		{height: migrations.BlacklistForkHeight, upgrades: migrations.BlacklistStoreUpgrades},
+	}
+	if upgradeInfo.Name == v6.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		candidates = append(candidates, heightStoreUpgrade{height: upgradeInfo.Height, upgrades: v6.V6StoreUpgrades})
 	}
 
-	if upgradeInfo.Name == v6.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
-		app.SetStoreLoader(upgradetypes.UpgradeStoreLoader(upgradeInfo.Height, &v6.V6StoreUpgrades))
+	app.SetStoreLoader(newStoreLoader(candidates))
+}
+
+// heightStoreUpgrade pairs a StoreUpgrades with the exact height at which
+// the restarting binary must apply it.
+type heightStoreUpgrade struct {
+	height   int64
+	upgrades storetypes.StoreUpgrades
+}
+
+// newStoreLoader mirrors upgradetypes.UpgradeStoreLoader, generalized to
+// pick whichever (at most one) candidate's height matches this restart's
+// committed version, instead of hardcoding a single height/StoreUpgrades
+// pair. Falls back to baseapp.DefaultStoreLoader if none match — the normal
+// case on every restart except the exact one where a given upgrade lands.
+// Nodes missing a newly mounted store must use the old binary to reach that
+// upgrade's pre-fork height before restarting; see docs/blacklist-fork-runbook.md.
+func newStoreLoader(candidates []heightStoreUpgrade) baseapp.StoreLoader {
+	return func(ms storetypes.CommitMultiStore) error {
+		version := ms.LastCommitID().Version
+		for _, c := range candidates {
+			if c.height != version+1 {
+				continue
+			}
+			if len(c.upgrades.Added) == 0 && len(c.upgrades.Renamed) == 0 && len(c.upgrades.Deleted) == 0 {
+				continue
+			}
+			return ms.LoadLatestVersionAndUpgrade(&c.upgrades)
+		}
+		return baseapp.DefaultStoreLoader(ms)
 	}
 }

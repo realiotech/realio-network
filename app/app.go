@@ -153,9 +153,14 @@ import (
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
 
 	evmmempool "github.com/cosmos/evm/mempool"
+	"github.com/realiotech/realio-network/app/migrations"
 	assetmodule "github.com/realiotech/realio-network/x/asset"
 	assetmodulekeeper "github.com/realiotech/realio-network/x/asset/keeper"
 	assetmoduletypes "github.com/realiotech/realio-network/x/asset/types"
+
+	blacklistmodule "github.com/realiotech/realio-network/x/blacklist"
+	blacklistmodulekeeper "github.com/realiotech/realio-network/x/blacklist/keeper"
+	blacklistmoduletypes "github.com/realiotech/realio-network/x/blacklist/types"
 
 	evmante "github.com/cosmos/evm/ante"
 	bridgemodule "github.com/realiotech/realio-network/x/bridge"
@@ -226,6 +231,7 @@ var (
 		feemarket.AppModuleBasic{},
 		feesponsor.AppModuleBasic{},
 		assetmodule.AppModuleBasic{},
+		blacklistmodule.AppModuleBasic{},
 		bridgemodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		ibctransfer.AppModuleBasic{},
@@ -321,8 +327,9 @@ type RealioNetwork struct {
 	ScopedTransferKeeper capabilitykeeper.ScopedKeeper
 
 	// Realio Network keepers
-	AssetKeeper  assetmodulekeeper.Keeper
-	BridgeKeeper bridgemodulekeeper.Keeper
+	AssetKeeper     assetmodulekeeper.Keeper
+	BridgeKeeper    bridgemodulekeeper.Keeper
+	BlacklistKeeper blacklistmodulekeeper.Keeper
 
 	// mm is the module manager
 	mm *module.Manager
@@ -332,6 +339,23 @@ type RealioNetwork struct {
 
 	// the configurator
 	configurator module.Configurator
+}
+
+// MigrationKeepers bundles the keepers app/migrations needs, by value, so
+// that package can't import app back (see the comment on migrations.Keepers
+// for why) — app is the only side allowed to depend on both.
+func (app *RealioNetwork) MigrationKeepers() migrations.Keepers {
+	return migrations.Keepers{
+		StakingKeeper:   app.StakingKeeper,
+		AssetKeeper:     app.AssetKeeper,
+		BlacklistKeeper: app.BlacklistKeeper,
+		BridgeKeeper:    app.BridgeKeeper,
+		AuthzKeeper:     app.AuthzKeeper,
+		Erc20Keeper:     app.Erc20Keeper,
+
+		Codec:           app.appCodec,
+		StakingStoreKey: app.keys[stakingtypes.StoreKey],
+	}
 }
 
 // New returns a reference to an initialized blockchain app
@@ -368,7 +392,7 @@ func New(
 		// ibc keys
 		ibcexported.StoreKey, ibctransfertypes.StoreKey,
 		// realio network keys
-		assetmoduletypes.StoreKey, bridgemoduletypes.StoreKey,
+		assetmoduletypes.StoreKey, bridgemoduletypes.StoreKey, blacklistmoduletypes.StoreKey,
 		// ethermint keys
 		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, feesponsortypes.StoreKey,
 		// multi-staking keys
@@ -560,8 +584,23 @@ func New(
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 
-	// Add transfer restriction
+	app.BlacklistKeeper = blacklistmodulekeeper.NewKeeper(
+		runtime.NewKVStoreService(keys[blacklistmoduletypes.StoreKey]),
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+		app.ModuleAccountAddrs(),
+	)
+	app.EvmKeeper.SetHooks(NewEVMTokenBlacklistHook(app.BlacklistKeeper))
+
+	// Add transfer restrictions
 	app.BankKeeper.AppendSendRestriction(app.AssetKeeper.AssetSendRestriction)
+	// Closes the authz MsgExec / feegrant / ERC-20 precompile transferFrom
+	// class of blacklist bypass: those all move coins whose owner never
+	// signs the outer transaction, so the ante-level blacklist decorators
+	// (which only inspect the outer tx's signers) never see them. A send
+	// restriction runs inside BankKeeper.SendCoins itself, so it catches
+	// the transfer regardless of what triggered it. See the comment on
+	// BlacklistSendRestriction for why it only checks the source address.
+	app.BankKeeper.AppendSendRestriction(app.BlacklistKeeper.BlacklistSendRestriction)
 
 	// IBC Keeper
 	app.IBCKeeper = ibckeeper.NewKeeper(
@@ -699,6 +738,7 @@ func New(
 		// realio network
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper, app.GetSubspace(assetmoduletypes.ModuleName)),
 		bridgemodule.NewAppModule(appCodec, app.BridgeKeeper),
+		blacklistmodule.NewAppModule(app.BlacklistKeeper),
 	)
 
 	// NOTE: upgrade module is required to be prioritized
@@ -802,6 +842,7 @@ func New(
 		// realio modules
 		assetmoduletypes.ModuleName,
 		bridgemoduletypes.ModuleName,
+		blacklistmoduletypes.ModuleName,
 		consensusparamtypes.ModuleName,
 	)
 
@@ -834,6 +875,7 @@ func New(
 		// realio modules
 		assetmoduletypes.ModuleName,
 		bridgemoduletypes.ModuleName,
+		blacklistmoduletypes.ModuleName,
 		consensusparamtypes.ModuleName,
 	)
 
@@ -872,6 +914,7 @@ func New(
 
 	maxGasWanted := cast.ToUint64(appOpts.Get(srvflags.EVMMaxTxGasWanted))
 	options := ante.HandlerOptions{
+		Codec:                  app.appCodec,
 		AccountKeeper:          app.AccountKeeper,
 		BankKeeper:             app.BankKeeper,
 		SignModeHandler:        encodingConfig.TxConfig.SignModeHandler(),
@@ -885,6 +928,7 @@ func New(
 		ExtensionOptionChecker: antetypes.HasDynamicFeeExtensionOption,
 		DynamicFeeChecker:      true,
 		PendingTxListener:      app.onPendingTx,
+		BlacklistKeeper:        app.BlacklistKeeper,
 	}
 
 	if err := options.Validate(); err != nil {
@@ -951,12 +995,28 @@ func (app *RealioNetwork) PreBlocker(ctx sdk.Context, _ *abci.RequestFinalizeBlo
 func (app *RealioNetwork) BeginBlocker(ctx sdk.Context) (sdk.BeginBlock, error) {
 	// Perform any scheduled forks before executing the modules logic
 	app.ScheduleForkUpgrade(ctx)
-	return app.mm.BeginBlock(ctx)
+
+	res, err := app.mm.BeginBlock(ctx)
+	if err != nil {
+		return res, err
+	}
+
+	return res, nil
 }
 
 // EndBlocker updates every end block
 func (app *RealioNetwork) EndBlocker(ctx sdk.Context) (sdk.EndBlock, error) {
-	return app.mm.EndBlock(ctx)
+	res, err := app.mm.EndBlock(ctx)
+	if err != nil {
+		return res, err
+	}
+
+	return res, nil
+}
+
+// ScheduleForkUpgrade delegates to app/migrations.
+func (app *RealioNetwork) ScheduleForkUpgrade(ctx sdk.Context) {
+	migrations.ScheduleForkUpgrade(ctx, app.MigrationKeepers())
 }
 
 // GetSubspace returns a param subspace for a given module name.

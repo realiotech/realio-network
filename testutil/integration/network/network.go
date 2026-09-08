@@ -43,6 +43,10 @@ type Network interface {
 	GetFeeGrantClient() feegranttypes.QueryClient
 	GetMintModuleClient() minttypes.QueryClient // conflict types with current GetMintClient()
 	GetBridgeClient() bridgetypes.QueryClient
+	// GetApp exposes the underlying app for keepers that have no Msg/Query
+	// service (e.g. x/blacklist, which is only ever mutated by genesis or an
+	// upgrade handler, never by a user transaction).
+	GetApp() *app.RealioNetwork
 }
 
 var _ Network = (*IntegrationNetwork)(nil)
@@ -252,6 +256,11 @@ func (n *IntegrationNetwork) configureAndInitChain() error {
 // GetConfig returns the network's configuration
 func (n *IntegrationNetwork) GetBaseDecimal() evmtypes.Decimals {
 	return n.baseDecimal
+}
+
+// GetApp exposes the underlying app.
+func (n *IntegrationNetwork) GetApp() *app.RealioNetwork {
+	return n.app
 }
 
 // GetContext returns the network's context
