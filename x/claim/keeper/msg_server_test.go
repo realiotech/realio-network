@@ -5,6 +5,7 @@ import (
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -327,4 +328,51 @@ func (suite *KeeperTestSuite) TestLinkAddressMergeFlushesRewardToNewAddress() {
 
 	suite.Require().True(oldBalanceAfter.Equal(oldBalanceBefore), "the compromised old address must never receive a payout")
 	suite.Require().True(newBalanceAfter.Amount.GT(newBalanceBefore.Amount), "the merge must flush the accrued reward to the new address immediately")
+}
+
+// TestLinkAddressFreshPreservesExactRewardAmount tightens the "some reward
+// arrived" check in TestLinkAddressFreshCarriesOverPendingReward into an
+// exact one: newAddr must withdraw precisely what a `distribution rewards`
+// query against oldAddr would have shown one instant before the migration
+// -- the same Querier.DelegationRewards RPC any wallet/CLI calls to preview
+// a pending reward, not a hand-rolled substitute. This proves the
+// carried-over DelegatorStartingInfo (PreviousPeriod, Stake, Height) is a
+// lossless copy, not just "close enough".
+//
+// The query mutates the context it's handed (it calls
+// IncrementValidatorPeriod for real, same as an actual withdrawal) -- in
+// production that's harmless because ABCI query requests run against a
+// context baseapp never commits back to app state. A keeper-level test has
+// no such isolation, so CacheContext() recreates it by hand: the query runs
+// for real, then its branch is discarded, leaving the ledger the actual
+// migration below runs against untouched.
+func (suite *KeeperTestSuite) TestLinkAddressFreshPreservesExactRewardAmount() {
+	oldAddr := testutil.GenAddress()
+	newAddr := testutil.GenAddress()
+
+	suite.delegate(oldAddr, math.NewInt(1_000_000_000_000))
+	bondDenom := suite.allocateReward(math.NewInt(1_000_000_000))
+
+	previewCtx, _ := suite.ctx.CacheContext()
+	querier := distrkeeper.NewQuerier(suite.app.DistrKeeper)
+	preview, err := querier.DelegationRewards(previewCtx, &distrtypes.QueryDelegationRewardsRequest{
+		DelegatorAddress: oldAddr.String(),
+		ValidatorAddress: suite.validator.String(),
+	})
+	suite.Require().NoError(err)
+	wantReward, _ := preview.Rewards.TruncateDecimal()
+	suite.Require().True(wantReward.AmountOf(bondDenom).IsPositive())
+
+	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
+	_, err = srv.LinkAddress(suite.ctx, &types.MsgLinkAddress{
+		Admin:      suite.admin,
+		OldAddress: oldAddr.String(),
+		NewAddress: newAddr.String(),
+	})
+	suite.Require().NoError(err)
+
+	gotReward, err := suite.app.DistrKeeper.WithdrawDelegationRewards(suite.ctx, newAddr, suite.validator)
+	suite.Require().NoError(err)
+	suite.Require().True(gotReward.Equal(wantReward),
+		"newAddr should inherit exactly what a rewards query against oldAddr showed pre-migration, got %s want %s", gotReward, wantReward)
 }
