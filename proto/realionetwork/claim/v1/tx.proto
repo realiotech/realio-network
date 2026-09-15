@@ -1,0 +1,33 @@
+syntax = "proto3";
+package realionetwork.claim.v1;
+
+import "cosmos/msg/v1/msg.proto";
+
+option go_package = "github.com/realiotech/realio-network/x/claim/types";
+
+// Msg defines the Msg service. It exposes exactly one RPC: linking an old
+// (leaked/compromised) address to the new address its holder registered
+// after re-doing KYC. Only the module's configured admin may call this —
+// there is no other way to create or change a link.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+  rpc LinkAddress(MsgLinkAddress) returns (MsgLinkAddressResponse);
+}
+
+message MsgLinkAddress {
+  option (cosmos.msg.v1.signer) = "admin";
+  // admin is the address authorized to submit this message (the module's
+  // configured admin — see x/claim/keeper.Keeper.Admin).
+  string admin = 1;
+
+  // old_address is the bech32 account address whose key is known to have
+  // leaked (e.g. an x/blacklist entry) and which has completed re-KYC.
+  string old_address = 2;
+
+  // new_address is the bech32 account address the holder registered during
+  // re-KYC. Every active staking delegation old_address holds is migrated
+  // to new_address as part of processing this message.
+  string new_address = 3;
+}
+
+message MsgLinkAddressResponse {}

@@ -1,0 +1,44 @@
+syntax = "proto3";
+package realionetwork.claim.v1;
+
+import "google/api/annotations.proto";
+
+option go_package = "github.com/realiotech/realio-network/x/claim/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // LinkedAddress looks up the new address an old address was linked to,
+  // if any.
+  rpc LinkedAddress(QueryLinkedAddressRequest) returns (QueryLinkedAddressResponse) {
+    option (google.api.http).get = "/realionetwork/claim/v1/linked_address/{old_address}";
+  }
+
+  // Admin returns the address currently authorized to submit
+  // MsgLinkAddress.
+  rpc Admin(QueryAdminRequest) returns (QueryAdminResponse) {
+    option (google.api.http).get = "/realionetwork/claim/v1/admin";
+  }
+}
+
+// QueryLinkedAddressRequest is request type for the Query/LinkedAddress RPC method.
+message QueryLinkedAddressRequest {
+  // old_address is the bech32 account address to look up.
+  string old_address = 1;
+}
+
+// QueryLinkedAddressResponse is response type for the Query/LinkedAddress RPC method.
+message QueryLinkedAddressResponse {
+  // new_address is the address old_address was linked to. Empty if found
+  // is false.
+  string new_address = 1;
+  // found reports whether old_address has been linked to a new address.
+  bool found = 2;
+}
+
+// QueryAdminRequest is request type for the Query/Admin RPC method.
+message QueryAdminRequest {}
+
+// QueryAdminResponse is response type for the Query/Admin RPC method.
+message QueryAdminResponse {
+  string admin = 1;
+}

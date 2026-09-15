@@ -1,0 +1,76 @@
+package cli
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/spf13/cobra"
+
+	"github.com/realiotech/realio-network/x/claim/types"
+)
+
+// GetQueryCmd returns the cli query commands for this module
+func GetQueryCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:                        types.ModuleName,
+		Short:                      fmt.Sprintf("Querying commands for the %s module", types.ModuleName),
+		DisableFlagParsing:         true,
+		SuggestionsMinimumDistance: 2,
+		RunE:                       client.ValidateCmd,
+	}
+
+	cmd.AddCommand(CmdQueryLinkedAddress())
+	cmd.AddCommand(CmdQueryAdmin())
+
+	return cmd
+}
+
+func CmdQueryLinkedAddress() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "linked-address [old-address]",
+		Short: "look up the new address an old (leaked) address was linked to, if any",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.LinkedAddress(context.Background(), &types.QueryLinkedAddressRequest{OldAddress: args[0]})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdQueryAdmin() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "admin",
+		Short: "query the address currently authorized to submit MsgLinkAddress",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.Admin(context.Background(), &types.QueryAdminRequest{})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
