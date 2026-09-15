@@ -228,32 +228,22 @@ func (suite *KeeperTestSuite) TestLinkAddressMergesIntoExistingNewDelegation() {
 	suite.Require().True(newLock.LockedCoin.Amount.Equal(oldAmount.Add(newAmount)))
 }
 
-// TestLinkAddressRedirectsRewardsToNewAddress verifies the safety property
-// the whole module exists for: any reward already accrued on the old
-// (compromised) address's delegation is paid to the NEW address, never the
-// old one.
-func (suite *KeeperTestSuite) TestLinkAddressRedirectsRewardsToNewAddress() {
-	oldAddr := testutil.GenAddress()
-	newAddr := testutil.GenAddress()
-
-	suite.delegate(oldAddr, math.NewInt(1_000_000_000_000))
-
-	// A delegation earns nothing for the block it was created in
-	// (DelegatorStartingInfo.Height == current height short-circuits
-	// CalculateDelegationRewards to zero, by design) -- advance one block
-	// so the reward allocated below actually has something to accrue to.
+// allocateReward advances one block (a delegation earns nothing for the
+// block it was created in -- DelegatorStartingInfo.Height == current
+// height short-circuits CalculateDelegationRewards to zero, by design) and
+// allocates amount of bond-denom reward to suite.validator, returning the
+// bond denom used. The genesis validator's own tokens are enormous
+// relative to a fresh test delegation (see app.MultiStakingCoinA), so any
+// one delegation's proportional share of the pool is tiny -- callers
+// should pass a large amount so that share survives the reward
+// calculation's integer truncation.
+func (suite *KeeperTestSuite) allocateReward(amount math.Int) string {
 	suite.ctx = suite.ctx.WithBlockHeight(suite.ctx.BlockHeight() + 1)
 
 	bondDenom, err := suite.app.StakingKeeper.BondDenom(suite.ctx)
 	suite.Require().NoError(err)
 
-	// Simulate reward accrual: allocate block rewards to the validator so
-	// oldAddr's delegation has a non-zero pending reward before migration.
-	// The genesis validator's own tokens are enormous relative to a fresh
-	// delegation (see app.MultiStakingCoinA), so oldAddr's proportional
-	// share of the pool is tiny -- the pool has to be large enough that
-	// share survives the reward calculation's integer truncation.
-	rewardCoins := sdk.NewCoins(sdk.NewCoin(bondDenom, math.NewInt(1_000_000_000)))
+	rewardCoins := sdk.NewCoins(sdk.NewCoin(bondDenom, amount))
 	suite.Require().NoError(suite.app.BankKeeper.MintCoins(suite.ctx, minttypes.ModuleName, rewardCoins))
 	suite.Require().NoError(suite.app.BankKeeper.SendCoinsFromModuleToModule(suite.ctx, minttypes.ModuleName, distrtypes.ModuleName, rewardCoins))
 
@@ -261,11 +251,71 @@ func (suite *KeeperTestSuite) TestLinkAddressRedirectsRewardsToNewAddress() {
 	suite.Require().NoError(err)
 	suite.Require().NoError(suite.app.DistrKeeper.AllocateTokensToValidator(suite.ctx, validator, sdk.NewDecCoinsFromCoins(rewardCoins...)))
 
+	return bondDenom
+}
+
+// TestLinkAddressFreshCarriesOverPendingReward covers the common (no
+// merge) case: migrating must NOT pay out oldAddr's pending reward as a
+// side effect of the admin's LinkAddress call. Instead newAddr inherits
+// the exact reward-accrual ledger and can withdraw it later, on its own,
+// for the full amount -- and oldAddr must never be able to claim anything
+// again once its delegation is gone.
+func (suite *KeeperTestSuite) TestLinkAddressFreshCarriesOverPendingReward() {
+	oldAddr := testutil.GenAddress()
+	newAddr := testutil.GenAddress()
+
+	suite.delegate(oldAddr, math.NewInt(1_000_000_000_000))
+	bondDenom := suite.allocateReward(math.NewInt(1_000_000_000))
+
 	oldBalanceBefore := suite.app.BankKeeper.GetBalance(suite.ctx, oldAddr, bondDenom)
 	newBalanceBefore := suite.app.BankKeeper.GetBalance(suite.ctx, newAddr, bondDenom)
 
 	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
-	_, err = srv.LinkAddress(suite.ctx, &types.MsgLinkAddress{
+	_, err := srv.LinkAddress(suite.ctx, &types.MsgLinkAddress{
+		Admin:      suite.admin,
+		OldAddress: oldAddr.String(),
+		NewAddress: newAddr.String(),
+	})
+	suite.Require().NoError(err)
+
+	// Nothing paid out yet, to either address -- the reward is carried
+	// over as a still-pending claim, not flushed.
+	oldBalanceAfterLink := suite.app.BankKeeper.GetBalance(suite.ctx, oldAddr, bondDenom)
+	newBalanceAfterLink := suite.app.BankKeeper.GetBalance(suite.ctx, newAddr, bondDenom)
+	suite.Require().True(oldBalanceAfterLink.Equal(oldBalanceBefore))
+	suite.Require().True(newBalanceAfterLink.Equal(newBalanceBefore))
+
+	// oldAddr has no delegation left at all -- it can never claim again.
+	_, err = suite.app.DistrKeeper.WithdrawDelegationRewards(suite.ctx, oldAddr, suite.validator)
+	suite.Require().Error(err)
+
+	// newAddr withdraws on its own, whenever it likes, and gets the full
+	// amount that had accrued on oldAddr's delegation.
+	withdrawn, err := suite.app.DistrKeeper.WithdrawDelegationRewards(suite.ctx, newAddr, suite.validator)
+	suite.Require().NoError(err)
+	suite.Require().True(withdrawn.AmountOf(bondDenom).IsPositive())
+
+	newBalanceAfterWithdraw := suite.app.BankKeeper.GetBalance(suite.ctx, newAddr, bondDenom)
+	suite.Require().True(newBalanceAfterWithdraw.Amount.GT(newBalanceBefore.Amount))
+}
+
+// TestLinkAddressMergeFlushesRewardToNewAddress covers the merge case:
+// unlike the fresh path above, two independent reward ledgers can't be
+// combined losslessly, so migrating must flush oldAddr's pending reward
+// immediately -- and it must still land on newAddr, never oldAddr.
+func (suite *KeeperTestSuite) TestLinkAddressMergeFlushesRewardToNewAddress() {
+	oldAddr := testutil.GenAddress()
+	newAddr := testutil.GenAddress()
+
+	suite.delegate(oldAddr, math.NewInt(1_000_000_000_000))
+	suite.delegate(newAddr, math.NewInt(500_000_000_000))
+	bondDenom := suite.allocateReward(math.NewInt(1_000_000_000))
+
+	oldBalanceBefore := suite.app.BankKeeper.GetBalance(suite.ctx, oldAddr, bondDenom)
+	newBalanceBefore := suite.app.BankKeeper.GetBalance(suite.ctx, newAddr, bondDenom)
+
+	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
+	_, err := srv.LinkAddress(suite.ctx, &types.MsgLinkAddress{
 		Admin:      suite.admin,
 		OldAddress: oldAddr.String(),
 		NewAddress: newAddr.String(),
@@ -276,5 +326,5 @@ func (suite *KeeperTestSuite) TestLinkAddressRedirectsRewardsToNewAddress() {
 	newBalanceAfter := suite.app.BankKeeper.GetBalance(suite.ctx, newAddr, bondDenom)
 
 	suite.Require().True(oldBalanceAfter.Equal(oldBalanceBefore), "the compromised old address must never receive a payout")
-	suite.Require().True(newBalanceAfter.Amount.GT(newBalanceBefore.Amount), "the accrued reward must be paid to the new address")
+	suite.Require().True(newBalanceAfter.Amount.GT(newBalanceBefore.Amount), "the merge must flush the accrued reward to the new address immediately")
 }

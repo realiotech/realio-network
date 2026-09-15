@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	errorsmod "cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,13 +30,23 @@ const maxDelegatorValidators = 65535
 // blacklisted address, never a module account paying funds in. See
 // x/claim/README.md.
 //
-// Any reward accrued but not yet withdrawn is paid out to the NEW address,
-// never the old one: the whole reason this module exists is that the old
-// address's key is compromised, so nothing should ever be credited there
-// again.
+// Any reward this migration DOES pay out immediately (the merge case
+// below) always goes to the NEW address, never the old one: the whole
+// reason this module exists is that the old address's key is compromised,
+// so nothing should ever be credited there again. SetDelegatorWithdrawAddr
+// is set unconditionally up front (once, not per validator -- it's a
+// per-account setting) so that guarantee holds no matter which validators
+// end up needing a flush.
 func (k Keeper) MigrateDelegations(ctx context.Context, oldAddr, newAddr sdk.AccAddress) error {
 	delegations, err := k.stakingKeeper.GetDelegatorDelegations(ctx, oldAddr, maxDelegatorValidators)
 	if err != nil {
+		return err
+	}
+	if len(delegations) == 0 {
+		return nil
+	}
+
+	if err := k.distrKeeper.SetDelegatorWithdrawAddr(ctx, oldAddr, newAddr); err != nil {
 		return err
 	}
 
@@ -52,33 +63,61 @@ func (k Keeper) MigrateDelegations(ctx context.Context, oldAddr, newAddr sdk.Acc
 }
 
 // migrateOneDelegation moves a single (oldAddr, valAddr) delegation to
-// (newAddr, valAddr). The hook sequencing below mirrors exactly what
-// native x/staking's Delegate/Unbond do internally (see
-// cosmos-sdk x/staking/keeper/delegation.go and
-// x/distribution/keeper/hooks.go) -- it is load-bearing, not cosmetic:
-// BeforeDelegationSharesModified is what flushes rewards and deletes the
-// old DelegatorStartingInfo (a no-op on RemoveDelegation's own
-// BeforeDelegationRemoved hook), and BeforeDelegationCreated /
-// AfterDelegationModified are what create the new DelegatorStartingInfo.
-// Getting this order wrong doesn't corrupt state silently -- it surfaces
-// later as a wrong reward calculation or a panic in the distribution
-// keeper's historical-rewards reference counting.
+// (newAddr, valAddr), then its backing multi-staking lock. Which of the
+// two strategies below applies depends on whether newAddr already
+// delegates to valAddr -- see migrateDelegationMerge and
+// migrateDelegationFresh for why they have to differ.
 func (k Keeper) migrateOneDelegation(
 	ctx context.Context,
 	oldAddr, newAddr sdk.AccAddress,
 	valAddr sdk.ValAddress,
 	oldDel stakingtypes.Delegation,
 ) error {
-	// Redirect any reward this delegation still owes to the NEW address
-	// before touching anything else, so the flush below never pays the
-	// compromised old address again.
-	if err := k.distrKeeper.SetDelegatorWithdrawAddr(ctx, oldAddr, newAddr); err != nil {
+	newDel, err := k.stakingKeeper.GetDelegation(ctx, newAddr, valAddr)
+	switch {
+	case err == nil:
+		if err := k.migrateDelegationMerge(ctx, oldAddr, newAddr, valAddr, oldDel, newDel); err != nil {
+			return err
+		}
+	case errors.Is(err, stakingtypes.ErrNoDelegation):
+		if err := k.migrateDelegationFresh(ctx, oldAddr, newAddr, valAddr, oldDel); err != nil {
+			return err
+		}
+	default:
 		return err
 	}
 
-	// Flush pending rewards and drop the old (valAddr, oldAddr)
-	// DelegatorStartingInfo -- the same hook native x/staking's Unbond
-	// calls before a delegation is fully removed.
+	return k.migrateMultiStakingLock(ctx, oldAddr, newAddr, valAddr)
+}
+
+// migrateDelegationMerge handles the case where newAddr already delegates
+// to valAddr: oldAddr's and newAddr's shares have to combine into the one
+// existing delegation record. The hook sequencing mirrors exactly what
+// native x/staking's Unbond (for removing oldAddr's side) and Delegate's
+// existing-delegation branch (for growing newAddr's side) do internally --
+// see cosmos-sdk x/staking/keeper/delegation.go and
+// x/distribution/keeper/hooks.go. It is load-bearing, not cosmetic:
+// BeforeDelegationSharesModified is what flushes pending rewards (paid to
+// newAddr, per MigrateDelegations' withdraw-address redirect) and drops
+// the old DelegatorStartingInfo; AfterDelegationModified is what
+// re-initializes it for the combined position. Getting the order wrong
+// doesn't corrupt state silently -- it surfaces later as a wrong reward
+// calculation or a panic in distribution's historical-rewards reference
+// counting.
+//
+// A flush is unavoidable here: oldAddr's and newAddr's delegations are two
+// independent reward-accrual ledgers (each with its own
+// DelegatorStartingInfo), and there's no lossless way to combine two such
+// ledgers into the single scalar a merged delegation needs. Paying out
+// both up front and starting the merged position fresh is what native
+// x/staking itself does any time delegated shares change, so this isn't a
+// weaker guarantee than an ordinary delegation gets.
+func (k Keeper) migrateDelegationMerge(
+	ctx context.Context,
+	oldAddr, newAddr sdk.AccAddress,
+	valAddr sdk.ValAddress,
+	oldDel, newDel stakingtypes.Delegation,
+) error {
 	if err := k.distrKeeper.Hooks().BeforeDelegationSharesModified(ctx, oldAddr, valAddr); err != nil {
 		return err
 	}
@@ -86,32 +125,74 @@ func (k Keeper) migrateOneDelegation(
 		return err
 	}
 
-	// Re-create the shares under the new address. SetDelegation alone
-	// moves no coins and doesn't touch the validator's total tokens/
-	// shares -- it only changes who the bookkeeping entry belongs to.
-	newDel, err := k.stakingKeeper.GetDelegation(ctx, newAddr, valAddr)
-	switch {
-	case err == nil:
-		if err := k.distrKeeper.Hooks().BeforeDelegationSharesModified(ctx, newAddr, valAddr); err != nil {
-			return err
-		}
-		newDel.Shares = newDel.Shares.Add(oldDel.Shares)
-	case errors.Is(err, stakingtypes.ErrNoDelegation):
-		if err := k.distrKeeper.Hooks().BeforeDelegationCreated(ctx, newAddr, valAddr); err != nil {
-			return err
-		}
-		newDel = stakingtypes.NewDelegation(newAddr.String(), valAddr.String(), oldDel.Shares)
-	default:
+	if err := k.distrKeeper.Hooks().BeforeDelegationSharesModified(ctx, newAddr, valAddr); err != nil {
 		return err
 	}
+	newDel.Shares = newDel.Shares.Add(oldDel.Shares)
 	if err := k.stakingKeeper.SetDelegation(ctx, newDel); err != nil {
 		return err
 	}
-	if err := k.distrKeeper.Hooks().AfterDelegationModified(ctx, newAddr, valAddr); err != nil {
+	return k.distrKeeper.Hooks().AfterDelegationModified(ctx, newAddr, valAddr)
+}
+
+// migrateDelegationFresh handles the common case where newAddr has no
+// existing delegation to valAddr yet. Rather than flushing oldAddr's
+// pending reward into an immediate payout, it carries the exact
+// reward-accrual ledger (DelegatorStartingInfo: which historical period it
+// last settled against, and its token-value stake as of that settlement)
+// over to newAddr verbatim. newAddr then withdraws whenever it likes, via
+// the normal MsgWithdrawDelegatorReward, for exactly what accrued since
+// oldAddr's last claim -- nothing paid out early as a side effect of the
+// admin's LinkAddress call, nothing lost either.
+//
+// This deliberately bypasses distribution's BeforeDelegationCreated /
+// BeforeDelegationSharesModified / AfterDelegationModified hooks: every
+// one of them would either flush (pay out now, the opposite of what this
+// path is for) or reset the new delegation to a fresh zero-reward
+// baseline (silently forfeiting oldAddr's accrued reward instead of
+// preserving it). The historical-rewards reference count backing
+// DelegatorStartingInfo.PreviousPeriod is left untouched on purpose, not
+// forgotten: moving the record from oldAddr's key to newAddr's key doesn't
+// change how many DelegatorStartingInfo entries point at that period --
+// still exactly one, just under a different owner -- so there is nothing
+// to increment or decrement. (The reference-count functions are
+// unexported in cosmos-sdk precisely because callers are never meant to
+// touch them directly; not needing to here is what makes this safe.)
+func (k Keeper) migrateDelegationFresh(
+	ctx context.Context,
+	oldAddr, newAddr sdk.AccAddress,
+	valAddr sdk.ValAddress,
+	oldDel stakingtypes.Delegation,
+) error {
+	has, err := k.distrKeeper.HasDelegatorStartingInfo(ctx, valAddr, oldAddr)
+	if err != nil {
+		return err
+	}
+	if !has {
+		// Every active delegation gets a DelegatorStartingInfo the moment
+		// it's created (native Delegate always runs the hooks). Reaching
+		// here would mean that invariant broke elsewhere -- fail loudly
+		// rather than silently hand newAddr a zero-value ledger.
+		return fmt.Errorf("no DelegatorStartingInfo for existing delegation (validator %s, delegator %s)", valAddr, oldAddr)
+	}
+	startingInfo, err := k.distrKeeper.GetDelegatorStartingInfo(ctx, valAddr, oldAddr)
+	if err != nil {
 		return err
 	}
 
-	return k.migrateMultiStakingLock(ctx, oldAddr, newAddr, valAddr)
+	if err := k.stakingKeeper.RemoveDelegation(ctx, oldDel); err != nil {
+		return err
+	}
+
+	newDel := stakingtypes.NewDelegation(newAddr.String(), valAddr.String(), oldDel.Shares)
+	if err := k.stakingKeeper.SetDelegation(ctx, newDel); err != nil {
+		return err
+	}
+
+	if err := k.distrKeeper.SetDelegatorStartingInfo(ctx, valAddr, newAddr, startingInfo); err != nil {
+		return err
+	}
+	return k.distrKeeper.DeleteDelegatorStartingInfo(ctx, valAddr, oldAddr)
 }
 
 // migrateMultiStakingLock moves the MultiStakingLock backing this
