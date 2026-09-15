@@ -77,8 +77,9 @@ func (suite *KeeperTestSuite) SetupTest() {
 	types.RegisterQueryServer(queryHelper, keeper.NewQueryServerImpl(suite.app.ClaimKeeper))
 	suite.queryClient = types.NewQueryClient(queryHelper)
 
-	suite.admin = sdk.AccAddress(priv.PubKey().Address()).String()
-	suite.Require().NoError(suite.app.ClaimKeeper.SetAdmin(suite.ctx, suite.admin))
+	adminAddr := sdk.AccAddress(priv.PubKey().Address())
+	suite.admin = adminAddr.String()
+	suite.Require().NoError(suite.app.ClaimKeeper.SetAdmin(suite.ctx, adminAddr))
 
 	vals, err := suite.app.StakingKeeper.GetAllValidators(suite.ctx)
 	suite.Require().NoError(err)

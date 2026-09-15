@@ -6,11 +6,15 @@ import (
 )
 
 func (suite *KeeperTestSuite) TestGetSetAdmin() {
-	suite.Require().Equal(suite.admin, suite.app.ClaimKeeper.GetAdmin(suite.ctx))
+	admin, ok := suite.app.ClaimKeeper.GetAdmin(suite.ctx)
+	suite.Require().True(ok)
+	suite.Require().Equal(suite.admin, admin.String())
 
-	newAdmin := testutil.GenAddress().String()
+	newAdmin := testutil.GenAddress()
 	suite.Require().NoError(suite.app.ClaimKeeper.SetAdmin(suite.ctx, newAdmin))
-	suite.Require().Equal(newAdmin, suite.app.ClaimKeeper.GetAdmin(suite.ctx))
+	gotAdmin, ok := suite.app.ClaimKeeper.GetAdmin(suite.ctx)
+	suite.Require().True(ok)
+	suite.Require().Equal(newAdmin, gotAdmin)
 }
 
 func (suite *KeeperTestSuite) TestGetSetLink() {
@@ -21,11 +25,11 @@ func (suite *KeeperTestSuite) TestGetSetLink() {
 	suite.Require().False(found)
 	suite.Require().False(suite.app.ClaimKeeper.IsLinked(suite.ctx, oldAddr))
 
-	suite.Require().NoError(suite.app.ClaimKeeper.SetLink(suite.ctx, oldAddr, newAddr.String()))
+	suite.Require().NoError(suite.app.ClaimKeeper.SetLink(suite.ctx, oldAddr, newAddr))
 
 	got, found := suite.app.ClaimKeeper.GetLink(suite.ctx, oldAddr)
 	suite.Require().True(found)
-	suite.Require().Equal(newAddr.String(), got)
+	suite.Require().Equal(newAddr, got)
 	suite.Require().True(suite.app.ClaimKeeper.IsLinked(suite.ctx, oldAddr))
 }
 
@@ -33,8 +37,8 @@ func (suite *KeeperTestSuite) TestGetAllLinks() {
 	oldA, newA := testutil.GenAddress(), testutil.GenAddress()
 	oldB, newB := testutil.GenAddress(), testutil.GenAddress()
 
-	suite.Require().NoError(suite.app.ClaimKeeper.SetLink(suite.ctx, oldA, newA.String()))
-	suite.Require().NoError(suite.app.ClaimKeeper.SetLink(suite.ctx, oldB, newB.String()))
+	suite.Require().NoError(suite.app.ClaimKeeper.SetLink(suite.ctx, oldA, newA))
+	suite.Require().NoError(suite.app.ClaimKeeper.SetLink(suite.ctx, oldB, newB))
 
 	links, err := suite.app.ClaimKeeper.GetAllLinks(suite.ctx)
 	suite.Require().NoError(err)

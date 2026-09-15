@@ -131,33 +131,194 @@ func (m *MsgLinkAddressResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgLinkAddressResponse proto.InternalMessageInfo
 
+// LinkAddressPair is one old_address -> new_address pair within a
+// MsgLinkAddresses batch.
+type LinkAddressPair struct {
+	// old_address is the bech32 account address whose key is known to have
+	// leaked and which has completed re-KYC.
+	OldAddress string `protobuf:"bytes,1,opt,name=old_address,json=oldAddress,proto3" json:"old_address,omitempty"`
+	// new_address is the bech32 account address the holder registered during
+	// re-KYC. Every active staking delegation old_address holds is migrated
+	// to new_address as part of processing this pair.
+	NewAddress string `protobuf:"bytes,2,opt,name=new_address,json=newAddress,proto3" json:"new_address,omitempty"`
+}
+
+func (m *LinkAddressPair) Reset()         { *m = LinkAddressPair{} }
+func (m *LinkAddressPair) String() string { return proto.CompactTextString(m) }
+func (*LinkAddressPair) ProtoMessage()    {}
+func (*LinkAddressPair) Descriptor() ([]byte, []int) {
+	return fileDescriptor_551333f1ff89dff7, []int{2}
+}
+func (m *LinkAddressPair) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *LinkAddressPair) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_LinkAddressPair.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *LinkAddressPair) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_LinkAddressPair.Merge(m, src)
+}
+func (m *LinkAddressPair) XXX_Size() int {
+	return m.Size()
+}
+func (m *LinkAddressPair) XXX_DiscardUnknown() {
+	xxx_messageInfo_LinkAddressPair.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_LinkAddressPair proto.InternalMessageInfo
+
+func (m *LinkAddressPair) GetOldAddress() string {
+	if m != nil {
+		return m.OldAddress
+	}
+	return ""
+}
+
+func (m *LinkAddressPair) GetNewAddress() string {
+	if m != nil {
+		return m.NewAddress
+	}
+	return ""
+}
+
+type MsgLinkAddresses struct {
+	// admin is the address authorized to submit this message (the module's
+	// configured admin — see x/claim/keeper.Keeper.Admin).
+	Admin string `protobuf:"bytes,1,opt,name=admin,proto3" json:"admin,omitempty"`
+	// links is the batch of old_address -> new_address pairs to link and
+	// migrate, processed in order. A failure on any one pair (e.g. it was
+	// already linked) fails the whole message -- either every pair in the
+	// batch is applied, or none are.
+	Links []*LinkAddressPair `protobuf:"bytes,2,rep,name=links,proto3" json:"links,omitempty"`
+}
+
+func (m *MsgLinkAddresses) Reset()         { *m = MsgLinkAddresses{} }
+func (m *MsgLinkAddresses) String() string { return proto.CompactTextString(m) }
+func (*MsgLinkAddresses) ProtoMessage()    {}
+func (*MsgLinkAddresses) Descriptor() ([]byte, []int) {
+	return fileDescriptor_551333f1ff89dff7, []int{3}
+}
+func (m *MsgLinkAddresses) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLinkAddresses) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLinkAddresses.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLinkAddresses) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLinkAddresses.Merge(m, src)
+}
+func (m *MsgLinkAddresses) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLinkAddresses) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLinkAddresses.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLinkAddresses proto.InternalMessageInfo
+
+func (m *MsgLinkAddresses) GetAdmin() string {
+	if m != nil {
+		return m.Admin
+	}
+	return ""
+}
+
+func (m *MsgLinkAddresses) GetLinks() []*LinkAddressPair {
+	if m != nil {
+		return m.Links
+	}
+	return nil
+}
+
+type MsgLinkAddressesResponse struct {
+}
+
+func (m *MsgLinkAddressesResponse) Reset()         { *m = MsgLinkAddressesResponse{} }
+func (m *MsgLinkAddressesResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgLinkAddressesResponse) ProtoMessage()    {}
+func (*MsgLinkAddressesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_551333f1ff89dff7, []int{4}
+}
+func (m *MsgLinkAddressesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgLinkAddressesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgLinkAddressesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgLinkAddressesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgLinkAddressesResponse.Merge(m, src)
+}
+func (m *MsgLinkAddressesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgLinkAddressesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgLinkAddressesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgLinkAddressesResponse proto.InternalMessageInfo
+
 func init() {
 	proto.RegisterType((*MsgLinkAddress)(nil), "realionetwork.claim.v1.MsgLinkAddress")
 	proto.RegisterType((*MsgLinkAddressResponse)(nil), "realionetwork.claim.v1.MsgLinkAddressResponse")
+	proto.RegisterType((*LinkAddressPair)(nil), "realionetwork.claim.v1.LinkAddressPair")
+	proto.RegisterType((*MsgLinkAddresses)(nil), "realionetwork.claim.v1.MsgLinkAddresses")
+	proto.RegisterType((*MsgLinkAddressesResponse)(nil), "realionetwork.claim.v1.MsgLinkAddressesResponse")
 }
 
 func init() { proto.RegisterFile("realionetwork/claim/v1/tx.proto", fileDescriptor_551333f1ff89dff7) }
 
 var fileDescriptor_551333f1ff89dff7 = []byte{
-	// 282 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xe2, 0x92, 0x2f, 0x4a, 0x4d, 0xcc,
-	0xc9, 0xcc, 0xcf, 0x4b, 0x2d, 0x29, 0xcf, 0x2f, 0xca, 0xd6, 0x4f, 0xce, 0x49, 0xcc, 0xcc, 0xd5,
-	0x2f, 0x33, 0xd4, 0x2f, 0xa9, 0xd0, 0x2b, 0x28, 0xca, 0x2f, 0xc9, 0x17, 0x12, 0x43, 0x51, 0xa0,
-	0x07, 0x56, 0xa0, 0x57, 0x66, 0x28, 0x25, 0x9e, 0x9c, 0x5f, 0x9c, 0x9b, 0x5f, 0xac, 0x9f, 0x5b,
-	0x9c, 0x0e, 0x52, 0x9f, 0x5b, 0x9c, 0x0e, 0xd1, 0xa0, 0x54, 0xc2, 0xc5, 0xe7, 0x5b, 0x9c, 0xee,
-	0x93, 0x99, 0x97, 0xed, 0x98, 0x92, 0x52, 0x94, 0x5a, 0x5c, 0x2c, 0x24, 0xc2, 0xc5, 0x9a, 0x98,
-	0x92, 0x9b, 0x99, 0x27, 0xc1, 0xa8, 0xc0, 0xa8, 0xc1, 0x19, 0x04, 0xe1, 0x08, 0xc9, 0x73, 0x71,
-	0xe7, 0xe7, 0xa4, 0xc4, 0x27, 0x42, 0x14, 0x49, 0x30, 0x81, 0xe5, 0xb8, 0xf2, 0x73, 0x52, 0x60,
-	0xda, 0xe4, 0xb9, 0xb8, 0xf3, 0x52, 0xcb, 0xe1, 0x0a, 0x98, 0x21, 0x0a, 0xf2, 0x52, 0xcb, 0xa1,
-	0x0a, 0xac, 0xb8, 0x9a, 0x9e, 0x6f, 0xd0, 0x82, 0x98, 0xa6, 0x24, 0xc1, 0x25, 0x86, 0x6a, 0x6b,
-	0x50, 0x6a, 0x71, 0x41, 0x7e, 0x5e, 0x71, 0xaa, 0x51, 0x31, 0x17, 0xb3, 0x6f, 0x71, 0xba, 0x50,
-	0x2a, 0x17, 0x37, 0xb2, 0x9b, 0xd4, 0xf4, 0xb0, 0xfb, 0x4b, 0x0f, 0xd5, 0x14, 0x29, 0x3d, 0xe2,
-	0xd4, 0xc1, 0x6c, 0x93, 0x62, 0x6d, 0x78, 0xbe, 0x41, 0x8b, 0xd1, 0xc9, 0xe7, 0xc4, 0x23, 0x39,
-	0xc6, 0x0b, 0x8f, 0xe4, 0x18, 0x1f, 0x3c, 0x92, 0x63, 0x9c, 0xf0, 0x58, 0x8e, 0xe1, 0xc2, 0x63,
-	0x39, 0x86, 0x1b, 0x8f, 0xe5, 0x18, 0xa2, 0x8c, 0xd2, 0x33, 0x4b, 0x32, 0x4a, 0x93, 0xf4, 0x92,
-	0xf3, 0x73, 0xf5, 0x21, 0x46, 0x97, 0xa4, 0x26, 0x67, 0x40, 0x99, 0xba, 0xb0, 0x78, 0xa8, 0x80,
-	0xc6, 0x44, 0x49, 0x65, 0x41, 0x6a, 0x71, 0x12, 0x1b, 0x38, 0x64, 0x8d, 0x01, 0x01, 0x00, 0x00,
-	0xff, 0xff, 0x11, 0x8a, 0xc2, 0xd4, 0xad, 0x01, 0x00, 0x00,
+	// 359 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x92, 0xcd, 0x4e, 0xf2, 0x40,
+	0x14, 0x86, 0x19, 0x08, 0x5f, 0xf2, 0x9d, 0xc6, 0x9f, 0x34, 0x06, 0x9b, 0x2e, 0x8a, 0xe9, 0x42,
+	0x09, 0x89, 0x53, 0xc1, 0x9d, 0x89, 0x0b, 0x5d, 0x43, 0x62, 0x70, 0xe7, 0xc6, 0x94, 0x76, 0x52,
+	0x26, 0x6d, 0x67, 0x48, 0x67, 0x04, 0xdc, 0x19, 0xaf, 0xc0, 0x4b, 0xe1, 0x32, 0x5c, 0xb2, 0x74,
+	0x49, 0x60, 0xc1, 0x6d, 0x18, 0x18, 0x6a, 0x68, 0x23, 0xb1, 0xbb, 0xfe, 0x3c, 0xe7, 0x7d, 0xe6,
+	0x9d, 0x1c, 0xa8, 0x27, 0xc4, 0x8d, 0x28, 0x67, 0x44, 0x8e, 0x79, 0x12, 0x3a, 0x5e, 0xe4, 0xd2,
+	0xd8, 0x19, 0xb5, 0x1c, 0x39, 0xc1, 0xc3, 0x84, 0x4b, 0xae, 0xd7, 0x32, 0x00, 0xde, 0x00, 0x78,
+	0xd4, 0x32, 0x4f, 0x3d, 0x2e, 0x62, 0x2e, 0x9c, 0x58, 0x04, 0x6b, 0x3e, 0x16, 0x81, 0x1a, 0xb0,
+	0x25, 0x1c, 0x76, 0x45, 0xd0, 0xa1, 0x2c, 0xbc, 0xf3, 0xfd, 0x84, 0x08, 0xa1, 0x9f, 0x40, 0xd5,
+	0xf5, 0x63, 0xca, 0x0c, 0x74, 0x86, 0x1a, 0xff, 0x7b, 0xea, 0x45, 0xaf, 0x83, 0xc6, 0x23, 0xff,
+	0xd9, 0x55, 0x90, 0x51, 0xde, 0xfc, 0x03, 0x1e, 0xf9, 0xe9, 0x58, 0x1d, 0x34, 0x46, 0xc6, 0x3f,
+	0x40, 0x45, 0x01, 0x8c, 0x8c, 0xb7, 0xc0, 0x0d, 0xbc, 0xaf, 0xa6, 0x4d, 0x95, 0x66, 0x1b, 0x50,
+	0xcb, 0x5a, 0x7b, 0x44, 0x0c, 0x39, 0x13, 0xc4, 0x7e, 0x84, 0xa3, 0x9d, 0xcf, 0x0f, 0x2e, 0x4d,
+	0xf2, 0x6a, 0xf4, 0x97, 0xba, 0x9c, 0x57, 0xdb, 0x02, 0x8e, 0xb3, 0x3a, 0xb2, 0xaf, 0xe6, 0x2d,
+	0x54, 0x23, 0xca, 0xc2, 0x75, 0x48, 0xa5, 0xa1, 0xb5, 0x2f, 0xf0, 0xef, 0xf7, 0x89, 0x73, 0x67,
+	0xec, 0xa9, 0xa9, 0x4c, 0x47, 0x13, 0x8c, 0xbc, 0x34, 0x6d, 0xd9, 0x9e, 0x23, 0xa8, 0x74, 0x45,
+	0xa0, 0x13, 0xd0, 0x76, 0xaf, 0xfe, 0x7c, 0x9f, 0x2e, 0x1b, 0x64, 0xe2, 0x62, 0x5c, 0xaa, 0xd3,
+	0x43, 0x38, 0xc8, 0x96, 0x6f, 0x14, 0x0b, 0x20, 0xc2, 0xbc, 0x2a, 0x4a, 0xa6, 0x32, 0xb3, 0xfa,
+	0xb6, 0x9a, 0x36, 0xd1, 0x7d, 0xe7, 0x73, 0x61, 0xa1, 0xd9, 0xc2, 0x42, 0xf3, 0x85, 0x85, 0x3e,
+	0x96, 0x56, 0x69, 0xb6, 0xb4, 0x4a, 0x5f, 0x4b, 0xab, 0xf4, 0xd4, 0x0e, 0xa8, 0x1c, 0xbc, 0xf4,
+	0xb1, 0xc7, 0x63, 0x47, 0x85, 0x4b, 0xe2, 0x0d, 0xb6, 0x8f, 0x97, 0xe9, 0x6e, 0x4f, 0xb6, 0xdb,
+	0x2d, 0x5f, 0x87, 0x44, 0xf4, 0xff, 0x6d, 0xb6, 0xf5, 0xfa, 0x3b, 0x00, 0x00, 0xff, 0xff, 0xaf,
+	0xac, 0x50, 0xd0, 0x01, 0x03, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -173,6 +334,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type MsgClient interface {
 	LinkAddress(ctx context.Context, in *MsgLinkAddress, opts ...grpc.CallOption) (*MsgLinkAddressResponse, error)
+	LinkAddresses(ctx context.Context, in *MsgLinkAddresses, opts ...grpc.CallOption) (*MsgLinkAddressesResponse, error)
 }
 
 type msgClient struct {
@@ -192,9 +354,19 @@ func (c *msgClient) LinkAddress(ctx context.Context, in *MsgLinkAddress, opts ..
 	return out, nil
 }
 
+func (c *msgClient) LinkAddresses(ctx context.Context, in *MsgLinkAddresses, opts ...grpc.CallOption) (*MsgLinkAddressesResponse, error) {
+	out := new(MsgLinkAddressesResponse)
+	err := c.cc.Invoke(ctx, "/realionetwork.claim.v1.Msg/LinkAddresses", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	LinkAddress(context.Context, *MsgLinkAddress) (*MsgLinkAddressResponse, error)
+	LinkAddresses(context.Context, *MsgLinkAddresses) (*MsgLinkAddressesResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -203,6 +375,9 @@ type UnimplementedMsgServer struct {
 
 func (*UnimplementedMsgServer) LinkAddress(ctx context.Context, req *MsgLinkAddress) (*MsgLinkAddressResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LinkAddress not implemented")
+}
+func (*UnimplementedMsgServer) LinkAddresses(ctx context.Context, req *MsgLinkAddresses) (*MsgLinkAddressesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method LinkAddresses not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -227,6 +402,25 @@ func _Msg_LinkAddress_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_LinkAddresses_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgLinkAddresses)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).LinkAddresses(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/realionetwork.claim.v1.Msg/LinkAddresses",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).LinkAddresses(ctx, req.(*MsgLinkAddresses))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "realionetwork.claim.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
@@ -234,6 +428,10 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LinkAddress",
 			Handler:    _Msg_LinkAddress_Handler,
+		},
+		{
+			MethodName: "LinkAddresses",
+			Handler:    _Msg_LinkAddresses_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -307,6 +505,110 @@ func (m *MsgLinkAddressResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) 
 	return len(dAtA) - i, nil
 }
 
+func (m *LinkAddressPair) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *LinkAddressPair) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *LinkAddressPair) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.NewAddress) > 0 {
+		i -= len(m.NewAddress)
+		copy(dAtA[i:], m.NewAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.NewAddress)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.OldAddress) > 0 {
+		i -= len(m.OldAddress)
+		copy(dAtA[i:], m.OldAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.OldAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgLinkAddresses) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLinkAddresses) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLinkAddresses) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Links) > 0 {
+		for iNdEx := len(m.Links) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Links[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
+	if len(m.Admin) > 0 {
+		i -= len(m.Admin)
+		copy(dAtA[i:], m.Admin)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Admin)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgLinkAddressesResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgLinkAddressesResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgLinkAddressesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -340,6 +642,51 @@ func (m *MsgLinkAddress) Size() (n int) {
 }
 
 func (m *MsgLinkAddressResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *LinkAddressPair) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.OldAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.NewAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgLinkAddresses) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Admin)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.Links) > 0 {
+		for _, e := range m.Links {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *MsgLinkAddressesResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -527,6 +874,286 @@ func (m *MsgLinkAddressResponse) Unmarshal(dAtA []byte) error {
 		}
 		if fieldNum <= 0 {
 			return fmt.Errorf("proto: MsgLinkAddressResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *LinkAddressPair) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: LinkAddressPair: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: LinkAddressPair: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OldAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OldAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NewAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NewAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgLinkAddresses) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLinkAddresses: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLinkAddresses: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Admin", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Admin = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Links", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Links = append(m.Links, &LinkAddressPair{})
+			if err := m.Links[len(m.Links)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgLinkAddressesResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgLinkAddressesResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgLinkAddressesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		default:

@@ -36,7 +36,10 @@ func (q queryServer) LinkedAddress(ctx context.Context, req *types.QueryLinkedAd
 	}
 
 	newAddr, found := q.k.GetLink(ctx, oldAddr)
-	return &types.QueryLinkedAddressResponse{NewAddress: newAddr, Found: found}, nil
+	if !found {
+		return &types.QueryLinkedAddressResponse{Found: false}, nil
+	}
+	return &types.QueryLinkedAddressResponse{NewAddress: newAddr.String(), Found: true}, nil
 }
 
 // Admin implements the Query/Admin gRPC method: anyone can check which
@@ -45,5 +48,9 @@ func (q queryServer) Admin(ctx context.Context, req *types.QueryAdminRequest) (*
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
-	return &types.QueryAdminResponse{Admin: q.k.GetAdmin(ctx)}, nil
+	admin, ok := q.k.GetAdmin(ctx)
+	if !ok {
+		return &types.QueryAdminResponse{Admin: ""}, nil
+	}
+	return &types.QueryAdminResponse{Admin: admin.String()}, nil
 }

@@ -1,6 +1,7 @@
 package keeper
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
@@ -10,6 +11,8 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
+
+	"github.com/realiotech/realio-network/x/claim/types"
 )
 
 // maxDelegatorValidators bounds how many of the old address's delegations
@@ -29,6 +32,13 @@ const maxDelegatorValidators = 65535
 // safe, because x/blacklist only blocks OUTGOING transfers from a
 // blacklisted address, never a module account paying funds in. See
 // x/claim/README.md.
+//
+// Also deliberately out of scope, for a different reason: if old_address is
+// itself a validator's operator account, that validator's self-delegation
+// is left in place rather than migrated -- see migrateOneDelegation for why
+// (in short: it would silently and permanently defeat MinSelfDelegation
+// enforcement). Every other delegation old_address holds, including ones
+// to validators it does not operate, still migrates normally.
 //
 // Any reward this migration DOES pay out immediately (the merge case
 // below) always goes to the NEW address, never the old one: the whole
@@ -67,12 +77,37 @@ func (k Keeper) MigrateDelegations(ctx context.Context, oldAddr, newAddr sdk.Acc
 // two strategies below applies depends on whether newAddr already
 // delegates to valAddr -- see migrateDelegationMerge and
 // migrateDelegationFresh for why they have to differ.
+//
+// One case is refused up front, before either strategy runs: oldAddr being
+// valAddr's own operator account, i.e. this delegation is that validator's
+// self-bond. Native cosmos-sdk only enforces MinSelfDelegation/jailing
+// inside Unbond (see cosmos-sdk x/staking/keeper/delegation.go), keyed off
+// the delegator being the operator address -- a check this migration
+// deliberately never calls. Moving self-bond shares to newAddr would
+// permanently and silently defeat that safety net (newAddr is never the
+// operator, so no future native Unbond of these shares can trip the check
+// either) for essentially no MinSelfDelegation benefit today, since it's
+// left untouched, exactly as it was, for a deliberate follow-up decision
+// instead. This has no effect on the validator's own delegations to OTHER
+// validators, or on other delegators' migrations -- only this one
+// (oldAddr, valAddr) pair is left alone.
 func (k Keeper) migrateOneDelegation(
 	ctx context.Context,
 	oldAddr, newAddr sdk.AccAddress,
 	valAddr sdk.ValAddress,
 	oldDel stakingtypes.Delegation,
 ) error {
+	if bytes.Equal(oldAddr, valAddr) {
+		sdk.UnwrapSDKContext(ctx).EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeSkippedSelfDelegation,
+				sdk.NewAttribute(types.AttributeKeyOldAddress, oldAddr.String()),
+				sdk.NewAttribute(types.AttributeKeyValidator, valAddr.String()),
+			),
+		)
+		return nil
+	}
+
 	newDel, err := k.stakingKeeper.GetDelegation(ctx, newAddr, valAddr)
 	switch {
 	case err == nil:

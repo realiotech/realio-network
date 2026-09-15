@@ -106,15 +106,25 @@ func (am AppModule) InitGenesis(ctx sdk.Context, _ codec.JSONCodec, bz json.RawM
 		panic(err)
 	}
 
-	if err := am.keeper.SetAdmin(ctx, gs.Admin); err != nil {
-		panic(err)
+	if gs.Admin != "" {
+		adminAddr, err := sdk.AccAddressFromBech32(gs.Admin)
+		if err != nil {
+			panic(fmt.Errorf("invalid admin %q in %s genesis: %w", gs.Admin, types.ModuleName, err))
+		}
+		if err := am.keeper.SetAdmin(ctx, adminAddr); err != nil {
+			panic(err)
+		}
 	}
 	for _, link := range gs.Links {
 		oldAddr, err := sdk.AccAddressFromBech32(link.OldAddress)
 		if err != nil {
 			panic(fmt.Errorf("invalid old_address %q in %s genesis: %w", link.OldAddress, types.ModuleName, err))
 		}
-		if err := am.keeper.SetLink(ctx, oldAddr, link.NewAddress); err != nil {
+		newAddr, err := sdk.AccAddressFromBech32(link.NewAddress)
+		if err != nil {
+			panic(fmt.Errorf("invalid new_address %q in %s genesis: %w", link.NewAddress, types.ModuleName, err))
+		}
+		if err := am.keeper.SetLink(ctx, oldAddr, newAddr); err != nil {
 			panic(err)
 		}
 	}
@@ -125,7 +135,11 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, _ codec.JSONCodec) json.RawMe
 	if err != nil {
 		panic(err)
 	}
-	bz, err := json.Marshal(types.GenesisState{Admin: am.keeper.GetAdmin(ctx), Links: links})
+	adminStr := ""
+	if admin, ok := am.keeper.GetAdmin(ctx); ok {
+		adminStr = admin.String()
+	}
+	bz, err := json.Marshal(types.GenesisState{Admin: adminStr, Links: links})
 	if err != nil {
 		panic(err)
 	}

@@ -5,13 +5,15 @@ import "cosmos/msg/v1/msg.proto";
 
 option go_package = "github.com/realiotech/realio-network/x/claim/types";
 
-// Msg defines the Msg service. It exposes exactly one RPC: linking an old
+// Msg defines the Msg service. LinkAddress links one old
 // (leaked/compromised) address to the new address its holder registered
-// after re-doing KYC. Only the module's configured admin may call this —
-// there is no other way to create or change a link.
+// after re-doing KYC; LinkAddresses does the same for a batch in a single
+// message. Only the module's configured admin may call either — there is
+// no other way to create or change a link.
 service Msg {
   option (cosmos.msg.v1.service) = true;
   rpc LinkAddress(MsgLinkAddress) returns (MsgLinkAddressResponse);
+  rpc LinkAddresses(MsgLinkAddresses) returns (MsgLinkAddressesResponse);
 }
 
 message MsgLinkAddress {
@@ -31,3 +33,31 @@ message MsgLinkAddress {
 }
 
 message MsgLinkAddressResponse {}
+
+// LinkAddressPair is one old_address -> new_address pair within a
+// MsgLinkAddresses batch.
+message LinkAddressPair {
+  // old_address is the bech32 account address whose key is known to have
+  // leaked and which has completed re-KYC.
+  string old_address = 1;
+
+  // new_address is the bech32 account address the holder registered during
+  // re-KYC. Every active staking delegation old_address holds is migrated
+  // to new_address as part of processing this pair.
+  string new_address = 2;
+}
+
+message MsgLinkAddresses {
+  option (cosmos.msg.v1.signer) = "admin";
+  // admin is the address authorized to submit this message (the module's
+  // configured admin — see x/claim/keeper.Keeper.Admin).
+  string admin = 1;
+
+  // links is the batch of old_address -> new_address pairs to link and
+  // migrate, processed in order. A failure on any one pair (e.g. it was
+  // already linked) fails the whole message -- either every pair in the
+  // batch is applied, or none are.
+  repeated LinkAddressPair links = 2;
+}
+
+message MsgLinkAddressesResponse {}

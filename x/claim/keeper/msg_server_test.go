@@ -96,7 +96,7 @@ func (suite *KeeperTestSuite) TestLinkAddressValidation() {
 		suite.Run(tc.name, func() {
 			suite.SetupTest()
 			if tc.noAdmin {
-				suite.Require().NoError(suite.app.ClaimKeeper.SetAdmin(suite.ctx, ""))
+				suite.Require().NoError(suite.app.ClaimKeeper.SetAdmin(suite.ctx, nil))
 			}
 
 			srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
@@ -135,7 +135,7 @@ func (suite *KeeperTestSuite) TestLinkAddressNoDelegations() {
 
 	got, found := suite.app.ClaimKeeper.GetLink(suite.ctx, oldAddr)
 	suite.Require().True(found)
-	suite.Require().Equal(newAddr.String(), got)
+	suite.Require().Equal(newAddr, got)
 }
 
 // TestLinkAddressMigratesDelegation is the core behavioral test: an old
@@ -375,4 +375,138 @@ func (suite *KeeperTestSuite) TestLinkAddressFreshPreservesExactRewardAmount() {
 	suite.Require().NoError(err)
 	suite.Require().True(gotReward.Equal(wantReward),
 		"newAddr should inherit exactly what a rewards query against oldAddr showed pre-migration, got %s want %s", gotReward, wantReward)
+}
+
+// TestLinkAddressSkipsValidatorSelfDelegation covers the safety check added
+// to migrateOneDelegation: if old_address is itself a validator's operator
+// account, that validator's self-delegation must be left exactly where it
+// is, not migrated -- see migrateOneDelegation's doc comment for why
+// (moving it would silently and permanently defeat MinSelfDelegation/
+// jailing enforcement, since that check only fires for the operator
+// address itself). Self-bond remediation is deliberately deferred to a
+// separate follow-up, not handled by LinkAddress.
+func (suite *KeeperTestSuite) TestLinkAddressSkipsValidatorSelfDelegation() {
+	oldAddr := sdk.AccAddress(suite.validator)
+	newAddr := testutil.GenAddress()
+
+	selfDelBefore, err := suite.app.StakingKeeper.GetDelegation(suite.ctx, oldAddr, suite.validator)
+	suite.Require().NoError(err)
+	suite.Require().True(selfDelBefore.Shares.IsPositive())
+
+	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
+	_, err = srv.LinkAddress(suite.ctx, &types.MsgLinkAddress{
+		Admin:      suite.admin,
+		OldAddress: oldAddr.String(),
+		NewAddress: newAddr.String(),
+	})
+	suite.Require().NoError(err)
+
+	// The self-delegation is untouched: still under oldAddr, same shares.
+	selfDelAfter, err := suite.app.StakingKeeper.GetDelegation(suite.ctx, oldAddr, suite.validator)
+	suite.Require().NoError(err)
+	suite.Require().True(selfDelAfter.Shares.Equal(selfDelBefore.Shares))
+
+	// Nothing was created for newAddr on this validator.
+	_, err = suite.app.StakingKeeper.GetDelegation(suite.ctx, newAddr, suite.validator)
+	suite.Require().True(errors.Is(err, stakingtypes.ErrNoDelegation))
+
+	// The validator itself is unaffected -- still bonded, not jailed.
+	validator, err := suite.app.StakingKeeper.GetValidator(suite.ctx, suite.validator)
+	suite.Require().NoError(err)
+	suite.Require().Equal(stakingtypes.Bonded, validator.Status)
+	suite.Require().False(validator.Jailed)
+
+	// The skip was surfaced, not silent.
+	var found bool
+	for _, event := range suite.ctx.EventManager().Events() {
+		if event.Type != types.EventTypeSkippedSelfDelegation {
+			continue
+		}
+		found = true
+		for _, attr := range event.Attributes {
+			switch attr.Key {
+			case types.AttributeKeyOldAddress:
+				suite.Require().Equal(oldAddr.String(), attr.Value)
+			case types.AttributeKeyValidator:
+				suite.Require().Equal(suite.validator.String(), attr.Value)
+			}
+		}
+	}
+	suite.Require().True(found, "expected an %s event", types.EventTypeSkippedSelfDelegation)
+}
+
+// TestLinkAddressesBatch covers the plural, batch form of LinkAddress: one
+// message links several old_address/new_address pairs, each going through
+// the exact same checks and delegation migration as a standalone
+// LinkAddress call.
+func (suite *KeeperTestSuite) TestLinkAddressesBatch() {
+	oldA, newA := testutil.GenAddress(), testutil.GenAddress()
+	oldB, newB := testutil.GenAddress(), testutil.GenAddress()
+
+	suite.delegate(oldA, math.NewInt(1_000_000_000_000))
+	// oldB has no delegation at all -- exercises the no-op migration path
+	// (MigrateDelegations returns early) within a batch.
+
+	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
+	_, err := srv.LinkAddresses(suite.ctx, &types.MsgLinkAddresses{
+		Admin: suite.admin,
+		Links: []*types.LinkAddressPair{
+			{OldAddress: oldA.String(), NewAddress: newA.String()},
+			{OldAddress: oldB.String(), NewAddress: newB.String()},
+		},
+	})
+	suite.Require().NoError(err)
+
+	gotA, found := suite.app.ClaimKeeper.GetLink(suite.ctx, oldA)
+	suite.Require().True(found)
+	suite.Require().Equal(newA, gotA)
+	gotB, found := suite.app.ClaimKeeper.GetLink(suite.ctx, oldB)
+	suite.Require().True(found)
+	suite.Require().Equal(newB, gotB)
+
+	_, err = suite.app.StakingKeeper.GetDelegation(suite.ctx, oldA, suite.validator)
+	suite.Require().True(errors.Is(err, stakingtypes.ErrNoDelegation))
+	newDelA, err := suite.app.StakingKeeper.GetDelegation(suite.ctx, newA, suite.validator)
+	suite.Require().NoError(err)
+	suite.Require().True(newDelA.Shares.IsPositive())
+}
+
+// TestLinkAddressesFailsAtomically covers what happens when one pair in a
+// batch is invalid: the message must fail as a whole, not apply the pairs
+// that came before the bad one and skip the rest. This module doesn't
+// implement that rollback itself -- runMsgs (baseapp/baseapp.go) wraps an
+// entire transaction, msg included, in one branched store and only writes
+// it back if every message returns nil, so a real transaction gets this
+// for free. A raw keeper-level test bypasses that wrapping, so it's
+// reproduced by hand here with CacheContext to prove the property the real
+// call site relies on: the earlier, "successful" pair is visible on the
+// branch runMsgs would have (attemptCtx below) but never reaches the state
+// anyone else can observe once the branch is discarded on error.
+func (suite *KeeperTestSuite) TestLinkAddressesFailsAtomically() {
+	oldA, newA := testutil.GenAddress(), testutil.GenAddress()
+	oldB := testutil.GenAddress()
+	// Pre-link oldB under the real ctx so the second pair in the batch
+	// fails with "already linked".
+	suite.Require().NoError(suite.app.ClaimKeeper.SetLink(suite.ctx, oldB, testutil.GenAddress()))
+
+	attemptCtx, _ := suite.ctx.CacheContext()
+	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
+	_, err := srv.LinkAddresses(attemptCtx, &types.MsgLinkAddresses{
+		Admin: suite.admin,
+		Links: []*types.LinkAddressPair{
+			{OldAddress: oldA.String(), NewAddress: newA.String()},
+			{OldAddress: oldB.String(), NewAddress: testutil.GenAddress().String()},
+		},
+	})
+	suite.Require().ErrorContains(err, "already linked")
+
+	// The loop really did apply the first pair before hitting the second,
+	// failing one -- this module does not skip ahead or pre-validate the
+	// whole batch before applying anything.
+	suite.Require().True(suite.app.ClaimKeeper.IsLinked(attemptCtx, oldA))
+
+	// But since attemptCtx's branch was never written back (exactly what
+	// happens to runMsgs' branch when a message returns an error), nothing
+	// from this failed attempt is visible on suite.ctx.
+	suite.Require().False(suite.app.ClaimKeeper.IsLinked(suite.ctx, oldA))
 }

@@ -21,7 +21,7 @@ func (suite *KeeperTestSuite) TestQueryLinkedAddress() {
 	suite.Require().NoError(err)
 	suite.Require().False(res.Found)
 
-	suite.Require().NoError(suite.app.ClaimKeeper.SetLink(suite.ctx, oldAddr, newAddr.String()))
+	suite.Require().NoError(suite.app.ClaimKeeper.SetLink(suite.ctx, oldAddr, newAddr))
 
 	res, err = suite.queryClient.LinkedAddress(context.Background(), &types.QueryLinkedAddressRequest{OldAddress: oldAddr.String()})
 	suite.Require().NoError(err)

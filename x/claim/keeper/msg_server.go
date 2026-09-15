@@ -28,36 +28,86 @@ var _ types.MsgServer = msgServer{}
 // the same step -- see Keeper.MigrateDelegations. Only the module's
 // configured admin may call this.
 func (ms msgServer) LinkAddress(ctx context.Context, msg *types.MsgLinkAddress) (*types.MsgLinkAddressResponse, error) {
-	admin := ms.GetAdmin(ctx)
-	if admin == "" || admin != msg.Admin {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "invalid admin; expected %s, got %s", admin, msg.Admin)
-	}
-
-	oldAddr, err := sdk.AccAddressFromBech32(msg.OldAddress)
-	if err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid old_address %q: %s", msg.OldAddress, err)
-	}
-	newAddr, err := sdk.AccAddressFromBech32(msg.NewAddress)
-	if err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid new_address %q: %s", msg.NewAddress, err)
-	}
-	if oldAddr.Equals(newAddr) {
-		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "old_address and new_address must differ")
-	}
-	if ms.IsLinked(ctx, oldAddr) {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "old_address %s is already linked", msg.OldAddress)
-	}
-	if ms.IsLinked(ctx, newAddr) {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "new_address %s was itself claimed as someone else's old_address; link to its new address instead", msg.NewAddress)
-	}
-
-	if err := ms.SetLink(ctx, oldAddr, msg.NewAddress); err != nil {
+	if err := ms.checkAdmin(ctx, msg.Admin); err != nil {
 		return nil, err
 	}
 
-	if err := ms.MigrateDelegations(ctx, oldAddr, newAddr); err != nil {
-		return nil, errorsmod.Wrap(err, "migrating delegations")
+	if err := ms.linkOneAddress(ctx, msg.OldAddress, msg.NewAddress); err != nil {
+		return nil, err
 	}
 
 	return &types.MsgLinkAddressResponse{}, nil
+}
+
+// LinkAddresses is the batch form of LinkAddress: it applies every
+// old_address -> new_address pair in msg.Links, in order, under a single
+// admin check. Like any other message, a failure partway through fails the
+// whole transaction -- either every pair in the batch is applied, or none
+// are; there is no partial-batch state to reconcile.
+func (ms msgServer) LinkAddresses(ctx context.Context, msg *types.MsgLinkAddresses) (*types.MsgLinkAddressesResponse, error) {
+	if err := ms.checkAdmin(ctx, msg.Admin); err != nil {
+		return nil, err
+	}
+	if len(msg.Links) == 0 {
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "links must not be empty")
+	}
+
+	for i, link := range msg.Links {
+		if err := ms.linkOneAddress(ctx, link.OldAddress, link.NewAddress); err != nil {
+			return nil, errorsmod.Wrapf(err, "link %d (old_address %q)", i, link.OldAddress)
+		}
+	}
+
+	return &types.MsgLinkAddressesResponse{}, nil
+}
+
+// checkAdmin verifies msgAdmin (the bech32 admin field off an incoming
+// message) matches the module's configured admin.
+func (ms msgServer) checkAdmin(ctx context.Context, msgAdmin string) error {
+	admin, ok := ms.GetAdmin(ctx)
+	if !ok {
+		return errorsmod.Wrap(sdkerrors.ErrUnauthorized, "invalid admin; no admin configured")
+	}
+
+	msgAdminAddr, err := sdk.AccAddressFromBech32(msgAdmin)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid admin address %q: %s", msgAdmin, err)
+	}
+	if !admin.Equals(msgAdminAddr) {
+		return errorsmod.Wrapf(sdkerrors.ErrUnauthorized, "invalid admin; expected %s, got %s", admin, msgAdmin)
+	}
+	return nil
+}
+
+// linkOneAddress validates one old_address/new_address pair, records the
+// link, and migrates old_address's delegations to new_address. Shared by
+// LinkAddress and LinkAddresses so both go through identical checks.
+func (ms msgServer) linkOneAddress(ctx context.Context, oldAddrStr, newAddrStr string) error {
+	oldAddr, err := sdk.AccAddressFromBech32(oldAddrStr)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid old_address %q: %s", oldAddrStr, err)
+	}
+	newAddr, err := sdk.AccAddressFromBech32(newAddrStr)
+	if err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidAddress, "invalid new_address %q: %s", newAddrStr, err)
+	}
+	if oldAddr.Equals(newAddr) {
+		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "old_address and new_address must differ")
+	}
+	if ms.IsLinked(ctx, oldAddr) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "old_address %s is already linked", oldAddrStr)
+	}
+	if ms.IsLinked(ctx, newAddr) {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest, "new_address %s was itself claimed as someone else's old_address; link to its new address instead", newAddrStr)
+	}
+
+	if err := ms.SetLink(ctx, oldAddr, newAddr); err != nil {
+		return err
+	}
+
+	if err := ms.MigrateDelegations(ctx, oldAddr, newAddr); err != nil {
+		return errorsmod.Wrap(err, "migrating delegations")
+	}
+
+	return nil
 }
