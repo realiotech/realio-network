@@ -42,37 +42,59 @@ also moved (or there being none to move).
 ## Delegation migration — what moves and what doesn't
 
 **In scope:** active (bonded) delegations only, for both native `x/staking`
-and `x/multi-staking`. For each validator the old address delegates to,
-`migrateOneDelegation`:
+and `x/multi-staking`. `MigrateDelegations` sets the old address's
+distribution withdraw address to the new one up front (`SetDelegatorWithdrawAddr`,
+once per `LinkAddress` call, not per validator — it's a per-account
+setting) so that any reward payout this migration does trigger always
+lands on the new address, never the compromised old one. Then, for each
+validator the old address delegates to, `migrateOneDelegation` takes one
+of two paths depending on whether the new address already delegates to
+that same validator:
 
-1. Redirects the delegation's distribution withdraw address to the new
-   address (`SetDelegatorWithdrawAddr`), so any reward payout below is
-   credited there, never to the compromised old address.
-2. Flushes pending rewards and the old `(validator, oldAddr)`
-   `DelegatorStartingInfo` via `distrKeeper.Hooks().BeforeDelegationSharesModified`
-   — the same hook native `x/staking`'s `Unbond` calls before removing a
-   delegation.
-3. Removes the old delegation (`stakingKeeper.RemoveDelegation` — not
-   `Unbond`/`Undelegate`, which would also shrink the validator's total
-   tokens/shares).
-4. Re-creates the shares under the new address with `SetDelegation`
-   (merging into an existing delegation to the same validator if the new
-   address already has one), bracketed by the matching
-   `BeforeDelegationCreated`/`BeforeDelegationSharesModified` and
-   `AfterDelegationModified` hooks so `DelegatorStartingInfo` and the
-   historical-rewards reference counts stay correct. `SetDelegation` alone
-   moves no coins and doesn't touch the validator's aggregate
-   tokens/shares — only the bookkeeping key changes.
-5. Moves the backing `MultiStakingLock` (the escrowed original-denom coin a
-   bond-coin delegation represents), if any, from the old `LockID` to the
-   new one, merging into an existing lock if the new address already has
-   one for that validator.
+**No existing delegation on the new side (`migrateDelegationFresh`,
+the common case).** Rather than paying out the old delegation's pending
+reward as a side effect of the admin's `LinkAddress` call, its exact
+reward-accrual ledger — the `DelegatorStartingInfo` recording which
+historical reward period it last settled against — is carried over to the
+new address verbatim (`GetDelegatorStartingInfo` → `SetDelegatorStartingInfo`
+→ `DeleteDelegatorStartingInfo`, all called directly, bypassing
+distribution's hooks entirely). The new address can then withdraw
+whenever it likes, via the ordinary `MsgWithdrawDelegatorReward`, for
+exactly what had accrued — nothing paid out early, nothing lost. This is
+safe without touching the historical-rewards reference count (its
+increment/decrement functions are unexported in cosmos-sdk, and rightly
+so — callers aren't meant to manage it manually): relocating the ledger
+from the old address's key to the new one's doesn't change how many
+`DelegatorStartingInfo` entries point at that historical period, still
+exactly one, just under a different owner.
 
-This hook sequencing is load-bearing, not cosmetic — see the comment on
-`migrateOneDelegation` for exactly which cosmos-sdk source it mirrors.
-Getting the order wrong doesn't corrupt state silently; it surfaces later
-as a wrong reward calculation or a panic in distribution's reference-count
-bookkeeping (`panic("reference count should never exceed 2")`).
+**New side already has a delegation to that validator
+(`migrateDelegationMerge`).** Two independent reward-accrual ledgers can't
+be combined losslessly into the single `DelegatorStartingInfo` a merged
+delegation needs, so this path can't avoid a flush: both sides' pending
+rewards are paid out (to the new address) and the combined position starts
+fresh, via `distrKeeper.Hooks().BeforeDelegationSharesModified` /
+`AfterDelegationModified` — the same hooks native `x/staking`'s `Unbond`
+and `Delegate` call internally for the equivalent state changes. This
+isn't a weaker guarantee than an ordinary delegation gets: native
+`x/staking` flushes on every share change the same way.
+
+Either path then removes the old delegation
+(`stakingKeeper.RemoveDelegation` — not `Unbond`/`Undelegate`, which would
+also shrink the validator's total tokens/shares) and re-creates the shares
+under the new address with `SetDelegation`, which alone moves no coins and
+doesn't touch the validator's aggregate tokens/shares — only the
+bookkeeping key changes. Finally, `migrateMultiStakingLock` moves the
+backing `MultiStakingLock` (the escrowed original-denom coin a bond-coin
+delegation represents), if any, from the old `LockID` to the new one,
+merging into an existing lock if the new address already has one for that
+validator.
+
+The merge path's hook sequencing is load-bearing, not cosmetic — see the
+comment on `migrateDelegationMerge` for exactly which cosmos-sdk source it
+mirrors. Getting the order wrong doesn't corrupt state silently; it
+surfaces later as a wrong reward calculation or a panic in distribution's
+reference-count bookkeeping (`panic("reference count should never exceed 2")`).
 
 **Deliberately out of scope:** any unbonding delegation or in-flight
 redelegation the old address already has when it's linked is left
