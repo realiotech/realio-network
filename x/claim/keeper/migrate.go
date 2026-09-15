@@ -12,6 +12,7 @@ import (
 
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 
+	assettypes "github.com/realiotech/realio-network/x/asset/types"
 	"github.com/realiotech/realio-network/x/claim/types"
 )
 
@@ -242,6 +243,17 @@ func (k Keeper) migrateDelegationFresh(
 // found" when it matures. Skipped entirely if the old address never
 // locked a multi-staking coin for this validator (a delegation funded
 // directly in the native bond denom has no lock to move).
+//
+// Also authorizes newAddr in x/asset for the lock's denom: the lock's
+// LockedCoin is the actual asset newAddr now holds a claim on, so if that
+// denom happens to be a permissioned x/asset Token, newAddr needs to be on
+// its authorized list or it will hold the migrated stake but be unable to
+// ever transact it. Resolving denom to a Token symbol (via bank denom
+// metadata) and updating the authorized list uses only x/asset's existing
+// exports (the Token collection and Token.AuthorizeAddress) -- nothing new
+// is added to x/asset itself. A no-op if that denom isn't a registered
+// Token at all, which is the common case for a plain native-bond-denom
+// delegation.
 func (k Keeper) migrateMultiStakingLock(ctx context.Context, oldAddr, newAddr sdk.AccAddress, valAddr sdk.ValAddress) error {
 	oldLockID := multistakingtypes.MultiStakingLockID(oldAddr.String(), valAddr.String())
 	lock, found := k.multiStakingKeeper.GetMultiStakingLock(ctx, oldLockID)
@@ -256,5 +268,27 @@ func (k Keeper) migrateMultiStakingLock(ctx context.Context, oldAddr, newAddr sd
 		return err
 	}
 	k.multiStakingKeeper.SetMultiStakingLock(ctx, newLock)
-	return nil
+
+	return k.authorizeAssetForDenom(ctx, lock.LockedCoin.Denom, newAddr)
+}
+
+// authorizeAssetForDenom resolves denom to a Token symbol -- the same
+// bank-denom-metadata lookup x/asset's own AssetSendRestriction uses --
+// and, if a Token is registered under that symbol, authorizes addr to
+// transact it. Built entirely from x/asset's pre-existing exported
+// surface (the Token collection field and Token.AuthorizeAddress); no
+// method is added to x/asset for this.
+func (k Keeper) authorizeAssetForDenom(ctx context.Context, denom string, addr sdk.AccAddress) error {
+	symbol := denom
+	if md, found := k.bankKeeper.GetDenomMetaData(ctx, denom); found {
+		symbol = md.Symbol
+	}
+
+	token, err := k.assetKeeper.Token.Get(ctx, assettypes.TokenKey(symbol))
+	if err != nil {
+		return nil
+	}
+
+	token.AuthorizeAddress(addr)
+	return k.assetKeeper.Token.Set(ctx, assettypes.TokenKey(symbol), token)
 }

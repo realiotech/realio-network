@@ -12,6 +12,7 @@ import (
 
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 
+	assetkeeper "github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/claim/types"
 )
 
@@ -43,6 +44,8 @@ type Keeper struct {
 	stakingKeeper      *stakingkeeper.Keeper
 	distrKeeper        distrkeeper.Keeper
 	multiStakingKeeper multistakingkeeper.Keeper
+	assetKeeper        assetkeeper.Keeper
+	bankKeeper         types.BankKeeper
 }
 
 func NewKeeper(
@@ -50,6 +53,8 @@ func NewKeeper(
 	stakingKeeper *stakingkeeper.Keeper,
 	distrKeeper distrkeeper.Keeper,
 	multiStakingKeeper multistakingkeeper.Keeper,
+	assetKeeper assetkeeper.Keeper,
+	bankKeeper types.BankKeeper,
 ) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 	k := Keeper{
@@ -58,6 +63,8 @@ func NewKeeper(
 		stakingKeeper:      stakingKeeper,
 		distrKeeper:        distrKeeper,
 		multiStakingKeeper: multiStakingKeeper,
+		assetKeeper:        assetKeeper,
+		bankKeeper:         bankKeeper,
 	}
 
 	schema, err := sb.Build()

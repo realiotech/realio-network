@@ -13,6 +13,7 @@ import (
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 
 	"github.com/realiotech/realio-network/testutil"
+	assettypes "github.com/realiotech/realio-network/x/asset/types"
 	"github.com/realiotech/realio-network/x/claim/keeper"
 	"github.com/realiotech/realio-network/x/claim/types"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
@@ -509,4 +510,31 @@ func (suite *KeeperTestSuite) TestLinkAddressesFailsAtomically() {
 	// happens to runMsgs' branch when a message returns an error), nothing
 	// from this failed attempt is visible on suite.ctx.
 	suite.Require().False(suite.app.ClaimKeeper.IsLinked(suite.ctx, oldA))
+}
+
+// TestLinkAddressAuthorizesNewAddressForAssetDenom covers x/asset interop:
+// if the multi-staking coin backing a migrated delegation is registered as
+// a permissioned x/asset Token (AuthorizationRequired = true), newAddr
+// must come out of LinkAddress already authorized to transact it --
+// otherwise it would hold the migrated stake but be unable to ever move
+// it, the exact dead end LinkAddress exists to get people out of.
+func (suite *KeeperTestSuite) TestLinkAddressAuthorizesNewAddressForAssetDenom() {
+	oldAddr := testutil.GenAddress()
+	newAddr := testutil.GenAddress()
+
+	token := assettypes.NewToken("Ario", multiStakingCoinDenom, "1000000000000000000000000", suite.admin, true)
+	suite.Require().NoError(suite.app.AssetKeeper.Token.Set(suite.ctx, assettypes.TokenKey(multiStakingCoinDenom), token))
+
+	suite.delegate(oldAddr, math.NewInt(1_000_000_000_000))
+	suite.Require().False(suite.app.AssetKeeper.IsAddressAuthorizedToSend(suite.ctx, multiStakingCoinDenom, newAddr))
+
+	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
+	_, err := srv.LinkAddress(suite.ctx, &types.MsgLinkAddress{
+		Admin:      suite.admin,
+		OldAddress: oldAddr.String(),
+		NewAddress: newAddr.String(),
+	})
+	suite.Require().NoError(err)
+
+	suite.Require().True(suite.app.AssetKeeper.IsAddressAuthorizedToSend(suite.ctx, multiStakingCoinDenom, newAddr))
 }
