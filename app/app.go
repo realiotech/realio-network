@@ -351,12 +351,13 @@ type RealioNetwork struct {
 // for why) — app is the only side allowed to depend on both.
 func (app *RealioNetwork) MigrationKeepers() migrations.Keepers {
 	return migrations.Keepers{
-		StakingKeeper:   app.StakingKeeper,
-		AssetKeeper:     app.AssetKeeper,
-		BlacklistKeeper: app.BlacklistKeeper,
-		BridgeKeeper:    app.BridgeKeeper,
-		AuthzKeeper:     app.AuthzKeeper,
-		Erc20Keeper:     app.Erc20Keeper,
+		StakingKeeper:      app.StakingKeeper,
+		MultiStakingKeeper: app.MultiStakingKeeper,
+		AssetKeeper:        app.AssetKeeper,
+		BlacklistKeeper:    app.BlacklistKeeper,
+		BridgeKeeper:       app.BridgeKeeper,
+		AuthzKeeper:        app.AuthzKeeper,
+		Erc20Keeper:        app.Erc20Keeper,
 
 		Codec:           app.appCodec,
 		StakingStoreKey: app.keys[stakingtypes.StoreKey],
@@ -602,6 +603,8 @@ func New(
 		app.StakingKeeper,
 		app.DistrKeeper,
 		app.MultiStakingKeeper,
+		app.AssetKeeper,
+		app.BankKeeper,
 	)
 
 	// Add transfer restrictions
