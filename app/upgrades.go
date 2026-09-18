@@ -153,6 +153,9 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 	if upgradeInfo.Name == v6.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
 		candidates = append(candidates, heightStoreUpgrade{height: upgradeInfo.Height, upgrades: v6.V6StoreUpgrades})
 	}
+	if upgradeInfo.Name == v8.UpgradeName && !app.UpgradeKeeper.IsSkipHeight(upgradeInfo.Height) {
+		candidates = append(candidates, heightStoreUpgrade{height: upgradeInfo.Height, upgrades: v8.V8StoreUpgrades})
+	}
 
 	app.SetStoreLoader(newStoreLoader(candidates))
 }
