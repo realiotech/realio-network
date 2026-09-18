@@ -203,3 +203,102 @@ func TestRedelegateLeakedValidatorsAgainstRealGenesis(t *testing.T) {
 			r.OldVal, r.NewVal, len(pre[i].delegators), oldValidator.Jailed, newValidator.Tokens.String())
 	}
 }
+
+// TestRedelegatedStakeStillSlashableForPreMigrationInfraction answers a
+// question this migration's design leans on but doesn't itself exercise:
+// what happens if evidence of the leaked validator's misbehavior (e.g. a
+// double-sign) surfaces *after* this migration already moved its delegators'
+// stake to the replacement validator? Because redelegateOneDelegation goes
+// through the real MsgBeginRedelegate path (see the package doc comment),
+// the answer comes from ordinary cosmos-sdk redelegation-slashing semantics,
+// not from any special-casing in this package: x/staking's SlashRedelegation
+// burns a redelegation entry whenever the infraction height is at or before
+// the entry's CreationHeight (the height RedelegateLeakedValidators ran at).
+// So stake that was still backing the leaked validator at the time of the
+// infraction stays liable for it even though it now sits with the
+// replacement validator -- a delegator can't outrun a slash for something
+// that already happened just because this migration moved them afterwards.
+func TestRedelegatedStakeStillSlashableForPreMigrationInfraction(t *testing.T) {
+	realioApp, _, initialHeight, proposerAddr, blockTime := app.SetupWithRealGenesis(t)
+	ctx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
+
+	rotations := rotationToTestValidators(t, realioApp, ctx)
+
+	// Snapshot each old validator's consensus address + power *before* the
+	// migration drains it -- this is what a real double-sign evidence
+	// submission would reference for an infraction that predates the move.
+	// Also pick one real, non-operator delegator per old validator so the
+	// assertions below can check a specific innocent delegator's stake, not
+	// just the replacement validator's aggregate total.
+	type target struct {
+		oldVal, newVal sdk.ValAddress
+		consAddr       sdk.ConsAddress
+		power          int64
+		delegator      sdk.AccAddress
+	}
+	targets := make([]target, 0, len(rotations))
+	for _, r := range rotations {
+		v, err := realioApp.StakingKeeper.GetValidator(ctx, r.OldVal)
+		require.NoError(t, err)
+		consAddrBz, err := v.GetConsAddr()
+		require.NoError(t, err)
+
+		dels, err := realioApp.StakingKeeper.GetValidatorDelegations(ctx, r.OldVal)
+		require.NoError(t, err)
+		operatorAddr := sdk.AccAddress(r.OldVal).String()
+		var delegator sdk.AccAddress
+		found := false
+		for _, d := range dels {
+			if d.DelegatorAddress == operatorAddr {
+				continue
+			}
+			delegator, err = sdk.AccAddressFromBech32(d.DelegatorAddress)
+			require.NoError(t, err)
+			found = true
+			break
+		}
+		require.True(t, found, "expected %s to have at least one non-operator delegator in the real genesis", r.OldVal)
+
+		targets = append(targets, target{
+			oldVal:    r.OldVal,
+			newVal:    r.NewVal,
+			consAddr:  sdk.ConsAddress(consAddrBz),
+			power:     v.ConsensusPower(sdk.DefaultPowerReduction),
+			delegator: delegator,
+		})
+	}
+
+	migrations.RedelegateLeakedValidators(realioApp.MigrationKeepers(), ctx)
+	redelegationHeight := ctx.BlockHeight()
+	slashFactor := math.LegacyNewDecWithPrec(5, 2) // 5%
+
+	for _, tg := range targets {
+		newValBefore, err := realioApp.StakingKeeper.GetValidator(ctx, tg.newVal)
+		require.NoError(t, err)
+		delBefore, err := realioApp.StakingKeeper.GetDelegation(ctx, tg.delegator, tg.newVal)
+		require.NoError(t, err)
+		tokensBefore := newValBefore.TokensFromShares(delBefore.Shares)
+
+		// The scenario this test exists for: a double-sign by the leaked
+		// validator at a height well before the migration only gets
+		// reported (evidence submitted) now, after the redelegation.
+		infractionHeight := redelegationHeight - 100
+		_, err = realioApp.StakingKeeper.Slash(ctx, tg.consAddr, infractionHeight, tg.power, slashFactor)
+		require.NoError(t, err)
+
+		newValAfter, err := realioApp.StakingKeeper.GetValidator(ctx, tg.newVal)
+		require.NoError(t, err)
+		require.True(t, newValAfter.Tokens.LT(newValBefore.Tokens),
+			"expected %s's total tokens to drop from a slash for %s's pre-migration infraction", tg.newVal, tg.oldVal)
+
+		delAfter, err := realioApp.StakingKeeper.GetDelegation(ctx, tg.delegator, tg.newVal)
+		require.NoError(t, err)
+		tokensAfter := newValAfter.TokensFromShares(delAfter.Shares)
+		require.True(t, tokensAfter.LT(tokensBefore),
+			"expected non-operator delegator %s's own redelegated stake on %s to be burned for %s's pre-migration infraction, not just the validator's aggregate total",
+			tg.delegator, tg.newVal, tg.oldVal)
+
+		t.Logf("validator %s -> %s: retroactive slash for a pre-redelegation infraction (height %d) burned delegator %s from %s to %s tokens",
+			tg.oldVal, tg.newVal, infractionHeight, tg.delegator, tokensBefore, tokensAfter)
+	}
+}
