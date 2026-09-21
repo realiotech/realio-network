@@ -11,16 +11,16 @@ import (
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v1.8.0. Its only
-// non-standard step is RedelegateLeakedValidators (app/migrations/
-// leaked_validator_redelegation.go): every delegation on each of the two
-// leaked validators -- including their own operator self-bond -- gets
-// redelegated to its replacement, through the real MsgBeginRedelegate path
-// (not a x/claim-style re-key), so it goes through the exact same checks
-// and safety nets an ordinary redelegation does. That function panics if
-// LeakedValidatorRedelegations still has an empty NewValidator entry, which
-// halts this upgrade rather than silently completing it half-configured --
-// the real replacement validator addresses must be filled in there before
-// this upgrade is proposed.
+// non-standard step is RotateValidators (app/migrations/
+// validator_rotation.go): every delegation on each validator being rotated
+// out -- including its own operator self-bond -- gets redelegated to its
+// replacement, through the real MsgBeginRedelegate path (not a x/claim-style
+// re-key), so it goes through the exact same checks and safety nets an
+// ordinary redelegation does. That function panics if ValidatorRotations
+// still has an empty NewValidator entry, which halts this upgrade rather
+// than silently completing it half-configured -- the real replacement
+// validator addresses must be filled in there before this upgrade is
+// proposed.
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	cfg module.Configurator,
@@ -30,7 +30,7 @@ func CreateUpgradeHandler(
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 		sdkCtx.Logger().Info("Starting upgrade for v1.8.0...")
 
-		migrations.RedelegateLeakedValidators(migrationKeepers, sdkCtx)
+		migrations.RotateValidators(migrationKeepers, sdkCtx)
 
 		return mm.RunMigrations(ctx, cfg, vm)
 	}

@@ -53,17 +53,17 @@ func createTestValidator(t *testing.T, realioApp *app.RealioNetwork, ctx sdk.Con
 	return valAddr
 }
 
-// rotationToTestValidators overwrites migrations.LeakedValidatorRedelegations
-// (restored via t.Cleanup) so every real leaked-validator entry points at a
-// freshly-created stand-in validator instead of its blank/real NewValidator
-// -- the real replacement addresses aren't known to this codebase yet.
-// Returns the old/new ValAddress pairs actually used, in the same order.
+// rotationToTestValidators overwrites migrations.ValidatorRotations
+// (restored via t.Cleanup) so every real entry points at a freshly-created
+// stand-in validator instead of its blank/real NewValidator -- the real
+// replacement addresses aren't known to this codebase yet. Returns the
+// old/new ValAddress pairs actually used, in the same order.
 func rotationToTestValidators(t *testing.T, realioApp *app.RealioNetwork, ctx sdk.Context) []struct{ OldVal, NewVal sdk.ValAddress } {
 	t.Helper()
 
-	origRotations := migrations.LeakedValidatorRedelegations
-	t.Cleanup(func() { migrations.LeakedValidatorRedelegations = origRotations })
-	require.Len(t, origRotations, 2, "expected exactly the two known real leaked validators")
+	origRotations := migrations.ValidatorRotations
+	t.Cleanup(func() { migrations.ValidatorRotations = origRotations })
+	require.Len(t, origRotations, 2, "expected exactly the two known validators pending rotation")
 
 	out := make([]struct{ OldVal, NewVal sdk.ValAddress }, len(origRotations))
 	newRotations := make([]struct {
@@ -84,18 +84,18 @@ func rotationToTestValidators(t *testing.T, realioApp *app.RealioNetwork, ctx sd
 			NewValidator string
 		}{OldValidator: r.OldValidator, NewValidator: newVal.String()}
 	}
-	migrations.LeakedValidatorRedelegations = newRotations
+	migrations.ValidatorRotations = newRotations
 	return out
 }
 
-// TestV18UpgradeRedelegatesLeakedValidatorsAgainstRealGenesis proves the
-// wiring, not just the underlying logic: scheduling and applying the real
-// v1.8.0 upgrade plan through app.UpgradeKeeper (the same path a live chain
-// takes for a governance-approved software upgrade) must actually invoke
-// RedelegateLeakedValidators, not just have it available to call directly.
-// Mirrors the existing TestCommissionUpgrade pattern (app/upgrades_test.go)
-// for exercising a registered upgrade handler end-to-end.
-func TestV18UpgradeRedelegatesLeakedValidatorsAgainstRealGenesis(t *testing.T) {
+// TestV18UpgradeRotatesValidatorsAgainstRealGenesis proves the wiring, not
+// just the underlying logic: scheduling and applying the real v1.8.0
+// upgrade plan through app.UpgradeKeeper (the same path a live chain takes
+// for a governance-approved software upgrade) must actually invoke
+// RotateValidators, not just have it available to call directly. Mirrors
+// the existing TestCommissionUpgrade pattern (app/upgrades_test.go) for
+// exercising a registered upgrade handler end-to-end.
+func TestV18UpgradeRotatesValidatorsAgainstRealGenesis(t *testing.T) {
 	realioApp, _, initialHeight, proposerAddr, blockTime := app.SetupWithRealGenesis(t)
 	ctx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
 
@@ -119,16 +119,16 @@ func TestV18UpgradeRedelegatesLeakedValidatorsAgainstRealGenesis(t *testing.T) {
 	}
 }
 
-// TestRedelegateLeakedValidatorsAgainstRealGenesis runs
-// RedelegateLeakedValidators against the real pre-incident genesis for the
-// two real leaked validators — the actual scenario this migration exists
-// for, not a synthetic fixture. Since the real replacement validators
-// aren't known to this codebase yet (LeakedValidatorRedelegations ships
-// with NewValidator left blank), this test points both entries at
-// freshly-created stand-in validators for the duration of the test, so the
-// redelegation MECHANICS get verified against real delegator/lock/share
-// data even though the real destination addresses are still pending.
-func TestRedelegateLeakedValidatorsAgainstRealGenesis(t *testing.T) {
+// TestRotateValidatorsAgainstRealGenesis runs RotateValidators against the
+// real genesis for the two validators this migration targets — the actual
+// scenario it exists for, not a synthetic fixture. Since the real
+// replacement validators aren't known to this codebase yet
+// (ValidatorRotations ships with NewValidator left blank), this test points
+// both entries at freshly-created stand-in validators for the duration of
+// the test, so the redelegation MECHANICS get verified against real
+// delegator/lock/share data even though the real destination addresses are
+// still pending.
+func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 	realioApp, _, initialHeight, proposerAddr, blockTime := app.SetupWithRealGenesis(t)
 	ctx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
 
@@ -158,10 +158,10 @@ func TestRedelegateLeakedValidatorsAgainstRealGenesis(t *testing.T) {
 			}
 		}
 		pre[i] = preState{delegators: addrs, operatorAddr: operatorAddr, hadOperator: hadOperator}
-		t.Logf("validator %s: %d real delegators before redelegation (operator self-bond present: %v)", r.OldVal, len(addrs), hadOperator)
+		t.Logf("validator %s: %d real delegators before rotation (operator self-bond present: %v)", r.OldVal, len(addrs), hadOperator)
 	}
 
-	migrations.RedelegateLeakedValidators(realioApp.MigrationKeepers(), ctx)
+	migrations.RotateValidators(realioApp.MigrationKeepers(), ctx)
 
 	for i, r := range rotations {
 		// Old validator: every delegation gone (redelegated away in full),
@@ -172,11 +172,11 @@ func TestRedelegateLeakedValidatorsAgainstRealGenesis(t *testing.T) {
 
 		oldValidator, err := realioApp.StakingKeeper.GetValidator(ctx, r.OldVal)
 		require.NoError(t, err)
-		require.True(t, oldValidator.Tokens.IsZero(), "expected %s to have zero tokens left after redelegation", r.OldVal)
+		require.True(t, oldValidator.Tokens.IsZero(), "expected %s to have zero tokens left after rotation", r.OldVal)
 
 		if pre[i].hadOperator {
 			require.True(t, oldValidator.Jailed,
-				"expected %s to be auto-jailed once its own self-bond (included in this redelegation) dropped below MinSelfDelegation", r.OldVal)
+				"expected %s to be auto-jailed once its own self-bond (included in this rotation) dropped below MinSelfDelegation", r.OldVal)
 		}
 
 		// New validator: received it all.
@@ -204,21 +204,22 @@ func TestRedelegateLeakedValidatorsAgainstRealGenesis(t *testing.T) {
 	}
 }
 
-// TestRedelegatedStakeStillSlashableForPreMigrationInfraction answers a
-// question this migration's design leans on but doesn't itself exercise:
-// what happens if evidence of the leaked validator's misbehavior (e.g. a
-// double-sign) surfaces *after* this migration already moved its delegators'
-// stake to the replacement validator? Because redelegateOneDelegation goes
-// through the real MsgBeginRedelegate path (see the package doc comment),
-// the answer comes from ordinary cosmos-sdk redelegation-slashing semantics,
-// not from any special-casing in this package: x/staking's SlashRedelegation
-// burns a redelegation entry whenever the infraction height is at or before
-// the entry's CreationHeight (the height RedelegateLeakedValidators ran at).
-// So stake that was still backing the leaked validator at the time of the
-// infraction stays liable for it even though it now sits with the
-// replacement validator -- a delegator can't outrun a slash for something
-// that already happened just because this migration moved them afterwards.
-func TestRedelegatedStakeStillSlashableForPreMigrationInfraction(t *testing.T) {
+// TestRotatedStakeStillSlashableForPriorInfraction answers a question this
+// migration's design leans on but doesn't itself exercise: what happens if
+// evidence of the outgoing validator's misbehavior (e.g. a double-sign)
+// surfaces *after* this migration already moved its delegators' stake to
+// the replacement validator? Because redelegateOneDelegation goes through
+// the real MsgBeginRedelegate path (see the package doc comment), the
+// answer comes from ordinary cosmos-sdk redelegation-slashing semantics,
+// not from any special-casing in this package: x/staking's
+// SlashRedelegation burns a redelegation entry whenever the infraction
+// height is at or before the entry's CreationHeight (the height
+// RotateValidators ran at). So stake that was still backing the outgoing
+// validator at the time of the infraction stays liable for it even though
+// it now sits with the replacement validator -- a delegator can't outrun a
+// slash for something that already happened just because this migration
+// moved them afterwards.
+func TestRotatedStakeStillSlashableForPriorInfraction(t *testing.T) {
 	realioApp, _, initialHeight, proposerAddr, blockTime := app.SetupWithRealGenesis(t)
 	ctx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
 
@@ -268,8 +269,8 @@ func TestRedelegatedStakeStillSlashableForPreMigrationInfraction(t *testing.T) {
 		})
 	}
 
-	migrations.RedelegateLeakedValidators(realioApp.MigrationKeepers(), ctx)
-	redelegationHeight := ctx.BlockHeight()
+	migrations.RotateValidators(realioApp.MigrationKeepers(), ctx)
+	rotationHeight := ctx.BlockHeight()
 	slashFactor := math.LegacyNewDecWithPrec(5, 2) // 5%
 
 	for _, tg := range targets {
@@ -279,26 +280,26 @@ func TestRedelegatedStakeStillSlashableForPreMigrationInfraction(t *testing.T) {
 		require.NoError(t, err)
 		tokensBefore := newValBefore.TokensFromShares(delBefore.Shares)
 
-		// The scenario this test exists for: a double-sign by the leaked
+		// The scenario this test exists for: a double-sign by the outgoing
 		// validator at a height well before the migration only gets
 		// reported (evidence submitted) now, after the redelegation.
-		infractionHeight := redelegationHeight - 100
+		infractionHeight := rotationHeight - 100
 		_, err = realioApp.StakingKeeper.Slash(ctx, tg.consAddr, infractionHeight, tg.power, slashFactor)
 		require.NoError(t, err)
 
 		newValAfter, err := realioApp.StakingKeeper.GetValidator(ctx, tg.newVal)
 		require.NoError(t, err)
 		require.True(t, newValAfter.Tokens.LT(newValBefore.Tokens),
-			"expected %s's total tokens to drop from a slash for %s's pre-migration infraction", tg.newVal, tg.oldVal)
+			"expected %s's total tokens to drop from a slash for %s's pre-rotation infraction", tg.newVal, tg.oldVal)
 
 		delAfter, err := realioApp.StakingKeeper.GetDelegation(ctx, tg.delegator, tg.newVal)
 		require.NoError(t, err)
 		tokensAfter := newValAfter.TokensFromShares(delAfter.Shares)
 		require.True(t, tokensAfter.LT(tokensBefore),
-			"expected non-operator delegator %s's own redelegated stake on %s to be burned for %s's pre-migration infraction, not just the validator's aggregate total",
+			"expected non-operator delegator %s's own redelegated stake on %s to be burned for %s's pre-rotation infraction, not just the validator's aggregate total",
 			tg.delegator, tg.newVal, tg.oldVal)
 
-		t.Logf("validator %s -> %s: retroactive slash for a pre-redelegation infraction (height %d) burned delegator %s from %s to %s tokens",
+		t.Logf("validator %s -> %s: retroactive slash for a pre-rotation infraction (height %d) burned delegator %s from %s to %s tokens",
 			tg.oldVal, tg.newVal, infractionHeight, tg.delegator, tokensBefore, tokensAfter)
 	}
 }
