@@ -2,6 +2,7 @@ package v8
 
 import (
 	"fmt"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
@@ -54,6 +55,10 @@ var ValidatorRotations = []struct {
 // self-bond last, purely for readability (native Unbond doesn't refuse to
 // unbond from an already-jailed validator, so processing order has no
 // effect on correctness here).
+//
+// One kind of delegation is deliberately not moved: a delegator with a
+// redelegation still in progress INTO the outgoing validator is skipped and
+// logged (the reasoning is at the skip in redelegateOneDelegation).
 func RotateValidators(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, multiStakingKeeper multistakingkeeper.Keeper) {
 	msMsgServer := multistakingkeeper.NewMsgServerImpl(multiStakingKeeper)
 
@@ -86,21 +91,85 @@ func redelegateOneValidator(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper
 			operatorDel = &delegations[i]
 			continue
 		}
-		redelegateOneDelegation(ctx, multiStakingKeeper, msMsgServer, delegations[i], oldValStr, newValStr)
+		redelegateOneDelegation(ctx, stakingKeeper, multiStakingKeeper, msMsgServer, delegations[i], oldValStr, newValStr)
 	}
 	if operatorDel != nil {
-		redelegateOneDelegation(ctx, multiStakingKeeper, msMsgServer, *operatorDel, oldValStr, newValStr)
+		redelegateOneDelegation(ctx, stakingKeeper, multiStakingKeeper, msMsgServer, *operatorDel, oldValStr, newValStr)
 	}
 }
 
-func redelegateOneDelegation(ctx sdk.Context, multiStakingKeeper multistakingkeeper.Keeper, msMsgServer stakingtypes.MsgServer, del stakingtypes.Delegation, oldValStr, newValStr string) {
+// redelegateOneDelegation moves one delegation off the outgoing validator,
+// unless the delegator has a redelegation in progress into it (see below).
+func redelegateOneDelegation(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, multiStakingKeeper multistakingkeeper.Keeper, msMsgServer stakingtypes.MsgServer, del stakingtypes.Delegation, oldValStr, newValStr string) {
 	lockID := multistakingtypes.MultiStakingLockID(del.DelegatorAddress, oldValStr)
 	lock, found := multiStakingKeeper.GetMultiStakingLock(ctx, lockID)
 	if !found {
 		panic(fmt.Errorf("validator rotation: no multi-staking lock for delegator %s on %s", del.DelegatorAddress, oldValStr))
 	}
 
-	_, err := msMsgServer.BeginRedelegate(ctx, &stakingtypes.MsgBeginRedelegate{
+	delAddr, err := sdk.AccAddressFromBech32(del.DelegatorAddress)
+	if err != nil {
+		panic(fmt.Errorf("validator rotation: invalid delegator address %q: %w", del.DelegatorAddress, err))
+	}
+	oldVal, err := sdk.ValAddressFromBech32(oldValStr)
+	if err != nil {
+		panic(fmt.Errorf("validator rotation: invalid old validator %q: %w", oldValStr, err))
+	}
+
+	// This has to be checked up front, not by catching BeginRedelegate's error
+	// afterwards: the multistaking msg server moves the lock between the two
+	// validators before calling into x/staking, and an upgrade handler has no
+	// per-message rollback, so a failed attempt would leave a lock moved with
+	// no delegation behind it.
+	receiving, err := stakingKeeper.HasReceivingRedelegation(ctx, delAddr, oldVal)
+	if err != nil {
+		panic(fmt.Errorf("validator rotation: failed to check redelegations into %s for %s: %w", oldValStr, del.DelegatorAddress, err))
+	}
+	if receiving {
+		// Skip this delegation, and log it, rather than move it or halt.
+		//
+		// x/staking refuses to redelegate stake out of a validator the
+		// delegator is currently receiving a redelegation into
+		// (ErrTransitiveRedelegation). The rule is what lets a slash follow
+		// stake one hop, so evidence against the validator the stake came from
+		// can still reach it. Anyone can put themselves in this state during
+		// the unbonding period before the upgrade, deliberately or not, so it
+		// has to be handled rather than assumed away. The alternatives are
+		// worse:
+		//   - panicking would halt the chain at the upgrade height, letting
+		//     one small redelegation block the whole upgrade;
+		//   - deleting or rewriting the delegator's redelegation record has no
+		//     supported path in x/staking, leaves the redelegation queue and
+		//     unbonding-id index pointing at nothing, and drops the trail a
+		//     later slash would follow.
+		//
+		// Skipping costs nothing permanent: the stake stays where it is, and
+		// once the earlier redelegation matures (one unbonding period) the
+		// delegator can move or unbond it themselves. The log is at error level
+		// with the delegator, amount and the time it unblocks, so it can be
+		// followed up.
+		//
+		// It is also safe because of who can end up here. Starting a
+		// redelegation takes a signed transaction, and x/blacklist rejects
+		// every transaction signed by a blacklisted address
+		// (app/ante/blacklist.go). So a blacklisted delegator -- which covers
+		// the outgoing operators' own self-bonds and a large share of the stake
+		// being rotated -- can never have a redelegation in progress, and is
+		// always moved. Only accounts able to sign, that is, not blacklisted,
+		// can be skipped, and those are exactly the accounts able to
+		// redelegate or unbond by themselves later. (The one gap: an address
+		// that governance blacklists after it redelegated, inside that same
+		// unbonding window, is skipped and cannot move itself until it is
+		// removed from the blacklist.)
+		ctx.Logger().Error("validator rotation: skipping delegation, delegator has a redelegation in progress into the outgoing validator",
+			"delegator", del.DelegatorAddress,
+			"old_validator", oldValStr,
+			"amount", lock.LockedCoin.String(),
+			"movable_after", latestIncomingRedelegationCompletion(ctx, stakingKeeper, delAddr, oldValStr))
+		return
+	}
+
+	_, err = msMsgServer.BeginRedelegate(ctx, &stakingtypes.MsgBeginRedelegate{
 		DelegatorAddress:    del.DelegatorAddress,
 		ValidatorSrcAddress: oldValStr,
 		ValidatorDstAddress: newValStr,
@@ -109,4 +178,27 @@ func redelegateOneDelegation(ctx sdk.Context, multiStakingKeeper multistakingkee
 	if err != nil {
 		panic(fmt.Errorf("validator rotation: failed to redelegate %s from %s to %s: %w", del.DelegatorAddress, oldValStr, newValStr, err))
 	}
+}
+
+// latestIncomingRedelegationCompletion returns when the last redelegation
+// from any validator into oldValStr completes for delAddr, i.e. when the
+// stake it blocks becomes movable. Purely informational, for the log; it
+// returns the zero time if the redelegations can't be read.
+func latestIncomingRedelegationCompletion(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, delAddr sdk.AccAddress, oldValStr string) time.Time {
+	reds, err := stakingKeeper.GetRedelegations(ctx, delAddr, 1000)
+	if err != nil {
+		return time.Time{}
+	}
+	var latest time.Time
+	for _, red := range reds {
+		if red.ValidatorDstAddress != oldValStr {
+			continue
+		}
+		for _, e := range red.Entries {
+			if e.CompletionTime.After(latest) {
+				latest = e.CompletionTime
+			}
+		}
+	}
+	return latest
 }

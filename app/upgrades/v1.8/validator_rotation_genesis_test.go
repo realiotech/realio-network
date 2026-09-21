@@ -1,13 +1,16 @@
 package v8_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
+	"strings"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/require"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -17,6 +20,7 @@ import (
 
 	"github.com/realiotech/realio-network/app"
 	v8 "github.com/realiotech/realio-network/app/upgrades/v1.8"
+	minttypes "github.com/realiotech/realio-network/x/mint/types"
 )
 
 // genesisDelegationCounts reads rotationGenesisPath directly (independent of
@@ -148,6 +152,24 @@ func TestRotateValidatorsGenesisStateDetail(t *testing.T) {
 			"%s exchange rate drifted from 1:1", newValStr)
 
 		newCoin := realioApp.MultiStakingKeeper.GetValidatorMultiStakingCoin(ctx, r.NewVal)
+
+		// A blacklisted account can't sign anything, so it can never have a
+		// redelegation in progress that would get it skipped: the outgoing
+		// operator and every blacklisted delegator must have moved.
+		require.True(t, realioApp.BlacklistKeeper.IsBlacklisted(ctx, sdk.AccAddress(r.OldVal)),
+			"fixture assumption: the outgoing operator %s is blacklisted", oldValStr)
+		blacklistedMoved := 0
+		for _, s := range pre[i] {
+			who := s.delegator.String()
+			if realioApp.BlacklistKeeper.IsBlacklisted(ctx, s.delegator) {
+				_, err := realioApp.StakingKeeper.GetDelegation(ctx, s.delegator, r.NewVal)
+				require.NoErrorf(t, err, "blacklisted delegator %s was not moved to %s", who, newValStr)
+				blacklistedMoved++
+			}
+		}
+		require.NotZero(t, blacklistedMoved, "fixture assumption: some delegators on %s are blacklisted", oldValStr)
+		t.Logf("validator %s: operator and %d blacklisted delegator(s) moved like everyone else", oldValStr, blacklistedMoved)
+
 		for _, s := range pre[i] {
 			who := s.delegator.String()
 
@@ -279,6 +301,12 @@ const replacementSelfBond = 1_000_000_000_000 // what createTestValidator self-b
 // SDK truncates each conversion, so a payout can be a unit or two light; that
 // is ordinary x/staking rounding, not value lost by the rotation.
 const payoutRoundingTolerance = 10
+
+// mergePayoutRoundingTolerance is the same allowance for a position that went
+// through more conversions: delegate, redelegate-merge, a slash that unbonds
+// shares, then a full unbond (measured worst case on this genesis: 12 units,
+// on positions of 1e21 units and up).
+const mergePayoutRoundingTolerance = 50
 
 // rotateAndUnbondEverything rotates the validators, then has every moved
 // delegator undelegate everything from the replacement through the real
@@ -525,4 +553,341 @@ func TestSlashAfterRotatedDelegatorsUnbondedEverything(t *testing.T) {
 				s.delegator, expectedBalance[key], run.coins[i], payoutRoundingTolerance, balanceBefore[key].Amount, after.Amount)
 		}
 	}
+}
+
+// TestRotateValidatorsMergesIntoExistingDelegation covers delegators who
+// already hold a delegation on the replacement validator when the rotation
+// moves their old stake onto it: half of the moved delegators are given such
+// a position first, so the redelegation has to merge into it.
+//
+// It checks the merge itself (amounts, locks, one redelegation entry for just
+// the moved part), then that a pre-rotation slash reaches only the moved part
+// and never the pre-existing position, and finally that the merged positions
+// can be unbonded in full and pay back exactly what is left.
+func TestRotateValidatorsMergesIntoExistingDelegation(t *testing.T) {
+	realioApp, _, initialHeight, proposerAddr, blockTime := setupRotationGenesis(t)
+	ctx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
+
+	rotations := rotationToTestValidators(t, realioApp, ctx)
+	msMsgServer := multistakingkeeper.NewMsgServerImpl(realioApp.MultiStakingKeeper)
+
+	type mover struct {
+		delegator      sdk.AccAddress
+		moved          math.Int // tokens leaving the outgoing validator
+		movedLock      math.Int
+		existing       math.Int // tokens already on the replacement, 0 if none
+		existingLock   math.Int
+		afterRotation  math.Int
+		afterSlash     math.Int
+		balanceBeforeM math.Int
+	}
+	movers := make([][]*mover, len(rotations))
+	consAddrs := make([]sdk.ConsAddress, len(rotations))
+	powers := make([]int64, len(rotations))
+	coins := make([]string, len(rotations))
+	merged := 0
+
+	for i, r := range rotations {
+		oldValidator, err := realioApp.StakingKeeper.GetValidator(ctx, r.OldVal)
+		require.NoError(t, err)
+		consAddrBz, err := oldValidator.GetConsAddr()
+		require.NoError(t, err)
+		consAddrs[i], powers[i] = sdk.ConsAddress(consAddrBz), oldValidator.ConsensusPower(sdk.DefaultPowerReduction)
+		coins[i] = realioApp.MultiStakingKeeper.GetValidatorMultiStakingCoin(ctx, r.OldVal)
+
+		dels, err := realioApp.StakingKeeper.GetValidatorDelegations(ctx, r.OldVal)
+		require.NoError(t, err)
+		for j, d := range dels {
+			delAddr, err := sdk.AccAddressFromBech32(d.DelegatorAddress)
+			require.NoError(t, err)
+			lock, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(ctx, multistakingtypes.MultiStakingLockID(d.DelegatorAddress, r.OldVal.String()))
+			require.True(t, found)
+
+			m := &mover{
+				delegator:    delAddr,
+				moved:        oldValidator.TokensFromShares(d.Shares).TruncateInt(),
+				movedLock:    lock.LockedCoin.Amount,
+				existing:     math.ZeroInt(),
+				existingLock: math.ZeroInt(),
+			}
+
+			if j%2 == 0 {
+				stake := sdk.NewCoin(coins[i], lock.LockedCoin.Amount.QuoRaw(4))
+				require.NoError(t, realioApp.BankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(stake)))
+				require.NoError(t, realioApp.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, delAddr, sdk.NewCoins(stake)))
+				_, err := msMsgServer.Delegate(ctx, &stakingtypes.MsgDelegate{
+					DelegatorAddress: d.DelegatorAddress,
+					ValidatorAddress: r.NewVal.String(),
+					Amount:           stake,
+				})
+				require.NoError(t, err)
+
+				newValidator, err := realioApp.StakingKeeper.GetValidator(ctx, r.NewVal)
+				require.NoError(t, err)
+				existingDel, err := realioApp.StakingKeeper.GetDelegation(ctx, delAddr, r.NewVal)
+				require.NoError(t, err, "premise: %s must already hold a delegation on %s", delAddr, r.NewVal)
+				existingLock, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(ctx, multistakingtypes.MultiStakingLockID(d.DelegatorAddress, r.NewVal.String()))
+				require.True(t, found)
+				m.existing = newValidator.TokensFromShares(existingDel.Shares).TruncateInt()
+				m.existingLock = existingLock.LockedCoin.Amount
+				require.True(t, m.existing.IsPositive())
+				merged++
+			}
+			movers[i] = append(movers[i], m)
+		}
+	}
+	require.NotZero(t, merged)
+
+	preNewTokens := make([]math.Int, len(rotations))
+	for i, r := range rotations {
+		v, err := realioApp.StakingKeeper.GetValidator(ctx, r.NewVal)
+		require.NoError(t, err)
+		preNewTokens[i] = v.Tokens
+	}
+
+	v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
+
+	// ---- merge ----
+	for i, r := range rotations {
+		newValidator, err := realioApp.StakingKeeper.GetValidator(ctx, r.NewVal)
+		require.NoError(t, err)
+
+		movedTotal := math.ZeroInt()
+		for _, m := range movers[i] {
+			who := m.delegator.String()
+			movedTotal = movedTotal.Add(m.moved)
+
+			del, err := realioApp.StakingKeeper.GetDelegation(ctx, m.delegator, r.NewVal)
+			require.NoError(t, err)
+			m.afterRotation = newValidator.TokensFromShares(del.Shares).TruncateInt()
+			require.Equalf(t, m.existing.Add(m.moved).String(), m.afterRotation.String(),
+				"%s: merged position should be its existing %s plus the %s moved", who, m.existing, m.moved)
+
+			lock, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(ctx, multistakingtypes.MultiStakingLockID(who, r.NewVal.String()))
+			require.True(t, found)
+			require.Equalf(t, m.existingLock.Add(m.movedLock).String(), lock.LockedCoin.Amount.String(),
+				"%s: merged lock should be existing %s plus moved %s", who, m.existingLock, m.movedLock)
+
+			red, err := realioApp.StakingKeeper.GetRedelegation(ctx, m.delegator, r.OldVal, r.NewVal)
+			require.NoError(t, err)
+			require.Len(t, red.Entries, 1)
+			require.Equalf(t, m.moved.String(), red.Entries[0].InitialBalance.String(),
+				"%s: the redelegation record must cover only the moved part, not the pre-existing position", who)
+			require.Equal(t, m.moved.String(), red.Entries[0].SharesDst.TruncateInt().String(), "%s: shares gained by the redelegation", who)
+		}
+		require.Equal(t, preNewTokens[i].Add(movedTotal).String(), newValidator.Tokens.String(),
+			"%s should hold its previous tokens plus everything that moved", r.NewVal)
+	}
+
+	// ---- slash for a pre-rotation infraction ----
+	slashFactor := math.LegacyNewDecWithPrec(5, 2)
+	for i, r := range rotations {
+		_, err := realioApp.StakingKeeper.Slash(ctx, consAddrs[i], ctx.BlockHeight()-100, powers[i], slashFactor)
+		require.NoError(t, err)
+
+		newValidator, err := realioApp.StakingKeeper.GetValidator(ctx, r.NewVal)
+		require.NoError(t, err)
+		for _, m := range movers[i] {
+			del, err := realioApp.StakingKeeper.GetDelegation(ctx, m.delegator, r.NewVal)
+			require.NoError(t, err)
+			m.afterSlash = newValidator.TokensFromShares(del.Shares).TruncateInt()
+
+			// Only the moved part is on the hook; the pre-existing position stays whole.
+			want := m.existing.Add(m.moved.Sub(slashFactor.MulInt(m.moved).TruncateInt()))
+			require.Truef(t, m.afterSlash.Sub(want).Abs().LTE(math.NewInt(payoutRoundingTolerance)),
+				"%s: after a %s slash want ~%s (existing %s + 95%% of moved %s), got %s", m.delegator, slashFactor, want, m.existing, m.moved, m.afterSlash)
+			require.Truef(t, m.afterSlash.GTE(m.existing),
+				"%s: the slash reached into the pre-existing position (%s < %s)", m.delegator, m.afterSlash, m.existing)
+		}
+	}
+
+	// ---- unbond the whole merged position, let it mature ----
+	for i, r := range rotations {
+		for _, m := range movers[i] {
+			lock, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(ctx, multistakingtypes.MultiStakingLockID(m.delegator.String(), r.NewVal.String()))
+			require.True(t, found)
+			_, err := msMsgServer.Undelegate(ctx, &stakingtypes.MsgUndelegate{
+				DelegatorAddress: m.delegator.String(),
+				ValidatorAddress: r.NewVal.String(),
+				Amount:           sdk.NewCoin(coins[i], lock.LockedCoin.Amount),
+			})
+			require.NoErrorf(t, err, "%s could not unbond its merged position from %s after the slash", m.delegator, r.NewVal)
+			m.balanceBeforeM = realioApp.BankKeeper.GetBalance(ctx, m.delegator, coins[i]).Amount
+		}
+	}
+
+	unbondingTime, err := realioApp.StakingKeeper.UnbondingTime(ctx)
+	require.NoError(t, err)
+	matureCtx := app.NewHeaderCtx(realioApp, ctx.BlockHeight()+2, proposerAddr, blockTime.Add(unbondingTime+24*time.Hour))
+	require.NotPanics(t, func() {
+		_, err := realioApp.EndBlocker(matureCtx)
+		require.NoError(t, err)
+	})
+
+	maxDiff := math.ZeroInt()
+	for i, r := range rotations {
+		for _, m := range movers[i] {
+			_, err := realioApp.StakingKeeper.GetUnbondingDelegation(matureCtx, m.delegator, r.NewVal)
+			require.Errorf(t, err, "%s: unbonding on %s should have completed", m.delegator, r.NewVal)
+
+			paid := realioApp.BankKeeper.GetBalance(matureCtx, m.delegator, coins[i]).Amount.Sub(m.balanceBeforeM)
+			diff := paid.Sub(m.afterSlash).Abs()
+			if diff.GT(maxDiff) {
+				maxDiff = diff
+			}
+			require.Truef(t, diff.LTE(math.NewInt(mergePayoutRoundingTolerance)),
+				"%s: matured payout %s should equal what was left after the slash (%s), not the pre-slash lock",
+				m.delegator, paid, m.afterSlash)
+		}
+	}
+	t.Logf("%d of the moved delegators had a pre-existing delegation to merge into; largest payout difference: %s unit(s)", merged, maxDiff)
+}
+
+// TestRotateValidatorsSkipsDelegatorWithIncomingRedelegation: a delegator who,
+// shortly before the upgrade, redelegated stake from some other validator INTO
+// an outgoing validator still has that redelegation in progress when the
+// rotation runs. x/staking refuses to redelegate stake out of a validator the
+// delegator is currently receiving a redelegation into
+// (ErrTransitiveRedelegation). The rotation must not halt on that: it moves
+// everybody else, leaves that one delegation exactly as it was (no half-moved
+// lock), logs it, and once the earlier redelegation has matured the delegator
+// can unbond and redelegate the leftover themselves.
+func TestRotateValidatorsSkipsDelegatorWithIncomingRedelegation(t *testing.T) {
+	realioApp, _, initialHeight, proposerAddr, blockTime := setupRotationGenesis(t)
+	ctx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
+
+	rotations := rotationToTestValidators(t, realioApp, ctx)
+	oldVal, newVal := rotations[0].OldVal, rotations[0].NewVal
+	coin := realioApp.MultiStakingKeeper.GetValidatorMultiStakingCoin(ctx, oldVal)
+	msMsgServer := multistakingkeeper.NewMsgServerImpl(realioApp.MultiStakingKeeper)
+
+	// A third validator on the same coin that is actually bonded (a redelegation
+	// out of an unbonded validator completes at once and leaves no record to
+	// block anything), and one existing delegator of the outgoing validator.
+	var otherVal sdk.ValAddress
+	allVals, err := realioApp.StakingKeeper.GetAllValidators(ctx)
+	require.NoError(t, err)
+	for _, v := range allVals {
+		valAddr, err := sdk.ValAddressFromBech32(v.OperatorAddress)
+		require.NoError(t, err)
+		if v.IsBonded() && !v.Jailed && !valAddr.Equals(oldVal) &&
+			realioApp.MultiStakingKeeper.GetValidatorMultiStakingCoin(ctx, valAddr) == coin {
+			otherVal = valAddr
+			break
+		}
+	}
+	require.NotNil(t, otherVal, "no bonded %s validator in the genesis to redelegate from", coin)
+
+	dels, err := realioApp.StakingKeeper.GetValidatorDelegations(ctx, oldVal)
+	require.NoError(t, err)
+	operatorAddr := sdk.AccAddress(oldVal).String()
+	var blocked sdk.AccAddress
+	for _, d := range dels {
+		if d.DelegatorAddress != operatorAddr {
+			blocked, err = sdk.AccAddressFromBech32(d.DelegatorAddress)
+			require.NoError(t, err)
+			break
+		}
+	}
+	require.NotNil(t, blocked)
+
+	// The delegator stakes on the third validator, then redelegates that stake
+	// into the outgoing validator: the redelegation is now in progress.
+	stake := sdk.NewCoin(coin, math.NewInt(1_000_000_000_000_000_000))
+	require.NoError(t, realioApp.BankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(stake)))
+	require.NoError(t, realioApp.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, blocked, sdk.NewCoins(stake)))
+	_, err = msMsgServer.Delegate(ctx, &stakingtypes.MsgDelegate{DelegatorAddress: blocked.String(), ValidatorAddress: otherVal.String(), Amount: stake})
+	require.NoError(t, err)
+	_, err = msMsgServer.BeginRedelegate(ctx, &stakingtypes.MsgBeginRedelegate{
+		DelegatorAddress: blocked.String(), ValidatorSrcAddress: otherVal.String(), ValidatorDstAddress: oldVal.String(), Amount: stake,
+	})
+	require.NoError(t, err)
+
+	receiving, err := realioApp.StakingKeeper.HasReceivingRedelegation(ctx, blocked, oldVal)
+	require.NoError(t, err)
+	require.True(t, receiving, "premise: the delegator must have a redelegation in progress into %s", oldVal)
+
+	// ---- snapshot everything the skip must leave untouched ----
+	blockedDelBefore, err := realioApp.StakingKeeper.GetDelegation(ctx, blocked, oldVal)
+	require.NoError(t, err)
+	blockedLockBefore, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(ctx, multistakingtypes.MultiStakingLockID(blocked.String(), oldVal.String()))
+	require.True(t, found)
+	oldValBefore, err := realioApp.StakingKeeper.GetValidator(ctx, oldVal)
+	require.NoError(t, err)
+	newValBefore, err := realioApp.StakingKeeper.GetValidator(ctx, newVal)
+	require.NoError(t, err)
+	blockedTokens := oldValBefore.TokensFromShares(blockedDelBefore.Shares).TruncateInt()
+
+	// ---- rotate: must not panic, must log the skip ----
+	var logs bytes.Buffer
+	logCtx := ctx.WithLogger(log.NewLogger(&logs))
+	require.NotPanics(t, func() {
+		v8.RotateValidators(logCtx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
+	})
+
+	require.Contains(t, logs.String(), "skipping delegation", "the skipped delegation must be logged")
+	require.Contains(t, logs.String(), blocked.String(), "the log must name the delegator")
+	require.Equal(t, 1, strings.Count(logs.String(), "skipping delegation"), "exactly the one blocked delegation should be skipped")
+
+	// The blocked delegation is exactly as it was: same shares, same lock, nothing on the replacement.
+	blockedDelAfter, err := realioApp.StakingKeeper.GetDelegation(ctx, blocked, oldVal)
+	require.NoError(t, err)
+	require.Equal(t, blockedDelBefore.Shares.String(), blockedDelAfter.Shares.String())
+	blockedLockAfter, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(ctx, multistakingtypes.MultiStakingLockID(blocked.String(), oldVal.String()))
+	require.True(t, found)
+	require.Equal(t, blockedLockBefore.LockedCoin.Amount.String(), blockedLockAfter.LockedCoin.Amount.String(), "the lock must not have been moved")
+	_, err = realioApp.StakingKeeper.GetDelegation(ctx, blocked, newVal)
+	require.Error(t, err, "nothing of the blocked delegator should have reached the replacement")
+	_, err = realioApp.StakingKeeper.GetRedelegation(ctx, blocked, oldVal, newVal)
+	require.Error(t, err)
+
+	// Everyone else on that validator moved, including the operator, who is therefore jailed.
+	remaining, err := realioApp.StakingKeeper.GetValidatorDelegations(ctx, oldVal)
+	require.NoError(t, err)
+	require.Len(t, remaining, 1, "only the blocked delegation should be left on %s", oldVal)
+	oldValAfter, err := realioApp.StakingKeeper.GetValidator(ctx, oldVal)
+	require.NoError(t, err)
+	require.Equal(t, blockedTokens.String(), oldValAfter.Tokens.String())
+	require.True(t, oldValAfter.Jailed)
+	newValAfter, err := realioApp.StakingKeeper.GetValidator(ctx, newVal)
+	require.NoError(t, err)
+	require.Equal(t, newValBefore.Tokens.Add(oldValBefore.Tokens.Sub(blockedTokens)).String(), newValAfter.Tokens.String(),
+		"the replacement should have received everything except the blocked delegation")
+
+	// The other outgoing validator has no such delegator: fully moved.
+	otherOld, err := realioApp.StakingKeeper.GetValidator(ctx, rotations[1].OldVal)
+	require.NoError(t, err)
+	require.True(t, otherOld.Tokens.IsZero())
+
+	// ---- once the earlier redelegation matures, the leftover moves ----
+	unbondingTime, err := realioApp.StakingKeeper.UnbondingTime(ctx)
+	require.NoError(t, err)
+	matureCtx := app.NewHeaderCtx(realioApp, ctx.BlockHeight()+2, proposerAddr, blockTime.Add(unbondingTime+24*time.Hour))
+	_, err = realioApp.EndBlocker(matureCtx)
+	require.NoError(t, err)
+
+	receiving, err = realioApp.StakingKeeper.HasReceivingRedelegation(matureCtx, blocked, oldVal)
+	require.NoError(t, err)
+	require.False(t, receiving, "the incoming redelegation should have matured")
+
+	// The comment on the skip promises the delegator can act for themselves
+	// from here on: unbond part of the leftover, redelegate the rest.
+	lock, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(matureCtx, multistakingtypes.MultiStakingLockID(blocked.String(), oldVal.String()))
+	require.True(t, found)
+	half := lock.LockedCoin.Amount.QuoRaw(2)
+	_, err = msMsgServer.Undelegate(matureCtx, &stakingtypes.MsgUndelegate{
+		DelegatorAddress: blocked.String(), ValidatorAddress: oldVal.String(), Amount: sdk.NewCoin(coin, half),
+	})
+	require.NoError(t, err, "once unblocked, the delegator must be able to unbond from the outgoing validator")
+	_, err = msMsgServer.BeginRedelegate(matureCtx, &stakingtypes.MsgBeginRedelegate{
+		DelegatorAddress: blocked.String(), ValidatorSrcAddress: oldVal.String(), ValidatorDstAddress: newVal.String(),
+		Amount: sdk.NewCoin(coin, lock.LockedCoin.Amount.Sub(half)),
+	})
+	require.NoError(t, err, "once unblocked, the delegator must be able to redelegate to the replacement")
+
+	_, err = realioApp.StakingKeeper.GetDelegation(matureCtx, blocked, newVal)
+	require.NoError(t, err)
+	leftover, err := realioApp.StakingKeeper.GetValidatorDelegations(matureCtx, oldVal)
+	require.NoError(t, err)
+	require.Empty(t, leftover, "nothing should be left on the outgoing validator")
 }
