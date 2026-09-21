@@ -161,9 +161,6 @@ import (
 	blacklistmodule "github.com/realiotech/realio-network/x/blacklist"
 	blacklistmodulekeeper "github.com/realiotech/realio-network/x/blacklist/keeper"
 	blacklistmoduletypes "github.com/realiotech/realio-network/x/blacklist/types"
-	claimmodule "github.com/realiotech/realio-network/x/claim"
-	claimmodulekeeper "github.com/realiotech/realio-network/x/claim/keeper"
-	claimmoduletypes "github.com/realiotech/realio-network/x/claim/types"
 
 	evmante "github.com/cosmos/evm/ante"
 	bridgemodule "github.com/realiotech/realio-network/x/bridge"
@@ -235,7 +232,6 @@ var (
 		feesponsor.AppModuleBasic{},
 		assetmodule.AppModuleBasic{},
 		blacklistmodule.AppModuleBasic{},
-		claimmodule.AppModuleBasic{},
 		bridgemodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		ibctransfer.AppModuleBasic{},
@@ -334,7 +330,6 @@ type RealioNetwork struct {
 	AssetKeeper     assetmodulekeeper.Keeper
 	BridgeKeeper    bridgemodulekeeper.Keeper
 	BlacklistKeeper blacklistmodulekeeper.Keeper
-	ClaimKeeper     claimmodulekeeper.Keeper
 
 	// mm is the module manager
 	mm *module.Manager
@@ -399,7 +394,6 @@ func New(
 		ibcexported.StoreKey, ibctransfertypes.StoreKey,
 		// realio network keys
 		assetmoduletypes.StoreKey, bridgemoduletypes.StoreKey, blacklistmoduletypes.StoreKey,
-		claimmoduletypes.StoreKey,
 		// ethermint keys
 		evmtypes.StoreKey, feemarkettypes.StoreKey, erc20types.StoreKey, feesponsortypes.StoreKey,
 		// multi-staking keys
@@ -598,15 +592,6 @@ func New(
 	)
 	app.EvmKeeper.SetHooks(NewEVMTokenBlacklistHook(app.BlacklistKeeper))
 
-	app.ClaimKeeper = claimmodulekeeper.NewKeeper(
-		runtime.NewKVStoreService(keys[claimmoduletypes.StoreKey]),
-		app.StakingKeeper,
-		app.DistrKeeper,
-		app.MultiStakingKeeper,
-		app.AssetKeeper,
-		app.BankKeeper,
-	)
-
 	// Add transfer restrictions
 	app.BankKeeper.AppendSendRestriction(app.AssetKeeper.AssetSendRestriction)
 	// Closes the authz MsgExec / feegrant / ERC-20 precompile transferFrom
@@ -755,7 +740,6 @@ func New(
 		assetmodule.NewAppModule(appCodec, app.AssetKeeper, app.BankKeeper, app.GetSubspace(assetmoduletypes.ModuleName)),
 		bridgemodule.NewAppModule(appCodec, app.BridgeKeeper),
 		blacklistmodule.NewAppModule(app.BlacklistKeeper),
-		claimmodule.NewAppModule(app.ClaimKeeper),
 	)
 
 	// NOTE: upgrade module is required to be prioritized
@@ -860,7 +844,6 @@ func New(
 		assetmoduletypes.ModuleName,
 		bridgemoduletypes.ModuleName,
 		blacklistmoduletypes.ModuleName,
-		claimmoduletypes.ModuleName,
 		consensusparamtypes.ModuleName,
 	)
 
@@ -894,7 +877,6 @@ func New(
 		assetmoduletypes.ModuleName,
 		bridgemoduletypes.ModuleName,
 		blacklistmoduletypes.ModuleName,
-		claimmoduletypes.ModuleName,
 		consensusparamtypes.ModuleName,
 	)
 

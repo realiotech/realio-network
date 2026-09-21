@@ -14,7 +14,7 @@ import (
 // non-standard step is RotateValidators (app/migrations/
 // validator_rotation.go): every delegation on each validator being rotated
 // out -- including its own operator self-bond -- gets redelegated to its
-// replacement, through the real MsgBeginRedelegate path (not a x/claim-style
+// replacement, through the real MsgBeginRedelegate path (not a direct
 // re-key), so it goes through the exact same checks and safety nets an
 // ordinary redelegation does. That function panics if ValidatorRotations
 // still has an empty NewValidator entry, which halts this upgrade rather
