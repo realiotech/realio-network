@@ -62,11 +62,36 @@ var ValidatorRotations = []struct {
 func RotateValidators(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, multiStakingKeeper multistakingkeeper.Keeper) {
 	msMsgServer := multistakingkeeper.NewMsgServerImpl(multiStakingKeeper)
 
+	// x/staking allows at most MaxEntries redelegation entries per (delegator,
+	// source validator, destination validator). A delegator who already moved
+	// stake from an outgoing validator to its replacement in small steps
+	// during the days before the upgrade can be at that limit, and the
+	// rotation needs to add one more entry for them; BeginRedelegate would
+	// fail with ErrMaxRedelegationEntries and halt the chain. The rotation
+	// adds exactly one entry per delegator per validator, so allow one extra
+	// entry for the duration of this function and put the original value back
+	// afterwards -- the same approach multistaking's own
+	// RemoveMultiStakingCoinProposal uses for its forced undelegations.
+	params, err := stakingKeeper.GetParams(ctx)
+	if err != nil {
+		panic(fmt.Errorf("validator rotation: failed to read staking params: %w", err))
+	}
+	originalMaxEntries := params.MaxEntries
+	params.MaxEntries = originalMaxEntries + 1
+	if err := stakingKeeper.SetParams(ctx, params); err != nil {
+		panic(fmt.Errorf("validator rotation: failed to raise max redelegation entries: %w", err))
+	}
+
 	for _, r := range ValidatorRotations {
 		if r.NewValidator == "" {
 			panic(fmt.Errorf("validator rotation: no NewValidator configured for %s", r.OldValidator))
 		}
 		redelegateOneValidator(ctx, stakingKeeper, multiStakingKeeper, msMsgServer, r.OldValidator, r.NewValidator)
+	}
+
+	params.MaxEntries = originalMaxEntries
+	if err := stakingKeeper.SetParams(ctx, params); err != nil {
+		panic(fmt.Errorf("validator rotation: failed to restore max redelegation entries: %w", err))
 	}
 }
 

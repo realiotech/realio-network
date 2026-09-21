@@ -127,9 +127,15 @@ func TestRotateValidatorsGenesisStateDetail(t *testing.T) {
 
 	totalBefore := totalValidatorTokens(t, realioApp, ctx)
 	bondedBefore, notBondedBefore := poolBalances(t, realioApp, ctx)
+	paramsBefore, err := realioApp.StakingKeeper.GetParams(ctx)
+	require.NoError(t, err)
 
 	// ---- rotate ----
 	v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
+
+	paramsAfter, err := realioApp.StakingKeeper.GetParams(ctx)
+	require.NoError(t, err)
+	require.Equal(t, paramsBefore, paramsAfter, "the rotation must leave the staking params exactly as it found them")
 
 	// ---- reconcile ----
 	unbondingTime, err := realioApp.StakingKeeper.UnbondingTime(ctx)
@@ -890,4 +896,103 @@ func TestRotateValidatorsSkipsDelegatorWithIncomingRedelegation(t *testing.T) {
 	leftover, err := realioApp.StakingKeeper.GetValidatorDelegations(matureCtx, oldVal)
 	require.NoError(t, err)
 	require.Empty(t, leftover, "nothing should be left on the outgoing validator")
+}
+
+// TestRotateValidatorsAtMaxRedelegationEntries: a delegator who, in the days
+// before the upgrade, already moved stake from the outgoing validator to its
+// replacement in as many small steps as x/staking allows (MaxEntries) is one
+// entry short for the rotation. It must still be moved in full, and the
+// staking params must come back exactly as they were.
+func TestRotateValidatorsAtMaxRedelegationEntries(t *testing.T) {
+	realioApp, _, initialHeight, proposerAddr, blockTime := setupRotationGenesis(t)
+	ctx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
+
+	rotations := rotationToTestValidators(t, realioApp, ctx)
+	oldVal, newVal := rotations[0].OldVal, rotations[0].NewVal
+	coin := realioApp.MultiStakingKeeper.GetValidatorMultiStakingCoin(ctx, oldVal)
+	msMsgServer := multistakingkeeper.NewMsgServerImpl(realioApp.MultiStakingKeeper)
+
+	maxEntries, err := realioApp.StakingKeeper.MaxEntries(ctx)
+	require.NoError(t, err)
+
+	dels, err := realioApp.StakingKeeper.GetValidatorDelegations(ctx, oldVal)
+	require.NoError(t, err)
+	var user sdk.AccAddress
+	for _, d := range dels {
+		if d.DelegatorAddress != sdk.AccAddress(oldVal).String() {
+			user, err = sdk.AccAddressFromBech32(d.DelegatorAddress)
+			require.NoError(t, err)
+			break
+		}
+	}
+	require.NotNil(t, user)
+
+	oldValidator, err := realioApp.StakingKeeper.GetValidator(ctx, oldVal)
+	require.NoError(t, err)
+	userDel, err := realioApp.StakingKeeper.GetDelegation(ctx, user, oldVal)
+	require.NoError(t, err)
+	userTokens := oldValidator.TokensFromShares(userDel.Shares).TruncateInt()
+
+	// The delegator migrates voluntarily in small steps until it is at the limit.
+	step := math.NewInt(1_000_000_000_000)
+	for i := uint32(0); i < maxEntries; i++ {
+		_, err := msMsgServer.BeginRedelegate(ctx, &stakingtypes.MsgBeginRedelegate{
+			DelegatorAddress: user.String(), ValidatorSrcAddress: oldVal.String(), ValidatorDstAddress: newVal.String(),
+			Amount: sdk.NewCoin(coin, step),
+		})
+		require.NoError(t, err)
+	}
+	red, err := realioApp.StakingKeeper.GetRedelegation(ctx, user, oldVal, newVal)
+	require.NoError(t, err)
+	require.Len(t, red.Entries, int(maxEntries), "premise: the delegator is at the redelegation entry limit")
+	// Probe in a throwaway context: the multistaking msg server moves the lock
+	// before x/staking rejects the message, and outside a transaction nothing
+	// rolls that half-done move back.
+	probeCtx, _ := ctx.CacheContext()
+	_, err = msMsgServer.BeginRedelegate(probeCtx, &stakingtypes.MsgBeginRedelegate{
+		DelegatorAddress: user.String(), ValidatorSrcAddress: oldVal.String(), ValidatorDstAddress: newVal.String(),
+		Amount: sdk.NewCoin(coin, step),
+	})
+	require.ErrorIs(t, err, stakingtypes.ErrMaxRedelegationEntries, "premise: one more entry is normally refused")
+
+	paramsBefore, err := realioApp.StakingKeeper.GetParams(ctx)
+	require.NoError(t, err)
+
+	require.NotPanics(t, func() {
+		v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
+	})
+
+	// Moved in full: nothing left on the outgoing validator, all of it on the replacement.
+	_, err = realioApp.StakingKeeper.GetDelegation(ctx, user, oldVal)
+	require.Error(t, err, "the delegator should have nothing left on the outgoing validator")
+	remaining, err := realioApp.StakingKeeper.GetValidatorDelegations(ctx, oldVal)
+	require.NoError(t, err)
+	require.Empty(t, remaining)
+
+	newValidator, err := realioApp.StakingKeeper.GetValidator(ctx, newVal)
+	require.NoError(t, err)
+	newDel, err := realioApp.StakingKeeper.GetDelegation(ctx, user, newVal)
+	require.NoError(t, err)
+	require.Equal(t, userTokens.String(), newValidator.TokensFromShares(newDel.Shares).TruncateInt().String(),
+		"the delegator's whole position, voluntary steps plus the rotation, should be on the replacement")
+
+	red, err = realioApp.StakingKeeper.GetRedelegation(ctx, user, oldVal, newVal)
+	require.NoError(t, err)
+	require.Len(t, red.Entries, int(maxEntries)+1, "the rotation adds exactly one entry on top of the voluntary ones")
+	require.Equal(t, userTokens.Sub(step.MulRaw(int64(maxEntries))).String(), red.Entries[len(red.Entries)-1].InitialBalance.String(),
+		"the rotation's own entry covers only what was still on the outgoing validator")
+
+	// The extra allowance was temporary.
+	paramsAfter, err := realioApp.StakingKeeper.GetParams(ctx)
+	require.NoError(t, err)
+	require.Equal(t, paramsBefore, paramsAfter)
+	restored, err := realioApp.StakingKeeper.MaxEntries(ctx)
+	require.NoError(t, err)
+	require.Equal(t, maxEntries, restored, "MaxEntries must be back to its original value")
+	probeCtx, _ = ctx.CacheContext()
+	_, err = msMsgServer.BeginRedelegate(probeCtx, &stakingtypes.MsgBeginRedelegate{
+		DelegatorAddress: user.String(), ValidatorSrcAddress: oldVal.String(), ValidatorDstAddress: newVal.String(),
+		Amount: sdk.NewCoin(coin, step),
+	})
+	require.Error(t, err, "with the limit restored, an entry beyond it is refused again")
 }
