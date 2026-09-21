@@ -124,7 +124,9 @@ func redelegateOneValidator(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper
 }
 
 // redelegateOneDelegation moves one delegation off the outgoing validator,
-// unless the delegator has a redelegation in progress into it (see below).
+// unless it cannot be moved and is skipped: a delegator with a redelegation in
+// progress into the outgoing validator, or a delegation worth less than one
+// token (see the comments at each skip below).
 func redelegateOneDelegation(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, multiStakingKeeper multistakingkeeper.Keeper, msMsgServer stakingtypes.MsgServer, del stakingtypes.Delegation, oldValStr, newValStr string) {
 	lockID := multistakingtypes.MultiStakingLockID(del.DelegatorAddress, oldValStr)
 	lock, found := multiStakingKeeper.GetMultiStakingLock(ctx, lockID)
@@ -191,6 +193,40 @@ func redelegateOneDelegation(ctx sdk.Context, stakingKeeper *stakingkeeper.Keepe
 			"old_validator", oldValStr,
 			"amount", lock.LockedCoin.String(),
 			"movable_after", latestIncomingRedelegationCompletion(ctx, stakingKeeper, delAddr, oldValStr))
+		return
+	}
+
+	// Skip a delegation that is dust: it still has shares, but they are worth
+	// less than one token, so their value truncates to zero.
+	//
+	// A delegation record with zero shares does not exist (x/staking deletes
+	// it), so this is not about empty delegations. It happens when the
+	// validator's tokens-per-share rate has dropped below 1 through a slash and
+	// a position of only a few of the smallest units is left worth under one
+	// unit: 1 share at a rate of 0.5 is 0.5 tokens, which truncates to 0.
+	// BeginRedelegate then fails (ErrTinyRedelegationAmount, or "invalid shares
+	// amount" once multistaking has adjusted the amount down to zero) and
+	// would halt the chain.
+	//
+	// Skipping this is not a concern. The amount is worth less than 1 unit of
+	// the smallest denomination -- 10^-18 of a coin -- so there is no value to
+	// move, nothing meaningful is left behind, and x/staking cannot redelegate
+	// an amount that truncates to zero for anyone. It only matters that one
+	// such delegation, which anybody can create for next to nothing, cannot be
+	// used to stop the upgrade. It is logged at info level, unlike the skip
+	// above, because nobody needs to follow it up.
+	//
+	// Like the check above, this must run before BeginRedelegate: by then the
+	// multistaking msg server has already moved the lock.
+	oldValidator, err := stakingKeeper.GetValidator(ctx, oldVal)
+	if err != nil {
+		panic(fmt.Errorf("validator rotation: failed to read outgoing validator %s: %w", oldValStr, err))
+	}
+	if oldValidator.TokensFromShares(del.Shares).TruncateInt().IsZero() {
+		ctx.Logger().Info("validator rotation: skipping dust delegation, its shares are worth less than one token",
+			"delegator", del.DelegatorAddress,
+			"old_validator", oldValStr,
+			"shares", del.Shares.String())
 		return
 	}
 

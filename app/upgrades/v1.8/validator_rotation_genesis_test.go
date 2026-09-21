@@ -12,6 +12,7 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
@@ -995,4 +996,89 @@ func TestRotateValidatorsAtMaxRedelegationEntries(t *testing.T) {
 		Amount: sdk.NewCoin(coin, step),
 	})
 	require.Error(t, err, "with the limit restored, an entry beyond it is refused again")
+}
+
+// TestRotateValidatorsSkipsDustDelegation: a delegation of a single smallest
+// unit is worth one token, until the validator is slashed and each share is
+// worth less than that. Its shares still exist but their value truncates to
+// zero, which x/staking refuses to redelegate. The rotation must skip it and
+// move everybody else instead of halting.
+//
+// (After a slash every mover also leaves a sub-token residue of shares behind,
+// from the truncating conversion at a rate other than 1; that is checked too.)
+func TestRotateValidatorsSkipsDustDelegation(t *testing.T) {
+	realioApp, _, initialHeight, proposerAddr, blockTime := setupRotationGenesis(t)
+	ctx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
+
+	rotations := rotationToTestValidators(t, realioApp, ctx)
+	oldVal, newVal := rotations[0].OldVal, rotations[0].NewVal
+	coin := realioApp.MultiStakingKeeper.GetValidatorMultiStakingCoin(ctx, oldVal)
+	msMsgServer := multistakingkeeper.NewMsgServerImpl(realioApp.MultiStakingKeeper)
+
+	dust := sdk.AccAddress(ed25519.GenPrivKey().PubKey().Address())
+	stake := sdk.NewCoin(coin, math.NewInt(1))
+	require.NoError(t, realioApp.BankKeeper.MintCoins(ctx, minttypes.ModuleName, sdk.NewCoins(stake)))
+	require.NoError(t, realioApp.BankKeeper.SendCoinsFromModuleToAccount(ctx, minttypes.ModuleName, dust, sdk.NewCoins(stake)))
+	_, err := msMsgServer.Delegate(ctx, &stakingtypes.MsgDelegate{DelegatorAddress: dust.String(), ValidatorAddress: oldVal.String(), Amount: stake})
+	require.NoError(t, err)
+
+	// Slash the outgoing validator: every share is now worth about half a token.
+	oldValidator, err := realioApp.StakingKeeper.GetValidator(ctx, oldVal)
+	require.NoError(t, err)
+	consAddrBz, err := oldValidator.GetConsAddr()
+	require.NoError(t, err)
+	_, err = realioApp.StakingKeeper.Slash(ctx, sdk.ConsAddress(consAddrBz), ctx.BlockHeight(),
+		oldValidator.ConsensusPower(sdk.DefaultPowerReduction), math.LegacyNewDecWithPrec(5, 1))
+	require.NoError(t, err)
+
+	oldValidator, err = realioApp.StakingKeeper.GetValidator(ctx, oldVal)
+	require.NoError(t, err)
+	dustDelBefore, err := realioApp.StakingKeeper.GetDelegation(ctx, dust, oldVal)
+	require.NoError(t, err, "premise: the dust delegation still exists")
+	require.True(t, dustDelBefore.Shares.IsPositive())
+	require.True(t, oldValidator.TokensFromShares(dustDelBefore.Shares).TruncateInt().IsZero(),
+		"premise: its shares are worth less than one token")
+	dustLockBefore, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(ctx, multistakingtypes.MultiStakingLockID(dust.String(), oldVal.String()))
+	require.True(t, found)
+	newValBefore, err := realioApp.StakingKeeper.GetValidator(ctx, newVal)
+	require.NoError(t, err)
+
+	var logs bytes.Buffer
+	logCtx := ctx.WithLogger(log.NewLogger(&logs))
+	require.NotPanics(t, func() {
+		v8.RotateValidators(logCtx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
+	})
+
+	require.Contains(t, logs.String(), "skipping dust delegation")
+	require.Contains(t, logs.String(), dust.String())
+	require.Equal(t, 1, strings.Count(logs.String(), "skipping dust delegation"), "only the dust delegation should be skipped")
+
+	// The dust delegation is untouched...
+	dustDelAfter, err := realioApp.StakingKeeper.GetDelegation(ctx, dust, oldVal)
+	require.NoError(t, err)
+	require.Equal(t, dustDelBefore.Shares.String(), dustDelAfter.Shares.String())
+	dustLockAfter, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(ctx, multistakingtypes.MultiStakingLockID(dust.String(), oldVal.String()))
+	require.True(t, found)
+	require.Equal(t, dustLockBefore.LockedCoin.Amount.String(), dustLockAfter.LockedCoin.Amount.String(), "the lock must not have been moved")
+	_, err = realioApp.StakingKeeper.GetDelegation(ctx, dust, newVal)
+	require.Error(t, err)
+
+	// ...and everyone else on that validator moved, the operator included. With
+	// the slash the tokens-per-share rate is no longer 1, so moving a position
+	// converts tokens to shares with truncation and each delegator is left with
+	// a fraction of a token's worth of shares behind; nothing bigger may remain.
+	oldValidatorAfter, err := realioApp.StakingKeeper.GetValidator(ctx, oldVal)
+	require.NoError(t, err)
+	remaining, err := realioApp.StakingKeeper.GetValidatorDelegations(ctx, oldVal)
+	require.NoError(t, err)
+	for _, d := range remaining {
+		require.Truef(t, oldValidatorAfter.TokensFromShares(d.Shares).TruncateInt().IsZero(),
+			"%s still has %s shares (worth at least one token) on %s", d.DelegatorAddress, d.Shares, oldVal)
+	}
+	require.True(t, oldValidatorAfter.Tokens.LT(math.NewInt(1000)),
+		"what is left on the outgoing validator should be rounding residue, got %s", oldValidatorAfter.Tokens)
+	require.True(t, oldValidatorAfter.Jailed)
+	newValAfter, err := realioApp.StakingKeeper.GetValidator(ctx, newVal)
+	require.NoError(t, err)
+	require.True(t, newValAfter.Tokens.GT(newValBefore.Tokens), "the replacement should have received everyone else's stake")
 }
