@@ -4,12 +4,11 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
-
-	"github.com/realiotech/realio-network/app/migrations"
 )
 
 // ValidatorRotations lists each validator being rotated out and its
@@ -55,24 +54,24 @@ var ValidatorRotations = []struct {
 // self-bond last, purely for readability (native Unbond doesn't refuse to
 // unbond from an already-jailed validator, so processing order has no
 // effect on correctness here).
-func RotateValidators(k migrations.Keepers, ctx sdk.Context) {
-	msMsgServer := multistakingkeeper.NewMsgServerImpl(k.MultiStakingKeeper)
+func RotateValidators(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, multiStakingKeeper multistakingkeeper.Keeper) {
+	msMsgServer := multistakingkeeper.NewMsgServerImpl(multiStakingKeeper)
 
 	for _, r := range ValidatorRotations {
 		if r.NewValidator == "" {
 			panic(fmt.Errorf("validator rotation: no NewValidator configured for %s", r.OldValidator))
 		}
-		redelegateOneValidator(k, ctx, msMsgServer, r.OldValidator, r.NewValidator)
+		redelegateOneValidator(ctx, stakingKeeper, multiStakingKeeper, msMsgServer, r.OldValidator, r.NewValidator)
 	}
 }
 
-func redelegateOneValidator(k migrations.Keepers, ctx sdk.Context, msMsgServer stakingtypes.MsgServer, oldValStr, newValStr string) {
+func redelegateOneValidator(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, multiStakingKeeper multistakingkeeper.Keeper, msMsgServer stakingtypes.MsgServer, oldValStr, newValStr string) {
 	oldVal, err := sdk.ValAddressFromBech32(oldValStr)
 	if err != nil {
 		panic(fmt.Errorf("validator rotation: invalid old validator %q: %w", oldValStr, err))
 	}
 
-	delegations, err := k.StakingKeeper.GetValidatorDelegations(ctx, oldVal)
+	delegations, err := stakingKeeper.GetValidatorDelegations(ctx, oldVal)
 	if err != nil {
 		panic(fmt.Errorf("validator rotation: failed to list delegations for %s: %w", oldValStr, err))
 	}
@@ -87,16 +86,16 @@ func redelegateOneValidator(k migrations.Keepers, ctx sdk.Context, msMsgServer s
 			operatorDel = &delegations[i]
 			continue
 		}
-		redelegateOneDelegation(k, ctx, msMsgServer, delegations[i], oldValStr, newValStr)
+		redelegateOneDelegation(ctx, multiStakingKeeper, msMsgServer, delegations[i], oldValStr, newValStr)
 	}
 	if operatorDel != nil {
-		redelegateOneDelegation(k, ctx, msMsgServer, *operatorDel, oldValStr, newValStr)
+		redelegateOneDelegation(ctx, multiStakingKeeper, msMsgServer, *operatorDel, oldValStr, newValStr)
 	}
 }
 
-func redelegateOneDelegation(k migrations.Keepers, ctx sdk.Context, msMsgServer stakingtypes.MsgServer, del stakingtypes.Delegation, oldValStr, newValStr string) {
+func redelegateOneDelegation(ctx sdk.Context, multiStakingKeeper multistakingkeeper.Keeper, msMsgServer stakingtypes.MsgServer, del stakingtypes.Delegation, oldValStr, newValStr string) {
 	lockID := multistakingtypes.MultiStakingLockID(del.DelegatorAddress, oldValStr)
-	lock, found := k.MultiStakingKeeper.GetMultiStakingLock(ctx, lockID)
+	lock, found := multiStakingKeeper.GetMultiStakingLock(ctx, lockID)
 	if !found {
 		panic(fmt.Errorf("validator rotation: no multi-staking lock for delegator %s on %s", del.DelegatorAddress, oldValStr))
 	}

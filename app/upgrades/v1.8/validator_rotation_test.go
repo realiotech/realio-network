@@ -20,9 +20,8 @@ import (
 )
 
 // rotationGenesisPath is the mainnet export every test in this file boots
-// from. It lives with this package rather than under app/migrations so the
-// v1.8.0 rotation is exercised against its own fixture, independent of the
-// genesis the older migrations' tests use.
+// from. It lives with this package so the v1.8.0 rotation is exercised
+// against its own fixture.
 const rotationGenesisPath = "testdata/exported_mainnet_after.json"
 
 func setupRotationGenesis(t *testing.T) (*app.RealioNetwork, string, int64, []byte, time.Time) {
@@ -171,7 +170,7 @@ func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 		t.Logf("validator %s: %d real delegators before rotation (operator self-bond present: %v)", r.OldVal, len(addrs), hadOperator)
 	}
 
-	v8.RotateValidators(realioApp.MigrationKeepers(), ctx)
+	v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
 
 	for i, r := range rotations {
 		// Old validator: every delegation gone (redelegated away in full),
@@ -279,7 +278,7 @@ func TestRotatedStakeStillSlashableForPriorInfraction(t *testing.T) {
 		})
 	}
 
-	v8.RotateValidators(realioApp.MigrationKeepers(), ctx)
+	v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
 	rotationHeight := ctx.BlockHeight()
 	slashFactor := math.LegacyNewDecWithPrec(5, 2) // 5%
 

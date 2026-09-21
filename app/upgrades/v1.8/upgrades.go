@@ -6,8 +6,9 @@ import (
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-	"github.com/realiotech/realio-network/app/migrations"
+	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 )
 
 // CreateUpgradeHandler creates an SDK upgrade handler for v1.8.0. Its only
@@ -23,13 +24,14 @@ import (
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	cfg module.Configurator,
-	migrationKeepers migrations.Keepers,
+	stakingKeeper *stakingkeeper.Keeper,
+	multiStakingKeeper multistakingkeeper.Keeper,
 ) upgradetypes.UpgradeHandler {
 	return func(ctx context.Context, _ upgradetypes.Plan, vm module.VersionMap) (module.VersionMap, error) {
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 		sdkCtx.Logger().Info("Starting upgrade for v1.8.0...")
 
-		RotateValidators(migrationKeepers, sdkCtx)
+		RotateValidators(sdkCtx, stakingKeeper, multiStakingKeeper)
 
 		return mm.RunMigrations(ctx, cfg, vm)
 	}

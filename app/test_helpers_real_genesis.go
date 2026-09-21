@@ -12,6 +12,7 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/stretchr/testify/require"
 
+	coreheader "cosmossdk.io/core/header"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -138,11 +139,16 @@ func SetupWithGenesisFile(t *testing.T, genesisPath string) (realioApp *RealioNe
 }
 
 // NewHeaderCtx builds an ad-hoc sdk.Context at the given height, the same
-// way BeginBlocker/EndBlocker would see it.
+// way BeginBlocker/EndBlocker would see it. HeaderInfo is set alongside the
+// block header because parts of x/staking (e.g. the redelegation queue) read
+// the time from HeaderInfo, not from BlockHeader.
 func NewHeaderCtx(realioApp *RealioNetwork, height int64, proposerAddr []byte, blockTime time.Time) sdk.Context {
 	return realioApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Height:          height,
 		ProposerAddress: proposerAddr,
 		Time:            blockTime,
+	}).WithHeaderInfo(coreheader.Info{
+		Height: height,
+		Time:   blockTime,
 	}).WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 }
