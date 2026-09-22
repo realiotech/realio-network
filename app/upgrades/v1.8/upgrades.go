@@ -17,10 +17,12 @@ import (
 // operator self-bond -- gets redelegated to its replacement, through the
 // real MsgBeginRedelegate path (not a direct re-key), so it goes through the
 // exact same checks and safety nets an ordinary redelegation does. That
-// function panics if ValidatorRotations still has an empty NewValidator
-// entry, which halts this upgrade rather than silently completing it
-// half-configured -- the real replacement validator addresses must be filled
-// in there before this upgrade is proposed.
+// function returns an error if ValidatorRotations still has an empty
+// NewValidator entry, which halts this upgrade rather than silently
+// completing it half-configured -- the real replacement validator addresses
+// must be filled in there before this upgrade is proposed. The error is
+// returned here, not panicked: x/upgrade already treats a non-nil error from
+// an UpgradeHandler as fatal to the block, the same way a panic would be.
 func CreateUpgradeHandler(
 	mm *module.Manager,
 	cfg module.Configurator,
@@ -31,7 +33,9 @@ func CreateUpgradeHandler(
 		sdkCtx := sdk.UnwrapSDKContext(ctx)
 		sdkCtx.Logger().Info("Starting upgrade for v1.8.0...")
 
-		RotateValidators(sdkCtx, stakingKeeper, multiStakingKeeper)
+		if err := RotateValidators(sdkCtx, stakingKeeper, multiStakingKeeper); err != nil {
+			return nil, err
+		}
 
 		return mm.RunMigrations(ctx, cfg, vm)
 	}

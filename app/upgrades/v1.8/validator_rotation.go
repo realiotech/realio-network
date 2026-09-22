@@ -26,8 +26,8 @@ import (
 // NewValidator is deliberately left blank below -- the real replacement
 // validator addresses aren't known to this codebase yet. Filling them in
 // (and wiring RotateValidators into a governance-gated x/upgrade handler)
-// is the last step before this can run for real; RotateValidators panics
-// rather than silently no-op'ing if any entry is left blank, so an
+// is the last step before this can run for real; RotateValidators returns
+// an error rather than silently no-op'ing if any entry is left blank, so an
 // incomplete config can't accidentally ship.
 var ValidatorRotations = []struct {
 	OldValidator string
@@ -59,7 +59,15 @@ var ValidatorRotations = []struct {
 // One kind of delegation is deliberately not moved: a delegator with a
 // redelegation still in progress INTO the outgoing validator is skipped and
 // logged (the reasoning is at the skip in redelegateOneDelegation).
-func RotateValidators(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, multiStakingKeeper multistakingkeeper.Keeper) {
+//
+// Returns an error rather than panicking on any unrecoverable problem: the
+// caller is CreateUpgradeHandler, whose signature is exactly
+// (module.VersionMap, error), and x/upgrade already treats a non-nil error
+// from an upgrade handler as fatal to the block -- the chain halts either
+// way, but a returned error gets there through the same path an ordinary
+// keeper failure would, instead of a raw panic/stack-trace, and it can be
+// asserted on directly in tests instead of through recover().
+func RotateValidators(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, multiStakingKeeper multistakingkeeper.Keeper) error {
 	msMsgServer := multistakingkeeper.NewMsgServerImpl(multiStakingKeeper)
 
 	// x/staking allows at most MaxEntries redelegation entries per (delegator,
@@ -74,36 +82,39 @@ func RotateValidators(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, mult
 	// RemoveMultiStakingCoinProposal uses for its forced undelegations.
 	params, err := stakingKeeper.GetParams(ctx)
 	if err != nil {
-		panic(fmt.Errorf("validator rotation: failed to read staking params: %w", err))
+		return fmt.Errorf("validator rotation: failed to read staking params: %w", err)
 	}
 	originalMaxEntries := params.MaxEntries
 	params.MaxEntries = originalMaxEntries + 1
 	if err := stakingKeeper.SetParams(ctx, params); err != nil {
-		panic(fmt.Errorf("validator rotation: failed to raise max redelegation entries: %w", err))
+		return fmt.Errorf("validator rotation: failed to raise max redelegation entries: %w", err)
 	}
 
 	for _, r := range ValidatorRotations {
 		if r.NewValidator == "" {
-			panic(fmt.Errorf("validator rotation: no NewValidator configured for %s", r.OldValidator))
+			return fmt.Errorf("validator rotation: no NewValidator configured for %s", r.OldValidator)
 		}
-		redelegateOneValidator(ctx, stakingKeeper, multiStakingKeeper, msMsgServer, r.OldValidator, r.NewValidator)
+		if err := redelegateOneValidator(ctx, stakingKeeper, multiStakingKeeper, msMsgServer, r.OldValidator, r.NewValidator); err != nil {
+			return err
+		}
 	}
 
 	params.MaxEntries = originalMaxEntries
 	if err := stakingKeeper.SetParams(ctx, params); err != nil {
-		panic(fmt.Errorf("validator rotation: failed to restore max redelegation entries: %w", err))
+		return fmt.Errorf("validator rotation: failed to restore max redelegation entries: %w", err)
 	}
+	return nil
 }
 
-func redelegateOneValidator(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, multiStakingKeeper multistakingkeeper.Keeper, msMsgServer stakingtypes.MsgServer, oldValStr, newValStr string) {
+func redelegateOneValidator(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, multiStakingKeeper multistakingkeeper.Keeper, msMsgServer stakingtypes.MsgServer, oldValStr, newValStr string) error {
 	oldVal, err := sdk.ValAddressFromBech32(oldValStr)
 	if err != nil {
-		panic(fmt.Errorf("validator rotation: invalid old validator %q: %w", oldValStr, err))
+		return fmt.Errorf("validator rotation: invalid old validator %q: %w", oldValStr, err)
 	}
 
 	delegations, err := stakingKeeper.GetValidatorDelegations(ctx, oldVal)
 	if err != nil {
-		panic(fmt.Errorf("validator rotation: failed to list delegations for %s: %w", oldValStr, err))
+		return fmt.Errorf("validator rotation: failed to list delegations for %s: %w", oldValStr, err)
 	}
 
 	// The outgoing operator's own self-bond is redelegated last -- see the
@@ -116,31 +127,61 @@ func redelegateOneValidator(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper
 			operatorDel = &delegations[i]
 			continue
 		}
-		redelegateOneDelegation(ctx, stakingKeeper, multiStakingKeeper, msMsgServer, delegations[i], oldValStr, newValStr)
+		if err := redelegateOneDelegation(ctx, stakingKeeper, multiStakingKeeper, msMsgServer, delegations[i], oldValStr, newValStr); err != nil {
+			return err
+		}
 	}
 	if operatorDel != nil {
-		redelegateOneDelegation(ctx, stakingKeeper, multiStakingKeeper, msMsgServer, *operatorDel, oldValStr, newValStr)
+		if err := redelegateOneDelegation(ctx, stakingKeeper, multiStakingKeeper, msMsgServer, *operatorDel, oldValStr, newValStr); err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 // redelegateOneDelegation moves one delegation off the outgoing validator,
-// unless it cannot be moved and is skipped: a delegator with a redelegation in
-// progress into the outgoing validator, or a delegation worth less than one
-// token (see the comments at each skip below).
-func redelegateOneDelegation(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, multiStakingKeeper multistakingkeeper.Keeper, msMsgServer stakingtypes.MsgServer, del stakingtypes.Delegation, oldValStr, newValStr string) {
+// unless it cannot be moved and is skipped: a delegator with no multi-staking
+// lock backing their delegation, a delegator with a redelegation in progress
+// into the outgoing validator, or a delegation worth less than one token (see
+// the comments at each skip below). A skip is not an error -- it returns nil
+// -- only a genuinely unrecoverable problem (bad address data, a keeper read
+// that fails, BeginRedelegate itself failing) returns one.
+func redelegateOneDelegation(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, multiStakingKeeper multistakingkeeper.Keeper, msMsgServer stakingtypes.MsgServer, del stakingtypes.Delegation, oldValStr, newValStr string) error {
 	lockID := multistakingtypes.MultiStakingLockID(del.DelegatorAddress, oldValStr)
 	lock, found := multiStakingKeeper.GetMultiStakingLock(ctx, lockID)
 	if !found {
-		panic(fmt.Errorf("validator rotation: no multi-staking lock for delegator %s on %s", del.DelegatorAddress, oldValStr))
+		// Skip this delegation, and log it, rather than treat it as corrupt
+		// data or halt.
+		//
+		// A delegation with no matching lock is normal state on this chain,
+		// not damage: SetMultiStakingLock deletes a lock once its amount hits
+		// zero, but AdjustUnbondAmount's token/share conversion can leave a
+		// few units of truncation residue behind in x/staking that a "full"
+		// undelegate never fully clears. Measured against the real mainnet
+		// export this migration is meant to run against, 374 of 3,764
+		// delegations (across 36 validators) are already in this state
+		// today, 161 of them above the dust threshold below -- so this is
+		// not rare, and not something the dust skip already catches.
+		//
+		// It also cannot be handled by falling through to the dust check:
+		// with no lock, there is no lock.LockedCoin to read a denom or
+		// amount from, so there is no coin to pass to BeginRedelegate in the
+		// first place, regardless of how small or large the leftover
+		// x/staking shares are.
+		ctx.Logger().Error("validator rotation: skipping delegation, no multi-staking lock backs it",
+			"delegator", del.DelegatorAddress,
+			"old_validator", oldValStr,
+			"shares", del.Shares.String())
+		return nil
 	}
 
 	delAddr, err := sdk.AccAddressFromBech32(del.DelegatorAddress)
 	if err != nil {
-		panic(fmt.Errorf("validator rotation: invalid delegator address %q: %w", del.DelegatorAddress, err))
+		return fmt.Errorf("validator rotation: invalid delegator address %q: %w", del.DelegatorAddress, err)
 	}
 	oldVal, err := sdk.ValAddressFromBech32(oldValStr)
 	if err != nil {
-		panic(fmt.Errorf("validator rotation: invalid old validator %q: %w", oldValStr, err))
+		return fmt.Errorf("validator rotation: invalid old validator %q: %w", oldValStr, err)
 	}
 
 	// This has to be checked up front, not by catching BeginRedelegate's error
@@ -150,7 +191,7 @@ func redelegateOneDelegation(ctx sdk.Context, stakingKeeper *stakingkeeper.Keepe
 	// no delegation behind it.
 	receiving, err := stakingKeeper.HasReceivingRedelegation(ctx, delAddr, oldVal)
 	if err != nil {
-		panic(fmt.Errorf("validator rotation: failed to check redelegations into %s for %s: %w", oldValStr, del.DelegatorAddress, err))
+		return fmt.Errorf("validator rotation: failed to check redelegations into %s for %s: %w", oldValStr, del.DelegatorAddress, err)
 	}
 	if receiving {
 		// Skip this delegation, and log it, rather than move it or halt.
@@ -163,8 +204,8 @@ func redelegateOneDelegation(ctx sdk.Context, stakingKeeper *stakingkeeper.Keepe
 		// the unbonding period before the upgrade, deliberately or not, so it
 		// has to be handled rather than assumed away. The alternatives are
 		// worse:
-		//   - panicking would halt the chain at the upgrade height, letting
-		//     one small redelegation block the whole upgrade;
+		//   - erroring out would halt the chain at the upgrade height,
+		//     letting one small redelegation block the whole upgrade;
 		//   - deleting or rewriting the delegator's redelegation record has no
 		//     supported path in x/staking, leaves the redelegation queue and
 		//     unbonding-id index pointing at nothing, and drops the trail a
@@ -193,7 +234,7 @@ func redelegateOneDelegation(ctx sdk.Context, stakingKeeper *stakingkeeper.Keepe
 			"old_validator", oldValStr,
 			"amount", lock.LockedCoin.String(),
 			"movable_after", latestIncomingRedelegationCompletion(ctx, stakingKeeper, delAddr, oldValStr))
-		return
+		return nil
 	}
 
 	// Skip a delegation that is dust: it still has shares, but they are worth
@@ -220,14 +261,14 @@ func redelegateOneDelegation(ctx sdk.Context, stakingKeeper *stakingkeeper.Keepe
 	// multistaking msg server has already moved the lock.
 	oldValidator, err := stakingKeeper.GetValidator(ctx, oldVal)
 	if err != nil {
-		panic(fmt.Errorf("validator rotation: failed to read outgoing validator %s: %w", oldValStr, err))
+		return fmt.Errorf("validator rotation: failed to read outgoing validator %s: %w", oldValStr, err)
 	}
 	if oldValidator.TokensFromShares(del.Shares).TruncateInt().IsZero() {
 		ctx.Logger().Info("validator rotation: skipping dust delegation, its shares are worth less than one token",
 			"delegator", del.DelegatorAddress,
 			"old_validator", oldValStr,
 			"shares", del.Shares.String())
-		return
+		return nil
 	}
 
 	_, err = msMsgServer.BeginRedelegate(ctx, &stakingtypes.MsgBeginRedelegate{
@@ -237,8 +278,9 @@ func redelegateOneDelegation(ctx sdk.Context, stakingKeeper *stakingkeeper.Keepe
 		Amount:              sdk.NewCoin(lock.LockedCoin.Denom, lock.LockedCoin.Amount),
 	})
 	if err != nil {
-		panic(fmt.Errorf("validator rotation: failed to redelegate %s from %s to %s: %w", del.DelegatorAddress, oldValStr, newValStr, err))
+		return fmt.Errorf("validator rotation: failed to redelegate %s from %s to %s: %w", del.DelegatorAddress, oldValStr, newValStr, err)
 	}
+	return nil
 }
 
 // latestIncomingRedelegationCompletion returns when the last redelegation

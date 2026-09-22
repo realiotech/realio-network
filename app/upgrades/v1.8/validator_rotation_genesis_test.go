@@ -132,7 +132,7 @@ func TestRotateValidatorsGenesisStateDetail(t *testing.T) {
 	require.NoError(t, err)
 
 	// ---- rotate ----
-	v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
+	require.NoError(t, v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 
 	paramsAfter, err := realioApp.StakingKeeper.GetParams(ctx)
 	require.NoError(t, err)
@@ -233,29 +233,25 @@ func TestRotateValidatorsGenesisStateDetail(t *testing.T) {
 	require.Equal(t, notBondedBefore.Add(crossed).String(), notBondedAfter.String(), "not-bonded pool change doesn't match stake moved to unbonded replacements")
 
 	// Nothing is left on the outgoing validators, so a second run is a no-op.
-	require.NotPanics(t, func() {
-		v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
-	})
+	require.NoError(t, v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 	require.Equal(t, totalBefore.String(), totalValidatorTokens(t, realioApp, ctx).String(), "second run moved tokens")
 }
 
 // TestRotateValidatorsPanicsOnBlankNewValidator: the shipped config leaves
 // NewValidator blank until the real replacement addresses are known, and the
 // upgrade must halt rather than quietly do nothing.
-func TestRotateValidatorsPanicsOnBlankNewValidator(t *testing.T) {
+func TestRotateValidatorsErrorsOnBlankNewValidator(t *testing.T) {
 	realioApp, _, initialHeight, proposerAddr, blockTime := setupRotationGenesis(t)
 	ctx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
 
-	require.Panics(t, func() {
-		v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
-	})
+	require.Error(t, v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 }
 
-// TestRotateValidatorsPanicsOnCoinMismatch: the two outgoing validators run
+// TestRotateValidatorsErrorsOnCoinMismatch: the two outgoing validators run
 // on different multi-staking coins (ario / arst); pointing one at a
 // replacement that accepts the other coin must fail loudly, and must leave
 // no partial state behind for the caller to trip over.
-func TestRotateValidatorsPanicsOnCoinMismatch(t *testing.T) {
+func TestRotateValidatorsErrorsOnCoinMismatch(t *testing.T) {
 	realioApp, _, initialHeight, proposerAddr, blockTime := setupRotationGenesis(t)
 	ctx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
 
@@ -277,9 +273,7 @@ func TestRotateValidatorsPanicsOnCoinMismatch(t *testing.T) {
 		NewValidator string
 	}{{OldValidator: orig[0].OldValidator, NewValidator: wrongCoinVal.String()}}
 
-	require.Panics(t, func() {
-		v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
-	})
+	require.Error(t, v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 }
 
 // unbondedRun is the state after RotateValidators ran and then every
@@ -357,7 +351,7 @@ func rotateAndUnbondEverything(t *testing.T) *unbondedRun {
 		run.pre = append(run.pre, snaps)
 	}
 
-	v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
+	require.NoError(t, v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 
 	msMsgServer := multistakingkeeper.NewMsgServerImpl(realioApp.MultiStakingKeeper)
 	for i, r := range run.rotations {
@@ -653,7 +647,7 @@ func TestRotateValidatorsMergesIntoExistingDelegation(t *testing.T) {
 		preNewTokens[i] = v.Tokens
 	}
 
-	v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
+	require.NoError(t, v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 
 	// ---- merge ----
 	for i, r := range rotations {
@@ -829,9 +823,7 @@ func TestRotateValidatorsSkipsDelegatorWithIncomingRedelegation(t *testing.T) {
 	// ---- rotate: must not panic, must log the skip ----
 	var logs bytes.Buffer
 	logCtx := ctx.WithLogger(log.NewLogger(&logs))
-	require.NotPanics(t, func() {
-		v8.RotateValidators(logCtx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
-	})
+	require.NoError(t, v8.RotateValidators(logCtx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 
 	require.Contains(t, logs.String(), "skipping delegation", "the skipped delegation must be logged")
 	require.Contains(t, logs.String(), blocked.String(), "the log must name the delegator")
@@ -960,9 +952,7 @@ func TestRotateValidatorsAtMaxRedelegationEntries(t *testing.T) {
 	paramsBefore, err := realioApp.StakingKeeper.GetParams(ctx)
 	require.NoError(t, err)
 
-	require.NotPanics(t, func() {
-		v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
-	})
+	require.NoError(t, v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 
 	// Moved in full: nothing left on the outgoing validator, all of it on the replacement.
 	_, err = realioApp.StakingKeeper.GetDelegation(ctx, user, oldVal)
@@ -1046,9 +1036,7 @@ func TestRotateValidatorsSkipsDustDelegation(t *testing.T) {
 
 	var logs bytes.Buffer
 	logCtx := ctx.WithLogger(log.NewLogger(&logs))
-	require.NotPanics(t, func() {
-		v8.RotateValidators(logCtx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
-	})
+	require.NoError(t, v8.RotateValidators(logCtx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 
 	require.Contains(t, logs.String(), "skipping dust delegation")
 	require.Contains(t, logs.String(), dust.String())
@@ -1176,7 +1164,7 @@ func rotateAfterPreUnbonds(t *testing.T) *unbondedBeforeRotation {
 		run.movers = append(run.movers, movers)
 	}
 
-	v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
+	require.NoError(t, v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 	return run
 }
 
@@ -1409,9 +1397,7 @@ func TestRotateValidatorsAfterDelegatorMovedStakeToThirdValidator(t *testing.T) 
 
 	// ---- rotate ----
 	var logs bytes.Buffer
-	require.NotPanics(t, func() {
-		v8.RotateValidators(ctx.WithLogger(log.NewLogger(&logs)), realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
-	})
+	require.NoError(t, v8.RotateValidators(ctx.WithLogger(log.NewLogger(&logs)), realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 	require.NotContains(t, logs.String(), "skipping", "an outgoing redelegation must not cause any skip")
 
 	// What was left moved to the replacement.
@@ -1481,7 +1467,7 @@ func TestRotatedDelegatorCannotRedelegateOnFromReplacement(t *testing.T) {
 	delegator := firstNonOperatorDelegator(t, realioApp, ctx, oldVal)
 	msMsgServer := multistakingkeeper.NewMsgServerImpl(realioApp.MultiStakingKeeper)
 
-	v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
+	require.NoError(t, v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 
 	lock, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(ctx, multistakingtypes.MultiStakingLockID(delegator.String(), newVal.String()))
 	require.True(t, found)
@@ -1509,4 +1495,121 @@ func TestRotatedDelegatorCannotRedelegateOnFromReplacement(t *testing.T) {
 	require.NoError(t, err)
 	_, err = msMsgServer.BeginRedelegate(matureCtx, redelegateOn)
 	require.NoError(t, err, "once the rotation's redelegation has matured the delegator can redelegate on")
+}
+
+// TestRotateValidatorsSkipsDelegationsWithoutALock reproduces a state that
+// already exists on this genesis, on a validator other than the two this
+// upgrade actually rotates: a delegation whose multi-staking lock has been
+// fully consumed and deleted (SetMultiStakingLock removes a lock once its
+// amount hits zero), while a few units of truncation residue -- left behind
+// by AdjustUnbondAmount's token/share conversion during an earlier full
+// undelegate -- still sit in the x/staking delegation record. Measured
+// against this genesis export: 374 of 3,764 delegations chain-wide are
+// already in this state, 161 of them above the one-token dust threshold the
+// existing skip checks for. RotateValidators must skip these too, not
+// panic: with no lock, there is no LockedCoin to read a denom or amount
+// from for BeginRedelegate, independent of how large the leftover shares
+// are.
+func TestRotateValidatorsSkipsDelegationsWithoutALock(t *testing.T) {
+	realioApp, _, initialHeight, proposerAddr, blockTime := setupRotationGenesis(t)
+	ctx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
+
+	// A real bonded validator from this genesis, not one of the two this
+	// upgrade rotates, with real lock-less delegations already on it (35 of
+	// its 216 delegators, measured with the jq query in the PR description).
+	oldVal, err := sdk.ValAddressFromBech32("realiovaloper1p0rnayfulqxzj9svs4ndnc460q0y0gp8605a3j")
+	require.NoError(t, err)
+	coin := realioApp.MultiStakingKeeper.GetValidatorMultiStakingCoin(ctx, oldVal)
+	require.NotEmpty(t, coin, "fixture assumption: this validator has a registered multi-staking coin")
+
+	dels, err := realioApp.StakingKeeper.GetValidatorDelegations(ctx, oldVal)
+	require.NoError(t, err)
+	require.NotEmpty(t, dels)
+
+	type lockless struct {
+		delegator sdk.AccAddress
+		shares    math.LegacyDec
+	}
+	var lockLess []lockless
+	var withLock int
+	for _, d := range dels {
+		if _, found := realioApp.MultiStakingKeeper.GetMultiStakingLock(ctx, multistakingtypes.MultiStakingLockID(d.DelegatorAddress, oldVal.String())); found {
+			withLock++
+			continue
+		}
+		delAddr, err := sdk.AccAddressFromBech32(d.DelegatorAddress)
+		require.NoError(t, err)
+		lockLess = append(lockLess, lockless{delegator: delAddr, shares: d.Shares})
+	}
+	require.NotEmpty(t, lockLess, "fixture assumption: this validator has at least one lock-less delegation")
+	require.NotZero(t, withLock, "fixture assumption: this validator also has ordinary, lock-backed delegations")
+	t.Logf("validator %s: %d delegations, %d without a lock, %d with one", oldVal, len(dels), len(lockLess), withLock)
+
+	newVal := createTestValidator(t, realioApp, ctx, coin)
+	orig := v8.ValidatorRotations
+	t.Cleanup(func() { v8.ValidatorRotations = orig })
+	v8.ValidatorRotations = []struct {
+		OldValidator string
+		NewValidator string
+	}{{OldValidator: oldVal.String(), NewValidator: newVal.String()}}
+
+	var logs bytes.Buffer
+	logCtx := ctx.WithLogger(log.NewLogger(&logs))
+	require.NoError(t, v8.RotateValidators(logCtx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
+
+	require.Equal(t, len(lockLess), strings.Count(logs.String(), "no multi-staking lock backs it"),
+		"exactly the lock-less delegations should be skipped and logged")
+
+	// Every lock-less delegation is untouched: still on the old validator,
+	// same shares, nothing moved to the replacement.
+	for _, ll := range lockLess {
+		del, err := realioApp.StakingKeeper.GetDelegation(ctx, ll.delegator, oldVal)
+		require.NoErrorf(t, err, "%s should still be delegated to %s", ll.delegator, oldVal)
+		require.Equal(t, ll.shares.String(), del.Shares.String(), "%s: shares changed", ll.delegator)
+
+		_, err = realioApp.StakingKeeper.GetDelegation(ctx, ll.delegator, newVal)
+		require.Errorf(t, err, "%s should not have anything on the replacement", ll.delegator)
+	}
+
+	// Every ordinary, lock-backed delegation moved: it has a real, positive
+	// delegation on the replacement now.
+	//
+	// It does not necessarily disappear from the old validator, though: this
+	// real validator's book-keeping already carries the same kind of
+	// truncation drift the lock-less skip exists for (that is how it came to
+	// have 68 lock-less delegations in the first place), so a redelegation
+	// sized off the lock's integer LockedCoin.Amount can leave a few units
+	// of residual shares behind on a delegator whose x/staking shares had
+	// already drifted from that amount -- the same phenomenon, just below
+	// the threshold where it deletes the lock entirely. That is expected and
+	// harmless (worth a small fraction of one token), unlike the two real
+	// rotation targets in TestRotateValidatorsGenesisStateDetail, which have
+	// no such history and so reduce to exactly zero.
+	const residueTolerance = 1000 // attounits; the real max measured here is ~8
+	oldValidator, err := realioApp.StakingKeeper.GetValidator(ctx, oldVal)
+	require.NoError(t, err)
+	maxResidue := math.ZeroInt()
+	lockLessAddrs := make(map[string]bool, len(lockLess))
+	for _, ll := range lockLess {
+		lockLessAddrs[ll.delegator.String()] = true
+	}
+	remaining, err := realioApp.StakingKeeper.GetValidatorDelegations(ctx, oldVal)
+	require.NoError(t, err)
+	for _, d := range remaining {
+		if lockLessAddrs[d.DelegatorAddress] {
+			continue
+		}
+		residue := oldValidator.TokensFromShares(d.Shares).TruncateInt()
+		require.Truef(t, residue.LTE(math.NewInt(residueTolerance)),
+			"%s: %s attounits left on the old validator after being \"moved\", too much to be truncation residue", d.DelegatorAddress, residue)
+		if residue.GT(maxResidue) {
+			maxResidue = residue
+		}
+
+		newDel, err := realioApp.StakingKeeper.GetDelegation(ctx, sdk.MustAccAddressFromBech32(d.DelegatorAddress), newVal)
+		require.NoErrorf(t, err, "%s has no delegation on the replacement despite not being skipped", d.DelegatorAddress)
+		require.True(t, newDel.Shares.IsPositive())
+	}
+	t.Logf("validator %s -> %s: %d lock-less delegations skipped, %d ordinary ones moved (largest truncation residue left behind: %s attounits)",
+		oldVal, newVal, len(lockLess), withLock, maxResidue)
 }

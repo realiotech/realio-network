@@ -170,7 +170,7 @@ func TestRotateValidatorsAgainstRealGenesis(t *testing.T) {
 		t.Logf("validator %s: %d real delegators before rotation (operator self-bond present: %v)", r.OldVal, len(addrs), hadOperator)
 	}
 
-	v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
+	require.NoError(t, v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 
 	for i, r := range rotations {
 		// Old validator: every delegation gone (redelegated away in full),
@@ -278,7 +278,7 @@ func TestRotatedStakeStillSlashableForPriorInfraction(t *testing.T) {
 		})
 	}
 
-	v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper)
+	require.NoError(t, v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 	rotationHeight := ctx.BlockHeight()
 	slashFactor := math.LegacyNewDecWithPrec(5, 2) // 5%
 
