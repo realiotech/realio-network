@@ -12,6 +12,7 @@ import (
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/stretchr/testify/require"
 
+	coreheader "cosmossdk.io/core/header"
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
@@ -22,12 +23,11 @@ import (
 	"github.com/realiotech/realio-network/app/migrations"
 )
 
-// RealGenesisPath is the actual pre-incident mainnet genesis export — the
-// same file the leaked-validator rotation is meant to run against for real.
-// Lives under app/migrations/testdata (a Go "testdata" directory: ignored
-// by the go tool for build purposes) since that's the one place every
-// current caller (app/migrations' external test package) resolves relative
-// paths against.
+// RealGenesisPath is the actual pre-incident mainnet genesis export used by
+// app/migrations' tests. Lives under app/migrations/testdata (a Go "testdata"
+// directory: ignored by the go tool for build purposes), resolved relative to
+// that package's directory. Tests in other packages keep their own fixture
+// under their own testdata directory and call SetupWithGenesisFile directly.
 const RealGenesisPath = "testdata/recover_genesis.json"
 
 // ConsensusValidatorEntry mirrors the top-level consensus.validators[] shape
@@ -37,7 +37,15 @@ type ConsensusValidatorEntry struct {
 	Address string `json:"address"`
 }
 
-// SetupWithRealGenesis boots a full app against the real genesis export,
+// SetupWithRealGenesis boots a full app against app/migrations' real genesis
+// export (see SetupWithGenesisFile).
+func SetupWithRealGenesis(t *testing.T) (realioApp *RealioNetwork, chainID string, initialHeight int64, proposerAddr []byte, blockTime time.Time) {
+	t.Helper()
+	return SetupWithGenesisFile(t, RealGenesisPath)
+}
+
+// SetupWithGenesisFile boots a full app against the genesis export at
+// genesisPath (relative to the calling test's package directory),
 // finalizing the first block at time.Now() — the same way a real node
 // resuming this chain today would. Any unbonding delegation whose
 // completion_time has already elapsed by "now" matures and pays out right
@@ -47,15 +55,16 @@ type ConsensusValidatorEntry struct {
 // only needs to deal with whatever is still in flight afterwards.
 // Skips the test (rather than failing) if the file isn't present.
 //
-// Exported (and not a _test.go file) so app/migrations' tests — a separate
-// package, since app/migrations is imported BY app and so can't import app
-// back from an internal test — can call it too. See migrations.Keepers.
-func SetupWithRealGenesis(t *testing.T) (realioApp *RealioNetwork, chainID string, initialHeight int64, proposerAddr []byte, blockTime time.Time) {
+// Exported (and not a _test.go file) so app/migrations' and
+// app/upgrades/v1.8's tests — separate packages, since both are imported BY
+// app and so can't import app back from an internal test — can call it too.
+// See migrations.Keepers.
+func SetupWithGenesisFile(t *testing.T, genesisPath string) (realioApp *RealioNetwork, chainID string, initialHeight int64, proposerAddr []byte, blockTime time.Time) {
 	t.Helper()
 
-	raw, err := os.ReadFile(RealGenesisPath) //nolint:staticcheck // SA4006 false positive: raw is read at json.Unmarshal(raw, &doc) below
+	raw, err := os.ReadFile(genesisPath) //nolint:staticcheck // SA4006 false positive: raw is read at json.Unmarshal(raw, &doc) below
 	if err != nil {
-		t.Skipf("real genesis fixture not present at %s, skipping: %v", RealGenesisPath, err)
+		t.Skipf("real genesis fixture not present at %s, skipping: %v", genesisPath, err)
 		return nil, "", 0, nil, time.Time{}
 	}
 
@@ -130,11 +139,16 @@ func SetupWithRealGenesis(t *testing.T) (realioApp *RealioNetwork, chainID strin
 }
 
 // NewHeaderCtx builds an ad-hoc sdk.Context at the given height, the same
-// way BeginBlocker/EndBlocker would see it.
+// way BeginBlocker/EndBlocker would see it. HeaderInfo is set alongside the
+// block header because parts of x/staking (e.g. the redelegation queue) read
+// the time from HeaderInfo, not from BlockHeader.
 func NewHeaderCtx(realioApp *RealioNetwork, height int64, proposerAddr []byte, blockTime time.Time) sdk.Context {
 	return realioApp.BaseApp.NewContextLegacy(false, tmproto.Header{
 		Height:          height,
 		ProposerAddress: proposerAddr,
 		Time:            blockTime,
+	}).WithHeaderInfo(coreheader.Info{
+		Height: height,
+		Time:   blockTime,
 	}).WithBlockGasMeter(storetypes.NewInfiniteGasMeter())
 }
