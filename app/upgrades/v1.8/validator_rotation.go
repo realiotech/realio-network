@@ -10,31 +10,48 @@ import (
 
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
+
+	realionetworktypes "github.com/realiotech/realio-network/types"
 )
 
-// ValidatorRotations lists each validator being rotated out and its
-// replacement. Every delegation currently on OldValidator -- including the
-// outgoing operator's own self-bond -- gets redelegated to NewValidator.
-// NewValidator must already exist on chain (created normally, ahead of this
-// upgrade, by its real-world operator) with the same multi-staking coin
-// registered as OldValidator: BeginRedelegate requires both sides to accept
-// the same coin (see multistaking's msgServer.BeginRedelegate), and each
-// outgoing validator's delegators are exclusively locked in one coin each
-// (confirmed against the real mainnet export: every delegator on both
-// validators being rotated has a lock, one denom per validator).
-//
-// NewValidator is deliberately left blank below -- the real replacement
-// validator addresses aren't known to this codebase yet. Filling them in
-// (and wiring RotateValidators into a governance-gated x/upgrade handler)
-// is the last step before this can run for real; RotateValidators returns
-// an error rather than silently no-op'ing if any entry is left blank, so an
-// incomplete config can't accidentally ship.
-var ValidatorRotations = []struct {
+// ValidatorRotation is one outgoing validator and its replacement: every
+// delegation on OldValidator -- including the outgoing operator's own
+// self-bond -- gets redelegated to NewValidator. NewValidator must already
+// exist on chain (created normally, ahead of this upgrade, by its
+// real-world operator) with the same multi-staking coin registered as
+// OldValidator: BeginRedelegate requires both sides to accept the same coin
+// (see multistaking's msgServer.BeginRedelegate), and each outgoing
+// validator's delegators are exclusively locked in one coin each (confirmed
+// against the real mainnet export: every delegator on both validators being
+// rotated has a lock, one denom per validator).
+type ValidatorRotation struct {
 	OldValidator string
 	NewValidator string
-}{
-	{OldValidator: "realiovaloper18a32el4maw3pqr8xh3yrl9ja4lejs265a5nxtm", NewValidator: ""},
-	{OldValidator: "realiovaloper13jrrtkfuuvzdak6zxmr95hek9c228ug50sdsvs", NewValidator: ""},
+}
+
+// ValidatorRotations are the real mainnet rotations
+var ValidatorRotations = []ValidatorRotation{
+	// ario
+	{OldValidator: "realiovaloper18a32el4maw3pqr8xh3yrl9ja4lejs265a5nxtm", NewValidator: "realiovaloper1fvh0yq5v8n5c2yz0cs5pkfdgx5t77x6vm3pr6y"},
+	// arst
+	{OldValidator: "realiovaloper13jrrtkfuuvzdak6zxmr95hek9c228ug50sdsvs", NewValidator: "realiovaloper1dlsleh9f0gsf7tl2kvyra7pmy3z8w7nek4u780"},
+}
+
+// TestnetValidatorRotations is ValidatorRotations' counterpart for realio's testnet
+var TestnetValidatorRotations = []ValidatorRotation{
+	// RIO
+	{OldValidator: "realiovaloper1jyrr9ga485mzdw6u7w7vcvcmhz8h6zq86p0un6", NewValidator: "realiovaloper18fhk2xfqnrh2w4yl0cvuu4dquuhgelm4mvd93n"}, // 0x3A6f65192098eEA7549F7e19CE55a0E72e8cFF75
+	// DSTRX
+	{OldValidator: "realiovaloper1ssau65h7873kyxeqcl8472rlpknqxfv7fel78v", NewValidator: "realiovaloper10y2gan5zaxvl94gtw3fhrghasvsr3kzqqf5t9m"}, // 0x79148ecE82E999f2D50b745371a2fD832038d840
+}
+
+// rotationsFor returns the rotations to apply for chainID: testnet's own
+// list on testnet, ValidatorRotations (mainnet) otherwise.
+func rotationsFor(chainID string) []ValidatorRotation {
+	if realionetworktypes.IsTestnet(chainID) {
+		return TestnetValidatorRotations
+	}
+	return ValidatorRotations
 }
 
 // RotateValidators redelegates every delegation on each OldValidator in
@@ -90,7 +107,7 @@ func RotateValidators(ctx sdk.Context, stakingKeeper *stakingkeeper.Keeper, mult
 		return fmt.Errorf("validator rotation: failed to raise max redelegation entries: %w", err)
 	}
 
-	for _, r := range ValidatorRotations {
+	for _, r := range rotationsFor(ctx.ChainID()) {
 		if r.NewValidator == "" {
 			return fmt.Errorf("validator rotation: no NewValidator configured for %s", r.OldValidator)
 		}
@@ -217,18 +234,12 @@ func redelegateOneDelegation(ctx sdk.Context, stakingKeeper *stakingkeeper.Keepe
 		// with the delegator, amount and the time it unblocks, so it can be
 		// followed up.
 		//
-		// It is also safe because of who can end up here. Starting a
-		// redelegation takes a signed transaction, and x/blacklist rejects
-		// every transaction signed by a blacklisted address
-		// (app/ante/blacklist.go). So a blacklisted delegator -- which covers
-		// the outgoing operators' own self-bonds and a large share of the stake
-		// being rotated -- can never have a redelegation in progress, and is
-		// always moved. Only accounts able to sign, that is, not blacklisted,
-		// can be skipped, and those are exactly the accounts able to
-		// redelegate or unbond by themselves later. (The one gap: an address
-		// that governance blacklists after it redelegated, inside that same
-		// unbonding window, is skipped and cannot move itself until it is
-		// removed from the blacklist.)
+		// It is also safe because of who can end up here: starting a
+		// redelegation takes a signed transaction, so only an account able to
+		// sign one in the first place can ever be in this state -- and that is
+		// exactly the kind of account that can redelegate or unbond by itself
+		// once the earlier redelegation matures, without needing this
+		// migration to do it for them.
 		ctx.Logger().Error("validator rotation: skipping delegation, delegator has a redelegation in progress into the outgoing validator",
 			"delegator", del.DelegatorAddress,
 			"old_validator", oldValStr,
