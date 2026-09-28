@@ -237,12 +237,19 @@ func TestRotateValidatorsGenesisStateDetail(t *testing.T) {
 	require.Equal(t, totalBefore.String(), totalValidatorTokens(t, realioApp, ctx).String(), "second run moved tokens")
 }
 
-// TestRotateValidatorsPanicsOnBlankNewValidator: the shipped config leaves
-// NewValidator blank until the real replacement addresses are known, and the
-// upgrade must halt rather than quietly do nothing.
+// TestRotateValidatorsErrorsOnBlankNewValidator: if a future edit to
+// ValidatorRotations ever leaves NewValidator blank again (as it did before
+// the real mainnet replacements were known), the upgrade must halt rather
+// than quietly do nothing. ValidatorRotations itself now ships with the real
+// addresses filled in, so this test constructs its own blank config instead
+// of relying on the package default being blank.
 func TestRotateValidatorsErrorsOnBlankNewValidator(t *testing.T) {
 	realioApp, _, initialHeight, proposerAddr, blockTime := setupRotationGenesis(t)
 	ctx := app.NewHeaderCtx(realioApp, initialHeight, proposerAddr, blockTime)
+
+	orig := v8.ValidatorRotations
+	t.Cleanup(func() { v8.ValidatorRotations = orig })
+	v8.ValidatorRotations = []v8.ValidatorRotation{{OldValidator: orig[0].OldValidator, NewValidator: ""}}
 
 	require.Error(t, v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 }
@@ -268,10 +275,7 @@ func TestRotateValidatorsErrorsOnCoinMismatch(t *testing.T) {
 	require.NotEqual(t, oldCoin, otherCoin, "test premise: the two outgoing validators use different coins")
 
 	wrongCoinVal := createTestValidator(t, realioApp, ctx, otherCoin)
-	v8.ValidatorRotations = []struct {
-		OldValidator string
-		NewValidator string
-	}{{OldValidator: orig[0].OldValidator, NewValidator: wrongCoinVal.String()}}
+	v8.ValidatorRotations = []v8.ValidatorRotation{{OldValidator: orig[0].OldValidator, NewValidator: wrongCoinVal.String()}}
 
 	require.Error(t, v8.RotateValidators(ctx, realioApp.StakingKeeper, realioApp.MultiStakingKeeper))
 }
@@ -1548,10 +1552,7 @@ func TestRotateValidatorsSkipsDelegationsWithoutALock(t *testing.T) {
 	newVal := createTestValidator(t, realioApp, ctx, coin)
 	orig := v8.ValidatorRotations
 	t.Cleanup(func() { v8.ValidatorRotations = orig })
-	v8.ValidatorRotations = []struct {
-		OldValidator string
-		NewValidator string
-	}{{OldValidator: oldVal.String(), NewValidator: newVal.String()}}
+	v8.ValidatorRotations = []v8.ValidatorRotation{{OldValidator: oldVal.String(), NewValidator: newVal.String()}}
 
 	var logs bytes.Buffer
 	logCtx := ctx.WithLogger(log.NewLogger(&logs))
