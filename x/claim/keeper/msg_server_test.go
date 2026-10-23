@@ -126,7 +126,7 @@ func (suite *KeeperTestSuite) TestLinkAddressAlreadyLinked() {
 	suite.Require().ErrorContains(err, "someone else's old_address")
 }
 
-func (suite *KeeperTestSuite) TestLinkAddressNoDelegations() {
+func (suite *KeeperTestSuite) TestClaimDelegationsNoDelegations() {
 	oldAddr := testutil.GenAddress()
 	newAddr := testutil.GenAddress()
 
@@ -137,14 +137,22 @@ func (suite *KeeperTestSuite) TestLinkAddressNoDelegations() {
 	got, found := suite.app.ClaimKeeper.GetLink(suite.ctx, oldAddr)
 	suite.Require().True(found)
 	suite.Require().Equal(newAddr, got)
+
+	// Claiming an address that has nothing staked is a no-op, not an error.
+	res, err := srv.ClaimDelegations(suite.ctx, &types.MsgClaimDelegations{
+		Admin:      suite.admin,
+		OldAddress: oldAddr.String(),
+	})
+	suite.Require().NoError(err)
+	suite.Require().Equal(newAddr.String(), res.NewAddress)
 }
 
-// TestLinkAddressMigratesDelegation is the core behavioral test: an old
+// TestClaimDelegationsMigratesDelegation is the core behavioral test: an old
 // address with an active multi-staking delegation gets linked to a new
 // address, and the delegation (both the native x/staking Delegation and
 // the backing x/multi-staking MultiStakingLock) must move over completely
 // -- nothing left behind on the old address, nothing duplicated.
-func (suite *KeeperTestSuite) TestLinkAddressMigratesDelegation() {
+func (suite *KeeperTestSuite) TestClaimDelegationsMigratesDelegation() {
 	oldAddr := testutil.GenAddress()
 	newAddr := testutil.GenAddress()
 	amount := math.NewInt(1_000_000_000_000)
@@ -165,6 +173,13 @@ func (suite *KeeperTestSuite) TestLinkAddressMigratesDelegation() {
 		Admin:      suite.admin,
 		OldAddress: oldAddr.String(),
 		NewAddress: newAddr.String(),
+	})
+	suite.Require().NoError(err)
+	// Linking only records where the address moved to. The
+	// delegations come over in their own message.
+	_, err = srv.ClaimDelegations(suite.ctx, &types.MsgClaimDelegations{
+		Admin:      suite.admin,
+		OldAddress: oldAddr.String(),
 	})
 	suite.Require().NoError(err)
 
@@ -192,11 +207,11 @@ func (suite *KeeperTestSuite) TestLinkAddressMigratesDelegation() {
 	suite.Require().Equal(stakingtypes.Bonded, validator.Status)
 }
 
-// TestLinkAddressMergesIntoExistingNewDelegation covers the case where the
+// TestClaimDelegationsMergesIntoExistingNewDelegation covers the case where the
 // new address already delegates to the same validator (e.g. it's the
 // user's own separate wallet, already staking): migrating the old
 // address's delegation must ADD to it, not clobber it.
-func (suite *KeeperTestSuite) TestLinkAddressMergesIntoExistingNewDelegation() {
+func (suite *KeeperTestSuite) TestClaimDelegationsMergesIntoExistingNewDelegation() {
 	oldAddr := testutil.GenAddress()
 	newAddr := testutil.GenAddress()
 
@@ -217,6 +232,13 @@ func (suite *KeeperTestSuite) TestLinkAddressMergesIntoExistingNewDelegation() {
 		Admin:      suite.admin,
 		OldAddress: oldAddr.String(),
 		NewAddress: newAddr.String(),
+	})
+	suite.Require().NoError(err)
+	// Linking only records where the address moved to. The
+	// delegations come over in their own message.
+	_, err = srv.ClaimDelegations(suite.ctx, &types.MsgClaimDelegations{
+		Admin:      suite.admin,
+		OldAddress: oldAddr.String(),
 	})
 	suite.Require().NoError(err)
 
@@ -256,13 +278,13 @@ func (suite *KeeperTestSuite) allocateReward(amount math.Int) string {
 	return bondDenom
 }
 
-// TestLinkAddressFreshCarriesOverPendingReward covers the common (no
+// TestClaimDelegationsFreshCarriesOverPendingReward covers the common (no
 // merge) case: migrating must NOT pay out oldAddr's pending reward as a
 // side effect of the admin's LinkAddress call. Instead newAddr inherits
 // the exact reward-accrual ledger and can withdraw it later, on its own,
 // for the full amount -- and oldAddr must never be able to claim anything
 // again once its delegation is gone.
-func (suite *KeeperTestSuite) TestLinkAddressFreshCarriesOverPendingReward() {
+func (suite *KeeperTestSuite) TestClaimDelegationsFreshCarriesOverPendingReward() {
 	oldAddr := testutil.GenAddress()
 	newAddr := testutil.GenAddress()
 
@@ -277,6 +299,13 @@ func (suite *KeeperTestSuite) TestLinkAddressFreshCarriesOverPendingReward() {
 		Admin:      suite.admin,
 		OldAddress: oldAddr.String(),
 		NewAddress: newAddr.String(),
+	})
+	suite.Require().NoError(err)
+	// Linking only records where the address moved to. The
+	// delegations come over in their own message.
+	_, err = srv.ClaimDelegations(suite.ctx, &types.MsgClaimDelegations{
+		Admin:      suite.admin,
+		OldAddress: oldAddr.String(),
 	})
 	suite.Require().NoError(err)
 
@@ -301,11 +330,11 @@ func (suite *KeeperTestSuite) TestLinkAddressFreshCarriesOverPendingReward() {
 	suite.Require().True(newBalanceAfterWithdraw.Amount.GT(newBalanceBefore.Amount))
 }
 
-// TestLinkAddressMergeFlushesRewardToNewAddress covers the merge case:
+// TestClaimDelegationsMergeFlushesRewardToNewAddress covers the merge case:
 // unlike the fresh path above, two independent reward ledgers can't be
 // combined losslessly, so migrating must flush oldAddr's pending reward
 // immediately -- and it must still land on newAddr, never oldAddr.
-func (suite *KeeperTestSuite) TestLinkAddressMergeFlushesRewardToNewAddress() {
+func (suite *KeeperTestSuite) TestClaimDelegationsMergeFlushesRewardToNewAddress() {
 	oldAddr := testutil.GenAddress()
 	newAddr := testutil.GenAddress()
 
@@ -323,6 +352,13 @@ func (suite *KeeperTestSuite) TestLinkAddressMergeFlushesRewardToNewAddress() {
 		NewAddress: newAddr.String(),
 	})
 	suite.Require().NoError(err)
+	// Linking only records where the address moved to. The
+	// delegations come over in their own message.
+	_, err = srv.ClaimDelegations(suite.ctx, &types.MsgClaimDelegations{
+		Admin:      suite.admin,
+		OldAddress: oldAddr.String(),
+	})
+	suite.Require().NoError(err)
 
 	oldBalanceAfter := suite.app.BankKeeper.GetBalance(suite.ctx, oldAddr, bondDenom)
 	newBalanceAfter := suite.app.BankKeeper.GetBalance(suite.ctx, newAddr, bondDenom)
@@ -331,8 +367,8 @@ func (suite *KeeperTestSuite) TestLinkAddressMergeFlushesRewardToNewAddress() {
 	suite.Require().True(newBalanceAfter.Amount.GT(newBalanceBefore.Amount), "the merge must flush the accrued reward to the new address immediately")
 }
 
-// TestLinkAddressFreshPreservesExactRewardAmount tightens the "some reward
-// arrived" check in TestLinkAddressFreshCarriesOverPendingReward into an
+// TestClaimDelegationsFreshPreservesExactRewardAmount tightens the "some reward
+// arrived" check in TestClaimDelegationsFreshCarriesOverPendingReward into an
 // exact one: newAddr must withdraw precisely what a `distribution rewards`
 // query against oldAddr would have shown one instant before the migration
 // -- the same Querier.DelegationRewards RPC any wallet/CLI calls to preview
@@ -347,7 +383,7 @@ func (suite *KeeperTestSuite) TestLinkAddressMergeFlushesRewardToNewAddress() {
 // no such isolation, so CacheContext() recreates it by hand: the query runs
 // for real, then its branch is discarded, leaving the ledger the actual
 // migration below runs against untouched.
-func (suite *KeeperTestSuite) TestLinkAddressFreshPreservesExactRewardAmount() {
+func (suite *KeeperTestSuite) TestClaimDelegationsFreshPreservesExactRewardAmount() {
 	oldAddr := testutil.GenAddress()
 	newAddr := testutil.GenAddress()
 
@@ -371,6 +407,13 @@ func (suite *KeeperTestSuite) TestLinkAddressFreshPreservesExactRewardAmount() {
 		NewAddress: newAddr.String(),
 	})
 	suite.Require().NoError(err)
+	// Linking only records where the address moved to. The
+	// delegations come over in their own message.
+	_, err = srv.ClaimDelegations(suite.ctx, &types.MsgClaimDelegations{
+		Admin:      suite.admin,
+		OldAddress: oldAddr.String(),
+	})
+	suite.Require().NoError(err)
 
 	gotReward, err := suite.app.DistrKeeper.WithdrawDelegationRewards(suite.ctx, newAddr, suite.validator)
 	suite.Require().NoError(err)
@@ -378,7 +421,7 @@ func (suite *KeeperTestSuite) TestLinkAddressFreshPreservesExactRewardAmount() {
 		"newAddr should inherit exactly what a rewards query against oldAddr showed pre-migration, got %s want %s", gotReward, wantReward)
 }
 
-// TestLinkAddressSkipsValidatorSelfDelegation covers the safety check added
+// TestClaimDelegationsSkipsValidatorSelfDelegation covers the safety check added
 // to migrateOneDelegation: if old_address is itself a validator's operator
 // account, that validator's self-delegation must be left exactly where it
 // is, not migrated -- see migrateOneDelegation's doc comment for why
@@ -386,7 +429,7 @@ func (suite *KeeperTestSuite) TestLinkAddressFreshPreservesExactRewardAmount() {
 // jailing enforcement, since that check only fires for the operator
 // address itself). Self-bond remediation is deliberately deferred to a
 // separate follow-up, not handled by LinkAddress.
-func (suite *KeeperTestSuite) TestLinkAddressSkipsValidatorSelfDelegation() {
+func (suite *KeeperTestSuite) TestClaimDelegationsSkipsValidatorSelfDelegation() {
 	oldAddr := sdk.AccAddress(suite.validator)
 	newAddr := testutil.GenAddress()
 
@@ -399,6 +442,13 @@ func (suite *KeeperTestSuite) TestLinkAddressSkipsValidatorSelfDelegation() {
 		Admin:      suite.admin,
 		OldAddress: oldAddr.String(),
 		NewAddress: newAddr.String(),
+	})
+	suite.Require().NoError(err)
+	// Linking only records where the address moved to. The
+	// delegations come over in their own message.
+	_, err = srv.ClaimDelegations(suite.ctx, &types.MsgClaimDelegations{
+		Admin:      suite.admin,
+		OldAddress: oldAddr.String(),
 	})
 	suite.Require().NoError(err)
 
@@ -438,15 +488,15 @@ func (suite *KeeperTestSuite) TestLinkAddressSkipsValidatorSelfDelegation() {
 
 // TestLinkAddressesBatch covers the plural, batch form of LinkAddress: one
 // message links several old_address/new_address pairs, each going through
-// the exact same checks and delegation migration as a standalone
-// LinkAddress call.
+// the exact same checks as a standalone LinkAddress call. Delegations are
+// then claimed per address, which is the step the batch does not fold in.
 func (suite *KeeperTestSuite) TestLinkAddressesBatch() {
 	oldA, newA := testutil.GenAddress(), testutil.GenAddress()
 	oldB, newB := testutil.GenAddress(), testutil.GenAddress()
 
 	suite.delegate(oldA, math.NewInt(1_000_000_000_000))
 	// oldB has no delegation at all -- exercises the no-op migration path
-	// (MigrateDelegations returns early) within a batch.
+	// (MigrateDelegations returns early).
 
 	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
 	_, err := srv.LinkAddresses(suite.ctx, &types.MsgLinkAddresses{
@@ -464,6 +514,14 @@ func (suite *KeeperTestSuite) TestLinkAddressesBatch() {
 	gotB, found := suite.app.ClaimKeeper.GetLink(suite.ctx, oldB)
 	suite.Require().True(found)
 	suite.Require().Equal(newB, gotB)
+
+	for _, old := range []sdk.AccAddress{oldA, oldB} {
+		_, err = srv.ClaimDelegations(suite.ctx, &types.MsgClaimDelegations{
+			Admin:      suite.admin,
+			OldAddress: old.String(),
+		})
+		suite.Require().NoError(err)
+	}
 
 	_, err = suite.app.StakingKeeper.GetDelegation(suite.ctx, oldA, suite.validator)
 	suite.Require().True(errors.Is(err, stakingtypes.ErrNoDelegation))
@@ -512,13 +570,18 @@ func (suite *KeeperTestSuite) TestLinkAddressesFailsAtomically() {
 	suite.Require().False(suite.app.ClaimKeeper.IsLinked(suite.ctx, oldA))
 }
 
-// TestLinkAddressAuthorizesNewAddressForAssetDenom covers x/asset interop:
-// if the multi-staking coin backing a migrated delegation is registered as
-// a permissioned x/asset Token (AuthorizationRequired = true), newAddr
-// must come out of LinkAddress already authorized to transact it --
-// otherwise it would hold the migrated stake but be unable to ever move
-// it, the exact dead end LinkAddress exists to get people out of.
-func (suite *KeeperTestSuite) TestLinkAddressAuthorizesNewAddressForAssetDenom() {
+// TestClaimDelegationsLeavesAssetAuthorizationAlone pins where this module
+// stops. If the migrated stake's denom is a permissioned x/asset Token, the
+// new address arrives holding it and still not on the Token's authorized
+// list -- so it cannot move it until that Token's manager says so.
+//
+// Not an oversight. The authorized list answers to the Token's manager, and
+// x/asset's MsgAuthorizeAddress is signed by that manager; the claim admin
+// does not hold that signature and should not be able to forge it by
+// writing into another module's permission state. The recovery is finished
+// off by the manager submitting MsgAuthorizeAddress -- in the same
+// transaction, if the two want it to land together.
+func (suite *KeeperTestSuite) TestClaimDelegationsLeavesAssetAuthorizationAlone() {
 	oldAddr := testutil.GenAddress()
 	newAddr := testutil.GenAddress()
 
@@ -526,7 +589,32 @@ func (suite *KeeperTestSuite) TestLinkAddressAuthorizesNewAddressForAssetDenom()
 	suite.Require().NoError(suite.app.AssetKeeper.Token.Set(suite.ctx, assettypes.TokenKey(multiStakingCoinDenom), token))
 
 	suite.delegate(oldAddr, math.NewInt(1_000_000_000_000))
+
+	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
+	_, err := srv.LinkAddress(suite.ctx, &types.MsgLinkAddress{
+		Admin:      suite.admin,
+		OldAddress: oldAddr.String(),
+		NewAddress: newAddr.String(),
+	})
+	suite.Require().NoError(err)
+	_, err = srv.ClaimDelegations(suite.ctx, &types.MsgClaimDelegations{
+		Admin:      suite.admin,
+		OldAddress: oldAddr.String(),
+	})
+	suite.Require().NoError(err)
+
+	// The stake moved...
+	newDel, err := suite.app.StakingKeeper.GetDelegation(suite.ctx, newAddr, suite.validator)
+	suite.Require().NoError(err)
+	suite.Require().True(newDel.Shares.IsPositive())
+
+	// ...and x/asset's permission state was not touched on the way.
 	suite.Require().False(suite.app.AssetKeeper.IsAddressAuthorizedToSend(suite.ctx, multiStakingCoinDenom, newAddr))
+}
+
+func (suite *KeeperTestSuite) TestLinkAddressDoesNotMigrateDelegations() {
+	oldAddr, newAddr := testutil.GenAddress(), testutil.GenAddress()
+	suite.delegate(oldAddr, math.NewInt(1_000_000_000_000))
 
 	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
 	_, err := srv.LinkAddress(suite.ctx, &types.MsgLinkAddress{
@@ -536,5 +624,65 @@ func (suite *KeeperTestSuite) TestLinkAddressAuthorizesNewAddressForAssetDenom()
 	})
 	suite.Require().NoError(err)
 
-	suite.Require().True(suite.app.AssetKeeper.IsAddressAuthorizedToSend(suite.ctx, multiStakingCoinDenom, newAddr))
+	// Still exactly where it was.
+	oldDel, err := suite.app.StakingKeeper.GetDelegation(suite.ctx, oldAddr, suite.validator)
+	suite.Require().NoError(err)
+	suite.Require().True(oldDel.Shares.IsPositive())
+
+	_, err = suite.app.StakingKeeper.GetDelegation(suite.ctx, newAddr, suite.validator)
+	suite.Require().True(errors.Is(err, stakingtypes.ErrNoDelegation))
+
+	_, found := suite.app.MultiStakingKeeper.GetMultiStakingLock(suite.ctx,
+		multistakingtypes.MultiStakingLockID(newAddr.String(), suite.validator.String()))
+	suite.Require().False(found)
+}
+
+// TestEveryMsgIsAdminGated walks the whole Msg service with a signer that
+// is not the admin. The module has no governance route and no self-service
+// route; the admin is the only authority there is, and that has to hold
+// for every message, not just the ones that obviously move funds.
+func (suite *KeeperTestSuite) TestEveryMsgIsAdminGated() {
+	oldAddr, newAddr := testutil.GenAddress(), testutil.GenAddress()
+	suite.link(oldAddr, newAddr)
+	notAdmin := testutil.GenAddress().String()
+
+	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
+	calls := map[string]func() error{
+		"LinkAddress": func() error {
+			_, err := srv.LinkAddress(suite.ctx, &types.MsgLinkAddress{
+				Admin: notAdmin, OldAddress: testutil.GenAddress().String(), NewAddress: testutil.GenAddress().String(),
+			})
+			return err
+		},
+		"LinkAddresses": func() error {
+			_, err := srv.LinkAddresses(suite.ctx, &types.MsgLinkAddresses{
+				Admin: notAdmin,
+				Links: []*types.LinkAddressPair{{OldAddress: testutil.GenAddress().String(), NewAddress: testutil.GenAddress().String()}},
+			})
+			return err
+		},
+		"ClaimDelegations": func() error {
+			_, err := srv.ClaimDelegations(suite.ctx, &types.MsgClaimDelegations{Admin: notAdmin, OldAddress: oldAddr.String()})
+			return err
+		},
+		"ClaimBalances": func() error {
+			_, err := srv.ClaimBalances(suite.ctx, &types.MsgClaimBalances{
+				Admin: notAdmin, OldAddress: oldAddr.String(),
+				Amount: sdk.NewCoins(sdk.NewCoin(multiStakingCoinDenom, math.NewInt(1))),
+			})
+			return err
+		},
+		"ClaimTokens": func() error {
+			_, err := srv.ClaimTokens(suite.ctx, &types.MsgClaimTokens{
+				Admin: notAdmin, OldAddress: oldAddr.String(), Erc20Contracts: []string{"0x0000000000000000000000000000000000000001"},
+			})
+			return err
+		},
+	}
+
+	for name, call := range calls {
+		suite.Run(name, func() {
+			suite.Require().ErrorContains(call(), "invalid admin")
+		})
+	}
 }

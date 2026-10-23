@@ -260,6 +260,18 @@ func (suite *KeeperTestSuite) TestMainnetSampleMigration() {
 	}
 	suite.T().Logf("linked %d addresses in %d batches of up to %d via LinkAddresses in %s", len(batched), batchCount, batchSize, time.Since(batchStart))
 
+	// Linking only records destinations. Pulling the delegations over is
+	// its own message, one per recovered address.
+	claimStart := time.Now()
+	for _, s := range samples {
+		_, err := claimSrv.ClaimDelegations(suite.ctx, &types.MsgClaimDelegations{
+			Admin:      suite.admin,
+			OldAddress: s.old.String(),
+		})
+		suite.Require().NoError(err, "ClaimDelegations failed for %s", s.old)
+	}
+	suite.T().Logf("claimed delegations for %d addresses in %s", len(samples), time.Since(claimStart))
+
 	// Verify every migration: old is fully gone, new holds exactly what
 	// old had, and new can fully operate the inherited position --
 	// delegate more, undelegate part of it, and redelegate part of it --
@@ -333,16 +345,20 @@ func (suite *KeeperTestSuite) TestMainnetSampleMigration() {
 	suite.T().Logf("total: %s", time.Since(start))
 }
 
-// TestMainnetRealAssetAuthorization is the counterpart to
-// TestMainnetSampleMigration for x/asset interop, using real data instead
-// of a fabricated Token: the real mainnet asset genesis has an actual
-// permissioned Token (symbol "rst", AuthorizationRequired = true) whose
-// base bank denom is "arst" -- which is also a real multi-staking lock
-// denom several leaked addresses hold. This seeds the real Token records
-// (seedRealAssetTokens) and a validator that accepts "arst", migrates
-// those real leaked "arst" delegators, and confirms every new address
-// comes out already authorized on the real "rst" Token -- discovered from
-// the data, not assumed or hand-registered.
+// TestMainnetRealAssetAuthorization pins the x/asset boundary against real
+// data rather than a fabricated Token. The real mainnet asset genesis has
+// an actual permissioned Token (symbol "rst", AuthorizationRequired =
+// true) whose base bank denom is "arst" -- also a real multi-staking lock
+// denom several leaked addresses hold. It seeds those real records and a
+// validator accepting "arst", claims the delegations of real leaked "arst"
+// holders, and asserts that the new addresses come out NOT authorized.
+//
+// That is the deliberate shape of this module, not an oversight: x/asset's
+// authorized list answers to the Token's manager, and MsgAuthorizeAddress
+// is signed by that manager -- a signature x/claim's admin does not hold.
+// The consequence is concrete and this test is where it is written down:
+// each of these recovered addresses holds real stake it cannot move until
+// the "rst" manager authorizes it.
 func (suite *KeeperTestSuite) TestMainnetRealAssetAuthorization() {
 	appState := suite.readMainnetExport()
 	suite.seedRealBankDenomMetadata(appState)
@@ -353,8 +369,7 @@ func (suite *KeeperTestSuite) TestMainnetRealAssetAuthorization() {
 	if md, found := suite.app.BankKeeper.GetDenomMetaData(suite.ctx, arstDenom); found {
 		// Token.Symbol ("rst") and bank Metadata.Symbol ("RST") disagree in
 		// case on real mainnet data; TokenKey lowercases both when used as
-		// a store key (and that's exactly what the production lookup in
-		// authorizeAssetForDenom relies on), so match the same way here.
+		// a store key, so match the same way here.
 		for i := range tokens {
 			if assettypes.TokenKey(tokens[i].Symbol) == assettypes.TokenKey(md.Symbol) {
 				arstToken = &tokens[i]
@@ -399,12 +414,22 @@ func (suite *KeeperTestSuite) TestMainnetRealAssetAuthorization() {
 			NewAddress: newAddr.String(),
 		})
 		suite.Require().NoError(err, "LinkAddress failed for %s", s.old)
+
+		_, err = claimSrv.ClaimDelegations(suite.ctx, &types.MsgClaimDelegations{
+			Admin:      suite.admin,
+			OldAddress: s.old.String(),
+		})
+		suite.Require().NoError(err, "ClaimDelegations failed for %s", s.old)
 	}
 
 	for _, s := range samples {
 		newAddr := newAddrOf[s.old.String()]
-		suite.Require().True(suite.app.AssetKeeper.IsAddressAuthorizedToSend(suite.ctx, arstToken.Symbol, newAddr),
-			"new address %s was not authorized for the real %s token after migration", newAddr, arstToken.Symbol)
+		// The stake moved...
+		_, err := suite.app.StakingKeeper.GetDelegation(suite.ctx, newAddr, arstValidator)
+		suite.Require().NoError(err, "delegation did not reach new address %s", newAddr)
+		// ...and the Token's authorized list is untouched by that move.
+		suite.Require().False(suite.app.AssetKeeper.IsAddressAuthorizedToSend(suite.ctx, arstToken.Symbol, newAddr),
+			"x/claim authorized %s for the real %s token; that is the Token manager's call, not this module's", newAddr, arstToken.Symbol)
 	}
-	suite.T().Logf("verified %d real leaked %s holders migrated with x/asset authorization for %q carried over", len(samples), arstDenom, arstToken.Symbol)
+	suite.T().Logf("verified %d real leaked %s holders had stake migrated, each still awaiting %q authorization from the token manager", len(samples), arstDenom, arstToken.Symbol)
 }

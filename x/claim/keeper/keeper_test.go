@@ -73,14 +73,6 @@ func (suite *KeeperTestSuite) SetupTest() {
 		LastResultsHash:    tmhash.Sum([]byte("last_result")),
 	})
 
-	queryHelper := baseapp.NewQueryServerTestHelper(suite.ctx, suite.app.InterfaceRegistry())
-	types.RegisterQueryServer(queryHelper, keeper.NewQueryServerImpl(suite.app.ClaimKeeper))
-	suite.queryClient = types.NewQueryClient(queryHelper)
-
-	adminAddr := sdk.AccAddress(priv.PubKey().Address())
-	suite.admin = adminAddr.String()
-	suite.Require().NoError(suite.app.ClaimKeeper.SetAdmin(suite.ctx, adminAddr))
-
 	vals, err := suite.app.StakingKeeper.GetAllValidators(suite.ctx)
 	suite.Require().NoError(err)
 	suite.Require().Len(vals, 1)
@@ -88,6 +80,26 @@ func (suite *KeeperTestSuite) SetupTest() {
 	suite.Require().NoError(err)
 	suite.validator = valAddr
 	suite.Require().Equal(stakingtypes.Bonded, vals[0].Status)
+
+	// Make the seeded validator the block's proposer. Anything that runs
+	// the EVM resolves the coinbase by looking the proposer up in
+	// x/staking (see the evm keeper's GetCoinbaseAddress), so a header
+	// naming an address no validator owns fails every EVM call with
+	// "validator does not exist" — which has nothing to do with what the
+	// test is checking.
+	valConsAddr, err := vals[0].GetConsAddr()
+	suite.Require().NoError(err)
+	header := suite.ctx.BlockHeader()
+	header.ProposerAddress = valConsAddr
+	suite.ctx = suite.ctx.WithBlockHeader(header)
+
+	queryHelper := baseapp.NewQueryServerTestHelper(suite.ctx, suite.app.InterfaceRegistry())
+	types.RegisterQueryServer(queryHelper, keeper.NewQueryServerImpl(suite.app.ClaimKeeper))
+	suite.queryClient = types.NewQueryClient(queryHelper)
+
+	adminAddr := sdk.AccAddress(priv.PubKey().Address())
+	suite.admin = adminAddr.String()
+	suite.Require().NoError(suite.app.ClaimKeeper.SetAdmin(suite.ctx, adminAddr))
 }
 
 func TestKeeperTestSuite(t *testing.T) {

@@ -6,7 +6,10 @@ package types
 import (
 	context "context"
 	fmt "fmt"
+	github_com_cosmos_cosmos_sdk_types "github.com/cosmos/cosmos-sdk/types"
+	types "github.com/cosmos/cosmos-sdk/types"
 	_ "github.com/cosmos/cosmos-sdk/types/msgservice"
+	_ "github.com/cosmos/gogoproto/gogoproto"
 	grpc1 "github.com/cosmos/gogoproto/grpc"
 	proto "github.com/cosmos/gogoproto/proto"
 	grpc "google.golang.org/grpc"
@@ -28,6 +31,10 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// MsgLinkAddress records that old_address was recovered to new_address. It
+// moves nothing on its own -- it establishes the destination every Claim
+// message afterwards reads, so that none of them has to name it and none
+// of them can be pointed somewhere else by a typo.
 type MsgLinkAddress struct {
 	// admin is the address authorized to submit this message (the module's
 	// configured admin — see x/claim/keeper.Keeper.Admin).
@@ -36,8 +43,7 @@ type MsgLinkAddress struct {
 	// leaked (e.g. an x/blacklist entry) and which has completed re-KYC.
 	OldAddress string `protobuf:"bytes,2,opt,name=old_address,json=oldAddress,proto3" json:"old_address,omitempty"`
 	// new_address is the bech32 account address the holder registered during
-	// re-KYC. Every active staking delegation old_address holds is migrated
-	// to new_address as part of processing this message.
+	// re-KYC.
 	NewAddress string `protobuf:"bytes,3,opt,name=new_address,json=newAddress,proto3" json:"new_address,omitempty"`
 }
 
@@ -138,8 +144,7 @@ type LinkAddressPair struct {
 	// leaked and which has completed re-KYC.
 	OldAddress string `protobuf:"bytes,1,opt,name=old_address,json=oldAddress,proto3" json:"old_address,omitempty"`
 	// new_address is the bech32 account address the holder registered during
-	// re-KYC. Every active staking delegation old_address holds is migrated
-	// to new_address as part of processing this pair.
+	// re-KYC.
 	NewAddress string `protobuf:"bytes,2,opt,name=new_address,json=newAddress,proto3" json:"new_address,omitempty"`
 }
 
@@ -190,14 +195,15 @@ func (m *LinkAddressPair) GetNewAddress() string {
 	return ""
 }
 
+// MsgLinkAddresses is the batch form of MsgLinkAddress.
 type MsgLinkAddresses struct {
 	// admin is the address authorized to submit this message (the module's
 	// configured admin — see x/claim/keeper.Keeper.Admin).
 	Admin string `protobuf:"bytes,1,opt,name=admin,proto3" json:"admin,omitempty"`
-	// links is the batch of old_address -> new_address pairs to link and
-	// migrate, processed in order. A failure on any one pair (e.g. it was
-	// already linked) fails the whole message -- either every pair in the
-	// batch is applied, or none are.
+	// links is the batch of old_address -> new_address pairs to record,
+	// processed in order. A failure on any one pair (e.g. it was already
+	// linked) fails the whole message -- either every pair in the batch is
+	// applied, or none are.
 	Links []*LinkAddressPair `protobuf:"bytes,2,rep,name=links,proto3" json:"links,omitempty"`
 }
 
@@ -284,41 +290,418 @@ func (m *MsgLinkAddressesResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_MsgLinkAddressesResponse proto.InternalMessageInfo
 
+// MsgClaimDelegations re-keys every ACTIVE staking and multi-staking
+// delegation old_address holds over to the address it was linked to,
+// without unbonding or rebonding: voting power and each validator's total
+// stake are unaffected. Unbonding delegations and in-flight redelegations
+// are deliberately left behind -- see x/claim/README.md.
+type MsgClaimDelegations struct {
+	// admin is the address authorized to submit this message.
+	Admin string `protobuf:"bytes,1,opt,name=admin,proto3" json:"admin,omitempty"`
+	// old_address is the linked address whose delegations to move.
+	OldAddress string `protobuf:"bytes,2,opt,name=old_address,json=oldAddress,proto3" json:"old_address,omitempty"`
+}
+
+func (m *MsgClaimDelegations) Reset()         { *m = MsgClaimDelegations{} }
+func (m *MsgClaimDelegations) String() string { return proto.CompactTextString(m) }
+func (*MsgClaimDelegations) ProtoMessage()    {}
+func (*MsgClaimDelegations) Descriptor() ([]byte, []int) {
+	return fileDescriptor_551333f1ff89dff7, []int{5}
+}
+func (m *MsgClaimDelegations) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgClaimDelegations) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgClaimDelegations.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgClaimDelegations) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgClaimDelegations.Merge(m, src)
+}
+func (m *MsgClaimDelegations) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgClaimDelegations) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgClaimDelegations.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgClaimDelegations proto.InternalMessageInfo
+
+func (m *MsgClaimDelegations) GetAdmin() string {
+	if m != nil {
+		return m.Admin
+	}
+	return ""
+}
+
+func (m *MsgClaimDelegations) GetOldAddress() string {
+	if m != nil {
+		return m.OldAddress
+	}
+	return ""
+}
+
+type MsgClaimDelegationsResponse struct {
+	// new_address the delegations were moved to, resolved from the link.
+	NewAddress string `protobuf:"bytes,1,opt,name=new_address,json=newAddress,proto3" json:"new_address,omitempty"`
+}
+
+func (m *MsgClaimDelegationsResponse) Reset()         { *m = MsgClaimDelegationsResponse{} }
+func (m *MsgClaimDelegationsResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgClaimDelegationsResponse) ProtoMessage()    {}
+func (*MsgClaimDelegationsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_551333f1ff89dff7, []int{6}
+}
+func (m *MsgClaimDelegationsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgClaimDelegationsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgClaimDelegationsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgClaimDelegationsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgClaimDelegationsResponse.Merge(m, src)
+}
+func (m *MsgClaimDelegationsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgClaimDelegationsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgClaimDelegationsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgClaimDelegationsResponse proto.InternalMessageInfo
+
+func (m *MsgClaimDelegationsResponse) GetNewAddress() string {
+	if m != nil {
+		return m.NewAddress
+	}
+	return ""
+}
+
+// MsgClaimBalances moves bank coins from old_address to the address it was
+// linked to. The amount is stated by the admin rather than read off the
+// chain, so that a recovery can be scoped deliberately -- to what the
+// holder can evidence, or to what a dispute has settled on -- instead of
+// always being all-or-nothing.
+//
+// The coins travel via the claim module account rather than directly.
+// x/blacklist blocks a blacklisted address paying a user account, which
+// old_address is and new_address is; it exempts payments to a module
+// account, because routine protocol bookkeeping depends on those. Hopping
+// through the module account satisfies both halves of that rule without
+// weakening it for anyone else (see x/claim/README.md).
+type MsgClaimBalances struct {
+	// admin is the address authorized to submit this message.
+	Admin string `protobuf:"bytes,1,opt,name=admin,proto3" json:"admin,omitempty"`
+	// old_address is the linked address to debit.
+	OldAddress string `protobuf:"bytes,2,opt,name=old_address,json=oldAddress,proto3" json:"old_address,omitempty"`
+	// amount is what to move. Coins beyond old_address's spendable balance
+	// fail the message; a vesting schedule still locks what it locked.
+	Amount github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,3,rep,name=amount,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"amount"`
+}
+
+func (m *MsgClaimBalances) Reset()         { *m = MsgClaimBalances{} }
+func (m *MsgClaimBalances) String() string { return proto.CompactTextString(m) }
+func (*MsgClaimBalances) ProtoMessage()    {}
+func (*MsgClaimBalances) Descriptor() ([]byte, []int) {
+	return fileDescriptor_551333f1ff89dff7, []int{7}
+}
+func (m *MsgClaimBalances) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgClaimBalances) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgClaimBalances.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgClaimBalances) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgClaimBalances.Merge(m, src)
+}
+func (m *MsgClaimBalances) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgClaimBalances) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgClaimBalances.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgClaimBalances proto.InternalMessageInfo
+
+func (m *MsgClaimBalances) GetAdmin() string {
+	if m != nil {
+		return m.Admin
+	}
+	return ""
+}
+
+func (m *MsgClaimBalances) GetOldAddress() string {
+	if m != nil {
+		return m.OldAddress
+	}
+	return ""
+}
+
+func (m *MsgClaimBalances) GetAmount() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.Amount
+	}
+	return nil
+}
+
+type MsgClaimBalancesResponse struct {
+	// new_address the coins were moved to, resolved from the link.
+	NewAddress string `protobuf:"bytes,1,opt,name=new_address,json=newAddress,proto3" json:"new_address,omitempty"`
+}
+
+func (m *MsgClaimBalancesResponse) Reset()         { *m = MsgClaimBalancesResponse{} }
+func (m *MsgClaimBalancesResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgClaimBalancesResponse) ProtoMessage()    {}
+func (*MsgClaimBalancesResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_551333f1ff89dff7, []int{8}
+}
+func (m *MsgClaimBalancesResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgClaimBalancesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgClaimBalancesResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgClaimBalancesResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgClaimBalancesResponse.Merge(m, src)
+}
+func (m *MsgClaimBalancesResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgClaimBalancesResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgClaimBalancesResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgClaimBalancesResponse proto.InternalMessageInfo
+
+func (m *MsgClaimBalancesResponse) GetNewAddress() string {
+	if m != nil {
+		return m.NewAddress
+	}
+	return ""
+}
+
+// MsgClaimTokens sweeps ERC-20 balances from old_address to the address it
+// was linked to, by running the transfers inside the EVM with old_address
+// as the caller.
+//
+// Each listed contract moves its ENTIRE balance -- there is no partial
+// amount, because unlike a bank balance there is nothing to split between
+// the old holder and the new one. A contract where old_address holds
+// nothing is skipped rather than treated as an error.
+//
+// The contracts are listed explicitly because the EVM offers no way to ask
+// which contracts an address holds a balance in. Any contract that reverts
+// fails the whole message, leaving nothing half-swept to reconcile.
+type MsgClaimTokens struct {
+	// admin is the address authorized to submit this message.
+	Admin string `protobuf:"bytes,1,opt,name=admin,proto3" json:"admin,omitempty"`
+	// old_address is the linked address to sweep.
+	OldAddress string `protobuf:"bytes,2,opt,name=old_address,json=oldAddress,proto3" json:"old_address,omitempty"`
+	// erc20_contracts are hex addresses of ERC-20 contracts to drain in full.
+	Erc20Contracts []string `protobuf:"bytes,3,rep,name=erc20_contracts,json=erc20Contracts,proto3" json:"erc20_contracts,omitempty"`
+}
+
+func (m *MsgClaimTokens) Reset()         { *m = MsgClaimTokens{} }
+func (m *MsgClaimTokens) String() string { return proto.CompactTextString(m) }
+func (*MsgClaimTokens) ProtoMessage()    {}
+func (*MsgClaimTokens) Descriptor() ([]byte, []int) {
+	return fileDescriptor_551333f1ff89dff7, []int{9}
+}
+func (m *MsgClaimTokens) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgClaimTokens) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgClaimTokens.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgClaimTokens) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgClaimTokens.Merge(m, src)
+}
+func (m *MsgClaimTokens) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgClaimTokens) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgClaimTokens.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgClaimTokens proto.InternalMessageInfo
+
+func (m *MsgClaimTokens) GetAdmin() string {
+	if m != nil {
+		return m.Admin
+	}
+	return ""
+}
+
+func (m *MsgClaimTokens) GetOldAddress() string {
+	if m != nil {
+		return m.OldAddress
+	}
+	return ""
+}
+
+func (m *MsgClaimTokens) GetErc20Contracts() []string {
+	if m != nil {
+		return m.Erc20Contracts
+	}
+	return nil
+}
+
+type MsgClaimTokensResponse struct {
+	// new_address the tokens were swept to, resolved from the link.
+	NewAddress string `protobuf:"bytes,1,opt,name=new_address,json=newAddress,proto3" json:"new_address,omitempty"`
+	// erc20_contracts_swept counts the listed contracts that actually had a
+	// non-zero balance to move.
+	Erc20ContractsSwept uint64 `protobuf:"varint,2,opt,name=erc20_contracts_swept,json=erc20ContractsSwept,proto3" json:"erc20_contracts_swept,omitempty"`
+}
+
+func (m *MsgClaimTokensResponse) Reset()         { *m = MsgClaimTokensResponse{} }
+func (m *MsgClaimTokensResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgClaimTokensResponse) ProtoMessage()    {}
+func (*MsgClaimTokensResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_551333f1ff89dff7, []int{10}
+}
+func (m *MsgClaimTokensResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *MsgClaimTokensResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_MsgClaimTokensResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *MsgClaimTokensResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgClaimTokensResponse.Merge(m, src)
+}
+func (m *MsgClaimTokensResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *MsgClaimTokensResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgClaimTokensResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_MsgClaimTokensResponse proto.InternalMessageInfo
+
+func (m *MsgClaimTokensResponse) GetNewAddress() string {
+	if m != nil {
+		return m.NewAddress
+	}
+	return ""
+}
+
+func (m *MsgClaimTokensResponse) GetErc20ContractsSwept() uint64 {
+	if m != nil {
+		return m.Erc20ContractsSwept
+	}
+	return 0
+}
+
 func init() {
 	proto.RegisterType((*MsgLinkAddress)(nil), "realionetwork.claim.v1.MsgLinkAddress")
 	proto.RegisterType((*MsgLinkAddressResponse)(nil), "realionetwork.claim.v1.MsgLinkAddressResponse")
 	proto.RegisterType((*LinkAddressPair)(nil), "realionetwork.claim.v1.LinkAddressPair")
 	proto.RegisterType((*MsgLinkAddresses)(nil), "realionetwork.claim.v1.MsgLinkAddresses")
 	proto.RegisterType((*MsgLinkAddressesResponse)(nil), "realionetwork.claim.v1.MsgLinkAddressesResponse")
+	proto.RegisterType((*MsgClaimDelegations)(nil), "realionetwork.claim.v1.MsgClaimDelegations")
+	proto.RegisterType((*MsgClaimDelegationsResponse)(nil), "realionetwork.claim.v1.MsgClaimDelegationsResponse")
+	proto.RegisterType((*MsgClaimBalances)(nil), "realionetwork.claim.v1.MsgClaimBalances")
+	proto.RegisterType((*MsgClaimBalancesResponse)(nil), "realionetwork.claim.v1.MsgClaimBalancesResponse")
+	proto.RegisterType((*MsgClaimTokens)(nil), "realionetwork.claim.v1.MsgClaimTokens")
+	proto.RegisterType((*MsgClaimTokensResponse)(nil), "realionetwork.claim.v1.MsgClaimTokensResponse")
 }
 
 func init() { proto.RegisterFile("realionetwork/claim/v1/tx.proto", fileDescriptor_551333f1ff89dff7) }
 
 var fileDescriptor_551333f1ff89dff7 = []byte{
-	// 359 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x92, 0xcd, 0x4e, 0xf2, 0x40,
-	0x14, 0x86, 0x19, 0x08, 0x5f, 0xf2, 0x9d, 0xc6, 0x9f, 0x34, 0x06, 0x9b, 0x2e, 0x8a, 0xe9, 0x42,
-	0x09, 0x89, 0x53, 0xc1, 0x9d, 0x89, 0x0b, 0x5d, 0x43, 0x62, 0x70, 0xe7, 0xc6, 0x94, 0x76, 0x52,
-	0x26, 0x6d, 0x67, 0x48, 0x67, 0x04, 0xdc, 0x19, 0xaf, 0xc0, 0x4b, 0xe1, 0x32, 0x5c, 0xb2, 0x74,
-	0x49, 0x60, 0xc1, 0x6d, 0x18, 0x18, 0x6a, 0x68, 0x23, 0xb1, 0xbb, 0xfe, 0x3c, 0xe7, 0x7d, 0xe6,
-	0x9d, 0x1c, 0xa8, 0x27, 0xc4, 0x8d, 0x28, 0x67, 0x44, 0x8e, 0x79, 0x12, 0x3a, 0x5e, 0xe4, 0xd2,
-	0xd8, 0x19, 0xb5, 0x1c, 0x39, 0xc1, 0xc3, 0x84, 0x4b, 0xae, 0xd7, 0x32, 0x00, 0xde, 0x00, 0x78,
-	0xd4, 0x32, 0x4f, 0x3d, 0x2e, 0x62, 0x2e, 0x9c, 0x58, 0x04, 0x6b, 0x3e, 0x16, 0x81, 0x1a, 0xb0,
-	0x25, 0x1c, 0x76, 0x45, 0xd0, 0xa1, 0x2c, 0xbc, 0xf3, 0xfd, 0x84, 0x08, 0xa1, 0x9f, 0x40, 0xd5,
-	0xf5, 0x63, 0xca, 0x0c, 0x74, 0x86, 0x1a, 0xff, 0x7b, 0xea, 0x45, 0xaf, 0x83, 0xc6, 0x23, 0xff,
-	0xd9, 0x55, 0x90, 0x51, 0xde, 0xfc, 0x03, 0x1e, 0xf9, 0xe9, 0x58, 0x1d, 0x34, 0x46, 0xc6, 0x3f,
-	0x40, 0x45, 0x01, 0x8c, 0x8c, 0xb7, 0xc0, 0x0d, 0xbc, 0xaf, 0xa6, 0x4d, 0x95, 0x66, 0x1b, 0x50,
-	0xcb, 0x5a, 0x7b, 0x44, 0x0c, 0x39, 0x13, 0xc4, 0x7e, 0x84, 0xa3, 0x9d, 0xcf, 0x0f, 0x2e, 0x4d,
-	0xf2, 0x6a, 0xf4, 0x97, 0xba, 0x9c, 0x57, 0xdb, 0x02, 0x8e, 0xb3, 0x3a, 0xb2, 0xaf, 0xe6, 0x2d,
-	0x54, 0x23, 0xca, 0xc2, 0x75, 0x48, 0xa5, 0xa1, 0xb5, 0x2f, 0xf0, 0xef, 0xf7, 0x89, 0x73, 0x67,
-	0xec, 0xa9, 0xa9, 0x4c, 0x47, 0x13, 0x8c, 0xbc, 0x34, 0x6d, 0xd9, 0x9e, 0x23, 0xa8, 0x74, 0x45,
-	0xa0, 0x13, 0xd0, 0x76, 0xaf, 0xfe, 0x7c, 0x9f, 0x2e, 0x1b, 0x64, 0xe2, 0x62, 0x5c, 0xaa, 0xd3,
-	0x43, 0x38, 0xc8, 0x96, 0x6f, 0x14, 0x0b, 0x20, 0xc2, 0xbc, 0x2a, 0x4a, 0xa6, 0x32, 0xb3, 0xfa,
-	0xb6, 0x9a, 0x36, 0xd1, 0x7d, 0xe7, 0x73, 0x61, 0xa1, 0xd9, 0xc2, 0x42, 0xf3, 0x85, 0x85, 0x3e,
-	0x96, 0x56, 0x69, 0xb6, 0xb4, 0x4a, 0x5f, 0x4b, 0xab, 0xf4, 0xd4, 0x0e, 0xa8, 0x1c, 0xbc, 0xf4,
-	0xb1, 0xc7, 0x63, 0x47, 0x85, 0x4b, 0xe2, 0x0d, 0xb6, 0x8f, 0x97, 0xe9, 0x6e, 0x4f, 0xb6, 0xdb,
-	0x2d, 0x5f, 0x87, 0x44, 0xf4, 0xff, 0x6d, 0xb6, 0xf5, 0xfa, 0x3b, 0x00, 0x00, 0xff, 0xff, 0xaf,
-	0xac, 0x50, 0xd0, 0x01, 0x03, 0x00, 0x00,
+	// 617 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x55, 0xc1, 0x4e, 0xdb, 0x4c,
+	0x10, 0x8e, 0x09, 0x20, 0x31, 0xd1, 0x0f, 0xc8, 0xf0, 0xd3, 0xd4, 0x95, 0x9c, 0x2a, 0x07, 0x88,
+	0xa8, 0xb0, 0x93, 0x70, 0x6b, 0xd5, 0x4a, 0x4d, 0x7a, 0x24, 0x52, 0x65, 0x7a, 0xa8, 0x7a, 0x89,
+	0x36, 0xf6, 0xca, 0x58, 0xb6, 0x77, 0x23, 0xef, 0x92, 0x50, 0xa9, 0x87, 0xaa, 0x4f, 0xd0, 0xe7,
+	0xe0, 0xc4, 0xb9, 0x4f, 0xc0, 0x91, 0x63, 0x4f, 0x6d, 0x95, 0x1c, 0x78, 0x8d, 0xca, 0x6b, 0x27,
+	0xf2, 0x9a, 0x90, 0xa4, 0x39, 0x79, 0xbd, 0xfb, 0xcd, 0xf7, 0xcd, 0xcc, 0x7e, 0xa3, 0x85, 0x4a,
+	0x84, 0x51, 0xe0, 0x51, 0x82, 0xf9, 0x90, 0x46, 0xbe, 0x69, 0x07, 0xc8, 0x0b, 0xcd, 0x41, 0xc3,
+	0xe4, 0x57, 0x46, 0x3f, 0xa2, 0x9c, 0xaa, 0x07, 0x12, 0xc0, 0x10, 0x00, 0x63, 0xd0, 0xd0, 0x9e,
+	0xd8, 0x94, 0x85, 0x94, 0x99, 0x21, 0x73, 0x63, 0x7c, 0xc8, 0xdc, 0x24, 0x40, 0xd3, 0xd3, 0x83,
+	0x1e, 0x62, 0xd8, 0x1c, 0x34, 0x7a, 0x98, 0xa3, 0x86, 0x69, 0x53, 0x8f, 0xa4, 0xe7, 0xfb, 0x2e,
+	0x75, 0xa9, 0x58, 0x9a, 0xf1, 0x2a, 0xd9, 0xad, 0x72, 0xd8, 0xee, 0x30, 0xf7, 0xcc, 0x23, 0xfe,
+	0x5b, 0xc7, 0x89, 0x30, 0x63, 0xea, 0x3e, 0x6c, 0x20, 0x27, 0xf4, 0x48, 0x59, 0x79, 0xae, 0xd4,
+	0xb6, 0xac, 0xe4, 0x47, 0xad, 0x40, 0x89, 0x06, 0x4e, 0x17, 0x25, 0xa0, 0xf2, 0x9a, 0x38, 0x03,
+	0x1a, 0x38, 0x93, 0xb0, 0x0a, 0x94, 0x08, 0x1e, 0x4e, 0x01, 0xc5, 0x04, 0x40, 0xf0, 0x30, 0x05,
+	0xbc, 0x84, 0x6f, 0xf7, 0x37, 0xc7, 0x09, 0x5b, 0xb5, 0x0c, 0x07, 0xb2, 0xaa, 0x85, 0x59, 0x9f,
+	0x12, 0x86, 0xab, 0xe7, 0xb0, 0x93, 0xd9, 0x7e, 0x8f, 0xbc, 0x28, 0x2f, 0xad, 0x2c, 0x92, 0x5e,
+	0xcb, 0x4b, 0x57, 0x19, 0xec, 0xca, 0x72, 0xf8, 0xb1, 0x32, 0x5f, 0xc3, 0x46, 0xe0, 0x11, 0x3f,
+	0x26, 0x29, 0xd6, 0x4a, 0xcd, 0x23, 0x63, 0xf6, 0x2d, 0x18, 0xb9, 0x1c, 0xad, 0x24, 0x4a, 0xaa,
+	0x51, 0x83, 0x72, 0x5e, 0x74, 0x5a, 0xe5, 0x47, 0xd8, 0xeb, 0x30, 0xb7, 0x1d, 0xb3, 0xbd, 0xc3,
+	0x01, 0x76, 0x11, 0xf7, 0x28, 0x59, 0xb5, 0xf5, 0x92, 0xea, 0x1b, 0x78, 0x36, 0x83, 0x79, 0x22,
+	0x9c, 0x6f, 0x95, 0xf2, 0xa0, 0x55, 0x3f, 0x14, 0xd1, 0x2b, 0x41, 0xd0, 0x42, 0x01, 0x22, 0x36,
+	0x5e, 0xd9, 0x12, 0x36, 0x6c, 0xa2, 0x90, 0x5e, 0x12, 0x5e, 0x2e, 0x8a, 0x6e, 0x3e, 0x35, 0x12,
+	0x8b, 0x1a, 0xb1, 0x45, 0x8d, 0xd4, 0xa2, 0x46, 0x9b, 0x7a, 0xa4, 0x55, 0xbf, 0xfd, 0x55, 0x29,
+	0x5c, 0xff, 0xae, 0xd4, 0x5c, 0x8f, 0x5f, 0x5c, 0xf6, 0x0c, 0x9b, 0x86, 0x66, 0xea, 0xe7, 0xe4,
+	0x73, 0xc2, 0x1c, 0xdf, 0xe4, 0x9f, 0xfb, 0x98, 0x89, 0x00, 0x66, 0xa5, 0xd4, 0x52, 0xf1, 0xaf,
+	0x44, 0xcb, 0xa5, 0xdc, 0x97, 0xaf, 0xfc, 0x8b, 0x98, 0x04, 0x11, 0xfc, 0x81, 0xfa, 0x78, 0xe5,
+	0xeb, 0x50, 0x8f, 0x60, 0x07, 0x47, 0x76, 0xb3, 0xde, 0xb5, 0x29, 0xe1, 0x11, 0xb2, 0x39, 0x13,
+	0xf5, 0x6f, 0x59, 0xdb, 0x62, 0xbb, 0x3d, 0xd9, 0x95, 0x52, 0x0f, 0xc5, 0x44, 0x64, 0xd4, 0x97,
+	0x4e, 0x5c, 0x6d, 0xc2, 0xff, 0x39, 0xbd, 0x2e, 0x1b, 0xe2, 0x3e, 0x17, 0xa9, 0xad, 0x5b, 0x7b,
+	0xb2, 0xea, 0x79, 0x7c, 0xd4, 0xbc, 0x5e, 0x87, 0x62, 0x87, 0xb9, 0x2a, 0x86, 0x52, 0x76, 0xf6,
+	0x0f, 0x1f, 0xf3, 0xbb, 0xec, 0x64, 0xcd, 0x58, 0x0e, 0x37, 0xad, 0xc1, 0x87, 0xff, 0xe4, 0xe9,
+	0xab, 0x2d, 0x47, 0x80, 0x99, 0x56, 0x5f, 0x16, 0x39, 0x15, 0xe3, 0xb0, 0xfb, 0x60, 0xb2, 0x5e,
+	0xcc, 0x61, 0xc9, 0x83, 0xb5, 0xd3, 0x7f, 0x00, 0x67, 0x4b, 0x94, 0x87, 0xa6, 0xb6, 0x88, 0x65,
+	0x82, 0x9c, 0x5b, 0xe2, 0x6c, 0x33, 0x63, 0x28, 0x65, 0x8d, 0x7a, 0xb8, 0x88, 0x20, 0xc1, 0xcd,
+	0xbd, 0xb6, 0x19, 0xd6, 0xd3, 0x36, 0xbe, 0xde, 0xdf, 0x1c, 0x2b, 0xad, 0xb3, 0xdb, 0x91, 0xae,
+	0xdc, 0x8d, 0x74, 0xe5, 0xcf, 0x48, 0x57, 0xbe, 0x8f, 0xf5, 0xc2, 0xdd, 0x58, 0x2f, 0xfc, 0x1c,
+	0xeb, 0x85, 0x4f, 0xcd, 0xcc, 0xb8, 0x26, 0xd4, 0x1c, 0xdb, 0x17, 0xe9, 0xf2, 0x64, 0xf2, 0xb8,
+	0x5d, 0xa5, 0xcf, 0x9b, 0x18, 0xdf, 0xde, 0xa6, 0x78, 0x78, 0x4e, 0xff, 0x06, 0x00, 0x00, 0xff,
+	0xff, 0x84, 0x39, 0xe6, 0xe0, 0x02, 0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -335,6 +718,9 @@ const _ = grpc.SupportPackageIsVersion4
 type MsgClient interface {
 	LinkAddress(ctx context.Context, in *MsgLinkAddress, opts ...grpc.CallOption) (*MsgLinkAddressResponse, error)
 	LinkAddresses(ctx context.Context, in *MsgLinkAddresses, opts ...grpc.CallOption) (*MsgLinkAddressesResponse, error)
+	ClaimDelegations(ctx context.Context, in *MsgClaimDelegations, opts ...grpc.CallOption) (*MsgClaimDelegationsResponse, error)
+	ClaimBalances(ctx context.Context, in *MsgClaimBalances, opts ...grpc.CallOption) (*MsgClaimBalancesResponse, error)
+	ClaimTokens(ctx context.Context, in *MsgClaimTokens, opts ...grpc.CallOption) (*MsgClaimTokensResponse, error)
 }
 
 type msgClient struct {
@@ -363,10 +749,40 @@ func (c *msgClient) LinkAddresses(ctx context.Context, in *MsgLinkAddresses, opt
 	return out, nil
 }
 
+func (c *msgClient) ClaimDelegations(ctx context.Context, in *MsgClaimDelegations, opts ...grpc.CallOption) (*MsgClaimDelegationsResponse, error) {
+	out := new(MsgClaimDelegationsResponse)
+	err := c.cc.Invoke(ctx, "/realionetwork.claim.v1.Msg/ClaimDelegations", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) ClaimBalances(ctx context.Context, in *MsgClaimBalances, opts ...grpc.CallOption) (*MsgClaimBalancesResponse, error) {
+	out := new(MsgClaimBalancesResponse)
+	err := c.cc.Invoke(ctx, "/realionetwork.claim.v1.Msg/ClaimBalances", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *msgClient) ClaimTokens(ctx context.Context, in *MsgClaimTokens, opts ...grpc.CallOption) (*MsgClaimTokensResponse, error) {
+	out := new(MsgClaimTokensResponse)
+	err := c.cc.Invoke(ctx, "/realionetwork.claim.v1.Msg/ClaimTokens", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // MsgServer is the server API for Msg service.
 type MsgServer interface {
 	LinkAddress(context.Context, *MsgLinkAddress) (*MsgLinkAddressResponse, error)
 	LinkAddresses(context.Context, *MsgLinkAddresses) (*MsgLinkAddressesResponse, error)
+	ClaimDelegations(context.Context, *MsgClaimDelegations) (*MsgClaimDelegationsResponse, error)
+	ClaimBalances(context.Context, *MsgClaimBalances) (*MsgClaimBalancesResponse, error)
+	ClaimTokens(context.Context, *MsgClaimTokens) (*MsgClaimTokensResponse, error)
 }
 
 // UnimplementedMsgServer can be embedded to have forward compatible implementations.
@@ -378,6 +794,15 @@ func (*UnimplementedMsgServer) LinkAddress(ctx context.Context, req *MsgLinkAddr
 }
 func (*UnimplementedMsgServer) LinkAddresses(ctx context.Context, req *MsgLinkAddresses) (*MsgLinkAddressesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method LinkAddresses not implemented")
+}
+func (*UnimplementedMsgServer) ClaimDelegations(ctx context.Context, req *MsgClaimDelegations) (*MsgClaimDelegationsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClaimDelegations not implemented")
+}
+func (*UnimplementedMsgServer) ClaimBalances(ctx context.Context, req *MsgClaimBalances) (*MsgClaimBalancesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClaimBalances not implemented")
+}
+func (*UnimplementedMsgServer) ClaimTokens(ctx context.Context, req *MsgClaimTokens) (*MsgClaimTokensResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClaimTokens not implemented")
 }
 
 func RegisterMsgServer(s grpc1.Server, srv MsgServer) {
@@ -420,6 +845,60 @@ func _Msg_LinkAddresses_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Msg_ClaimDelegations_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgClaimDelegations)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ClaimDelegations(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/realionetwork.claim.v1.Msg/ClaimDelegations",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ClaimDelegations(ctx, req.(*MsgClaimDelegations))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_ClaimBalances_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgClaimBalances)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ClaimBalances(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/realionetwork.claim.v1.Msg/ClaimBalances",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ClaimBalances(ctx, req.(*MsgClaimBalances))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Msg_ClaimTokens_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgClaimTokens)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(MsgServer).ClaimTokens(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/realionetwork.claim.v1.Msg/ClaimTokens",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(MsgServer).ClaimTokens(ctx, req.(*MsgClaimTokens))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var Msg_serviceDesc = _Msg_serviceDesc
 var _Msg_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "realionetwork.claim.v1.Msg",
@@ -432,6 +911,18 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "LinkAddresses",
 			Handler:    _Msg_LinkAddresses_Handler,
+		},
+		{
+			MethodName: "ClaimDelegations",
+			Handler:    _Msg_ClaimDelegations_Handler,
+		},
+		{
+			MethodName: "ClaimBalances",
+			Handler:    _Msg_ClaimBalances_Handler,
+		},
+		{
+			MethodName: "ClaimTokens",
+			Handler:    _Msg_ClaimTokens_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -609,6 +1100,235 @@ func (m *MsgLinkAddressesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error
 	return len(dAtA) - i, nil
 }
 
+func (m *MsgClaimDelegations) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgClaimDelegations) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgClaimDelegations) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.OldAddress) > 0 {
+		i -= len(m.OldAddress)
+		copy(dAtA[i:], m.OldAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.OldAddress)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Admin) > 0 {
+		i -= len(m.Admin)
+		copy(dAtA[i:], m.Admin)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Admin)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgClaimDelegationsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgClaimDelegationsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgClaimDelegationsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.NewAddress) > 0 {
+		i -= len(m.NewAddress)
+		copy(dAtA[i:], m.NewAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.NewAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgClaimBalances) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgClaimBalances) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgClaimBalances) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Amount) > 0 {
+		for iNdEx := len(m.Amount) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Amount[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.OldAddress) > 0 {
+		i -= len(m.OldAddress)
+		copy(dAtA[i:], m.OldAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.OldAddress)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Admin) > 0 {
+		i -= len(m.Admin)
+		copy(dAtA[i:], m.Admin)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Admin)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgClaimBalancesResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgClaimBalancesResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgClaimBalancesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.NewAddress) > 0 {
+		i -= len(m.NewAddress)
+		copy(dAtA[i:], m.NewAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.NewAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgClaimTokens) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgClaimTokens) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgClaimTokens) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Erc20Contracts) > 0 {
+		for iNdEx := len(m.Erc20Contracts) - 1; iNdEx >= 0; iNdEx-- {
+			i -= len(m.Erc20Contracts[iNdEx])
+			copy(dAtA[i:], m.Erc20Contracts[iNdEx])
+			i = encodeVarintTx(dAtA, i, uint64(len(m.Erc20Contracts[iNdEx])))
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.OldAddress) > 0 {
+		i -= len(m.OldAddress)
+		copy(dAtA[i:], m.OldAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.OldAddress)))
+		i--
+		dAtA[i] = 0x12
+	}
+	if len(m.Admin) > 0 {
+		i -= len(m.Admin)
+		copy(dAtA[i:], m.Admin)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.Admin)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *MsgClaimTokensResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *MsgClaimTokensResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *MsgClaimTokensResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Erc20ContractsSwept != 0 {
+		i = encodeVarintTx(dAtA, i, uint64(m.Erc20ContractsSwept))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.NewAddress) > 0 {
+		i -= len(m.NewAddress)
+		copy(dAtA[i:], m.NewAddress)
+		i = encodeVarintTx(dAtA, i, uint64(len(m.NewAddress)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintTx(dAtA []byte, offset int, v uint64) int {
 	offset -= sovTx(v)
 	base := offset
@@ -692,6 +1412,111 @@ func (m *MsgLinkAddressesResponse) Size() (n int) {
 	}
 	var l int
 	_ = l
+	return n
+}
+
+func (m *MsgClaimDelegations) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Admin)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.OldAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgClaimDelegationsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.NewAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgClaimBalances) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Admin)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.OldAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.Amount) > 0 {
+		for _, e := range m.Amount {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *MsgClaimBalancesResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.NewAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	return n
+}
+
+func (m *MsgClaimTokens) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Admin)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	l = len(m.OldAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.Erc20Contracts) > 0 {
+		for _, s := range m.Erc20Contracts {
+			l = len(s)
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *MsgClaimTokensResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.NewAddress)
+	if l > 0 {
+		n += 1 + l + sovTx(uint64(l))
+	}
+	if m.Erc20ContractsSwept != 0 {
+		n += 1 + sovTx(uint64(m.Erc20ContractsSwept))
+	}
 	return n
 }
 
@@ -1156,6 +1981,679 @@ func (m *MsgLinkAddressesResponse) Unmarshal(dAtA []byte) error {
 			return fmt.Errorf("proto: MsgLinkAddressesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgClaimDelegations) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgClaimDelegations: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgClaimDelegations: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Admin", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Admin = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OldAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OldAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgClaimDelegationsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgClaimDelegationsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgClaimDelegationsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NewAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NewAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgClaimBalances) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgClaimBalances: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgClaimBalances: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Admin", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Admin = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OldAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OldAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Amount = append(m.Amount, types.Coin{})
+			if err := m.Amount[len(m.Amount)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgClaimBalancesResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgClaimBalancesResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgClaimBalancesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NewAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NewAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgClaimTokens) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgClaimTokens: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgClaimTokens: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Admin", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Admin = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field OldAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.OldAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Erc20Contracts", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Erc20Contracts = append(m.Erc20Contracts, string(dAtA[iNdEx:postIndex]))
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipTx(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return ErrInvalidLengthTx
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *MsgClaimTokensResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowTx
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: MsgClaimTokensResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: MsgClaimTokensResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field NewAddress", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.NewAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Erc20ContractsSwept", wireType)
+			}
+			m.Erc20ContractsSwept = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.Erc20ContractsSwept |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
 		default:
 			iNdEx = preIndex
 			skippy, err := skipTx(dAtA[iNdEx:])

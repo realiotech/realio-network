@@ -265,8 +265,8 @@ type QueryClient interface {
 	// LinkedAddress looks up the new address an old address was linked to,
 	// if any.
 	LinkedAddress(ctx context.Context, in *QueryLinkedAddressRequest, opts ...grpc.CallOption) (*QueryLinkedAddressResponse, error)
-	// Admin returns the address currently authorized to submit
-	// MsgLinkAddress.
+	// Admin returns the address currently authorized to submit any of the
+	// module's messages.
 	Admin(ctx context.Context, in *QueryAdminRequest, opts ...grpc.CallOption) (*QueryAdminResponse, error)
 }
 
@@ -301,8 +301,8 @@ type QueryServer interface {
 	// LinkedAddress looks up the new address an old address was linked to,
 	// if any.
 	LinkedAddress(context.Context, *QueryLinkedAddressRequest) (*QueryLinkedAddressResponse, error)
-	// Admin returns the address currently authorized to submit
-	// MsgLinkAddress.
+	// Admin returns the address currently authorized to submit any of the
+	// module's messages.
 	Admin(context.Context, *QueryAdminRequest) (*QueryAdminResponse, error)
 }
 
@@ -357,6 +357,7 @@ func _Query_Admin_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
+var Query_serviceDesc = _Query_serviceDesc
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "realionetwork.claim.v1.Query",
 	HandlerType: (*QueryServer)(nil),

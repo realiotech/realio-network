@@ -11,9 +11,9 @@ import (
 // sufficient. InitGenesis/ExportGenesis decode/encode this struct directly
 // with encoding/json.
 type GenesisState struct {
-	// Admin is the bech32 address authorized to submit MsgLinkAddress.
-	// Empty means unset — MsgLinkAddress always rejects until an admin is
-	// configured, whether at genesis or by a later chain-upgrade handler
+	// Admin is the bech32 address authorized to submit any of the module's
+	// messages. Empty means unset — every message is rejected until an admin
+	// is configured, whether at genesis or by a later chain-upgrade handler
 	// (the same way x/blacklist's leaked-address list and x/asset's
 	// manager rotations are seeded on a live chain).
 	Admin string `json:"admin"`

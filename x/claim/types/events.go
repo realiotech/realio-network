@@ -10,6 +10,20 @@ package types
 const EventTypeSkippedSelfDelegation = "skipped_self_delegation"
 
 const (
+	// EventTypeClaimedBalance is emitted once per MsgClaimBalances, with
+	// the full set of coins that moved.
+	EventTypeClaimedBalance = "claimed_balance"
+
+	// EventTypeClaimedERC20 is emitted once per ERC-20 contract whose
+	// balance MsgClaimTokens actually moved. Contracts where the old
+	// address held nothing emit no event.
+	EventTypeClaimedERC20 = "claimed_erc20"
+)
+
+const (
 	AttributeKeyOldAddress = "old_address"
+	AttributeKeyNewAddress = "new_address"
 	AttributeKeyValidator  = "validator_address"
+	AttributeKeyContract   = "contract"
+	AttributeKeyAmount     = "amount"
 )
