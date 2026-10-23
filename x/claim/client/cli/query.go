@@ -54,7 +54,7 @@ func CmdQueryLinkedAddress() *cobra.Command {
 func CmdQueryAdmin() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "admin",
-		Short: "query the address currently authorized to submit MsgLinkAddress",
+		Short: "query the address currently authorized to submit claim messages",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)

@@ -2,20 +2,42 @@ syntax = "proto3";
 package realionetwork.claim.v1;
 
 import "cosmos/msg/v1/msg.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "gogoproto/gogo.proto";
 
 option go_package = "github.com/realiotech/realio-network/x/claim/types";
 
-// Msg defines the Msg service. LinkAddress links one old
-// (leaked/compromised) address to the new address its holder registered
-// after re-doing KYC; LinkAddresses does the same for a batch in a single
-// message. Only the module's configured admin may call either — there is
-// no other way to create or change a link.
+// Msg defines the Msg service.
+//
+// Recovering a leaked address takes two steps. First the admin records
+// where it was moved to (LinkAddress, or LinkAddresses for a batch). Then,
+// once that link exists, one message per kind of asset pulls what the old
+// address holds over to the new one: ClaimDelegations for staking,
+// ClaimBalances for bank coins, ClaimTokens for ERC-20 balances.
+//
+// They are separate because they fail for unrelated reasons -- a paused
+// token contract, a validator being slashed, an amount keyed in wrong --
+// and one of those must not be able to roll back the others. An admin who
+// wants them to land together can put several in one transaction, which
+// recovers exactly the atomicity the split gives up.
+//
+// Every message is gated on the module's configured admin. Nothing in this
+// module is open to the address being recovered, to its holder, or to
+// governance: the admin is the sole authority, and there is no message
+// that changes who the admin is.
 service Msg {
   option (cosmos.msg.v1.service) = true;
   rpc LinkAddress(MsgLinkAddress) returns (MsgLinkAddressResponse);
   rpc LinkAddresses(MsgLinkAddresses) returns (MsgLinkAddressesResponse);
+  rpc ClaimDelegations(MsgClaimDelegations) returns (MsgClaimDelegationsResponse);
+  rpc ClaimBalances(MsgClaimBalances) returns (MsgClaimBalancesResponse);
+  rpc ClaimTokens(MsgClaimTokens) returns (MsgClaimTokensResponse);
 }
 
+// MsgLinkAddress records that old_address was recovered to new_address. It
+// moves nothing on its own -- it establishes the destination every Claim
+// message afterwards reads, so that none of them has to name it and none
+// of them can be pointed somewhere else by a typo.
 message MsgLinkAddress {
   option (cosmos.msg.v1.signer) = "admin";
   // admin is the address authorized to submit this message (the module's
@@ -27,8 +49,7 @@ message MsgLinkAddress {
   string old_address = 2;
 
   // new_address is the bech32 account address the holder registered during
-  // re-KYC. Every active staking delegation old_address holds is migrated
-  // to new_address as part of processing this message.
+  // re-KYC.
   string new_address = 3;
 }
 
@@ -42,22 +63,107 @@ message LinkAddressPair {
   string old_address = 1;
 
   // new_address is the bech32 account address the holder registered during
-  // re-KYC. Every active staking delegation old_address holds is migrated
-  // to new_address as part of processing this pair.
+  // re-KYC.
   string new_address = 2;
 }
 
+// MsgLinkAddresses is the batch form of MsgLinkAddress.
 message MsgLinkAddresses {
   option (cosmos.msg.v1.signer) = "admin";
   // admin is the address authorized to submit this message (the module's
   // configured admin — see x/claim/keeper.Keeper.Admin).
   string admin = 1;
 
-  // links is the batch of old_address -> new_address pairs to link and
-  // migrate, processed in order. A failure on any one pair (e.g. it was
-  // already linked) fails the whole message -- either every pair in the
-  // batch is applied, or none are.
+  // links is the batch of old_address -> new_address pairs to record,
+  // processed in order. A failure on any one pair (e.g. it was already
+  // linked) fails the whole message -- either every pair in the batch is
+  // applied, or none are.
   repeated LinkAddressPair links = 2;
 }
 
 message MsgLinkAddressesResponse {}
+
+// MsgClaimDelegations re-keys every ACTIVE staking and multi-staking
+// delegation old_address holds over to the address it was linked to,
+// without unbonding or rebonding: voting power and each validator's total
+// stake are unaffected. Unbonding delegations and in-flight redelegations
+// are deliberately left behind -- see x/claim/README.md.
+message MsgClaimDelegations {
+  option (cosmos.msg.v1.signer) = "admin";
+  // admin is the address authorized to submit this message.
+  string admin = 1;
+
+  // old_address is the linked address whose delegations to move.
+  string old_address = 2;
+}
+
+message MsgClaimDelegationsResponse {
+  // new_address the delegations were moved to, resolved from the link.
+  string new_address = 1;
+}
+
+// MsgClaimBalances moves bank coins from old_address to the address it was
+// linked to. The amount is stated by the admin rather than read off the
+// chain, so that a recovery can be scoped deliberately -- to what the
+// holder can evidence, or to what a dispute has settled on -- instead of
+// always being all-or-nothing.
+//
+// The coins travel via the claim module account rather than directly.
+// x/blacklist blocks a blacklisted address paying a user account, which
+// old_address is and new_address is; it exempts payments to a module
+// account, because routine protocol bookkeeping depends on those. Hopping
+// through the module account satisfies both halves of that rule without
+// weakening it for anyone else (see x/claim/README.md).
+message MsgClaimBalances {
+  option (cosmos.msg.v1.signer) = "admin";
+  // admin is the address authorized to submit this message.
+  string admin = 1;
+
+  // old_address is the linked address to debit.
+  string old_address = 2;
+
+  // amount is what to move. Coins beyond old_address's spendable balance
+  // fail the message; a vesting schedule still locks what it locked.
+  repeated cosmos.base.v1beta1.Coin amount = 3 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}
+
+message MsgClaimBalancesResponse {
+  // new_address the coins were moved to, resolved from the link.
+  string new_address = 1;
+}
+
+// MsgClaimTokens sweeps ERC-20 balances from old_address to the address it
+// was linked to, by running the transfers inside the EVM with old_address
+// as the caller.
+//
+// Each listed contract moves its ENTIRE balance -- there is no partial
+// amount, because unlike a bank balance there is nothing to split between
+// the old holder and the new one. A contract where old_address holds
+// nothing is skipped rather than treated as an error.
+//
+// The contracts are listed explicitly because the EVM offers no way to ask
+// which contracts an address holds a balance in. Any contract that reverts
+// fails the whole message, leaving nothing half-swept to reconcile.
+message MsgClaimTokens {
+  option (cosmos.msg.v1.signer) = "admin";
+  // admin is the address authorized to submit this message.
+  string admin = 1;
+
+  // old_address is the linked address to sweep.
+  string old_address = 2;
+
+  // erc20_contracts are hex addresses of ERC-20 contracts to drain in full.
+  repeated string erc20_contracts = 3;
+}
+
+message MsgClaimTokensResponse {
+  // new_address the tokens were swept to, resolved from the link.
+  string new_address = 1;
+
+  // erc20_contracts_swept counts the listed contracts that actually had a
+  // non-zero balance to move.
+  uint64 erc20_contracts_swept = 2;
+}

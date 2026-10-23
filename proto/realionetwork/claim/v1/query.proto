@@ -13,8 +13,8 @@ service Query {
     option (google.api.http).get = "/realionetwork/claim/v1/linked_address/{old_address}";
   }
 
-  // Admin returns the address currently authorized to submit
-  // MsgLinkAddress.
+  // Admin returns the address currently authorized to submit any of the
+  // module's messages.
   rpc Admin(QueryAdminRequest) returns (QueryAdminResponse) {
     option (google.api.http).get = "/realionetwork/claim/v1/admin";
   }

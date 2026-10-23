@@ -10,9 +10,11 @@ import (
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
+	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
+	evmkeeper "github.com/cosmos/evm/x/vm/keeper"
+
 	multistakingkeeper "github.com/realio-tech/multi-staking-module/x/multi-staking/keeper"
 
-	assetkeeper "github.com/realiotech/realio-network/x/asset/keeper"
 	"github.com/realiotech/realio-network/x/claim/types"
 )
 
@@ -24,8 +26,8 @@ import (
 type Keeper struct {
 	Schema collections.Schema
 
-	// Admin is the sole address authorized to submit MsgLinkAddress /
-	// MsgLinkAddresses. Stored as raw address bytes rather than a bech32
+	// Admin is the sole address authorized to submit ANY of the module's
+	// messages. Stored as raw address bytes rather than a bech32
 	// string so every comparison against an incoming message's admin field
 	// is a byte comparison, not a string one -- immune to prefix/casing
 	// quirks a string equality check would be sensitive to. Set at genesis
@@ -44,8 +46,15 @@ type Keeper struct {
 	stakingKeeper      *stakingkeeper.Keeper
 	distrKeeper        distrkeeper.Keeper
 	multiStakingKeeper multistakingkeeper.Keeper
-	assetKeeper        assetkeeper.Keeper
 	bankKeeper         types.BankKeeper
+
+	// evmKeeper and erc20Keeper back MsgClaimTokens (keeper/evm.go).
+	// Both are the concrete keepers rather than narrow interfaces because
+	// CallEVM needs a *evmkeeper.Keeper to build a statedb.StateDB from --
+	// the same reason x/erc20 holds it concretely.
+	evmKeeper     *evmkeeper.Keeper
+	erc20Keeper   erc20keeper.Keeper
+	accountKeeper types.AccountKeeper
 }
 
 func NewKeeper(
@@ -53,8 +62,10 @@ func NewKeeper(
 	stakingKeeper *stakingkeeper.Keeper,
 	distrKeeper distrkeeper.Keeper,
 	multiStakingKeeper multistakingkeeper.Keeper,
-	assetKeeper assetkeeper.Keeper,
 	bankKeeper types.BankKeeper,
+	evmKeeper *evmkeeper.Keeper,
+	erc20Keeper erc20keeper.Keeper,
+	accountKeeper types.AccountKeeper,
 ) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 	k := Keeper{
@@ -63,8 +74,10 @@ func NewKeeper(
 		stakingKeeper:      stakingKeeper,
 		distrKeeper:        distrKeeper,
 		multiStakingKeeper: multiStakingKeeper,
-		assetKeeper:        assetKeeper,
 		bankKeeper:         bankKeeper,
+		evmKeeper:          evmKeeper,
+		erc20Keeper:        erc20Keeper,
+		accountKeeper:      accountKeeper,
 	}
 
 	schema, err := sb.Build()
@@ -76,7 +89,7 @@ func NewKeeper(
 }
 
 // GetAdmin returns the address currently authorized to submit
-// MsgLinkAddress / MsgLinkAddresses, and whether one has been configured
+// any of the module's messages, and whether one has been configured
 // yet. An admin explicitly set to an empty address (as genesis does when
 // no admin is configured) reports the same "not configured" result as one
 // that was never set at all.
@@ -88,8 +101,7 @@ func (k Keeper) GetAdmin(ctx context.Context) (sdk.AccAddress, bool) {
 	return admin, true
 }
 
-// SetAdmin sets the address authorized to submit MsgLinkAddress /
-// MsgLinkAddresses.
+// SetAdmin sets the address authorized to submit the module's messages.
 func (k Keeper) SetAdmin(ctx context.Context, admin sdk.AccAddress) error {
 	return k.Admin.Set(ctx, admin)
 }

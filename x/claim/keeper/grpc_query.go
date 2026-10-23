@@ -43,7 +43,7 @@ func (q queryServer) LinkedAddress(ctx context.Context, req *types.QueryLinkedAd
 }
 
 // Admin implements the Query/Admin gRPC method: anyone can check which
-// address is currently authorized to submit MsgLinkAddress.
+// address is currently authorized to submit the module's messages.
 func (q queryServer) Admin(ctx context.Context, req *types.QueryAdminRequest) (*types.QueryAdminResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
