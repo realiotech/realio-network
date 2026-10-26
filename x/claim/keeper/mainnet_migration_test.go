@@ -22,7 +22,10 @@ import (
 )
 
 const (
-	mainnetExportPath   = "../testdata/exported_mainnet_after.json"
+	// Shared with the v1.8 upgrade's own tests rather than kept as a second
+	// 34MB copy under x/claim/testdata. Both want the same snapshot of the
+	// same chain; two copies would only drift apart.
+	mainnetExportPath   = "../../../app/upgrades/v1.8/testdata/exported_mainnet_after.json"
 	leakedAddressesPath = "../../../app/migrations/leaked_addresses.json"
 )
 
