@@ -129,11 +129,12 @@ func (suite *KeeperTestSuite) seedRealAssetTokens(appState map[string]json.RawMe
 }
 
 // seedRealBankDenomMetadata loads the real bank denom metadata
-// (app_state.bank.denom_metadata) from the mainnet export, so denom->symbol
-// resolution (used both by x/asset's own AssetSendRestriction and by
-// x/claim's authorizeAssetForDenom) works the same way it does on real
-// mainnet instead of finding nothing in the test app's synthetic bank
-// genesis.
+// (app_state.bank.denom_metadata) from the mainnet export, so the
+// denom->symbol resolution x/asset's AssetSendRestriction does works the
+// same way it does on real mainnet instead of finding nothing in the test
+// app's synthetic bank genesis. That resolution is what decides whether a
+// migrated denom is permissioned at all, which is what
+// TestMainnetRealAssetAuthorization turns on.
 func (suite *KeeperTestSuite) seedRealBankDenomMetadata(appState map[string]json.RawMessage) {
 	var bankGenesis banktypes.GenesisState
 	suite.Require().NoError(suite.app.AppCodec().UnmarshalJSON(appState["bank"], &bankGenesis))
@@ -176,13 +177,16 @@ func (suite *KeeperTestSuite) createTestValidator(denom string) sdk.ValAddress {
 	return valAddr
 }
 
-// TestMainnetSampleMigration replays LinkAddress/LinkAddresses against
-// every real leaked mainnet delegator that locked "ario" -- the one denom
-// the test suite's seed validator (suite.validator) accepts -- split across
-// both call styles: the first individualBatchSize addresses one at a time
-// via LinkAddress, the rest in groups of batchSize via LinkAddresses. For
-// every migrated address it then proves the new address can fully operate
-// the position it inherited, not just hold it: a real additional
+// TestMainnetSampleMigration replays the full recovery -- link, then claim
+// -- against every real leaked mainnet delegator that locked "ario", the
+// one denom the test suite's seed validator (suite.validator) accepts.
+// Linking is split across both call styles to exercise each: the first
+// individualBatchSize addresses one at a time via LinkAddress, the rest in
+// groups of batchSize via LinkAddresses. ClaimDelegations then runs once
+// per address, since that is the message that actually moves stake.
+//
+// For every migrated address it then proves the new address can fully
+// operate the position it inherited, not just hold it: a real additional
 // MsgDelegate, a real partial MsgUndelegate, and a real partial
 // MsgBeginRedelegate into a second validator, each submitted by the new
 // address itself through the actual multistaking message server.

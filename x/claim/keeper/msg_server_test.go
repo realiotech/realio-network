@@ -31,6 +31,11 @@ const multiStakingCoinDenom = "ario"
 // MultiStakingLock exist for delAddr afterwards -- exactly the state
 // MigrateDelegations is meant to re-key.
 func (suite *KeeperTestSuite) delegate(delAddr sdk.AccAddress, amount math.Int) {
+	suite.delegateTo(delAddr, suite.validator, amount)
+}
+
+// delegateTo is delegate against a validator of the caller's choosing.
+func (suite *KeeperTestSuite) delegateTo(delAddr sdk.AccAddress, valAddr sdk.ValAddress, amount math.Int) {
 	coins := sdk.NewCoins(sdk.NewCoin(multiStakingCoinDenom, amount))
 	suite.Require().NoError(suite.app.BankKeeper.MintCoins(suite.ctx, minttypes.ModuleName, coins))
 	suite.Require().NoError(suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, delAddr, coins))
@@ -38,7 +43,7 @@ func (suite *KeeperTestSuite) delegate(delAddr sdk.AccAddress, amount math.Int) 
 	msMsgServer := multistakingkeeper.NewMsgServerImpl(suite.app.MultiStakingKeeper)
 	_, err := msMsgServer.Delegate(suite.ctx, &stakingtypes.MsgDelegate{
 		DelegatorAddress: delAddr.String(),
-		ValidatorAddress: suite.validator.String(),
+		ValidatorAddress: valAddr.String(),
 		Amount:           sdk.NewCoin(multiStakingCoinDenom, amount),
 	})
 	suite.Require().NoError(err)
@@ -665,10 +670,16 @@ func (suite *KeeperTestSuite) TestEveryMsgIsAdminGated() {
 			_, err := srv.ClaimDelegations(suite.ctx, &types.MsgClaimDelegations{Admin: notAdmin, OldAddress: oldAddr.String()})
 			return err
 		},
-		"ClaimBalances": func() error {
-			_, err := srv.ClaimBalances(suite.ctx, &types.MsgClaimBalances{
+		"MigrateBankBalance": func() error {
+			_, err := srv.MigrateBankBalance(suite.ctx, &types.MsgMigrateBankBalance{
 				Admin: notAdmin, OldAddress: oldAddr.String(),
-				Amount: sdk.NewCoins(sdk.NewCoin(multiStakingCoinDenom, math.NewInt(1))),
+			})
+			return err
+		},
+		"ClaimFromAttacker": func() error {
+			_, err := srv.MigrateBankBalance(suite.ctx, &types.MsgMigrateBankBalance{
+				Admin: notAdmin, OldAddress: oldAddr.String(),
+				FromAttacker: sdk.NewCoins(sdk.NewCoin(multiStakingCoinDenom, math.NewInt(1))),
 			})
 			return err
 		},
@@ -685,4 +696,74 @@ func (suite *KeeperTestSuite) TestEveryMsgIsAdminGated() {
 			suite.Require().ErrorContains(call(), "invalid admin")
 		})
 	}
+}
+
+// TestClaimDelegationsLeavesOrphanedLockBehind pins what happens to a
+// MultiStakingLock whose native delegation no longer exists: nothing. The
+// lock stays on the old address, the coins behind it stay in the
+// multi-staking module account, and the claim reports success anyway.
+//
+// This is not hypothetical. Real mainnet has five of them among frozen
+// addresses, worth 19.998 RIO and 124 RST between them. The clearest one
+// is a redelegation residue: the lock records escrowed coin 1:1 and a
+// downtime slash never touches it, while the delegation's token value
+// drops by the slash fraction. Redelegating moves the delegation's value,
+// multi-staking subtracts exactly that from the lock rather than zeroing
+// it, and the slashed-away 0.01% is left behind as a lock with no
+// delegation pointing at it.
+//
+// MigrateDelegations iterates delegations, so such a lock is never
+// visited. Reaching it would mean iterating locks instead, which is a
+// different traversal with its own failure modes -- see x/claim/README.md.
+func (suite *KeeperTestSuite) TestClaimDelegationsLeavesOrphanedLockBehind() {
+	oldAddr, newAddr := testutil.GenAddress(), testutil.GenAddress()
+	healthy := suite.validator
+	stranded := suite.createTestValidator(multiStakingCoinDenom)
+
+	// One good position, and one that will be left holding only a lock --
+	// the same shape as the real mainnet addresses, which each have many
+	// working delegations plus one orphan.
+	suite.delegateTo(oldAddr, healthy, math.NewInt(1_000_000_000_000))
+	suite.delegateTo(oldAddr, stranded, math.NewInt(500_000_000_000))
+
+	// Strip the native delegation but leave the lock, which is the state a
+	// slashed redelegation leaves behind.
+	strandedDel, err := suite.app.StakingKeeper.GetDelegation(suite.ctx, oldAddr, stranded)
+	suite.Require().NoError(err)
+	suite.Require().NoError(suite.app.StakingKeeper.RemoveDelegation(suite.ctx, strandedDel))
+
+	orphan, found := suite.app.MultiStakingKeeper.GetMultiStakingLock(suite.ctx,
+		multistakingtypes.MultiStakingLockID(oldAddr.String(), stranded.String()))
+	suite.Require().True(found, "fixture assumption broken: the lock should outlive the delegation")
+
+	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
+	_, err = srv.LinkAddress(suite.ctx, &types.MsgLinkAddress{
+		Admin: suite.admin, OldAddress: oldAddr.String(), NewAddress: newAddr.String(),
+	})
+	suite.Require().NoError(err)
+
+	// The claim succeeds. It does not warn, and it does not fail.
+	_, err = srv.ClaimDelegations(suite.ctx, &types.MsgClaimDelegations{
+		Admin: suite.admin, OldAddress: oldAddr.String(),
+	})
+	suite.Require().NoError(err)
+
+	// The healthy position moved, lock and all.
+	_, err = suite.app.StakingKeeper.GetDelegation(suite.ctx, newAddr, healthy)
+	suite.Require().NoError(err)
+	_, found = suite.app.MultiStakingKeeper.GetMultiStakingLock(suite.ctx,
+		multistakingtypes.MultiStakingLockID(newAddr.String(), healthy.String()))
+	suite.Require().True(found)
+
+	// The orphan did not. It is still keyed to the old, frozen address,
+	// with the same amount as before.
+	stillOld, found := suite.app.MultiStakingKeeper.GetMultiStakingLock(suite.ctx,
+		multistakingtypes.MultiStakingLockID(oldAddr.String(), stranded.String()))
+	suite.Require().True(found, "the orphaned lock should still be on the old address")
+	suite.Require().True(stillOld.LockedCoin.Amount.Equal(orphan.LockedCoin.Amount))
+
+	// And nothing was created for the new address to claim it with.
+	_, found = suite.app.MultiStakingKeeper.GetMultiStakingLock(suite.ctx,
+		multistakingtypes.MultiStakingLockID(newAddr.String(), stranded.String()))
+	suite.Require().False(found, "the new address should have no lock for the stranded validator")
 }
