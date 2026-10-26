@@ -18,6 +18,12 @@ type GenesisState struct {
 	// manager rotations are seeded on a live chain).
 	Admin string `json:"admin"`
 
+	// Attacker is the bech32 address MsgClaimBalances draws compensation
+	// from -- the account the stolen funds were moved into. Empty means
+	// unset, and any message asking for compensation is rejected until it
+	// is configured. Like Admin, there is no message to change it.
+	Attacker string `json:"attacker"`
+
 	// Links seeds the old->new address mapping. In practice this is
 	// populated by MsgLinkAddress at runtime; it's present in genesis
 	// mainly so state round-trips through export/import.
@@ -33,7 +39,7 @@ type AddressLink struct {
 // DefaultGenesis returns the default (empty, no admin configured) genesis
 // state.
 func DefaultGenesis() *GenesisState {
-	return &GenesisState{Admin: "", Links: []AddressLink{}}
+	return &GenesisState{Admin: "", Attacker: "", Links: []AddressLink{}}
 }
 
 // Validate performs basic genesis state validation: well-formed addresses,
@@ -44,6 +50,15 @@ func (gs GenesisState) Validate() error {
 	if gs.Admin != "" {
 		if _, err := sdk.AccAddressFromBech32(gs.Admin); err != nil {
 			return fmt.Errorf("claim genesis: invalid admin address %q: %w", gs.Admin, err)
+		}
+	}
+
+	if gs.Attacker != "" {
+		if _, err := sdk.AccAddressFromBech32(gs.Attacker); err != nil {
+			return fmt.Errorf("claim genesis: invalid attacker address %q: %w", gs.Attacker, err)
+		}
+		if gs.Attacker == gs.Admin {
+			return fmt.Errorf("claim genesis: attacker and admin must differ (%q)", gs.Attacker)
 		}
 	}
 

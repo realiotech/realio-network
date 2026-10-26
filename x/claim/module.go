@@ -115,6 +115,15 @@ func (am AppModule) InitGenesis(ctx sdk.Context, _ codec.JSONCodec, bz json.RawM
 			panic(err)
 		}
 	}
+	if gs.Attacker != "" {
+		attackerAddr, err := sdk.AccAddressFromBech32(gs.Attacker)
+		if err != nil {
+			panic(fmt.Errorf("invalid attacker %q in %s genesis: %w", gs.Attacker, types.ModuleName, err))
+		}
+		if err := am.keeper.SetAttacker(ctx, attackerAddr); err != nil {
+			panic(err)
+		}
+	}
 	for _, link := range gs.Links {
 		oldAddr, err := sdk.AccAddressFromBech32(link.OldAddress)
 		if err != nil {
@@ -139,7 +148,11 @@ func (am AppModule) ExportGenesis(ctx sdk.Context, _ codec.JSONCodec) json.RawMe
 	if admin, ok := am.keeper.GetAdmin(ctx); ok {
 		adminStr = admin.String()
 	}
-	bz, err := json.Marshal(types.GenesisState{Admin: adminStr, Links: links})
+	attackerStr := ""
+	if attacker, ok := am.keeper.GetAttacker(ctx); ok {
+		attackerStr = attacker.String()
+	}
+	bz, err := json.Marshal(types.GenesisState{Admin: adminStr, Attacker: attackerStr, Links: links})
 	if err != nil {
 		panic(err)
 	}

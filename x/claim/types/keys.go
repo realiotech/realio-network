@@ -19,4 +19,8 @@ var (
 	// (leaked) address's raw bytes to the raw bytes of the new address it
 	// has been linked to.
 	AddressLinkKeyPrefix = collections.NewPrefix(1)
+
+	// AttackerKey is the collections.Item prefix for the address
+	// MsgClaimBalances draws compensation from.
+	AttackerKey = collections.NewPrefix(2)
 )

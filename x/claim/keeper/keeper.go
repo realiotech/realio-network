@@ -43,6 +43,13 @@ type Keeper struct {
 	// old address can only ever be linked once.
 	AddressLinks collections.Map[sdk.AccAddress, sdk.AccAddress]
 
+	// Attacker is the address MsgClaimBalances draws compensation from --
+	// the account the stolen funds were moved into. Kept in state rather
+	// than taken from the message so that no admin slip can point a
+	// compensation leg at a victim; like Admin, there is no message to
+	// change it. Raw bytes, same byte-comparison rationale as above.
+	Attacker collections.Item[sdk.AccAddress]
+
 	stakingKeeper      *stakingkeeper.Keeper
 	distrKeeper        distrkeeper.Keeper
 	multiStakingKeeper multistakingkeeper.Keeper
@@ -71,6 +78,7 @@ func NewKeeper(
 	k := Keeper{
 		Admin:              collections.NewItem(sb, types.AdminKey, "admin", collcodec.KeyToValueCodec(sdk.AccAddressKey)),
 		AddressLinks:       collections.NewMap(sb, types.AddressLinkKeyPrefix, "address_links", sdk.AccAddressKey, collcodec.KeyToValueCodec(sdk.AccAddressKey)),
+		Attacker:           collections.NewItem(sb, types.AttackerKey, "attacker", collcodec.KeyToValueCodec(sdk.AccAddressKey)),
 		stakingKeeper:      stakingKeeper,
 		distrKeeper:        distrKeeper,
 		multiStakingKeeper: multiStakingKeeper,
@@ -104,6 +112,22 @@ func (k Keeper) GetAdmin(ctx context.Context) (sdk.AccAddress, bool) {
 // SetAdmin sets the address authorized to submit the module's messages.
 func (k Keeper) SetAdmin(ctx context.Context, admin sdk.AccAddress) error {
 	return k.Admin.Set(ctx, admin)
+}
+
+// GetAttacker returns the address compensation is drawn from, and whether
+// one has been configured. An attacker explicitly set to an empty address
+// reports the same "not configured" result as one never set at all.
+func (k Keeper) GetAttacker(ctx context.Context) (sdk.AccAddress, bool) {
+	attacker, err := k.Attacker.Get(ctx)
+	if err != nil || len(attacker) == 0 {
+		return nil, false
+	}
+	return attacker, true
+}
+
+// SetAttacker sets the address compensation is drawn from.
+func (k Keeper) SetAttacker(ctx context.Context, attacker sdk.AccAddress) error {
+	return k.Attacker.Set(ctx, attacker)
 }
 
 // GetLink returns the new address old was linked to, if any.
@@ -145,4 +169,10 @@ func (k Keeper) GetAllLinks(ctx context.Context) ([]types.AddressLink, error) {
 		links[i] = types.AddressLink{OldAddress: kv.Key.String(), NewAddress: kv.Value.String()}
 	}
 	return links, nil
+}
+
+// SpendableCoinsOf reports what addr can currently move. Used to report
+// the attacker's remaining pool after a restitution payment.
+func (k Keeper) SpendableCoinsOf(ctx context.Context, addr sdk.AccAddress) sdk.Coins {
+	return k.bankKeeper.SpendableCoins(ctx, addr)
 }
