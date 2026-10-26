@@ -120,7 +120,8 @@ func (app *RealioNetwork) setupUpgradeHandlers() {
 		v8.CreateUpgradeHandler(
 			app.mm,
 			app.configurator,
-			app.MigrationKeepers(),
+			app.StakingKeeper,
+			app.MultiStakingKeeper,
 		),
 	)
 
