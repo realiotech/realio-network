@@ -77,27 +77,55 @@ func (ms msgServer) ClaimDelegations(ctx context.Context, msg *types.MsgClaimDel
 	return &types.MsgClaimDelegationsResponse{NewAddress: newAddr.String()}, nil
 }
 
-// ClaimBalances moves the stated bank coins from the linked old address to
-// its new address. See Keeper.MoveBalances for why the coins travel via
-// the module account.
-func (ms msgServer) ClaimBalances(ctx context.Context, msg *types.MsgClaimBalances) (*types.MsgClaimBalancesResponse, error) {
+// MigrateBankBalance recovers bank coins for the linked old address: the
+// whole spendable balance, plus whatever the admin pays out of the
+// attacker on top.
+//
+// One message because it is one operation per holder, but two keeper calls
+// and two events, so the record of what came back from where survives.
+// See Keeper.MigrateBankBalance and Keeper.ClaimFromAttacker.
+func (ms msgServer) MigrateBankBalance(ctx context.Context, msg *types.MsgMigrateBankBalance) (*types.MsgMigrateBankBalanceResponse, error) {
 	oldAddr, newAddr, err := ms.authorizeClaim(ctx, msg.Admin, msg.OldAddress)
 	if err != nil {
 		return nil, err
 	}
-
-	if err := msg.Amount.Validate(); err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "invalid amount: %s", err)
-	}
-	if msg.Amount.IsZero() {
-		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidCoins, "amount must not be empty")
+	if err := msg.FromAttacker.Validate(); err != nil {
+		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "invalid from_attacker: %s", err)
 	}
 
-	if err := ms.MoveBalances(ctx, oldAddr, newAddr, msg.Amount); err != nil {
+	// An address with nothing spendable is swept successfully, for zero --
+	// not an error, the same way ClaimTokens skips a contract the holder
+	// holds none of. The admin does not always know which addresses still
+	// hold something, and erroring here would take down the payout for an
+	// address the attacker drained to empty, which is precisely the
+	// address whose payout matters most.
+	swept, err := ms.Keeper.MigrateBankBalance(ctx, oldAddr, newAddr)
+	if err != nil {
 		return nil, err
 	}
 
-	return &types.MsgClaimBalancesResponse{NewAddress: newAddr.String()}, nil
+	if !msg.FromAttacker.IsZero() {
+		if err := ms.Keeper.ClaimFromAttacker(ctx, oldAddr, newAddr, msg.FromAttacker); err != nil {
+			return nil, err
+		}
+	}
+
+	// A message that finds nothing to move is not an error either. A
+	// re-sweep pass over every recovered address is a normal thing to run
+	// -- most addresses will have nothing new, and erroring on those would
+	// make the pass unusable. The response reports what moved, so a no-op
+	// is visible without being fatal, matching how ClaimTokens reports a
+	// sweep that found every listed contract empty.
+	var remaining sdk.Coins
+	if attacker, ok := ms.GetAttacker(ctx); ok {
+		remaining = ms.SpendableCoinsOf(ctx, attacker)
+	}
+	return &types.MsgMigrateBankBalanceResponse{
+		NewAddress:          newAddr.String(),
+		Swept:               swept,
+		ClaimedFromAttacker: msg.FromAttacker,
+		AttackerRemaining:   remaining,
+	}, nil
 }
 
 // ClaimTokens sweeps ERC-20 balances held by the linked old address over

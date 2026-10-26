@@ -394,40 +394,69 @@ func (m *MsgClaimDelegationsResponse) GetNewAddress() string {
 	return ""
 }
 
-// MsgClaimBalances moves bank coins from old_address to the address it was
-// linked to. The amount is stated by the admin rather than read off the
-// chain, so that a recovery can be scoped deliberately -- to what the
-// holder can evidence, or to what a dispute has settled on -- instead of
-// always being all-or-nothing.
+// MsgMigrateBankBalance recovers bank coins for a linked old address, in
+// two parts, and both land together or not at all:
 //
-// The coins travel via the claim module account rather than directly.
+//  1. Everything spendable on old_address moves to the address it was
+//     linked to. No amount is given: a recovery claims the whole balance,
+//     because none of it belongs to anyone else. An address holding
+//     nothing is swept successfully for zero, not an error -- the same way
+//     ClaimTokens skips a contract the holder holds none of. That matters:
+//     exactly one mainnet victim was drained to completely empty and is
+//     owed 58,041.338 RIO, and an error here would take its payout down.
+//  2. from_attacker, if given, is paid out of the ATTACKER's own account.
+//     Part 1 recovers only what the attacker left behind; what it moved
+//     out before the freeze is sitting in its account instead. How much a
+//     holder is owed is a judgement the chain cannot make, so the admin
+//     states it.
+//
+// Both parts are optional in practice and the message adapts: of 2,454
+// mainnet victims, 2,373 need both, 79 lost nothing to the attacker and
+// need only the sweep (leave from_attacker empty), and one has nothing
+// left to sweep and needs only the payout.
+//
+// The two are one message because they are one operation per holder --
+// but they stay two keeper calls, two events and two response fields, so
+// what came back from where is never ambiguous after the fact.
+//
+// WARNING: the payout part is NOT idempotent. Re-sending this message with
+// from_attacker set pays again; the sweep part, by contrast, is safe to
+// repeat and will pick up coins that arrive later. To re-sweep an address,
+// send it with from_attacker empty.
+//
+// The attacker's address is module state, never a message field, so no
+// admin mistake can aim a payout at a victim.
+//
+// Both parts travel via the claim module account rather than directly.
 // x/blacklist blocks a blacklisted address paying a user account, which
-// old_address is and new_address is; it exempts payments to a module
-// account, because routine protocol bookkeeping depends on those. Hopping
-// through the module account satisfies both halves of that rule without
-// weakening it for anyone else (see x/claim/README.md).
-type MsgClaimBalances struct {
+// old_address and the attacker both are and new_address is; it exempts
+// payments to a module account, because routine protocol bookkeeping
+// depends on those. Hopping through the module account satisfies both
+// halves of that rule without weakening it for anyone else (see
+// x/claim/README.md).
+type MsgMigrateBankBalance struct {
 	// admin is the address authorized to submit this message.
 	Admin string `protobuf:"bytes,1,opt,name=admin,proto3" json:"admin,omitempty"`
-	// old_address is the linked address to debit.
+	// old_address is the linked address to recover for.
 	OldAddress string `protobuf:"bytes,2,opt,name=old_address,json=oldAddress,proto3" json:"old_address,omitempty"`
-	// amount is what to move. Coins beyond old_address's spendable balance
-	// fail the message; a vesting schedule still locks what it locked.
-	Amount github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,3,rep,name=amount,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"amount"`
+	// from_attacker is what to pay out of the attacker's account on top of
+	// the sweep. Empty recovers only what old_address still holds. Coins
+	// beyond the attacker's spendable balance fail the message.
+	FromAttacker github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,3,rep,name=from_attacker,json=fromAttacker,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"from_attacker"`
 }
 
-func (m *MsgClaimBalances) Reset()         { *m = MsgClaimBalances{} }
-func (m *MsgClaimBalances) String() string { return proto.CompactTextString(m) }
-func (*MsgClaimBalances) ProtoMessage()    {}
-func (*MsgClaimBalances) Descriptor() ([]byte, []int) {
+func (m *MsgMigrateBankBalance) Reset()         { *m = MsgMigrateBankBalance{} }
+func (m *MsgMigrateBankBalance) String() string { return proto.CompactTextString(m) }
+func (*MsgMigrateBankBalance) ProtoMessage()    {}
+func (*MsgMigrateBankBalance) Descriptor() ([]byte, []int) {
 	return fileDescriptor_551333f1ff89dff7, []int{7}
 }
-func (m *MsgClaimBalances) XXX_Unmarshal(b []byte) error {
+func (m *MsgMigrateBankBalance) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgClaimBalances) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgMigrateBankBalance) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgClaimBalances.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgMigrateBankBalance.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -437,56 +466,63 @@ func (m *MsgClaimBalances) XXX_Marshal(b []byte, deterministic bool) ([]byte, er
 		return b[:n], nil
 	}
 }
-func (m *MsgClaimBalances) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgClaimBalances.Merge(m, src)
+func (m *MsgMigrateBankBalance) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgMigrateBankBalance.Merge(m, src)
 }
-func (m *MsgClaimBalances) XXX_Size() int {
+func (m *MsgMigrateBankBalance) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgClaimBalances) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgClaimBalances.DiscardUnknown(m)
+func (m *MsgMigrateBankBalance) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgMigrateBankBalance.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgClaimBalances proto.InternalMessageInfo
+var xxx_messageInfo_MsgMigrateBankBalance proto.InternalMessageInfo
 
-func (m *MsgClaimBalances) GetAdmin() string {
+func (m *MsgMigrateBankBalance) GetAdmin() string {
 	if m != nil {
 		return m.Admin
 	}
 	return ""
 }
 
-func (m *MsgClaimBalances) GetOldAddress() string {
+func (m *MsgMigrateBankBalance) GetOldAddress() string {
 	if m != nil {
 		return m.OldAddress
 	}
 	return ""
 }
 
-func (m *MsgClaimBalances) GetAmount() github_com_cosmos_cosmos_sdk_types.Coins {
+func (m *MsgMigrateBankBalance) GetFromAttacker() github_com_cosmos_cosmos_sdk_types.Coins {
 	if m != nil {
-		return m.Amount
+		return m.FromAttacker
 	}
 	return nil
 }
 
-type MsgClaimBalancesResponse struct {
-	// new_address the coins were moved to, resolved from the link.
+type MsgMigrateBankBalanceResponse struct {
+	// new_address the coins were paid to, resolved from the link.
 	NewAddress string `protobuf:"bytes,1,opt,name=new_address,json=newAddress,proto3" json:"new_address,omitempty"`
+	// swept is what came off old_address itself.
+	Swept github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=swept,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"swept"`
+	// claimed_from_attacker is what came out of the attacker's account.
+	ClaimedFromAttacker github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,3,rep,name=claimed_from_attacker,json=claimedFromAttacker,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"claimed_from_attacker"`
+	// attacker_remaining is the attacker's spendable balance afterwards --
+	// what is left in the pool to distribute.
+	AttackerRemaining github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,4,rep,name=attacker_remaining,json=attackerRemaining,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"attacker_remaining"`
 }
 
-func (m *MsgClaimBalancesResponse) Reset()         { *m = MsgClaimBalancesResponse{} }
-func (m *MsgClaimBalancesResponse) String() string { return proto.CompactTextString(m) }
-func (*MsgClaimBalancesResponse) ProtoMessage()    {}
-func (*MsgClaimBalancesResponse) Descriptor() ([]byte, []int) {
+func (m *MsgMigrateBankBalanceResponse) Reset()         { *m = MsgMigrateBankBalanceResponse{} }
+func (m *MsgMigrateBankBalanceResponse) String() string { return proto.CompactTextString(m) }
+func (*MsgMigrateBankBalanceResponse) ProtoMessage()    {}
+func (*MsgMigrateBankBalanceResponse) Descriptor() ([]byte, []int) {
 	return fileDescriptor_551333f1ff89dff7, []int{8}
 }
-func (m *MsgClaimBalancesResponse) XXX_Unmarshal(b []byte) error {
+func (m *MsgMigrateBankBalanceResponse) XXX_Unmarshal(b []byte) error {
 	return m.Unmarshal(b)
 }
-func (m *MsgClaimBalancesResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+func (m *MsgMigrateBankBalanceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	if deterministic {
-		return xxx_messageInfo_MsgClaimBalancesResponse.Marshal(b, m, deterministic)
+		return xxx_messageInfo_MsgMigrateBankBalanceResponse.Marshal(b, m, deterministic)
 	} else {
 		b = b[:cap(b)]
 		n, err := m.MarshalToSizedBuffer(b)
@@ -496,23 +532,44 @@ func (m *MsgClaimBalancesResponse) XXX_Marshal(b []byte, deterministic bool) ([]
 		return b[:n], nil
 	}
 }
-func (m *MsgClaimBalancesResponse) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MsgClaimBalancesResponse.Merge(m, src)
+func (m *MsgMigrateBankBalanceResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_MsgMigrateBankBalanceResponse.Merge(m, src)
 }
-func (m *MsgClaimBalancesResponse) XXX_Size() int {
+func (m *MsgMigrateBankBalanceResponse) XXX_Size() int {
 	return m.Size()
 }
-func (m *MsgClaimBalancesResponse) XXX_DiscardUnknown() {
-	xxx_messageInfo_MsgClaimBalancesResponse.DiscardUnknown(m)
+func (m *MsgMigrateBankBalanceResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_MsgMigrateBankBalanceResponse.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MsgClaimBalancesResponse proto.InternalMessageInfo
+var xxx_messageInfo_MsgMigrateBankBalanceResponse proto.InternalMessageInfo
 
-func (m *MsgClaimBalancesResponse) GetNewAddress() string {
+func (m *MsgMigrateBankBalanceResponse) GetNewAddress() string {
 	if m != nil {
 		return m.NewAddress
 	}
 	return ""
+}
+
+func (m *MsgMigrateBankBalanceResponse) GetSwept() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.Swept
+	}
+	return nil
+}
+
+func (m *MsgMigrateBankBalanceResponse) GetClaimedFromAttacker() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.ClaimedFromAttacker
+	}
+	return nil
+}
+
+func (m *MsgMigrateBankBalanceResponse) GetAttackerRemaining() github_com_cosmos_cosmos_sdk_types.Coins {
+	if m != nil {
+		return m.AttackerRemaining
+	}
+	return nil
 }
 
 // MsgClaimTokens sweeps ERC-20 balances from old_address to the address it
@@ -653,8 +710,8 @@ func init() {
 	proto.RegisterType((*MsgLinkAddressesResponse)(nil), "realionetwork.claim.v1.MsgLinkAddressesResponse")
 	proto.RegisterType((*MsgClaimDelegations)(nil), "realionetwork.claim.v1.MsgClaimDelegations")
 	proto.RegisterType((*MsgClaimDelegationsResponse)(nil), "realionetwork.claim.v1.MsgClaimDelegationsResponse")
-	proto.RegisterType((*MsgClaimBalances)(nil), "realionetwork.claim.v1.MsgClaimBalances")
-	proto.RegisterType((*MsgClaimBalancesResponse)(nil), "realionetwork.claim.v1.MsgClaimBalancesResponse")
+	proto.RegisterType((*MsgMigrateBankBalance)(nil), "realionetwork.claim.v1.MsgMigrateBankBalance")
+	proto.RegisterType((*MsgMigrateBankBalanceResponse)(nil), "realionetwork.claim.v1.MsgMigrateBankBalanceResponse")
 	proto.RegisterType((*MsgClaimTokens)(nil), "realionetwork.claim.v1.MsgClaimTokens")
 	proto.RegisterType((*MsgClaimTokensResponse)(nil), "realionetwork.claim.v1.MsgClaimTokensResponse")
 }
@@ -662,46 +719,51 @@ func init() {
 func init() { proto.RegisterFile("realionetwork/claim/v1/tx.proto", fileDescriptor_551333f1ff89dff7) }
 
 var fileDescriptor_551333f1ff89dff7 = []byte{
-	// 617 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x9c, 0x55, 0xc1, 0x4e, 0xdb, 0x4c,
-	0x10, 0x8e, 0x09, 0x20, 0x31, 0xd1, 0x0f, 0xc8, 0xf0, 0xd3, 0xd4, 0x95, 0x9c, 0x2a, 0x07, 0x88,
-	0xa8, 0xb0, 0x93, 0x70, 0x6b, 0xd5, 0x4a, 0x4d, 0x7a, 0x24, 0x52, 0x65, 0x7a, 0xa8, 0x7a, 0x89,
-	0x36, 0xf6, 0xca, 0x58, 0xb6, 0x77, 0x23, 0xef, 0x92, 0x50, 0xa9, 0x87, 0xaa, 0x4f, 0xd0, 0xe7,
-	0xe0, 0xc4, 0xb9, 0x4f, 0xc0, 0x91, 0x63, 0x4f, 0x6d, 0x95, 0x1c, 0x78, 0x8d, 0xca, 0x6b, 0x27,
-	0xf2, 0x9a, 0x90, 0xa4, 0x39, 0x79, 0xbd, 0xfb, 0xcd, 0xf7, 0xcd, 0xcc, 0x7e, 0xa3, 0x85, 0x4a,
-	0x84, 0x51, 0xe0, 0x51, 0x82, 0xf9, 0x90, 0x46, 0xbe, 0x69, 0x07, 0xc8, 0x0b, 0xcd, 0x41, 0xc3,
-	0xe4, 0x57, 0x46, 0x3f, 0xa2, 0x9c, 0xaa, 0x07, 0x12, 0xc0, 0x10, 0x00, 0x63, 0xd0, 0xd0, 0x9e,
-	0xd8, 0x94, 0x85, 0x94, 0x99, 0x21, 0x73, 0x63, 0x7c, 0xc8, 0xdc, 0x24, 0x40, 0xd3, 0xd3, 0x83,
-	0x1e, 0x62, 0xd8, 0x1c, 0x34, 0x7a, 0x98, 0xa3, 0x86, 0x69, 0x53, 0x8f, 0xa4, 0xe7, 0xfb, 0x2e,
-	0x75, 0xa9, 0x58, 0x9a, 0xf1, 0x2a, 0xd9, 0xad, 0x72, 0xd8, 0xee, 0x30, 0xf7, 0xcc, 0x23, 0xfe,
-	0x5b, 0xc7, 0x89, 0x30, 0x63, 0xea, 0x3e, 0x6c, 0x20, 0x27, 0xf4, 0x48, 0x59, 0x79, 0xae, 0xd4,
-	0xb6, 0xac, 0xe4, 0x47, 0xad, 0x40, 0x89, 0x06, 0x4e, 0x17, 0x25, 0xa0, 0xf2, 0x9a, 0x38, 0x03,
-	0x1a, 0x38, 0x93, 0xb0, 0x0a, 0x94, 0x08, 0x1e, 0x4e, 0x01, 0xc5, 0x04, 0x40, 0xf0, 0x30, 0x05,
-	0xbc, 0x84, 0x6f, 0xf7, 0x37, 0xc7, 0x09, 0x5b, 0xb5, 0x0c, 0x07, 0xb2, 0xaa, 0x85, 0x59, 0x9f,
-	0x12, 0x86, 0xab, 0xe7, 0xb0, 0x93, 0xd9, 0x7e, 0x8f, 0xbc, 0x28, 0x2f, 0xad, 0x2c, 0x92, 0x5e,
-	0xcb, 0x4b, 0x57, 0x19, 0xec, 0xca, 0x72, 0xf8, 0xb1, 0x32, 0x5f, 0xc3, 0x46, 0xe0, 0x11, 0x3f,
-	0x26, 0x29, 0xd6, 0x4a, 0xcd, 0x23, 0x63, 0xf6, 0x2d, 0x18, 0xb9, 0x1c, 0xad, 0x24, 0x4a, 0xaa,
-	0x51, 0x83, 0x72, 0x5e, 0x74, 0x5a, 0xe5, 0x47, 0xd8, 0xeb, 0x30, 0xb7, 0x1d, 0xb3, 0xbd, 0xc3,
-	0x01, 0x76, 0x11, 0xf7, 0x28, 0x59, 0xb5, 0xf5, 0x92, 0xea, 0x1b, 0x78, 0x36, 0x83, 0x79, 0x22,
-	0x9c, 0x6f, 0x95, 0xf2, 0xa0, 0x55, 0x3f, 0x14, 0xd1, 0x2b, 0x41, 0xd0, 0x42, 0x01, 0x22, 0x36,
-	0x5e, 0xd9, 0x12, 0x36, 0x6c, 0xa2, 0x90, 0x5e, 0x12, 0x5e, 0x2e, 0x8a, 0x6e, 0x3e, 0x35, 0x12,
-	0x8b, 0x1a, 0xb1, 0x45, 0x8d, 0xd4, 0xa2, 0x46, 0x9b, 0x7a, 0xa4, 0x55, 0xbf, 0xfd, 0x55, 0x29,
-	0x5c, 0xff, 0xae, 0xd4, 0x5c, 0x8f, 0x5f, 0x5c, 0xf6, 0x0c, 0x9b, 0x86, 0x66, 0xea, 0xe7, 0xe4,
-	0x73, 0xc2, 0x1c, 0xdf, 0xe4, 0x9f, 0xfb, 0x98, 0x89, 0x00, 0x66, 0xa5, 0xd4, 0x52, 0xf1, 0xaf,
-	0x44, 0xcb, 0xa5, 0xdc, 0x97, 0xaf, 0xfc, 0x8b, 0x98, 0x04, 0x11, 0xfc, 0x81, 0xfa, 0x78, 0xe5,
-	0xeb, 0x50, 0x8f, 0x60, 0x07, 0x47, 0x76, 0xb3, 0xde, 0xb5, 0x29, 0xe1, 0x11, 0xb2, 0x39, 0x13,
-	0xf5, 0x6f, 0x59, 0xdb, 0x62, 0xbb, 0x3d, 0xd9, 0x95, 0x52, 0x0f, 0xc5, 0x44, 0x64, 0xd4, 0x97,
-	0x4e, 0x5c, 0x6d, 0xc2, 0xff, 0x39, 0xbd, 0x2e, 0x1b, 0xe2, 0x3e, 0x17, 0xa9, 0xad, 0x5b, 0x7b,
-	0xb2, 0xea, 0x79, 0x7c, 0xd4, 0xbc, 0x5e, 0x87, 0x62, 0x87, 0xb9, 0x2a, 0x86, 0x52, 0x76, 0xf6,
-	0x0f, 0x1f, 0xf3, 0xbb, 0xec, 0x64, 0xcd, 0x58, 0x0e, 0x37, 0xad, 0xc1, 0x87, 0xff, 0xe4, 0xe9,
-	0xab, 0x2d, 0x47, 0x80, 0x99, 0x56, 0x5f, 0x16, 0x39, 0x15, 0xe3, 0xb0, 0xfb, 0x60, 0xb2, 0x5e,
-	0xcc, 0x61, 0xc9, 0x83, 0xb5, 0xd3, 0x7f, 0x00, 0x67, 0x4b, 0x94, 0x87, 0xa6, 0xb6, 0x88, 0x65,
-	0x82, 0x9c, 0x5b, 0xe2, 0x6c, 0x33, 0x63, 0x28, 0x65, 0x8d, 0x7a, 0xb8, 0x88, 0x20, 0xc1, 0xcd,
-	0xbd, 0xb6, 0x19, 0xd6, 0xd3, 0x36, 0xbe, 0xde, 0xdf, 0x1c, 0x2b, 0xad, 0xb3, 0xdb, 0x91, 0xae,
-	0xdc, 0x8d, 0x74, 0xe5, 0xcf, 0x48, 0x57, 0xbe, 0x8f, 0xf5, 0xc2, 0xdd, 0x58, 0x2f, 0xfc, 0x1c,
-	0xeb, 0x85, 0x4f, 0xcd, 0xcc, 0xb8, 0x26, 0xd4, 0x1c, 0xdb, 0x17, 0xe9, 0xf2, 0x64, 0xf2, 0xb8,
-	0x5d, 0xa5, 0xcf, 0x9b, 0x18, 0xdf, 0xde, 0xa6, 0x78, 0x78, 0x4e, 0xff, 0x06, 0x00, 0x00, 0xff,
-	0xff, 0x84, 0x39, 0xe6, 0xe0, 0x02, 0x07, 0x00, 0x00,
+	// 700 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xb4, 0x96, 0xcd, 0x6e, 0xd3, 0x4c,
+	0x14, 0x86, 0xe3, 0xa6, 0xf9, 0xa4, 0x9e, 0x7c, 0xfd, 0xc1, 0xfd, 0x21, 0x18, 0xe1, 0xa0, 0x2c,
+	0xda, 0xa8, 0xa8, 0x76, 0x93, 0x8a, 0x0d, 0x12, 0x48, 0x4d, 0x11, 0xab, 0x46, 0x42, 0x2e, 0x0b,
+	0xc4, 0x26, 0x9a, 0xd8, 0x83, 0x3b, 0xb2, 0x3d, 0x13, 0x79, 0x86, 0xa6, 0x54, 0x48, 0x20, 0xae,
+	0x80, 0x4b, 0x60, 0xcd, 0xaa, 0x5b, 0xee, 0xa0, 0x0b, 0x16, 0x5d, 0xb2, 0x02, 0xd4, 0x2e, 0x7a,
+	0x1b, 0xc8, 0x63, 0x3b, 0x8a, 0xdd, 0xb4, 0x4d, 0xab, 0xb2, 0xca, 0x64, 0xe6, 0x9d, 0xf3, 0xcc,
+	0x39, 0x7e, 0xe7, 0xd8, 0x50, 0x0d, 0x31, 0xf2, 0x09, 0xa3, 0x58, 0xf4, 0x59, 0xe8, 0x99, 0xb6,
+	0x8f, 0x48, 0x60, 0xee, 0x35, 0x4c, 0xb1, 0x6f, 0xf4, 0x42, 0x26, 0x98, 0xba, 0x94, 0x11, 0x18,
+	0x52, 0x60, 0xec, 0x35, 0xb4, 0xbb, 0x36, 0xe3, 0x01, 0xe3, 0x66, 0xc0, 0xdd, 0x48, 0x1f, 0x70,
+	0x37, 0xde, 0xa0, 0xe9, 0xc9, 0x42, 0x17, 0x71, 0x6c, 0xee, 0x35, 0xba, 0x58, 0xa0, 0x86, 0x69,
+	0x33, 0x42, 0x93, 0xf5, 0x05, 0x97, 0xb9, 0x4c, 0x0e, 0xcd, 0x68, 0x14, 0xcf, 0xd6, 0x04, 0xcc,
+	0xb4, 0xb9, 0xbb, 0x4d, 0xa8, 0xb7, 0xe9, 0x38, 0x21, 0xe6, 0x5c, 0x5d, 0x80, 0x12, 0x72, 0x02,
+	0x42, 0x2b, 0xca, 0x43, 0xa5, 0x3e, 0x65, 0xc5, 0x7f, 0xd4, 0x2a, 0x94, 0x99, 0xef, 0x74, 0x50,
+	0x2c, 0xaa, 0x4c, 0xc8, 0x35, 0x60, 0xbe, 0x93, 0x6e, 0xab, 0x42, 0x99, 0xe2, 0xfe, 0x40, 0x50,
+	0x8c, 0x05, 0x14, 0xf7, 0x13, 0xc1, 0x13, 0xf8, 0x7c, 0x76, 0xb8, 0x1a, 0x47, 0xab, 0x55, 0x60,
+	0x29, 0x4b, 0xb5, 0x30, 0xef, 0x31, 0xca, 0x71, 0x6d, 0x07, 0x66, 0x87, 0xa6, 0x5f, 0x22, 0x12,
+	0xe6, 0xd1, 0xca, 0x55, 0xe8, 0x89, 0x3c, 0xba, 0xc6, 0x61, 0x2e, 0x8b, 0xc3, 0x17, 0xa5, 0xf9,
+	0x14, 0x4a, 0x3e, 0xa1, 0x5e, 0x14, 0xa4, 0x58, 0x2f, 0x37, 0x57, 0x8c, 0xd1, 0x4f, 0xc1, 0xc8,
+	0x9d, 0xd1, 0x8a, 0x77, 0x65, 0x72, 0xd4, 0xa0, 0x92, 0x87, 0x0e, 0xb2, 0x7c, 0x0d, 0xf3, 0x6d,
+	0xee, 0x6e, 0x45, 0xd1, 0x9e, 0x63, 0x1f, 0xbb, 0x48, 0x10, 0x46, 0x6f, 0x5a, 0xfa, 0x0c, 0xf5,
+	0x19, 0xdc, 0x1f, 0x11, 0x39, 0x05, 0xe7, 0x4b, 0xa5, 0x9c, 0x2b, 0xd5, 0x0f, 0x05, 0x16, 0xdb,
+	0xdc, 0x6d, 0x13, 0x37, 0x44, 0x02, 0xb7, 0x10, 0xf5, 0x5a, 0xc8, 0x47, 0xd4, 0xc6, 0x37, 0xf5,
+	0x45, 0x0f, 0xa6, 0xdf, 0x86, 0x2c, 0xe8, 0x20, 0x21, 0x90, 0xed, 0xe1, 0xb0, 0x52, 0x94, 0x95,
+	0xbd, 0x67, 0xc4, 0x76, 0x35, 0x22, 0xbb, 0x1a, 0x89, 0x5d, 0x8d, 0x2d, 0x46, 0x68, 0x6b, 0xfd,
+	0xe8, 0x57, 0xb5, 0xf0, 0xed, 0x77, 0xb5, 0xee, 0x12, 0xb1, 0xfb, 0xae, 0x6b, 0xd8, 0x2c, 0x30,
+	0x13, 0x6f, 0xc7, 0x3f, 0x6b, 0xdc, 0xf1, 0x4c, 0xf1, 0xbe, 0x87, 0xb9, 0xdc, 0xc0, 0xad, 0xff,
+	0x23, 0xc2, 0x66, 0x02, 0xc8, 0x94, 0xe3, 0x6b, 0x11, 0x1e, 0x8c, 0x4c, 0x67, 0xec, 0x8a, 0xa8,
+	0x08, 0x4a, 0xbc, 0x8f, 0x7b, 0x22, 0xb1, 0xc4, 0xad, 0x1e, 0x3c, 0x8e, 0xac, 0x7e, 0x84, 0x45,
+	0xe9, 0x2c, 0xec, 0x74, 0xfe, 0x79, 0xad, 0xe6, 0x13, 0xd2, 0x8b, 0xa1, 0x92, 0xa9, 0x07, 0xa0,
+	0xa6, 0xcc, 0x4e, 0x88, 0x03, 0x44, 0x28, 0xa1, 0x6e, 0x65, 0xf2, 0xf6, 0xe9, 0x77, 0x52, 0x8c,
+	0x95, 0x52, 0x6a, 0x1f, 0x64, 0x07, 0x92, 0x8e, 0x7d, 0xc5, 0x3c, 0x7c, 0xe3, 0x6b, 0xa0, 0xae,
+	0xc0, 0x2c, 0x0e, 0xed, 0xe6, 0x7a, 0xc7, 0x66, 0x54, 0x84, 0xc8, 0x16, 0x5c, 0xd6, 0x6f, 0xca,
+	0x9a, 0x91, 0xd3, 0x5b, 0xe9, 0x6c, 0xc6, 0x20, 0x81, 0xec, 0x44, 0x43, 0xf4, 0xf1, 0x8d, 0xd1,
+	0x84, 0xc5, 0x1c, 0xaf, 0x93, 0x1a, 0x45, 0xa9, 0x4f, 0x5a, 0xf3, 0x59, 0xea, 0x4e, 0xb4, 0xd4,
+	0xfc, 0x3e, 0x09, 0xc5, 0x36, 0x77, 0x55, 0x0c, 0xe5, 0xe1, 0x9e, 0xbb, 0x7c, 0x51, 0x9f, 0xc9,
+	0x76, 0x10, 0xcd, 0x18, 0x4f, 0x37, 0xc8, 0xc1, 0x83, 0xe9, 0x6c, 0xd7, 0xab, 0x8f, 0x17, 0x00,
+	0x73, 0x6d, 0x7d, 0x5c, 0xe5, 0x00, 0x26, 0x60, 0xee, 0x5c, 0x47, 0x7b, 0x74, 0x49, 0x94, 0xbc,
+	0x58, 0xdb, 0xb8, 0x86, 0x78, 0x40, 0x3d, 0x00, 0x75, 0x44, 0xb3, 0x5a, 0xbb, 0x24, 0xd4, 0x79,
+	0xb9, 0xf6, 0xf8, 0x5a, 0xf2, 0x01, 0x1b, 0x43, 0x79, 0xd8, 0xb7, 0xcb, 0x57, 0x9d, 0x3f, 0xd6,
+	0x5d, 0xfa, 0x14, 0x47, 0x38, 0x51, 0x2b, 0x7d, 0x3a, 0x3b, 0x5c, 0x55, 0x5a, 0xdb, 0x47, 0x27,
+	0xba, 0x72, 0x7c, 0xa2, 0x2b, 0x7f, 0x4e, 0x74, 0xe5, 0xcb, 0xa9, 0x5e, 0x38, 0x3e, 0xd5, 0x0b,
+	0x3f, 0x4f, 0xf5, 0xc2, 0x9b, 0xe6, 0xd0, 0xfd, 0x8b, 0x43, 0x0b, 0x6c, 0xef, 0x26, 0xc3, 0xb5,
+	0xf4, 0x1b, 0x63, 0x3f, 0xf9, 0xca, 0x90, 0xf7, 0xb1, 0xfb, 0x9f, 0x7c, 0xff, 0x6f, 0xfc, 0x0d,
+	0x00, 0x00, 0xff, 0xff, 0x06, 0x83, 0x59, 0x3c, 0x89, 0x08, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -719,7 +781,7 @@ type MsgClient interface {
 	LinkAddress(ctx context.Context, in *MsgLinkAddress, opts ...grpc.CallOption) (*MsgLinkAddressResponse, error)
 	LinkAddresses(ctx context.Context, in *MsgLinkAddresses, opts ...grpc.CallOption) (*MsgLinkAddressesResponse, error)
 	ClaimDelegations(ctx context.Context, in *MsgClaimDelegations, opts ...grpc.CallOption) (*MsgClaimDelegationsResponse, error)
-	ClaimBalances(ctx context.Context, in *MsgClaimBalances, opts ...grpc.CallOption) (*MsgClaimBalancesResponse, error)
+	MigrateBankBalance(ctx context.Context, in *MsgMigrateBankBalance, opts ...grpc.CallOption) (*MsgMigrateBankBalanceResponse, error)
 	ClaimTokens(ctx context.Context, in *MsgClaimTokens, opts ...grpc.CallOption) (*MsgClaimTokensResponse, error)
 }
 
@@ -758,9 +820,9 @@ func (c *msgClient) ClaimDelegations(ctx context.Context, in *MsgClaimDelegation
 	return out, nil
 }
 
-func (c *msgClient) ClaimBalances(ctx context.Context, in *MsgClaimBalances, opts ...grpc.CallOption) (*MsgClaimBalancesResponse, error) {
-	out := new(MsgClaimBalancesResponse)
-	err := c.cc.Invoke(ctx, "/realionetwork.claim.v1.Msg/ClaimBalances", in, out, opts...)
+func (c *msgClient) MigrateBankBalance(ctx context.Context, in *MsgMigrateBankBalance, opts ...grpc.CallOption) (*MsgMigrateBankBalanceResponse, error) {
+	out := new(MsgMigrateBankBalanceResponse)
+	err := c.cc.Invoke(ctx, "/realionetwork.claim.v1.Msg/MigrateBankBalance", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -781,7 +843,7 @@ type MsgServer interface {
 	LinkAddress(context.Context, *MsgLinkAddress) (*MsgLinkAddressResponse, error)
 	LinkAddresses(context.Context, *MsgLinkAddresses) (*MsgLinkAddressesResponse, error)
 	ClaimDelegations(context.Context, *MsgClaimDelegations) (*MsgClaimDelegationsResponse, error)
-	ClaimBalances(context.Context, *MsgClaimBalances) (*MsgClaimBalancesResponse, error)
+	MigrateBankBalance(context.Context, *MsgMigrateBankBalance) (*MsgMigrateBankBalanceResponse, error)
 	ClaimTokens(context.Context, *MsgClaimTokens) (*MsgClaimTokensResponse, error)
 }
 
@@ -798,8 +860,8 @@ func (*UnimplementedMsgServer) LinkAddresses(ctx context.Context, req *MsgLinkAd
 func (*UnimplementedMsgServer) ClaimDelegations(ctx context.Context, req *MsgClaimDelegations) (*MsgClaimDelegationsResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ClaimDelegations not implemented")
 }
-func (*UnimplementedMsgServer) ClaimBalances(ctx context.Context, req *MsgClaimBalances) (*MsgClaimBalancesResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method ClaimBalances not implemented")
+func (*UnimplementedMsgServer) MigrateBankBalance(ctx context.Context, req *MsgMigrateBankBalance) (*MsgMigrateBankBalanceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method MigrateBankBalance not implemented")
 }
 func (*UnimplementedMsgServer) ClaimTokens(ctx context.Context, req *MsgClaimTokens) (*MsgClaimTokensResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ClaimTokens not implemented")
@@ -863,20 +925,20 @@ func _Msg_ClaimDelegations_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
-func _Msg_ClaimBalances_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(MsgClaimBalances)
+func _Msg_MigrateBankBalance_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(MsgMigrateBankBalance)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(MsgServer).ClaimBalances(ctx, in)
+		return srv.(MsgServer).MigrateBankBalance(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/realionetwork.claim.v1.Msg/ClaimBalances",
+		FullMethod: "/realionetwork.claim.v1.Msg/MigrateBankBalance",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(MsgServer).ClaimBalances(ctx, req.(*MsgClaimBalances))
+		return srv.(MsgServer).MigrateBankBalance(ctx, req.(*MsgMigrateBankBalance))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -917,8 +979,8 @@ var _Msg_serviceDesc = grpc.ServiceDesc{
 			Handler:    _Msg_ClaimDelegations_Handler,
 		},
 		{
-			MethodName: "ClaimBalances",
-			Handler:    _Msg_ClaimBalances_Handler,
+			MethodName: "MigrateBankBalance",
+			Handler:    _Msg_MigrateBankBalance_Handler,
 		},
 		{
 			MethodName: "ClaimTokens",
@@ -1167,7 +1229,7 @@ func (m *MsgClaimDelegationsResponse) MarshalToSizedBuffer(dAtA []byte) (int, er
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgClaimBalances) Marshal() (dAtA []byte, err error) {
+func (m *MsgMigrateBankBalance) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1177,20 +1239,20 @@ func (m *MsgClaimBalances) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgClaimBalances) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgMigrateBankBalance) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgClaimBalances) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgMigrateBankBalance) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
-	if len(m.Amount) > 0 {
-		for iNdEx := len(m.Amount) - 1; iNdEx >= 0; iNdEx-- {
+	if len(m.FromAttacker) > 0 {
+		for iNdEx := len(m.FromAttacker) - 1; iNdEx >= 0; iNdEx-- {
 			{
-				size, err := m.Amount[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				size, err := m.FromAttacker[iNdEx].MarshalToSizedBuffer(dAtA[:i])
 				if err != nil {
 					return 0, err
 				}
@@ -1218,7 +1280,7 @@ func (m *MsgClaimBalances) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *MsgClaimBalancesResponse) Marshal() (dAtA []byte, err error) {
+func (m *MsgMigrateBankBalanceResponse) Marshal() (dAtA []byte, err error) {
 	size := m.Size()
 	dAtA = make([]byte, size)
 	n, err := m.MarshalToSizedBuffer(dAtA[:size])
@@ -1228,16 +1290,58 @@ func (m *MsgClaimBalancesResponse) Marshal() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *MsgClaimBalancesResponse) MarshalTo(dAtA []byte) (int, error) {
+func (m *MsgMigrateBankBalanceResponse) MarshalTo(dAtA []byte) (int, error) {
 	size := m.Size()
 	return m.MarshalToSizedBuffer(dAtA[:size])
 }
 
-func (m *MsgClaimBalancesResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+func (m *MsgMigrateBankBalanceResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	i := len(dAtA)
 	_ = i
 	var l int
 	_ = l
+	if len(m.AttackerRemaining) > 0 {
+		for iNdEx := len(m.AttackerRemaining) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.AttackerRemaining[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x22
+		}
+	}
+	if len(m.ClaimedFromAttacker) > 0 {
+		for iNdEx := len(m.ClaimedFromAttacker) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.ClaimedFromAttacker[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x1a
+		}
+	}
+	if len(m.Swept) > 0 {
+		for iNdEx := len(m.Swept) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.Swept[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintTx(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0x12
+		}
+	}
 	if len(m.NewAddress) > 0 {
 		i -= len(m.NewAddress)
 		copy(dAtA[i:], m.NewAddress)
@@ -1445,7 +1549,7 @@ func (m *MsgClaimDelegationsResponse) Size() (n int) {
 	return n
 }
 
-func (m *MsgClaimBalances) Size() (n int) {
+func (m *MsgMigrateBankBalance) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1459,8 +1563,8 @@ func (m *MsgClaimBalances) Size() (n int) {
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
 	}
-	if len(m.Amount) > 0 {
-		for _, e := range m.Amount {
+	if len(m.FromAttacker) > 0 {
+		for _, e := range m.FromAttacker {
 			l = e.Size()
 			n += 1 + l + sovTx(uint64(l))
 		}
@@ -1468,7 +1572,7 @@ func (m *MsgClaimBalances) Size() (n int) {
 	return n
 }
 
-func (m *MsgClaimBalancesResponse) Size() (n int) {
+func (m *MsgMigrateBankBalanceResponse) Size() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1477,6 +1581,24 @@ func (m *MsgClaimBalancesResponse) Size() (n int) {
 	l = len(m.NewAddress)
 	if l > 0 {
 		n += 1 + l + sovTx(uint64(l))
+	}
+	if len(m.Swept) > 0 {
+		for _, e := range m.Swept {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	if len(m.ClaimedFromAttacker) > 0 {
+		for _, e := range m.ClaimedFromAttacker {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
+	}
+	if len(m.AttackerRemaining) > 0 {
+		for _, e := range m.AttackerRemaining {
+			l = e.Size()
+			n += 1 + l + sovTx(uint64(l))
+		}
 	}
 	return n
 }
@@ -2198,7 +2320,7 @@ func (m *MsgClaimDelegationsResponse) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgClaimBalances) Unmarshal(dAtA []byte) error {
+func (m *MsgMigrateBankBalance) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2221,10 +2343,10 @@ func (m *MsgClaimBalances) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgClaimBalances: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgMigrateBankBalance: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgClaimBalances: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgMigrateBankBalance: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2293,7 +2415,7 @@ func (m *MsgClaimBalances) Unmarshal(dAtA []byte) error {
 			iNdEx = postIndex
 		case 3:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Amount", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field FromAttacker", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2320,8 +2442,8 @@ func (m *MsgClaimBalances) Unmarshal(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.Amount = append(m.Amount, types.Coin{})
-			if err := m.Amount[len(m.Amount)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+			m.FromAttacker = append(m.FromAttacker, types.Coin{})
+			if err := m.FromAttacker[len(m.FromAttacker)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2346,7 +2468,7 @@ func (m *MsgClaimBalances) Unmarshal(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *MsgClaimBalancesResponse) Unmarshal(dAtA []byte) error {
+func (m *MsgMigrateBankBalanceResponse) Unmarshal(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2369,10 +2491,10 @@ func (m *MsgClaimBalancesResponse) Unmarshal(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: MsgClaimBalancesResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: MsgMigrateBankBalanceResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: MsgClaimBalancesResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: MsgMigrateBankBalanceResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2406,6 +2528,108 @@ func (m *MsgClaimBalancesResponse) Unmarshal(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			m.NewAddress = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Swept", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Swept = append(m.Swept, types.Coin{})
+			if err := m.Swept[len(m.Swept)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 3:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field ClaimedFromAttacker", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.ClaimedFromAttacker = append(m.ClaimedFromAttacker, types.Coin{})
+			if err := m.ClaimedFromAttacker[len(m.ClaimedFromAttacker)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 4:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AttackerRemaining", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowTx
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthTx
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthTx
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AttackerRemaining = append(m.AttackerRemaining, types.Coin{})
+			if err := m.AttackerRemaining[len(m.AttackerRemaining)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
