@@ -20,10 +20,11 @@ leaked addr ──freeze──> x/blacklist
                     admin: MsgLinkAddress(old, new)     ← records the destination
                                   │
          ┌────────────────────────┼────────────────────────┐
-  ClaimDelegations          ClaimBalances             ClaimTokens
-  staking shares,           bank coins,               ERC-20 balances,
-  rewards ledger,           admin states the          drained in full
-  multi-staking lock        amount
+  ClaimDelegations     MigrateBankBalance      ClaimTokens
+  staking shares,      own bank coins in       ERC-20 balances,
+  rewards ledger,      full, plus what the     drained in full
+  multi-staking lock   attacker took, paid
+                       out of its account
 ```
 
 ## Messages
@@ -37,7 +38,7 @@ admin is — a compromised key can never link itself anywhere or claim anything.
 | `MsgLinkAddress` | Record `old_address` → `new_address`. Moves nothing. |
 | `MsgLinkAddresses` | Batch of the above under one admin check. |
 | `MsgClaimDelegations` | Re-key active delegations. See [Delegation claim](#delegation-claim). |
-| `MsgClaimBalances` | Move bank coins the admin names. See [Bank claim](#bank-claim). |
+| `MsgMigrateBankBalance` | Sweep own bank coins, plus what the attacker took. See [Bank claim](#bank-claim). |
 | `MsgClaimTokens` | Drain ERC-20 balances. See [ERC-20 claim](#erc-20-claim). |
 
 ### Why linking and claiming are separate
@@ -90,6 +91,7 @@ equality check would be sensitive to.
 | Field | Type | Notes |
 | --- | --- | --- |
 | `Admin` | `collections.Item[sdk.AccAddress]` | The sole address allowed to submit anything. No message changes it — it is set at genesis or by a chain-upgrade handler calling `SetAdmin` directly. An empty value reads back as "not configured". |
+| `Attacker` | `collections.Item[sdk.AccAddress]` | The account `MsgMigrateBankBalance` pays `from_attacker` out of. Also state rather than a message field, so no admin slip can aim a payout at a victim. No message changes it. |
 | `AddressLinks` | `collections.Map[sdk.AccAddress, sdk.AccAddress]` | old → new. Many old addresses may point at one new address (consolidating several leaked wallets); an old address links only once. |
 
 ## Delegation claim
@@ -182,36 +184,82 @@ failure mode entirely.
 
 ## Bank claim
 
-`MsgClaimBalances` moves bank coins the admin names:
+One message, two parts, landing together:
 
 ```
-MsgClaimBalances{ admin, old_address, amount: [ {denom, amount}, ... ] }
+MsgMigrateBankBalance{ admin, old_address, from_attacker }
+
+  part 1   old_address ──> new_address      everything spendable, no amount
+  part 2   attacker    ──> new_address      exactly `from_attacker`
 ```
 
-The amount is **stated, not read off the chain**. A recovery can then be scoped
-deliberately — to what the holder can evidence, or to what a dispute settled
-on — instead of always being all-or-nothing. Coins beyond the old address's
-*spendable* balance fail the message; a vesting schedule still locks what it
-locked.
+**Part 1 takes the whole balance.** There is no amount, because none of it
+belongs to anyone else. Coins a vesting schedule still locks stay put. An
+address holding nothing is swept successfully *for zero* — not an error.
 
-### Why it hops through the module account
+On mainnet this is the **only** way LMX and RST come back at all: the attacker
+holds neither, so there is nothing to pay them out of.
 
-A direct `old → new` send is refused. `BlacklistSendRestriction` blocks a
-blacklisted address paying a **user** account, and that is exactly what this
-transfer is. It exempts payments *into* a module account, because routine
-protocol bookkeeping debits blacklisted balances that way and none of those
-callers survive `SendCoins` failing.
+**Part 2 is what the attacker took.** Part 1 recovers only what it left
+behind; what it moved out before the freeze is sitting in its own account
+instead. How much a holder is owed is a judgement the chain cannot make, so
+the admin states it. Leave `from_attacker` empty to recover only the sweep.
 
-So `MoveBalances` (`keeper/bank.go`) sends in two hops:
+The attacker's address is **module state**, never a message field, so no admin
+mistake can aim part 2 at a victim.
+
+### The two parts are not the same kind of thing
+
+| | Part 1 — sweep | Part 2 — `from_attacker` |
+| --- | --- | --- |
+| Nature | Mechanical | A decision, sized off-chain |
+| Amount | All of it | Admin states it |
+| Re-sending it | Safe — picks up coins that arrive later | **Pays again** |
+| Source | The holder's own coins | One finite pool shared across every victim |
+
+So they stay two keeper calls, two events and two response fields, even inside
+one message: what came back from where is never ambiguous after the fact.
+
+> **`from_attacker` is not idempotent.** To re-sweep an address later — a
+> matured unbonding, a late IBC transfer — send the message with
+> `from_attacker` **empty**. A message that finds nothing to move succeeds and
+> reports zero, so a blind re-sweep pass over every recovered address is safe
+> to run.
+
+### Why zero is not an error
+
+Of 2,454 mainnet victims: **2,373** need both parts, **79** lost nothing to the
+attacker and need only the sweep, and **one** has nothing left to sweep and
+needs only the payout:
 
 ```
-old ──SendCoinsFromAccountToModule──> claim module acct ──SendCoinsFromModuleToAccount──> new
-     (allowed: destination is a module account)          (allowed: sender isn't blacklisted)
+realio1zypukaapv7etkevjm8ur2t5hj5ww0uu9lvma09   owed 58,041.338 RIO, bank empty
 ```
 
-Nothing about the restriction is weakened for anyone else: only this module can
-spend from its own module account, and it only ever does so here, in the same
-transaction, for the amount it just escrowed.
+Were an empty sweep an error, that address could never be paid — the one
+holder with nothing left to sweep being also the one for whom the payout is
+everything. Hence the rule, which also matches how `ClaimTokens` skips a
+contract the holder holds none of.
+
+### Why both parts hop through the module account
+
+A direct send is refused either way. `BlacklistSendRestriction` blocks a
+blacklisted address paying a **user** account — and the old address and the
+attacker are both frozen while the destination is a plain account. It exempts
+payments *into* a module account, because routine protocol bookkeeping debits
+blacklisted balances that way and none of those callers survive `SendCoins`
+failing.
+
+So each part sends in two hops (`keeper/bank.go`):
+
+```
+frozen ──SendCoinsFromAccountToModule──> claim module acct ──SendCoinsFromModuleToAccount──> new
+       (allowed: destination is a module account)          (allowed: sender isn't blacklisted)
+```
+
+Nothing is weakened for anyone else: only this module can spend from its own
+module account, and it only ever does so here, in the same transaction, for
+what it just escrowed.
 
 `x/asset`'s restriction clears for the same reason — it skips any transfer
 where either side is a module account. Note what that implies: a permissioned
@@ -324,20 +372,22 @@ Plain JSON (not protobuf), mirroring `x/blacklist`:
 ```json
 {
   "admin": "realio1...",
+  "attacker": "realio1...",
   "links": [{ "old_address": "realio1...", "new_address": "realio1..." }]
 }
 ```
 
 `admin: ""` means unset, and every message is rejected until one is configured.
-Validation rejects malformed addresses, `old == new`, and duplicate
-`old_address` entries.
+`attacker: ""` means unset, and a `from_attacker` payout is rejected until it is. Validation rejects malformed addresses, `old == new`,
+`attacker == admin`, and duplicate `old_address` entries.
 
 ## Events
 
 | Event | Attributes | When |
 | --- | --- | --- |
 | `skipped_self_delegation` | `old_address`, `validator_address` | A validator's own self-bond was left in place (Path C). |
-| `claimed_balance` | `old_address`, `new_address`, `amount` | A `MsgClaimBalances` completed. |
+| `migrated_bank_balance` | `old_address`, `new_address`, `swept` | The sweep part moved something. |
+| `claimed_from_attacker` | `old_address`, `new_address`, `attacker`, `amount` | The payout part moved something. |
 | `claimed_erc20` | `contract`, `old_address`, `new_address`, `amount` | An ERC-20 balance was swept. Contracts holding nothing emit nothing. |
 
 ## Module wiring
@@ -356,13 +406,26 @@ Validation rejects malformed addresses, `old == new`, and duplicate
 `keeper/msg_server_test.go` covers linking, the admin gate across every
 message, both delegation paths, exact reward preservation on the fresh path,
 reward flush to the new address on the merge path, the self-delegation skip,
-and batch atomicity. `keeper/bank_test.go` covers the balance claim, including
-that it succeeds out of a blacklisted address where a direct send is refused,
-and that it leaves `x/asset` authorization alone.
+and batch atomicity. `keeper/bank_test.go` covers both parts of the bank claim and
+the asymmetry between them: that a sweep is safe to re-run blind and picks up
+coins that arrive later, that a payout is *not* idempotent, that the attacker
+is one finite pool which refuses to be over-drawn, that a drained address can
+still be paid, and that both succeed out of blacklisted addresses where a
+direct send is refused.
 `keeper/evm_test.go` covers the ERC-20 sweep against real contracts deployed
 into the test EVM, including an address with no auth account and the
 all-or-nothing rollback. `keeper/mainnet_migration_test.go` replays the whole
 flow against a real mainnet export (`testdata/exported_mainnet_after.json`).
+
+`keeper/mainnet_recovery_test.go` is the end-to-end rehearsal against that
+same export, on all three asset kinds at once: it seeds the real frozen
+address list (33,606 entries), the real balances those addresses held, their
+real delegations, and the real DSTRX contract — bytecode and all 8,468
+storage slots — then mints a recovery wallet for every sampled victim, links
+it as the admin would, and claims each asset with the message that owns it.
+The attacker's own address is excluded, and the test finishes by proving the
+module itself enforces that: unlinked, still frozen, and every claim message
+refuses it.
 
 Run them with the build tag the EVM test config requires:
 
