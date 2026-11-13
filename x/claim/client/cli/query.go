@@ -56,7 +56,7 @@ func CmdQueryAdmin() *cobra.Command {
 		Use:   "admin",
 		Short: "query the address currently authorized to submit claim messages",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 
 			queryClient := types.NewQueryClient(clientCtx)

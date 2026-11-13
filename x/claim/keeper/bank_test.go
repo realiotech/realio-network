@@ -11,9 +11,9 @@ import (
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
 )
 
-// fund mints denom to addr.
-func (suite *KeeperTestSuite) fund(addr sdk.AccAddress, denom string, amount math.Int) {
-	coins := sdk.NewCoins(sdk.NewCoin(denom, amount))
+// fund mints amount of the multi-staking denom to addr.
+func (suite *KeeperTestSuite) fund(addr sdk.AccAddress, amount math.Int) {
+	coins := sdk.NewCoins(sdk.NewCoin(multiStakingCoinDenom, amount))
 	suite.Require().NoError(suite.app.BankKeeper.MintCoins(suite.ctx, minttypes.ModuleName, coins))
 	suite.Require().NoError(suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr, coins))
 }
@@ -23,7 +23,7 @@ func (suite *KeeperTestSuite) fund(addr sdk.AccAddress, denom string, amount mat
 func (suite *KeeperTestSuite) setupAttacker(amount math.Int) sdk.AccAddress {
 	attacker := testutil.GenAddress()
 	suite.Require().NoError(suite.app.ClaimKeeper.SetAttacker(suite.ctx, attacker))
-	suite.fund(attacker, multiStakingCoinDenom, amount)
+	suite.fund(attacker, amount)
 	return attacker
 }
 
@@ -41,7 +41,7 @@ func coins(amount int64) sdk.Coins {
 
 func (suite *KeeperTestSuite) TestMigrateBankBalance() {
 	oldAddr, newAddr := testutil.GenAddress(), testutil.GenAddress()
-	suite.fund(oldAddr, multiStakingCoinDenom, math.NewInt(400))
+	suite.fund(oldAddr, math.NewInt(400))
 	suite.link(oldAddr, newAddr)
 
 	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
@@ -70,7 +70,7 @@ func (suite *KeeperTestSuite) TestMigrateBankBalance() {
 // for an address the attacker drained.
 func (suite *KeeperTestSuite) TestMigrateBankBalanceIsSafeToRepeat() {
 	oldAddr, newAddr := testutil.GenAddress(), testutil.GenAddress()
-	suite.fund(oldAddr, multiStakingCoinDenom, math.NewInt(100))
+	suite.fund(oldAddr, math.NewInt(100))
 	suite.link(oldAddr, newAddr)
 
 	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
@@ -90,7 +90,7 @@ func (suite *KeeperTestSuite) TestMigrateBankBalanceIsSafeToRepeat() {
 
 	// More arrives later -- a late IBC transfer, a matured unbonding -- and
 	// the same message picks it up.
-	suite.fund(oldAddr, multiStakingCoinDenom, math.NewInt(70))
+	suite.fund(oldAddr, math.NewInt(70))
 	_, err = srv.MigrateBankBalance(suite.ctx, msg)
 	suite.Require().NoError(err)
 	suite.Require().Equal(math.NewInt(170), suite.balance(newAddr))
@@ -99,7 +99,7 @@ func (suite *KeeperTestSuite) TestMigrateBankBalanceIsSafeToRepeat() {
 func (suite *KeeperTestSuite) TestMigrateBankBalanceValidation() {
 	linkedOld, linkedNew := testutil.GenAddress(), testutil.GenAddress()
 	unlinked := testutil.GenAddress()
-	suite.fund(linkedOld, multiStakingCoinDenom, math.NewInt(100))
+	suite.fund(linkedOld, math.NewInt(100))
 	suite.link(linkedOld, linkedNew)
 
 	testCases := []struct {
@@ -278,7 +278,7 @@ func (suite *KeeperTestSuite) TestMigrateBankBalanceFromAttackerValidation() {
 func (suite *KeeperTestSuite) TestBankClaimsSurviveBlacklisting() {
 	oldAddr, newAddr := testutil.GenAddress(), testutil.GenAddress()
 	attacker := suite.setupAttacker(math.NewInt(10_000))
-	suite.fund(oldAddr, multiStakingCoinDenom, math.NewInt(1_000))
+	suite.fund(oldAddr, math.NewInt(1_000))
 	suite.link(oldAddr, newAddr)
 	suite.Require().NoError(suite.app.BlacklistKeeper.SetBlacklisted(suite.ctx, oldAddr))
 	suite.Require().NoError(suite.app.BlacklistKeeper.SetBlacklisted(suite.ctx, attacker))
@@ -312,7 +312,7 @@ func (suite *KeeperTestSuite) TestBankClaimsSurviveBlacklisting() {
 // MsgAuthorizeAddress.
 func (suite *KeeperTestSuite) TestBankClaimsLeaveAssetAuthorizationAlone() {
 	oldAddr, newAddr := testutil.GenAddress(), testutil.GenAddress()
-	suite.fund(oldAddr, multiStakingCoinDenom, math.NewInt(1_000))
+	suite.fund(oldAddr, math.NewInt(1_000))
 	suite.link(oldAddr, newAddr)
 
 	token := assettypes.NewToken("Ario", multiStakingCoinDenom, "1000000000000000000000000", suite.admin, true)
