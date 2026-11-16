@@ -1188,42 +1188,6 @@ func (app *RealioNetwork) InitChainer(ctx sdk.Context, req *abci.RequestInitChai
 		panic(err)
 	}
 
-	var erc20GenState erc20types.GenesisState
-	if genesisState[erc20types.ModuleName] != nil {
-		app.appCodec.MustUnmarshalJSON(genesisState[erc20types.ModuleName], &erc20GenState)
-	} else {
-		erc20GenState = *erc20types.DefaultGenesisState()
-	}
-
-	err = app.Erc20Keeper.SetParams(ctx, erc20GenState.Params)
-	if err != nil {
-		panic(err)
-	}
-
-	for _, pair := range erc20GenState.TokenPairs {
-		err = app.Erc20Keeper.SetToken(ctx, pair)
-		if err != nil {
-			panic(err)
-		}
-	}
-
-	for _, allowance := range erc20GenState.Allowances {
-		erc20 := common.HexToAddress(allowance.Erc20Address)
-		owner := common.HexToAddress(allowance.Owner)
-		spender := common.HexToAddress(allowance.Spender)
-		value := allowance.Value.BigInt()
-		err := app.Erc20Keeper.UnsafeSetAllowance(ctx, erc20, owner, spender, value)
-		if err != nil {
-			panic(fmt.Errorf("error setting allowance %s", err))
-		}
-	}
-
-	// ensure erc20 module account is set on genesis
-	if acc := app.AccountKeeper.GetModuleAccount(ctx, erc20types.ModuleName); acc == nil {
-		// NOTE: shouldn't occur
-		panic("the erc20 module account has not been set")
-	}
-
 	return res, nil
 }
 

@@ -94,7 +94,12 @@ func SetupWithGenesisFile(t *testing.T, genesisPath string) (realioApp *RealioNe
 	require.NoError(t, err)
 
 	db := dbm.NewMemDB()
-	realioApp = New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, DefaultNodeHome, 5, simtestutil.EmptyAppOptions{}, EmptyWasmOptions,
+	// each app instance needs its own wasmvm cache dir: wasmvm takes an exclusive
+	// file lock on <home>/wasm, so reusing DefaultNodeHome across test apps in the
+	// same process panics on the second call ("Could not lock exclusive.lock").
+	homeDir, err := os.MkdirTemp("", ".realio-network-test")
+	require.NoError(t, err)
+	realioApp = New(log.NewNopLogger(), db, nil, true, map[int64]bool{}, homeDir, 5, simtestutil.EmptyAppOptions{}, EmptyWasmOptions,
 		baseapp.SetChainID(doc.ChainID))
 
 	_, err = realioApp.InitChain(&abci.RequestInitChain{
