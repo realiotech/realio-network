@@ -1,0 +1,32 @@
+syntax = "proto3";
+package realionetwork.blacklist.v1;
+
+import "cosmos/msg/v1/msg.proto";
+
+option go_package = "github.com/realiotech/realio-network/x/blacklist/types";
+
+// Msg defines the Msg service. It exposes exactly one gov-gated RPC: adding
+// or removing addresses from the blacklist. There is no user-facing RPC —
+// the authority must match the module's configured authority (x/gov by
+// default), so only a passed governance proposal can call this.
+service Msg {
+  option (cosmos.msg.v1.service) = true;
+  rpc UpdateBlacklist(MsgUpdateBlacklist) returns (MsgUpdateBlacklistResponse);
+}
+
+message MsgUpdateBlacklist {
+  option (cosmos.msg.v1.signer) = "authority";
+  // authority is the address that controls the module (defaults to x/gov
+  // unless overwritten).
+  string authority = 1;
+
+  // add_addresses is the list of bech32 account addresses to add to the
+  // blacklist.
+  repeated string add_addresses = 2;
+
+  // remove_addresses is the list of bech32 account addresses to remove from
+  // the blacklist.
+  repeated string remove_addresses = 3;
+}
+
+message MsgUpdateBlacklistResponse {}

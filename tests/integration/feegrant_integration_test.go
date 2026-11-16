@@ -503,7 +503,7 @@ func (suite *EVMTestSuite) TestFeeGrantBothZeroBalance() {
 		drainMsg := &banktypes.MsgSend{
 			FromAddress: granterAddr.String(),
 			ToAddress:   thirdAddr.String(),
-			Amount:      sdk.NewCoins(sdk.NewCoin(baseDenom, granterBalance.Balance.Amount.Sub(math.NewInt(1050000)))),
+			Amount:      sdk.NewCoins(sdk.NewCoin(baseDenom, granterBalance.Balance.Amount.Sub(math.NewInt(1060000)))),
 		}
 
 		drainRes, err := suite.factory.ExecuteCosmosTx(granterPriv, factory.CosmosTxArgs{
@@ -522,7 +522,7 @@ func (suite *EVMTestSuite) TestFeeGrantBothZeroBalance() {
 		drainMsg := &banktypes.MsgSend{
 			FromAddress: granteeAddr.String(),
 			ToAddress:   thirdAddr.String(),
-			Amount:      sdk.NewCoins(sdk.NewCoin(baseDenom, granteeBalance.Balance.Amount.Sub(math.NewInt(1050000)))),
+			Amount:      sdk.NewCoins(sdk.NewCoin(baseDenom, granteeBalance.Balance.Amount.Sub(math.NewInt(1060000)))),
 		}
 
 		drainRes, err := suite.factory.ExecuteCosmosTx(granteePriv, factory.CosmosTxArgs{

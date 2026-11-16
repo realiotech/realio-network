@@ -194,7 +194,7 @@ localnet-show-logstream:
 ###############################################################################
 
 PACKAGE_NAME:=github.com/realiotech/realio-network
-GOLANG_CROSS_VERSION  = v1.22
+GOLANG_CROSS_VERSION  = v1.23
 GOPATH ?= '$(HOME)/go'
 release-dry-run:
 	docker run \
