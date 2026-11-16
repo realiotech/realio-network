@@ -8,7 +8,7 @@ import (
 
 // BankKeeper defines the subset of x/bank the claim module needs.
 //
-// SpendableCoins is how MsgClaimBalances decides what a sweep takes: the
+// SpendableCoins is how MsgMigrateBankBalance decides what a sweep takes: the
 // whole balance minus whatever a vesting schedule still locks, since
 // locked coins cannot move regardless of who asks. The two Send methods
 // move the coins, always via the module account and never as a direct

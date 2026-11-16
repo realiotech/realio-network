@@ -16,7 +16,8 @@ const (
 	EventTypeMigratedBankBalance = "migrated_bank_balance"
 
 	// EventTypeClaimedFromAttacker is emitted once per
-	// MsgClaimFromAttacker, naming the attacker the coins came out of.
+	// MsgMigrateBankBalance that paid a recorded loss, naming the attacker
+	// the coins came out of. Nothing recorded, nothing emitted.
 	EventTypeClaimedFromAttacker = "claimed_from_attacker"
 
 	// EventTypeClaimedERC20 is emitted once per ERC-20 contract whose

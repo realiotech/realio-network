@@ -378,6 +378,15 @@ func (suite *KeeperTestSuite) TestMainnetRecoveryAcrossAllAssetKinds() {
 		addVictim(addr)
 	}
 
+	// The incident's own figures go on chain, one record per victim, before
+	// any claim runs -- the claim message carries no amount.
+	for _, bech := range inflowOrder {
+		addr, err := sdk.AccAddressFromBech32(bech)
+		suite.Require().NoError(err)
+		suite.Require().NoError(suite.app.ClaimKeeper.SetHackedAmount(suite.ctx, addr,
+			sdk.NewCoins(sdk.NewCoin(multiStakingCoinDenom, inflows[bech]))))
+	}
+
 	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
 	linkStart := time.Now()
 	for _, old := range victims {
@@ -407,9 +416,20 @@ func (suite *KeeperTestSuite) TestMainnetRecoveryAcrossAllAssetKinds() {
 	bankAwarded := sdk.NewCoins()
 	attackerBefore := suite.app.BankKeeper.GetBalance(suite.ctx, attacker, multiStakingCoinDenom).Amount
 
+	// Holders the message pays the attacker's share of in the same call as
+	// the sweep, because their loss is on record. Phase two skips them.
+	paidWithSweep := map[string]bool{}
 	for _, h := range bankHolders {
 		newAddr := recovery[h.bech]
 		newRIOBefore := suite.app.BankKeeper.GetBalance(suite.ctx, newAddr, multiStakingCoinDenom).Amount
+
+		// What the chain has on record for this holder, which the one
+		// message pays out of the attacker alongside the sweep.
+		var owed sdk.Coins
+		if amount, ok := inflows[h.bech]; ok {
+			owed = sdk.NewCoins(sdk.NewCoin(multiStakingCoinDenom, amount))
+			paidWithSweep[h.bech] = true
+		}
 
 		// Every one of these addresses is refused a direct transfer out.
 		// The reason varies with what they hold -- the blacklist for plain
@@ -431,45 +451,72 @@ func (suite *KeeperTestSuite) TestMainnetRecoveryAcrossAllAssetKinds() {
 		suite.Require().True(res.Swept.Equal(h.coins),
 			"%s: swept %s, expected its whole balance %s", h.bech, res.Swept, h.coins)
 
-		// Then, separately, what the attacker took comes back out of the
-		// attacker's own account. Only RIO: the attacker holds no LMX, no
-		// RST and no IBC coin, so those can only ever return via the sweep.
+		// And, as its own field, what the attacker took comes back out of
+		// the attacker's account -- the recorded figure, not one passed in.
+		// Only RIO: the attacker holds no LMX, no RST and no IBC coin, so
+		// those can only ever return via the sweep.
+		suite.Require().True(res.ClaimedFromAttacker.Equal(owed),
+			"%s: paid %s out of the attacker, expected the recorded %s", h.bech, res.ClaimedFromAttacker, owed)
 		bankSwept = bankSwept.Add(res.Swept...)
+		bankAwarded = bankAwarded.Add(owed...)
 
 		// The old address is empty in every denom it held.
 		for _, c := range h.coins {
 			suite.Require().True(suite.app.BankKeeper.GetBalance(suite.ctx, h.addr, c.Denom).IsZero(),
 				"%s still holds %s", h.bech, c.Denom)
 		}
-		// The new address holds what the sweep brought, on top of
-		// anything it already had.
+		// The new address holds what the sweep brought plus anything paid
+		// from the attacker, on top of anything it already had.
 		for _, c := range h.coins {
+			want := c.Amount
+			if c.Denom == multiStakingCoinDenom {
+				want = want.Add(owed.AmountOf(multiStakingCoinDenom))
+			}
 			suite.Require().True(
-				suite.app.BankKeeper.GetBalance(suite.ctx, newAddr, c.Denom).Amount.Equal(newRIOBefore.Add(c.Amount)),
+				suite.app.BankKeeper.GetBalance(suite.ctx, newAddr, c.Denom).Amount.Equal(newRIOBefore.Add(want)),
 				"%s did not receive the right %s", newAddr, c.Denom)
 		}
 	}
 
 	suite.T().Logf("MIGRATE BANK: %d/%d holders drained; swept %s", len(bankHolders), len(bankHolders), bankSwept)
 
-	// ---- claim what the attacker took, address by address ----
+	// ---- the addresses the attacker drained to zero ----
 	//
-	// Separate from the sweep above because it answers a separate
-	// question: not "what is still here" but "what was taken". The figure
-	// is the incident's own, not derived from chain state.
+	// They held nothing, so they are in no list above and the sweep found
+	// nothing for them -- the payout is the only thing that recovers
+	// anything. The figure is the incident's own, recorded on chain above
+	// and read back by the message, which names only the address.
+	//
+	// Holders already paid with their sweep are sent again here to pin
+	// that a repeat pays nothing: the first payout consumed the record.
 	for _, bech := range inflowOrder {
 		newAddr := recovery[bech]
 		lost := sdk.NewCoins(sdk.NewCoin(multiStakingCoinDenom, inflows[bech]))
 		before := suite.app.BankKeeper.GetBalance(suite.ctx, newAddr, multiStakingCoinDenom).Amount
 
 		res, err := srv.MigrateBankBalance(suite.ctx, &types.MsgMigrateBankBalance{
-			Admin:        suite.admin,
-			OldAddress:   bech,
-			FromAttacker: lost,
+			Admin:      suite.admin,
+			OldAddress: bech,
 		})
 		suite.Require().NoError(err, "ClaimFromAttacker failed for %s", bech)
 		suite.Require().Equal(newAddr.String(), res.NewAddress)
 
+		victim, err := sdk.AccAddressFromBech32(bech)
+		suite.Require().NoError(err)
+		owed, err := suite.app.ClaimKeeper.GetHackedAmount(suite.ctx, victim)
+		suite.Require().NoError(err)
+		suite.Require().True(owed.IsZero(), "%s: record not cleared after payout", bech)
+
+		if paidWithSweep[bech] {
+			suite.Require().True(res.ClaimedFromAttacker.IsZero(), "%s was paid a second time", bech)
+			suite.Require().True(
+				suite.app.BankKeeper.GetBalance(suite.ctx, newAddr, multiStakingCoinDenom).Amount.Equal(before),
+				"%s balance moved on a repeat", bech)
+			continue
+		}
+
+		suite.Require().True(res.ClaimedFromAttacker.Equal(lost),
+			"%s: paid %s, expected the recorded %s", bech, res.ClaimedFromAttacker, lost)
 		suite.Require().True(
 			suite.app.BankKeeper.GetBalance(suite.ctx, newAddr, multiStakingCoinDenom).Amount.Equal(before.Add(inflows[bech])),
 			"%s was not made whole for what it lost", bech)
@@ -594,13 +641,6 @@ func (suite *KeeperTestSuite) TestMainnetRecoveryAcrossAllAssetKinds() {
 		"MigrateBankBalance": func() error {
 			_, err := srv.MigrateBankBalance(suite.ctx, &types.MsgMigrateBankBalance{
 				Admin: suite.admin, OldAddress: attackerAddress,
-			})
-			return err
-		},
-		"ClaimFromAttacker": func() error {
-			_, err := srv.MigrateBankBalance(suite.ctx, &types.MsgMigrateBankBalance{
-				Admin: suite.admin, OldAddress: attackerAddress,
-				FromAttacker: sdk.NewCoins(sdk.NewCoin(multiStakingCoinDenom, math.NewInt(1))),
 			})
 			return err
 		},

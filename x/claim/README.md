@@ -23,7 +23,8 @@ leaked addr ──freeze──> x/blacklist
   ClaimDelegations     MigrateBankBalance      ClaimTokens
   staking shares,      own bank coins in       ERC-20 balances,
   rewards ledger,      full, plus what the     drained in full
-  multi-staking lock   attacker took, paid
+  multi-staking lock   attacker took (read
+                       from chain state), paid
                        out of its account
 ```
 
@@ -38,13 +39,13 @@ admin is — a compromised key can never link itself anywhere or claim anything.
 | `MsgLinkAddress` | Record `old_address` → `new_address`. Moves nothing. |
 | `MsgLinkAddresses` | Batch of the above under one admin check. |
 | `MsgClaimDelegations` | Re-key active delegations. See [Delegation claim](#delegation-claim). |
-| `MsgMigrateBankBalance` | Sweep own bank coins, plus what the attacker took. See [Bank claim](#bank-claim). |
+| `MsgMigrateBankBalance` | Sweep own bank coins, plus the loss recorded on chain for that address, paid out of the attacker. Takes no amount. See [Bank claim](#bank-claim). |
 | `MsgClaimTokens` | Drain ERC-20 balances. See [ERC-20 claim](#erc-20-claim). |
 
 ### Why linking and claiming are separate
 
 The three claim steps fail for unrelated reasons — a paused token contract, a
-validator being slashed, an amount keyed in wrong — and none of those should
+validator being slashed, a bad contract address — and none of those should
 be able to roll back the others, or undo the link itself. Keeping them apart
 also lets the admin re-run one step after finding more contracts, without
 touching anything already recovered.
@@ -91,8 +92,9 @@ equality check would be sensitive to.
 | Field | Type | Notes |
 | --- | --- | --- |
 | `Admin` | `collections.Item[sdk.AccAddress]` | The sole address allowed to submit anything. No message changes it — it is set at genesis or by a chain-upgrade handler calling `SetAdmin` directly. An empty value reads back as "not configured". |
-| `Attacker` | `collections.Item[sdk.AccAddress]` | The account `MsgMigrateBankBalance` pays `from_attacker` out of. Also state rather than a message field, so no admin slip can aim a payout at a victim. No message changes it. |
+| `Attacker` | `collections.Item[sdk.AccAddress]` | The account `MsgMigrateBankBalance` pays recorded losses out of. Also state rather than a message field, so no admin slip can aim a payout at a victim. No message changes it. |
 | `AddressLinks` | `collections.Map[sdk.AccAddress, sdk.AccAddress]` | old → new. Many old addresses may point at one new address (consolidating several leaked wallets); an old address links only once. |
+| `HackedAmounts` | `collections.Map[(sdk.AccAddress, denom), math.Int]` | What the attacker took from each victim and has not yet repaid, keyed by old address and denom. This is the figure `MsgMigrateBankBalance` pays out of the attacker. Set at genesis or by a chain-upgrade handler calling `SetHackedAmount` — no message writes it. A payout deletes the entry, so a repeat pays nothing. |
 
 ## Delegation claim
 
@@ -187,11 +189,15 @@ failure mode entirely.
 One message, two parts, landing together:
 
 ```
-MsgMigrateBankBalance{ admin, old_address, from_attacker }
+MsgMigrateBankBalance{ admin, old_address }
 
   part 1   old_address ──> new_address      everything spendable, no amount
-  part 2   attacker    ──> new_address      exactly `from_attacker`
+  part 2   attacker    ──> new_address      the amount on record for old_address
 ```
+
+The message carries **no amount at all**. Part 1 takes the whole balance and
+part 2 reads what to pay from chain state, so there is no figure an admin can
+mistype.
 
 **Part 1 takes the whole balance.** There is no amount, because none of it
 belongs to anyone else. Coins a vesting schedule still locks stay put. An
@@ -202,35 +208,39 @@ holds neither, so there is nothing to pay them out of.
 
 **Part 2 is what the attacker took.** Part 1 recovers only what it left
 behind; what it moved out before the freeze is sitting in its own account
-instead. How much a holder is owed is a judgement the chain cannot make, so
-the admin states it. Leave `from_attacker` empty to recover only the sweep.
+instead. How much each holder lost is a figure from the incident analysis, put
+on chain in `HackedAmounts` (genesis, or a chain-upgrade handler calling
+`SetHackedAmount`). An address with nothing on record — one of the 79 that lost
+nothing — gets only the sweep.
 
 The attacker's address is **module state**, never a message field, so no admin
-mistake can aim part 2 at a victim.
+mistake can aim part 2 at a victim. The message also refuses the attacker as
+`old_address` outright, so the pool cannot be swept to the attacker's link.
 
 ### The two parts are not the same kind of thing
 
-| | Part 1 — sweep | Part 2 — `from_attacker` |
+| | Part 1 — sweep | Part 2 — recorded loss |
 | --- | --- | --- |
-| Nature | Mechanical | A decision, sized off-chain |
-| Amount | All of it | Admin states it |
-| Re-sending it | Safe — picks up coins that arrive later | **Pays again** |
+| Nature | Mechanical | A figure sized off-chain, recorded on chain |
+| Amount | All of it | Read from `HackedAmounts` |
+| Re-sending it | Safe — picks up coins that arrive later | Safe — the record is deleted when paid, so a repeat pays nothing |
 | Source | The holder's own coins | One finite pool shared across every victim |
 
 So they stay two keeper calls, two events and two response fields, even inside
 one message: what came back from where is never ambiguous after the fact.
 
-> **`from_attacker` is not idempotent.** To re-sweep an address later — a
-> matured unbonding, a late IBC transfer — send the message with
-> `from_attacker` **empty**. A message that finds nothing to move succeeds and
-> reports zero, so a blind re-sweep pass over every recovered address is safe
-> to run.
+> **Re-sending is safe.** To re-sweep an address later — a matured unbonding, a
+> late IBC transfer — send the same message again. A message that finds nothing
+> to move succeeds and reports zero, so a blind re-sweep pass over every
+> recovered address is safe to run. If the attacker's pool cannot cover a
+> recorded loss the message fails and the record is kept, so it can be retried
+> once the pool is topped up.
 
 ### Why zero is not an error
 
 Of 2,454 mainnet victims: **2,373** need both parts, **79** lost nothing to the
-attacker and need only the sweep, and **one** has nothing left to sweep and
-needs only the payout:
+attacker (no `HackedAmounts` record, so only the sweep runs), and **one** has
+nothing left to sweep and needs only the payout:
 
 ```
 realio1zypukaapv7etkevjm8ur2t5hj5ww0uu9lvma09   owed 58,041.338 RIO, bank empty
@@ -304,7 +314,7 @@ Both cases are rejected up front because neither would fail loudly on its own.
 
 | Case | What would otherwise happen |
 | --- | --- |
-| A contract registered in `x/erc20` as the representation of a **native coin** | It is a precompile, not bytecode: "transferring" it runs bank's `SendCoins` and surfaces as a bare `address is blacklisted`, with no hint the balance was a bank balance. Use `MsgClaimBalances`. |
+| A contract registered in `x/erc20` as the representation of a **native coin** | It is a precompile, not bytecode: "transferring" it runs bank's `SendCoins` and surfaces as a bare `address is blacklisted`, with no hint the balance was a bank balance. Use `MsgMigrateBankBalance`. |
 | An address with no contract code | A call to a codeless address does **not** revert in the EVM — it succeeds and returns nothing, so a mistyped address would only show up later as an unpack failure somewhere less obvious. |
 
 ### Verification
@@ -340,7 +350,7 @@ ABI and a `transferFrom` call alongside `MigrateERC20`.
 **A recovery does not authorize the new address for anything.** If a claimed
 denom is a permissioned `x/asset` Token, the new address ends up holding it
 and still off that Token's authorized list — so it cannot send it on. This
-applies to both `MsgClaimBalances` and the multi-staking lock that comes
+applies to both `MsgMigrateBankBalance` and the multi-staking lock that comes
 across with `MsgClaimDelegations`.
 
 That is deliberate. The authorized list answers to the **Token's manager**:
@@ -373,13 +383,16 @@ Plain JSON (not protobuf), mirroring `x/blacklist`:
 {
   "admin": "realio1...",
   "attacker": "realio1...",
-  "links": [{ "old_address": "realio1...", "new_address": "realio1..." }]
+  "links": [{ "old_address": "realio1...", "new_address": "realio1..." }],
+  "hacked_amounts": [
+    { "address": "realio1...", "amount": [{ "denom": "ario", "amount": "58041338000000000000000" }] }
+  ]
 }
 ```
 
 `admin: ""` means unset, and every message is rejected until one is configured.
-`attacker: ""` means unset, and a `from_attacker` payout is rejected until it is. Validation rejects malformed addresses, `old == new`,
-`attacker == admin`, and duplicate `old_address` entries.
+`attacker: ""` means unset, and a payout of a recorded loss is rejected until it is. `hacked_amounts` lists only what is still unpaid — exporting after payouts omits what was already repaid. Validation rejects malformed addresses, `old == new`,
+`attacker == admin`, duplicate `old_address` entries, and for `hacked_amounts` a malformed or empty amount, a duplicate address, or the attacker itself.
 
 ## Events
 
@@ -396,7 +409,7 @@ Plain JSON (not protobuf), mirroring `x/blacklist`:
 - The store is mounted by the **v1.8 upgrade**
   (`app/upgrades/v1.8/constants.go`), the first release to ship the module.
 - The module holds a **module account** with no minting or burning rights,
-  used only as the escrow waypoint in `MsgClaimBalances`. Adding it to
+  used only as the escrow waypoint in `MsgMigrateBankBalance`. Adding it to
   `maccPerms` also puts it in `x/blacklist`'s and `x/asset`'s allow lists,
   which is what makes both hops legal; the account itself is created lazily on
   first use.
@@ -408,10 +421,15 @@ message, both delegation paths, exact reward preservation on the fresh path,
 reward flush to the new address on the merge path, the self-delegation skip,
 and batch atomicity. `keeper/bank_test.go` covers both parts of the bank claim and
 the asymmetry between them: that a sweep is safe to re-run blind and picks up
-coins that arrive later, that a payout is *not* idempotent, that the attacker
+coins that arrive later, that a payout reads its amount from `HackedAmounts`
+and deletes the record so a repeat pays nothing, that a failed payout keeps its
+record, that an address with nothing on record is only swept, that the attacker
 is one finite pool which refuses to be over-drawn, that a drained address can
 still be paid, and that both succeed out of blacklisted addresses where a
-direct send is refused.
+direct send is refused. `keeper/hacked_amount_test.go` covers the
+`HackedAmounts` state (set replaces, clear is per address, multi-denom
+grouping) and its genesis export/import round trip; `types/genesis_test.go`
+covers genesis validation of `hacked_amounts`.
 `keeper/evm_test.go` covers the ERC-20 sweep against real contracts deployed
 into the test EVM, including an address with no auth account and the
 all-or-nothing rollback. `keeper/mainnet_migration_test.go` replays the whole
@@ -421,8 +439,10 @@ flow against a real mainnet export (`testdata/exported_mainnet_after.json`).
 same export, on all three asset kinds at once: it seeds the real frozen
 address list (33,606 entries), the real balances those addresses held, their
 real delegations, and the real DSTRX contract — bytecode and all 8,468
-storage slots — then mints a recovery wallet for every sampled victim, links
-it as the admin would, and claims each asset with the message that owns it.
+storage slots — records each victim's loss in `HackedAmounts`, then mints a recovery wallet
+for every sampled victim, links it as the admin would, and claims each asset
+with the message that owns it — the bank message naming only the address, and
+the attacker finishing at exactly zero.
 The attacker's own address is excluded, and the test finishes by proving the
 module itself enforces that: unlinked, still frozen, and every claim message
 refuses it.

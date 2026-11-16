@@ -96,7 +96,7 @@ func (k Keeper) assertSweepable(ctx sdk.Context, contract common.Address) error 
 	if id := k.erc20Keeper.GetTokenPairID(ctx, contract.Hex()); len(id) > 0 {
 		if pair, found := k.erc20Keeper.GetTokenPair(ctx, id); found && pair.IsNativeCoin() {
 			return errorsmod.Wrapf(sdkerrors.ErrInvalidRequest,
-				"%s is the ERC-20 representation of native denom %q; claim that with MsgClaimBalances instead",
+				"%s is the ERC-20 representation of native denom %q; claim that with MsgMigrateBankBalance instead",
 				contract, pair.Denom)
 		}
 	}

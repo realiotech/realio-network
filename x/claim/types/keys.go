@@ -21,6 +21,11 @@ var (
 	AddressLinkKeyPrefix = collections.NewPrefix(1)
 
 	// AttackerKey is the collections.Item prefix for the address
-	// MsgClaimBalances draws compensation from.
+	// MsgMigrateBankBalance pays recorded losses from.
 	AttackerKey = collections.NewPrefix(2)
+
+	// HackedAmountKeyPrefix is the collections.Map prefix recording, per old
+	// address and denom, how much the attacker took from it and has not yet
+	// been paid back.
+	HackedAmountKeyPrefix = collections.NewPrefix(3)
 )

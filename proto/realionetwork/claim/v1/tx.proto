@@ -16,7 +16,7 @@ option go_package = "github.com/realiotech/realio-network/x/claim/types";
 // MigrateBankBalance for bank coins, ClaimTokens for ERC-20 balances.
 //
 // They are separate because they fail for unrelated reasons -- a paused
-// token contract, a validator being slashed, an amount keyed in wrong --
+// token contract, a validator being slashed, a bad contract address --
 // and one of those must not be able to roll back the others. An admin who
 // wants them to land together can put several in one transaction, which
 // recovers exactly the atomicity the split gives up.
@@ -103,44 +103,38 @@ message MsgClaimDelegationsResponse {
 }
 
 // MsgMigrateBankBalance recovers bank coins for a linked old address, in
-// two parts, and both land together or not at all:
+// two parts that land together or not at all:
 //
-//  1. Everything spendable on old_address moves to the address it was
-//     linked to. No amount is given: a recovery claims the whole balance,
-//     because none of it belongs to anyone else. An address holding
-//     nothing is swept successfully for zero, not an error -- the same way
-//     ClaimTokens skips a contract the holder holds none of. That matters:
-//     exactly one mainnet victim was drained to completely empty and is
-//     owed 58,041.338 RIO, and an error here would take its payout down.
-//  2. from_attacker, if given, is paid out of the ATTACKER's own account.
-//     Part 1 recovers only what the attacker left behind; what it moved
-//     out before the freeze is sitting in its account instead. How much a
-//     holder is owed is a judgement the chain cannot make, so the admin
-//     states it.
+//  1. Sweep: everything spendable on old_address moves to the address it
+//     was linked to. The message names no amount because none of the
+//     balance belongs to anyone else. An address holding nothing sweeps
+//     successfully for zero -- one mainnet victim was drained completely
+//     and is owed 58,041.338 RIO, and an error here would take its payout
+//     down.
+//  2. Payout: the loss recorded in module state for old_address is paid out
+//     of the ATTACKER's account. The sweep recovers what the attacker left
+//     behind; what it moved out before the freeze sits in its own account.
+//     The recorded figure comes from the incident analysis (genesis or a
+//     chain upgrade handler), so the admin has no amount to mistype. An
+//     address with no record is only swept.
 //
-// Both parts are optional in practice and the message adapts: of 2,454
-// mainnet victims, 2,373 need both, 79 lost nothing to the attacker and
-// need only the sweep (leave from_attacker empty), and one has nothing
-// left to sweep and needs only the payout.
+// The two stay separate keeper calls, events and response fields, so what
+// came back from where is unambiguous afterwards.
 //
-// The two are one message because they are one operation per holder --
-// but they stay two keeper calls, two events and two response fields, so
-// what came back from where is never ambiguous after the fact.
+// Safe to repeat. A payout deletes the record it paid, so sending the
+// message again pays nothing further, while the sweep picks up whatever
+// has arrived on old_address since. A payout the attacker cannot cover
+// fails the message and keeps the record.
 //
-// WARNING: the payout part is NOT idempotent. Re-sending this message with
-// from_attacker set pays again; the sweep part, by contrast, is safe to
-// repeat and will pick up coins that arrive later. To re-sweep an address,
-// send it with from_attacker empty.
+// The attacker is module state, never a message field, and the message
+// refuses the attacker as old_address, so no admin mistake can aim a
+// payout at a victim or sweep the pool away.
 //
-// The attacker's address is module state, never a message field, so no
-// admin mistake can aim a payout at a victim.
-//
-// Both parts travel via the claim module account rather than directly.
-// x/blacklist blocks a blacklisted address paying a user account, which
-// old_address and the attacker both are and new_address is; it exempts
-// payments to a module account, because routine protocol bookkeeping
-// depends on those. Hopping through the module account satisfies both
-// halves of that rule without weakening it for anyone else (see
+// Both parts travel via the claim module account. x/blacklist blocks a
+// blacklisted address paying a user account -- old_address and the
+// attacker are both blacklisted and new_address is a user account -- but
+// exempts payments into a module account. Hopping through it satisfies
+// both halves of the rule without weakening it for anyone else (see
 // x/claim/README.md).
 message MsgMigrateBankBalance {
   option (cosmos.msg.v1.signer) = "admin";
@@ -149,14 +143,6 @@ message MsgMigrateBankBalance {
 
   // old_address is the linked address to recover for.
   string old_address = 2;
-
-  // from_attacker is what to pay out of the attacker's account on top of
-  // the sweep. Empty recovers only what old_address still holds. Coins
-  // beyond the attacker's spendable balance fail the message.
-  repeated cosmos.base.v1beta1.Coin from_attacker = 3 [
-    (gogoproto.nullable) = false,
-    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
-  ];
 }
 
 message MsgMigrateBankBalanceResponse {
@@ -169,7 +155,9 @@ message MsgMigrateBankBalanceResponse {
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
 
-  // claimed_from_attacker is what came out of the attacker's account.
+  // claimed_from_attacker is what came out of the attacker's account: the
+  // loss recorded for old_address. Empty if none was recorded or it was
+  // already paid.
   repeated cosmos.base.v1beta1.Coin claimed_from_attacker = 3 [
     (gogoproto.nullable) = false,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"

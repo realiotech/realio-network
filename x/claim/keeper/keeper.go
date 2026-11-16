@@ -6,7 +6,10 @@ import (
 	"cosmossdk.io/collections"
 	collcodec "cosmossdk.io/collections/codec"
 	corestore "cosmossdk.io/core/store"
+	errorsmod "cosmossdk.io/errors"
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
@@ -43,12 +46,21 @@ type Keeper struct {
 	// old address can only ever be linked once.
 	AddressLinks collections.Map[sdk.AccAddress, sdk.AccAddress]
 
-	// Attacker is the address MsgClaimBalances draws compensation from --
-	// the account the stolen funds were moved into. Kept in state rather
-	// than taken from the message so that no admin slip can point a
-	// compensation leg at a victim; like Admin, there is no message to
-	// change it. Raw bytes, same byte-comparison rationale as above.
+	// Attacker is the address MsgMigrateBankBalance pays recorded losses
+	// from -- the account the stolen funds were moved into. It lives in
+	// state, not in the message, so no admin slip can point a payout at a
+	// victim; like Admin, no message changes it. Raw bytes, same
+	// byte-comparison rationale as above.
 	Attacker collections.Item[sdk.AccAddress]
+
+	// HackedAmounts records how much the attacker took from each victim:
+	// (old address, denom) -> amount still owed. MsgMigrateBankBalance pays
+	// it out of the attacker and deletes the entry, so a repeated message
+	// pays nothing twice.
+	//
+	// One row per denom, so state needs no codec beyond the SDK's own: a
+	// key pair and an Int.
+	HackedAmounts collections.Map[collections.Pair[sdk.AccAddress, string], math.Int]
 
 	stakingKeeper      *stakingkeeper.Keeper
 	distrKeeper        distrkeeper.Keeper
@@ -76,9 +88,11 @@ func NewKeeper(
 ) Keeper {
 	sb := collections.NewSchemaBuilder(storeService)
 	k := Keeper{
-		Admin:              collections.NewItem(sb, types.AdminKey, "admin", collcodec.KeyToValueCodec(sdk.AccAddressKey)),
-		AddressLinks:       collections.NewMap(sb, types.AddressLinkKeyPrefix, "address_links", sdk.AccAddressKey, collcodec.KeyToValueCodec(sdk.AccAddressKey)),
-		Attacker:           collections.NewItem(sb, types.AttackerKey, "attacker", collcodec.KeyToValueCodec(sdk.AccAddressKey)),
+		Admin:        collections.NewItem(sb, types.AdminKey, "admin", collcodec.KeyToValueCodec(sdk.AccAddressKey)),
+		AddressLinks: collections.NewMap(sb, types.AddressLinkKeyPrefix, "address_links", sdk.AccAddressKey, collcodec.KeyToValueCodec(sdk.AccAddressKey)),
+		Attacker:     collections.NewItem(sb, types.AttackerKey, "attacker", collcodec.KeyToValueCodec(sdk.AccAddressKey)),
+		HackedAmounts: collections.NewMap(sb, types.HackedAmountKeyPrefix, "hacked_amounts",
+			collections.PairKeyCodec(sdk.AccAddressKey, collections.StringKey), sdk.IntValue),
 		stakingKeeper:      stakingKeeper,
 		distrKeeper:        distrKeeper,
 		multiStakingKeeper: multiStakingKeeper,
@@ -128,6 +142,81 @@ func (k Keeper) GetAttacker(ctx context.Context) (sdk.AccAddress, bool) {
 // SetAttacker sets the address compensation is drawn from.
 func (k Keeper) SetAttacker(ctx context.Context, attacker sdk.AccAddress) error {
 	return k.Attacker.Set(ctx, attacker)
+}
+
+// SetHackedAmount records amount as what the attacker took from addr and
+// has not yet repaid, replacing anything recorded before. An empty amount
+// clears the record. This is how the figure gets on chain -- genesis and
+// chain-upgrade handlers call it; no message does, so the only way to
+// change what a payout will be is to change state the way an upgrade does.
+func (k Keeper) SetHackedAmount(ctx context.Context, addr sdk.AccAddress, amount sdk.Coins) error {
+	if err := amount.Validate(); err != nil {
+		return errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "hacked amount for %s: %s", addr, err)
+	}
+	if err := k.ClearHackedAmount(ctx, addr); err != nil {
+		return err
+	}
+	for _, coin := range amount {
+		if err := k.HackedAmounts.Set(ctx, collections.Join(addr, coin.Denom), coin.Amount); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+// GetHackedAmount returns what the attacker took from addr and has not yet
+// repaid. Empty if nothing is recorded or it has already been paid.
+func (k Keeper) GetHackedAmount(ctx context.Context, addr sdk.AccAddress) (sdk.Coins, error) {
+	iter, err := k.HackedAmounts.Iterate(ctx, collections.NewPrefixedPairRange[sdk.AccAddress, string](addr))
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	kvs, err := iter.KeyValues()
+	if err != nil {
+		return nil, err
+	}
+	// Denoms iterate in ascending order, which is the order sdk.Coins
+	// requires, so the result is already canonical.
+	amount := make(sdk.Coins, 0, len(kvs))
+	for _, kv := range kvs {
+		amount = append(amount, sdk.Coin{Denom: kv.Key.K2(), Amount: kv.Value})
+	}
+	return amount, nil
+}
+
+// ClearHackedAmount removes whatever is recorded for addr. Called once the
+// amount has been paid, so the same loss is never paid twice.
+func (k Keeper) ClearHackedAmount(ctx context.Context, addr sdk.AccAddress) error {
+	return k.HackedAmounts.Clear(ctx, collections.NewPrefixedPairRange[sdk.AccAddress, string](addr))
+}
+
+// GetAllHackedAmounts returns every unpaid record, grouped by address, in
+// ascending address order. Used by ExportGenesis.
+func (k Keeper) GetAllHackedAmounts(ctx context.Context) ([]types.HackedAmount, error) {
+	iter, err := k.HackedAmounts.Iterate(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer iter.Close()
+
+	kvs, err := iter.KeyValues()
+	if err != nil {
+		return nil, err
+	}
+
+	var out []types.HackedAmount
+	for _, kv := range kvs {
+		addr, denom := kv.Key.K1(), kv.Key.K2()
+		coin := sdk.Coin{Denom: denom, Amount: kv.Value}
+		if n := len(out); n > 0 && out[n-1].Address == addr.String() {
+			out[n-1].Amount = append(out[n-1].Amount, coin)
+			continue
+		}
+		out = append(out, types.HackedAmount{Address: addr.String(), Amount: sdk.Coins{coin}})
+	}
+	return out, nil
 }
 
 // GetLink returns the new address old was linked to, if any.

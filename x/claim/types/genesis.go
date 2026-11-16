@@ -18,16 +18,32 @@ type GenesisState struct {
 	// manager rotations are seeded on a live chain).
 	Admin string `json:"admin"`
 
-	// Attacker is the bech32 address MsgClaimBalances draws compensation
-	// from -- the account the stolen funds were moved into. Empty means
-	// unset, and any message asking for compensation is rejected until it
-	// is configured. Like Admin, there is no message to change it.
+	// Attacker is the bech32 address MsgMigrateBankBalance pays recorded
+	// losses from -- the account the stolen funds were moved into. Empty
+	// means unset, and a payout fails until it is configured. Like Admin, no
+	// message changes it.
 	Attacker string `json:"attacker"`
 
 	// Links seeds the old->new address mapping. In practice this is
 	// populated by MsgLinkAddress at runtime; it's present in genesis
 	// mainly so state round-trips through export/import.
 	Links []AddressLink `json:"links"`
+
+	// HackedAmounts records, per victim's old address, how much the attacker
+	// took and has not yet repaid. MsgMigrateBankBalance pays exactly this
+	// out of the attacker and removes the entry. Exported state holds only
+	// what is still unpaid.
+	HackedAmounts []HackedAmount `json:"hacked_amounts"`
+}
+
+// HackedAmount is what the attacker took from one victim address.
+type HackedAmount struct {
+	// Address is the bech32 old (compromised) address the funds were taken
+	// from.
+	Address string `json:"address"`
+
+	// Amount is what is owed back, to be paid out of the attacker's account.
+	Amount sdk.Coins `json:"amount"`
 }
 
 // AddressLink is one old-address -> new-address mapping.
@@ -39,7 +55,7 @@ type AddressLink struct {
 // DefaultGenesis returns the default (empty, no admin configured) genesis
 // state.
 func DefaultGenesis() *GenesisState {
-	return &GenesisState{Admin: "", Attacker: "", Links: []AddressLink{}}
+	return &GenesisState{Admin: "", Attacker: "", Links: []AddressLink{}, HackedAmounts: []HackedAmount{}}
 }
 
 // Validate performs basic genesis state validation: well-formed addresses,
@@ -78,6 +94,27 @@ func (gs GenesisState) Validate() error {
 			return fmt.Errorf("claim genesis: duplicate old_address %q", link.OldAddress)
 		}
 		seen[oldAddr.String()] = struct{}{}
+	}
+
+	hackedSeen := make(map[string]struct{}, len(gs.HackedAmounts))
+	for _, h := range gs.HackedAmounts {
+		addr, err := sdk.AccAddressFromBech32(h.Address)
+		if err != nil {
+			return fmt.Errorf("claim genesis: invalid hacked_amounts address %q: %w", h.Address, err)
+		}
+		if h.Address == gs.Attacker {
+			return fmt.Errorf("claim genesis: hacked_amounts address %q is the attacker, which is owed nothing", h.Address)
+		}
+		if h.Amount.IsZero() {
+			return fmt.Errorf("claim genesis: hacked_amounts for %q must not be empty", h.Address)
+		}
+		if err := h.Amount.Validate(); err != nil {
+			return fmt.Errorf("claim genesis: invalid hacked_amounts amount for %q: %w", h.Address, err)
+		}
+		if _, dup := hackedSeen[addr.String()]; dup {
+			return fmt.Errorf("claim genesis: duplicate hacked_amounts address %q", h.Address)
+		}
+		hackedSeen[addr.String()] = struct{}{}
 	}
 	return nil
 }

@@ -676,13 +676,6 @@ func (suite *KeeperTestSuite) TestEveryMsgIsAdminGated() {
 			})
 			return err
 		},
-		"ClaimFromAttacker": func() error {
-			_, err := srv.MigrateBankBalance(suite.ctx, &types.MsgMigrateBankBalance{
-				Admin: notAdmin, OldAddress: oldAddr.String(),
-				FromAttacker: sdk.NewCoins(sdk.NewCoin(multiStakingCoinDenom, math.NewInt(1))),
-			})
-			return err
-		},
 		"ClaimTokens": func() error {
 			_, err := srv.ClaimTokens(suite.ctx, &types.MsgClaimTokens{
 				Admin: notAdmin, OldAddress: oldAddr.String(), Erc20Contracts: []string{"0x0000000000000000000000000000000000000001"},

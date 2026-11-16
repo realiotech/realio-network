@@ -18,6 +18,12 @@ func (suite *KeeperTestSuite) fund(addr sdk.AccAddress, amount math.Int) {
 	suite.Require().NoError(suite.app.BankKeeper.SendCoinsFromModuleToAccount(suite.ctx, minttypes.ModuleName, addr, coins))
 }
 
+// owe records amount as what the attacker took from addr -- the figure
+// MigrateBankBalance pays out.
+func (suite *KeeperTestSuite) owe(addr sdk.AccAddress, amount int64) {
+	suite.Require().NoError(suite.app.ClaimKeeper.SetHackedAmount(suite.ctx, addr, coins(amount)))
+}
+
 // setupAttacker configures an attacker address holding amount -- the pool
 // ClaimFromAttacker draws on.
 func (suite *KeeperTestSuite) setupAttacker(amount math.Int) sdk.AccAddress {
@@ -140,16 +146,19 @@ func (suite *KeeperTestSuite) TestMigrateBankBalanceFromAttacker() {
 	oldAddr, newAddr := testutil.GenAddress(), testutil.GenAddress()
 	attacker := suite.setupAttacker(math.NewInt(10_000))
 	suite.link(oldAddr, newAddr)
+	suite.owe(oldAddr, 2_500)
 	suite.Require().True(suite.balance(oldAddr).IsZero(), "fixture: the old address starts drained")
 
 	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
 	res, err := srv.MigrateBankBalance(suite.ctx, &types.MsgMigrateBankBalance{
-		Admin:        suite.admin,
-		OldAddress:   oldAddr.String(),
-		FromAttacker: coins(2_500),
+		Admin:      suite.admin,
+		OldAddress: oldAddr.String(),
 	})
 	suite.Require().NoError(err)
 	suite.Require().Equal(newAddr.String(), res.NewAddress)
+
+	// The amount came from state, and the response says what it was.
+	suite.Require().Equal(coins(2_500), res.ClaimedFromAttacker)
 
 	// Paid to the new address, out of the attacker, not out of nowhere.
 	suite.Require().Equal(math.NewInt(2_500), suite.balance(newAddr))
@@ -157,11 +166,16 @@ func (suite *KeeperTestSuite) TestMigrateBankBalanceFromAttacker() {
 
 	// The response reports what is left in the pool to distribute.
 	suite.Require().Equal(math.NewInt(7_500), res.AttackerRemaining.AmountOf(multiStakingCoinDenom))
+
+	// And the record is consumed by the payout.
+	owed, err := suite.app.ClaimKeeper.GetHackedAmount(suite.ctx, oldAddr)
+	suite.Require().NoError(err)
+	suite.Require().True(owed.IsZero(), "a paid amount must not stay on record")
 }
 
 // TestMigrateBankBalanceDrawsOneSharedPool: the attacker's balance is a
-// single finite pool across every victim, which is why this is sized by
-// the admin and reconciled rather than derived per address.
+// single finite pool across every victim, which is why each payout is a
+// recorded figure reconciled against it rather than derived per address.
 func (suite *KeeperTestSuite) TestMigrateBankBalanceDrawsOneSharedPool() {
 	attacker := suite.setupAttacker(math.NewInt(1_000))
 	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
@@ -170,9 +184,10 @@ func (suite *KeeperTestSuite) TestMigrateBankBalanceDrawsOneSharedPool() {
 	for range 3 {
 		oldAddr, newAddr := testutil.GenAddress(), testutil.GenAddress()
 		suite.link(oldAddr, newAddr)
+		suite.owe(oldAddr, 300)
 		newAddrs = append(newAddrs, newAddr)
 		_, err := srv.MigrateBankBalance(suite.ctx, &types.MsgMigrateBankBalance{
-			Admin: suite.admin, OldAddress: oldAddr.String(), FromAttacker: coins(300),
+			Admin: suite.admin, OldAddress: oldAddr.String(),
 		})
 		suite.Require().NoError(err)
 	}
@@ -185,31 +200,85 @@ func (suite *KeeperTestSuite) TestMigrateBankBalanceDrawsOneSharedPool() {
 	// over-drawing it.
 	oldAddr, newAddr := testutil.GenAddress(), testutil.GenAddress()
 	suite.link(oldAddr, newAddr)
+	suite.owe(oldAddr, 300)
 	_, err := srv.MigrateBankBalance(suite.ctx, &types.MsgMigrateBankBalance{
-		Admin: suite.admin, OldAddress: oldAddr.String(), FromAttacker: coins(300),
+		Admin: suite.admin, OldAddress: oldAddr.String(),
 	})
 	suite.Require().ErrorContains(err, "insufficient funds")
 	suite.Require().Equal(math.NewInt(100), suite.balance(attacker))
 }
 
-// TestMigrateBankBalanceFromAttackerIsNotIdempotent pins the sharp edge
-// of the merged message: the sweep half is safe to repeat, the payout half
-// is not. Re-sending with from_attacker set pays again. To re-sweep an
-// address later, send it with from_attacker empty.
-func (suite *KeeperTestSuite) TestMigrateBankBalanceFromAttackerIsNotIdempotent() {
+// TestMigrateBankBalancePayoutIsSafeToRepeat: the payout consumes the
+// amount on record, so sending the message again pays nothing more. The
+// sweep half stays repeatable on its own, picking up coins that arrive
+// later.
+func (suite *KeeperTestSuite) TestMigrateBankBalancePayoutIsSafeToRepeat() {
 	oldAddr, newAddr := testutil.GenAddress(), testutil.GenAddress()
-	suite.setupAttacker(math.NewInt(10_000))
+	attacker := suite.setupAttacker(math.NewInt(10_000))
+	suite.link(oldAddr, newAddr)
+	suite.owe(oldAddr, 500)
+
+	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
+	msg := &types.MsgMigrateBankBalance{Admin: suite.admin, OldAddress: oldAddr.String()}
+
+	res, err := srv.MigrateBankBalance(suite.ctx, msg)
+	suite.Require().NoError(err)
+	suite.Require().Equal(coins(500), res.ClaimedFromAttacker)
+
+	res, err = srv.MigrateBankBalance(suite.ctx, msg)
+	suite.Require().NoError(err)
+	suite.Require().True(res.ClaimedFromAttacker.IsZero(), "the second send finds nothing owed")
+	suite.Require().Equal(math.NewInt(500), suite.balance(newAddr))
+	suite.Require().Equal(math.NewInt(9_500), suite.balance(attacker))
+
+	// Coins arriving later are still swept by the same message.
+	suite.fund(oldAddr, math.NewInt(70))
+	res, err = srv.MigrateBankBalance(suite.ctx, msg)
+	suite.Require().NoError(err)
+	suite.Require().Equal(coins(70), res.Swept)
+	suite.Require().True(res.ClaimedFromAttacker.IsZero())
+	suite.Require().Equal(math.NewInt(570), suite.balance(newAddr))
+}
+
+// TestMigrateBankBalanceWithNothingOwed: an address with no recorded amount
+// -- one of the 79 that lost nothing to the attacker -- gets only the
+// sweep, and the attacker's pool is untouched.
+func (suite *KeeperTestSuite) TestMigrateBankBalanceWithNothingOwed() {
+	oldAddr, newAddr := testutil.GenAddress(), testutil.GenAddress()
+	attacker := suite.setupAttacker(math.NewInt(10_000))
+	suite.fund(oldAddr, math.NewInt(40))
 	suite.link(oldAddr, newAddr)
 
 	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
-	msg := &types.MsgMigrateBankBalance{Admin: suite.admin, OldAddress: oldAddr.String(), FromAttacker: coins(500)}
+	res, err := srv.MigrateBankBalance(suite.ctx, &types.MsgMigrateBankBalance{
+		Admin: suite.admin, OldAddress: oldAddr.String(),
+	})
+	suite.Require().NoError(err)
+	suite.Require().Equal(coins(40), res.Swept)
+	suite.Require().True(res.ClaimedFromAttacker.IsZero())
+	suite.Require().Equal(math.NewInt(40), suite.balance(newAddr))
+	suite.Require().Equal(math.NewInt(10_000), suite.balance(attacker))
+}
 
-	_, err := srv.MigrateBankBalance(suite.ctx, msg)
+// TestMigrateBankBalanceFailedPayoutKeepsTheRecord: when the pool cannot
+// cover what is owed the message fails, and the record survives so the
+// admin can retry once the pool is topped up.
+func (suite *KeeperTestSuite) TestMigrateBankBalanceFailedPayoutKeepsTheRecord() {
+	oldAddr, newAddr := testutil.GenAddress(), testutil.GenAddress()
+	suite.setupAttacker(math.NewInt(100))
+	suite.link(oldAddr, newAddr)
+	suite.owe(oldAddr, 101)
+
+	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
+	attemptCtx, _ := suite.ctx.CacheContext()
+	_, err := srv.MigrateBankBalance(attemptCtx, &types.MsgMigrateBankBalance{
+		Admin: suite.admin, OldAddress: oldAddr.String(),
+	})
+	suite.Require().ErrorContains(err, "insufficient funds")
+
+	owed, err := suite.app.ClaimKeeper.GetHackedAmount(suite.ctx, oldAddr)
 	suite.Require().NoError(err)
-	_, err = srv.MigrateBankBalance(suite.ctx, msg)
-	suite.Require().NoError(err)
-	suite.Require().Equal(math.NewInt(1_000), suite.balance(newAddr),
-		"the chain cannot tell a second award from a repeat; that is the admin's to get right")
+	suite.Require().Equal(coins(101), owed)
 }
 
 func (suite *KeeperTestSuite) TestMigrateBankBalanceFromAttackerValidation() {
@@ -217,6 +286,9 @@ func (suite *KeeperTestSuite) TestMigrateBankBalanceFromAttackerValidation() {
 	unlinked := testutil.GenAddress()
 	attacker := suite.setupAttacker(math.NewInt(100))
 	suite.link(linkedOld, linkedNew)
+	owe := func(ctx sdk.Context, addr sdk.AccAddress, amount int64) {
+		suite.Require().NoError(suite.app.ClaimKeeper.SetHackedAmount(ctx, addr, coins(amount)))
+	}
 
 	// The attacker linked to somewhere, to prove it is refused as a subject.
 	suite.link(attacker, testutil.GenAddress())
@@ -229,28 +301,32 @@ func (suite *KeeperTestSuite) TestMigrateBankBalanceFromAttackerValidation() {
 	}{
 		{
 			name:      "wrong admin",
-			msg:       &types.MsgMigrateBankBalance{Admin: testutil.GenAddress().String(), OldAddress: linkedOld.String(), FromAttacker: coins(10)},
+			msg:       &types.MsgMigrateBankBalance{Admin: testutil.GenAddress().String(), OldAddress: linkedOld.String()},
 			errString: "invalid admin",
 		},
 		{
 			name:      "old_address not linked",
-			msg:       &types.MsgMigrateBankBalance{Admin: suite.admin, OldAddress: unlinked.String(), FromAttacker: coins(10)},
+			msg:       &types.MsgMigrateBankBalance{Admin: suite.admin, OldAddress: unlinked.String()},
 			errString: "is not linked",
 		},
 		{
 			name:      "more than the pool holds",
-			msg:       &types.MsgMigrateBankBalance{Admin: suite.admin, OldAddress: linkedOld.String(), FromAttacker: coins(101)},
+			setup:     func(ctx sdk.Context) { owe(ctx, linkedOld, 101) },
+			msg:       &types.MsgMigrateBankBalance{Admin: suite.admin, OldAddress: linkedOld.String()},
 			errString: "insufficient funds",
 		},
 		{
 			name:      "the attacker is owed nothing",
-			msg:       &types.MsgMigrateBankBalance{Admin: suite.admin, OldAddress: attacker.String(), FromAttacker: coins(10)},
+			msg:       &types.MsgMigrateBankBalance{Admin: suite.admin, OldAddress: attacker.String()},
 			errString: "is the attacker",
 		},
 		{
-			name:      "no attacker configured",
-			setup:     func(ctx sdk.Context) { suite.Require().NoError(suite.app.ClaimKeeper.SetAttacker(ctx, nil)) },
-			msg:       &types.MsgMigrateBankBalance{Admin: suite.admin, OldAddress: linkedOld.String(), FromAttacker: coins(10)},
+			name: "no attacker configured",
+			setup: func(ctx sdk.Context) {
+				owe(ctx, linkedOld, 10)
+				suite.Require().NoError(suite.app.ClaimKeeper.SetAttacker(ctx, nil))
+			},
+			msg:       &types.MsgMigrateBankBalance{Admin: suite.admin, OldAddress: linkedOld.String()},
 			errString: "no attacker address is configured",
 		},
 	}
@@ -280,6 +356,7 @@ func (suite *KeeperTestSuite) TestBankClaimsSurviveBlacklisting() {
 	attacker := suite.setupAttacker(math.NewInt(10_000))
 	suite.fund(oldAddr, math.NewInt(1_000))
 	suite.link(oldAddr, newAddr)
+	suite.owe(oldAddr, 3_000)
 	suite.Require().NoError(suite.app.BlacklistKeeper.SetBlacklisted(suite.ctx, oldAddr))
 	suite.Require().NoError(suite.app.BlacklistKeeper.SetBlacklisted(suite.ctx, attacker))
 
@@ -293,10 +370,6 @@ func (suite *KeeperTestSuite) TestBankClaimsSurviveBlacklisting() {
 	srv := keeper.NewMsgServerImpl(suite.app.ClaimKeeper)
 	_, err := srv.MigrateBankBalance(suite.ctx, &types.MsgMigrateBankBalance{
 		Admin: suite.admin, OldAddress: oldAddr.String(),
-	})
-	suite.Require().NoError(err)
-	_, err = srv.MigrateBankBalance(suite.ctx, &types.MsgMigrateBankBalance{
-		Admin: suite.admin, OldAddress: oldAddr.String(), FromAttacker: coins(3_000),
 	})
 	suite.Require().NoError(err)
 
@@ -342,6 +415,7 @@ func (suite *KeeperTestSuite) TestBundledBankClaimsForADrainedAddress() {
 	oldAddr, newAddr := testutil.GenAddress(), testutil.GenAddress()
 	suite.setupAttacker(math.NewInt(10_000))
 	suite.link(oldAddr, newAddr)
+	suite.owe(oldAddr, 5_000)
 	suite.Require().True(suite.balance(oldAddr).IsZero(), "fixture: drained to empty")
 
 	// Both messages in one transaction is one cache branch that either
@@ -354,11 +428,9 @@ func (suite *KeeperTestSuite) TestBundledBankClaimsForADrainedAddress() {
 	})
 	suite.Require().NoError(err, "a sweep of an empty address must not fail the transaction")
 	suite.Require().True(sweep.Swept.IsZero())
+	suite.Require().Equal(coins(5_000), sweep.ClaimedFromAttacker,
+		"the same message pays the recorded amount even when the sweep found nothing")
 
-	_, err = srv.MigrateBankBalance(txCtx, &types.MsgMigrateBankBalance{
-		Admin: suite.admin, OldAddress: oldAddr.String(), FromAttacker: coins(5_000),
-	})
-	suite.Require().NoError(err)
 	commit()
 
 	suite.Require().Equal(math.NewInt(5_000), suite.balance(newAddr))

@@ -15,9 +15,8 @@ import (
 // whole balance, because none of it belongs to anyone else. Coins a
 // vesting schedule still locks are not spendable and stay put.
 //
-// This recovers only what the attacker left behind. What was moved out
-// before the freeze comes back through PayRestitution, which is separate
-// for the reasons documented there.
+// This recovers only what the attacker left behind. What it moved out
+// before the freeze comes back through ClaimFromAttacker.
 func (k Keeper) MigrateBankBalance(ctx context.Context, oldAddr, newAddr sdk.AccAddress) (swept sdk.Coins, err error) {
 	swept = k.bankKeeper.SpendableCoins(ctx, oldAddr)
 	if swept.IsZero() {
@@ -36,42 +35,49 @@ func (k Keeper) MigrateBankBalance(ctx context.Context, oldAddr, newAddr sdk.Acc
 	return swept, nil
 }
 
-// ClaimFromAttacker pays amount out of the attacker's own account to the new
-// address, for coins the attacker took from the old address before the
-// freeze.
+// ClaimFromAttacker pays the loss recorded for oldAddr (see SetHackedAmount)
+// out of the attacker's account to newAddr, deletes the record, and reports
+// what it paid.
 //
-// The attacker comes from module state, not from a caller argument, so
-// there is no code path by which this debits anyone else. It refuses to
-// pay the attacker itself, which would be a loop that moves nothing and
-// means the caller has the wrong address.
+// Amount and attacker both come from module state, so no caller can size a
+// payout or debit anyone else. The attacker as oldAddr or newAddr is
+// refused: either would move nothing and means the caller has the wrong
+// address.
 //
-// Kept as its own function, and its own event, even though one message
-// drives both halves of a bank recovery. The two are not the same kind of
-// thing and the record should not blur them: a sweep is mechanical, safe
-// to repeat, and moves only the holder's own coins; this is a decision
-// sized from off-chain analysis, NOT idempotent, and draws on one finite
-// pool shared across every victim. Re-sending the message with a
-// from_attacker amount pays again.
-func (k Keeper) ClaimFromAttacker(ctx context.Context, oldAddr, newAddr sdk.AccAddress, amount sdk.Coins) error {
+// No record pays nothing and is not an error; this is also what a repeat of
+// an already-paid address sees. A record the attacker cannot cover is an
+// error and the record stays.
+//
+// Kept apart from the sweep, with its own event: a sweep moves only the
+// holder's own coins, while this draws on one finite pool shared across
+// every victim.
+func (k Keeper) ClaimFromAttacker(ctx context.Context, oldAddr, newAddr sdk.AccAddress) (paid sdk.Coins, err error) {
+	amount, err := k.GetHackedAmount(ctx, oldAddr)
+	if err != nil {
+		return nil, err
+	}
 	if amount.IsZero() {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidCoins, "amount must not be empty")
+		return sdk.Coins{}, nil
 	}
 
 	attacker, ok := k.GetAttacker(ctx)
 	if !ok {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "no attacker address is configured")
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest, "no attacker address is configured")
 	}
 	if attacker.Equals(oldAddr) {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest,
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest,
 			"old_address is the attacker; it is owed no restitution")
 	}
 	if attacker.Equals(newAddr) {
-		return errorsmod.Wrap(sdkerrors.ErrInvalidRequest,
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest,
 			"the link points at the attacker; restitution would pay it back to itself")
 	}
 
 	if err := k.payVia(ctx, attacker, newAddr, amount); err != nil {
-		return errorsmod.Wrapf(err, "paying %s out of %s", amount, attacker)
+		return nil, errorsmod.Wrapf(err, "paying %s out of %s", amount, attacker)
+	}
+	if err := k.ClearHackedAmount(ctx, oldAddr); err != nil {
+		return nil, err
 	}
 
 	sdk.UnwrapSDKContext(ctx).EventManager().EmitEvent(sdk.NewEvent(
@@ -81,7 +87,7 @@ func (k Keeper) ClaimFromAttacker(ctx context.Context, oldAddr, newAddr sdk.AccA
 		sdk.NewAttribute(types.AttributeKeyAttacker, attacker.String()),
 		sdk.NewAttribute(types.AttributeKeyAmount, amount.String()),
 	))
-	return nil
+	return amount, nil
 }
 
 // payVia moves amount from a frozen address to a user account by escrowing

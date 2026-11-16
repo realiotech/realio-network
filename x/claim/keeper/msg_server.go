@@ -78,19 +78,24 @@ func (ms msgServer) ClaimDelegations(ctx context.Context, msg *types.MsgClaimDel
 }
 
 // MigrateBankBalance recovers bank coins for the linked old address: the
-// whole spendable balance, plus whatever the admin pays out of the
-// attacker on top.
+// whole spendable balance, plus the loss recorded for it, paid out of the
+// attacker. The message names only old_address; see the proto for what makes
+// repeating it safe.
 //
-// One message because it is one operation per holder, but two keeper calls
-// and two events, so the record of what came back from where survives.
-// See Keeper.MigrateBankBalance and Keeper.ClaimFromAttacker.
+// Two keeper calls and two events, so the record of what came back from
+// where survives. See Keeper.MigrateBankBalance and Keeper.ClaimFromAttacker.
 func (ms msgServer) MigrateBankBalance(ctx context.Context, msg *types.MsgMigrateBankBalance) (*types.MsgMigrateBankBalanceResponse, error) {
 	oldAddr, newAddr, err := ms.authorizeClaim(ctx, msg.Admin, msg.OldAddress)
 	if err != nil {
 		return nil, err
 	}
-	if err := msg.FromAttacker.Validate(); err != nil {
-		return nil, errorsmod.Wrapf(sdkerrors.ErrInvalidCoins, "invalid from_attacker: %s", err)
+
+	// The attacker's balance is the pool every payout draws on. Refuse it
+	// before the sweep, which runs unconditionally and would otherwise move
+	// the whole pool to the attacker's link.
+	if attacker, ok := ms.GetAttacker(ctx); ok && attacker.Equals(oldAddr) {
+		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest,
+			"old_address is the attacker; it is owed no restitution")
 	}
 
 	// An address with nothing spendable is swept successfully, for zero --
@@ -104,10 +109,9 @@ func (ms msgServer) MigrateBankBalance(ctx context.Context, msg *types.MsgMigrat
 		return nil, err
 	}
 
-	if !msg.FromAttacker.IsZero() {
-		if err := ms.Keeper.ClaimFromAttacker(ctx, oldAddr, newAddr, msg.FromAttacker); err != nil {
-			return nil, err
-		}
+	claimed, err := ms.Keeper.ClaimFromAttacker(ctx, oldAddr, newAddr)
+	if err != nil {
+		return nil, err
 	}
 
 	// A message that finds nothing to move is not an error either. A
@@ -123,7 +127,7 @@ func (ms msgServer) MigrateBankBalance(ctx context.Context, msg *types.MsgMigrat
 	return &types.MsgMigrateBankBalanceResponse{
 		NewAddress:          newAddr.String(),
 		Swept:               swept,
-		ClaimedFromAttacker: msg.FromAttacker,
+		ClaimedFromAttacker: claimed,
 		AttackerRemaining:   remaining,
 	}, nil
 }

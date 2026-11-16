@@ -257,7 +257,7 @@ var (
 		multistakingtypes.ModuleName:   {authtypes.Minter, authtypes.Burner},
 		erc20types.ModuleName:          {authtypes.Minter, authtypes.Burner},
 		// x/claim needs an account, with no minting or burning rights, only
-		// as the waypoint MsgClaimBalances routes coins through: a
+		// as the waypoint MsgMigrateBankBalance routes coins through: a
 		// blacklisted address may pay a module account but not a user one,
 		// so the escrow hop is what lets a recovery debit it at all (see
 		// x/claim/keeper/bank.go).
