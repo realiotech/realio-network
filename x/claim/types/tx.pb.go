@@ -394,40 +394,18 @@ func (m *MsgClaimDelegationsResponse) GetNewAddress() string {
 	return ""
 }
 
-// MsgMigrateBankBalance recovers bank coins for a linked old address, in
-// two parts that land together or not at all:
+// MsgMigrateBankBalance recovers bank coins for a linked old address, in two
+// parts that land together or not at all:
 //
-//  1. Sweep: everything spendable on old_address moves to the address it
-//     was linked to. The message names no amount because none of the
-//     balance belongs to anyone else. An address holding nothing sweeps
-//     successfully for zero -- one mainnet victim was drained completely
-//     and is owed 58,041.338 RIO, and an error here would take its payout
-//     down.
-//  2. Payout: the loss recorded in module state for old_address is paid out
-//     of the ATTACKER's account. The sweep recovers what the attacker left
-//     behind; what it moved out before the freeze sits in its own account.
-//     The recorded figure comes from the incident analysis (genesis or a
-//     chain upgrade handler), so the admin has no amount to mistype. An
-//     address with no record is only swept.
+//  1. Sweep: everything spendable on old_address moves to the address it was
+//     linked to. An address holding nothing sweeps successfully for zero.
+//  2. Payout: the hacked amount recorded in module state for old_address is
+//     paid out of the attacker's account, and the record is deleted. No
+//     record means sweep only.
 //
-// The two stay separate keeper calls, events and response fields, so what
-// came back from where is unambiguous afterwards.
-//
-// Safe to repeat. A payout deletes the record it paid, so sending the
-// message again pays nothing further, while the sweep picks up whatever
-// has arrived on old_address since. A payout the attacker cannot cover
-// fails the message and keeps the record.
-//
-// The attacker is module state, never a message field, and the message
-// refuses the attacker as old_address, so no admin mistake can aim a
-// payout at a victim or sweep the pool away.
-//
-// Both parts travel via the claim module account. x/blacklist blocks a
-// blacklisted address paying a user account -- old_address and the
-// attacker are both blacklisted and new_address is a user account -- but
-// exempts payments into a module account. Hopping through it satisfies
-// both halves of the rule without weakening it for anyone else (see
-// x/claim/README.md).
+// The message names no amount and is safe to repeat. The attacker is module
+// state, never a field, and is refused as old_address. Rationale and the
+// module-account hop both parts use: x/claim/README.md#bank-claim.
 type MsgMigrateBankBalance struct {
 	// admin is the address authorized to submit this message.
 	Admin string `protobuf:"bytes,1,opt,name=admin,proto3" json:"admin,omitempty"`
@@ -488,8 +466,8 @@ type MsgMigrateBankBalanceResponse struct {
 	// swept is what came off old_address itself.
 	Swept github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,2,rep,name=swept,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"swept"`
 	// claimed_from_attacker is what came out of the attacker's account: the
-	// loss recorded for old_address. Empty if none was recorded or it was
-	// already paid.
+	// hacked amount recorded for old_address. Empty if none was recorded or it
+	// was already paid.
 	ClaimedFromAttacker github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,3,rep,name=claimed_from_attacker,json=claimedFromAttacker,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"claimed_from_attacker"`
 	// attacker_remaining is the attacker's spendable balance afterwards --
 	// what is left in the pool to distribute.

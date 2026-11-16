@@ -35,9 +35,9 @@ func (k Keeper) MigrateBankBalance(ctx context.Context, oldAddr, newAddr sdk.Acc
 	return swept, nil
 }
 
-// ClaimFromAttacker pays the loss recorded for oldAddr (see SetHackedAmount)
-// out of the attacker's account to newAddr, deletes the record, and reports
-// what it paid.
+// ClaimFromAttacker pays the hacked amount recorded for oldAddr (see
+// SetHackedAmount) out of the attacker's account to newAddr, deletes the
+// record, and reports what it paid.
 //
 // Amount and attacker both come from module state, so no caller can size a
 // payout or debit anyone else. The attacker as oldAddr or newAddr is
@@ -66,11 +66,11 @@ func (k Keeper) ClaimFromAttacker(ctx context.Context, oldAddr, newAddr sdk.AccA
 	}
 	if attacker.Equals(oldAddr) {
 		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest,
-			"old_address is the attacker; it is owed no restitution")
+			"old_address is the attacker; it is owed no payout")
 	}
 	if attacker.Equals(newAddr) {
 		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest,
-			"the link points at the attacker; restitution would pay it back to itself")
+			"the link points at the attacker; the payout would go back to the attacker itself")
 	}
 
 	if err := k.payVia(ctx, attacker, newAddr, amount); err != nil {

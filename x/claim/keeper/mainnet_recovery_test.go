@@ -417,7 +417,7 @@ func (suite *KeeperTestSuite) TestMainnetRecoveryAcrossAllAssetKinds() {
 	attackerBefore := suite.app.BankKeeper.GetBalance(suite.ctx, attacker, multiStakingCoinDenom).Amount
 
 	// Holders the message pays the attacker's share of in the same call as
-	// the sweep, because their loss is on record. Phase two skips them.
+	// the sweep, because their hacked amount is on record. Phase two skips them.
 	paidWithSweep := map[string]bool{}
 	for _, h := range bankHolders {
 		newAddr := recovery[h.bech]

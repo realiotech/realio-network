@@ -16,7 +16,7 @@ const (
 	EventTypeMigratedBankBalance = "migrated_bank_balance"
 
 	// EventTypeClaimedFromAttacker is emitted once per
-	// MsgMigrateBankBalance that paid a recorded loss, naming the attacker
+	// MsgMigrateBankBalance that paid a hacked amount, naming the attacker
 	// the coins came out of. Nothing recorded, nothing emitted.
 	EventTypeClaimedFromAttacker = "claimed_from_attacker"
 

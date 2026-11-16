@@ -18,8 +18,8 @@ type GenesisState struct {
 	// manager rotations are seeded on a live chain).
 	Admin string `json:"admin"`
 
-	// Attacker is the bech32 address MsgMigrateBankBalance pays recorded
-	// losses from -- the account the stolen funds were moved into. Empty
+	// Attacker is the bech32 address MsgMigrateBankBalance pays hacked
+	// amounts from -- the account the stolen funds were moved into. Empty
 	// means unset, and a payout fails until it is configured. Like Admin, no
 	// message changes it.
 	Attacker string `json:"attacker"`

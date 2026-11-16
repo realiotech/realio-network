@@ -46,7 +46,7 @@ type Keeper struct {
 	// old address can only ever be linked once.
 	AddressLinks collections.Map[sdk.AccAddress, sdk.AccAddress]
 
-	// Attacker is the address MsgMigrateBankBalance pays recorded losses
+	// Attacker is the address MsgMigrateBankBalance pays hacked amounts
 	// from -- the account the stolen funds were moved into. It lives in
 	// state, not in the message, so no admin slip can point a payout at a
 	// victim; like Admin, no message changes it. Raw bytes, same
@@ -187,7 +187,7 @@ func (k Keeper) GetHackedAmount(ctx context.Context, addr sdk.AccAddress) (sdk.C
 }
 
 // ClearHackedAmount removes whatever is recorded for addr. Called once the
-// amount has been paid, so the same loss is never paid twice.
+// amount has been paid, so the same hacked amount is never paid twice.
 func (k Keeper) ClearHackedAmount(ctx context.Context, addr sdk.AccAddress) error {
 	return k.HackedAmounts.Clear(ctx, collections.NewPrefixedPairRange[sdk.AccAddress, string](addr))
 }
@@ -261,7 +261,7 @@ func (k Keeper) GetAllLinks(ctx context.Context) ([]types.AddressLink, error) {
 }
 
 // SpendableCoinsOf reports what addr can currently move. Used to report
-// the attacker's remaining pool after a restitution payment.
+// the attacker's remaining pool after a payout.
 func (k Keeper) SpendableCoinsOf(ctx context.Context, addr sdk.AccAddress) sdk.Coins {
 	return k.bankKeeper.SpendableCoins(ctx, addr)
 }

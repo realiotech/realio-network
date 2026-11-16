@@ -78,8 +78,8 @@ func (ms msgServer) ClaimDelegations(ctx context.Context, msg *types.MsgClaimDel
 }
 
 // MigrateBankBalance recovers bank coins for the linked old address: the
-// whole spendable balance, plus the loss recorded for it, paid out of the
-// attacker. The message names only old_address; see the proto for what makes
+// whole spendable balance, plus the hacked amount recorded for it, paid out
+// of the attacker. The message names only old_address; see the proto for what makes
 // repeating it safe.
 //
 // Two keeper calls and two events, so the record of what came back from
@@ -95,7 +95,7 @@ func (ms msgServer) MigrateBankBalance(ctx context.Context, msg *types.MsgMigrat
 	// the whole pool to the attacker's link.
 	if attacker, ok := ms.GetAttacker(ctx); ok && attacker.Equals(oldAddr) {
 		return nil, errorsmod.Wrap(sdkerrors.ErrInvalidRequest,
-			"old_address is the attacker; it is owed no restitution")
+			"old_address is the attacker; it is owed no payout")
 	}
 
 	// An address with nothing spendable is swept successfully, for zero --
