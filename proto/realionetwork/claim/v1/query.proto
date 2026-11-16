@@ -1,7 +1,9 @@
 syntax = "proto3";
 package realionetwork.claim.v1;
 
+import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
+import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/realiotech/realio-network/x/claim/types";
 
@@ -11,6 +13,12 @@ service Query {
   // if any.
   rpc LinkedAddress(QueryLinkedAddressRequest) returns (QueryLinkedAddressResponse) {
     option (google.api.http).get = "/realionetwork/claim/v1/linked_address/{old_address}";
+  }
+
+  // HackedAmount returns what the attacker took from an old address and has
+  // not yet paid back: the amount MsgMigrateBankBalance will pay out.
+  rpc HackedAmount(QueryHackedAmountRequest) returns (QueryHackedAmountResponse) {
+    option (google.api.http).get = "/realionetwork/claim/v1/hacked_amount/{old_address}";
   }
 
   // Admin returns the address currently authorized to submit any of the
@@ -41,4 +49,20 @@ message QueryAdminRequest {}
 // QueryAdminResponse is response type for the Query/Admin RPC method.
 message QueryAdminResponse {
   string admin = 1;
+}
+
+// QueryHackedAmountRequest is request type for the Query/HackedAmount RPC method.
+message QueryHackedAmountRequest {
+  // old_address is the bech32 account address to look up.
+  string old_address = 1;
+}
+
+// QueryHackedAmountResponse is response type for the Query/HackedAmount RPC method.
+message QueryHackedAmountResponse {
+  // amount is the hacked amount still owed to old_address. Empty if none was
+  // recorded or it has already been paid.
+  repeated cosmos.base.v1beta1.Coin amount = 1 [
+    (gogoproto.nullable) = false,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
 }

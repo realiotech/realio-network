@@ -75,9 +75,46 @@ someone's `old_address` (no chains — link to the end of the chain instead).
 
 ## Queries
 
-`LinkedAddress` and `Admin`, defined in `query.proto`, both open to everyone.
+All open to everyone.
+
+| RPC | CLI | REST |
+| --- | --- | --- |
+| `LinkedAddress` | `realio-networkd query claim linked-address [old-address]` | `/realionetwork/claim/v1/linked_address/{old_address}` |
+| `HackedAmount` | `realio-networkd query claim hacked-amount [old-address]` | `/realionetwork/claim/v1/hacked_amount/{old_address}` |
+| `Admin` | `realio-networkd query claim admin` | `/realionetwork/claim/v1/admin` |
+
 `LinkedAddress` returns `found: false` rather than an error for an unlinked
-address.
+address. `HackedAmount` returns an empty amount when nothing is recorded or the
+payout has already been made.
+
+### Data for the claim dashboard
+
+What a claim dashboard shows for a connected old address, and where each number
+comes from:
+
+| Dashboard shows | State | Query |
+| --- | --- | --- |
+| Linked address | claim | `LinkedAddress(old)` |
+| Bank amount to claim | claim + bank | Sweep: bank `SpendableBalances(old)` (`/cosmos/bank/v1beta1/spendable_balances/{address}`). Payout: `HackedAmount(old)`. Total per denom = sweep + payout. |
+| Delegation amount | staking + multi-staking | Staking `DelegatorDelegations(old)` (`/cosmos/staking/v1beta1/delegations/{delegator_addr}`), plus multi-staking `MultiStakingLock(old, validator)` (`/realiotech/multistaking/v1/lock/{validator_address}/{multi_staker_address}`) for the original-denom coin behind each delegation. |
+| ERC-20 amount to claim | EVM | `balanceOf(old)` on each candidate contract, via JSON-RPC `eth_call` (or `/cosmos/evm/vm/v1/eth_call`). |
+
+Notes that change what the dashboard should count:
+
+- **Bank:** vesting-locked coins are not spendable and are not claimed. The
+  payout is only paid out of the attacker's pool; if the pool cannot cover it,
+  the claim fails (see [Bank claim](#bank-claim)).
+- **Delegations:** skip a delegation where the old address is the operator of
+  that validator (case C), and do not count unbonding delegations or
+  redelegations; neither is claimed.
+- **ERC-20:** no on-chain index says which contracts an address holds, so the
+  contract list is supplied from outside. `x/erc20` `TokenPairs`
+  (`/cosmos/evm/erc20/v1/token_pairs`) lists registered tokens, but tokens not
+  registered there will not appear, so combine it with the admin's off-chain
+  list. Leave out pairs that represent a native coin (`contract_owner =
+  OWNER_MODULE`): those are claimed as bank balances and `MsgClaimTokens`
+  rejects them. `balanceOf` is selector `0x70a08231` followed by the address
+  left-padded to 32 bytes.
 
 ## State
 

@@ -22,6 +22,7 @@ func GetQueryCmd() *cobra.Command {
 	}
 
 	cmd.AddCommand(CmdQueryLinkedAddress())
+	cmd.AddCommand(CmdQueryHackedAmount())
 	cmd.AddCommand(CmdQueryAdmin())
 
 	return cmd
@@ -38,6 +39,30 @@ func CmdQueryLinkedAddress() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			res, err := queryClient.LinkedAddress(context.Background(), &types.QueryLinkedAddressRequest{OldAddress: args[0]})
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(res)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+func CmdQueryHackedAmount() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "hacked-amount [old-address]",
+		Short: "query what the attacker took from an old address and has not yet paid back",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			res, err := queryClient.HackedAmount(context.Background(), &types.QueryHackedAmountRequest{OldAddress: args[0]})
 			if err != nil {
 				return err
 			}

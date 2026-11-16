@@ -42,6 +42,25 @@ func (q queryServer) LinkedAddress(ctx context.Context, req *types.QueryLinkedAd
 	return &types.QueryLinkedAddressResponse{NewAddress: newAddr.String(), Found: true}, nil
 }
 
+// HackedAmount implements the Query/HackedAmount gRPC method: anyone can see
+// what the attacker took from an old address and has not yet paid back.
+func (q queryServer) HackedAmount(ctx context.Context, req *types.QueryHackedAmountRequest) (*types.QueryHackedAmountResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	oldAddr, err := sdk.AccAddressFromBech32(req.OldAddress)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, sdkerrors.ErrInvalidAddress.Wrapf("invalid old_address %q: %s", req.OldAddress, err).Error())
+	}
+
+	amount, err := q.k.GetHackedAmount(ctx, oldAddr)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	return &types.QueryHackedAmountResponse{Amount: amount}, nil
+}
+
 // Admin implements the Query/Admin gRPC method: anyone can check which
 // address is currently authorized to submit the module's messages.
 func (q queryServer) Admin(ctx context.Context, req *types.QueryAdminRequest) (*types.QueryAdminResponse, error) {
