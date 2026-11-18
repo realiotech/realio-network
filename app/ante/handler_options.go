@@ -4,6 +4,7 @@ import (
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
 	txsigning "cosmossdk.io/x/tx/signing"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	errortypes "github.com/cosmos/cosmos-sdk/types/errors"
@@ -18,6 +19,8 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ibcante "github.com/cosmos/ibc-go/v10/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	corestoretypes "cosmossdk.io/core/store"
 )
 
 // HandlerOptions defines the list of module keepers required to run the RealioNetwork
@@ -38,8 +41,11 @@ type HandlerOptions struct {
 	MaxTxGasWanted         uint64
 	BlacklistKeeper        BlacklistKeeper
 	// use dynamic fee checker or the cosmos-sdk default one for native transactions
-	DynamicFeeChecker bool
-	PendingTxListener PendingTxListener
+	DynamicFeeChecker      bool
+	PendingTxListener      PendingTxListener
+	// wasm
+	WasmConfig             *wasmtypes.NodeConfig
+	TXCounterStoreService  corestoretypes.KVStoreService
 }
 
 // Validate checks if the keepers are defined
@@ -110,6 +116,8 @@ func newCosmosAnteHandler(ctx sdk.Context, options HandlerOptions) sdk.AnteHandl
 		),
 		ante.NewSetUpContextDecorator(),
 		ante.NewExtensionOptionsDecorator(options.ExtensionOptionChecker),
+		wasmkeeper.NewLimitSimulationGasDecorator(options.WasmConfig.SimulationGasLimit), // after setup context to enforce limits early
+		wasmkeeper.NewCountTXDecorator(options.TXCounterStoreService),
 		ante.NewValidateBasicDecorator(),
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.AccountKeeper),

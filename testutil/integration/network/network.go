@@ -24,6 +24,7 @@ import (
 	feegranttypes "cosmossdk.io/x/feegrant"
 	"github.com/cosmos/evm/testutil/integration"
 
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	sdktypes "github.com/cosmos/cosmos-sdk/types"
 	sdktestutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
@@ -43,6 +44,7 @@ type Network interface {
 	GetFeeGrantClient() feegranttypes.QueryClient
 	GetMintModuleClient() minttypes.QueryClient // conflict types with current GetMintClient()
 	GetBridgeClient() bridgetypes.QueryClient
+	GetWasmClient() wasmtypes.QueryClient
 	// GetApp exposes the underlying app for keepers that have no Msg/Query
 	// service (e.g. x/blacklist, which is only ever mutated by genesis or an
 	// upgrade handler, never by a user transaction).

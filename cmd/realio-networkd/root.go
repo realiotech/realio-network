@@ -52,6 +52,11 @@ import (
 
 	"github.com/realiotech/realio-network/app"
 	cmdcfg "github.com/realiotech/realio-network/cmd/config"
+
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
+	"github.com/CosmWasm/wasmd/x/wasm"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	"github.com/prometheus/client_golang/prometheus"
 	// this line is used by starport scaffolding # stargate/root/import
 )
 
@@ -85,6 +90,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 		tempDir,
 		5,
 		initAppOptions,
+		app.EmptyWasmOptions,
 	)
 	encodingConfig := params.EncodingConfig{
 		InterfaceRegistry: tempApp.InterfaceRegistry(),
@@ -182,7 +188,9 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	rootCmd.AddCommand(rosettacmd.RosettaCommand(encodingConfig.InterfaceRegistry, encodingConfig.Codec))
 }
 
-func addModuleInitFlags(_ *cobra.Command) {}
+func addModuleInitFlags(startCmd *cobra.Command) {
+	wasm.AddModuleInitFlags(startCmd)
+}
 
 func queryCommand() *cobra.Command {
 	cmd := &cobra.Command{
@@ -237,6 +245,11 @@ func txCommand() *cobra.Command {
 	return cmd
 }
 
+type RealioAppConfig struct {
+	evmconfig.EVMAppConfig
+	Wasm wasmtypes.NodeConfig `mapstructure:"wasm"`
+}
+
 // initAppConfig helps to override default appConfig template and configs.
 // return "", nil if no custom configuration is required for the application.
 func AppConfig(evmChainID uint64) (string, interface{}) {
@@ -267,7 +280,12 @@ func AppConfig(evmChainID uint64) (string, interface{}) {
 		TLS:     *cosmosevmserverconfig.DefaultTLSConfig(),
 	}
 
-	return evmconfig.EVMAppTemplate, customAppConfig
+	realioAppConfig := RealioAppConfig{
+		EVMAppConfig: customAppConfig,
+		Wasm: wasmtypes.DefaultNodeConfig(),
+	}
+
+	return evmconfig.EVMAppTemplate + wasmtypes.DefaultConfigTemplate(), realioAppConfig
 }
 
 type appCreator struct {
@@ -328,6 +346,11 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		}
 	}
 
+	var wasmOpts []wasmkeeper.Option
+	if cast.ToBool(appOpts.Get("telemetry.enabled")) {
+		wasmOpts = append(wasmOpts, wasmkeeper.WithVMCacheMetrics(prometheus.DefaultRegisterer))
+	}
+
 	// this line is used by starport scaffolding # stargate/root/appBeforeInit
 
 	return app.New(
@@ -336,6 +359,7 @@ func (a appCreator) newApp(logger log.Logger, db dbm.DB, traceStore io.Writer, a
 		cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
 		// this line is used by starport scaffolding # stargate/root/appArgument
 		appOpts,
+		wasmOpts,
 		baseapp.SetChainID(chainID),
 		baseapp.SetPruning(pruningOpts),
 		baseapp.SetMinGasPrices(cast.ToString(appOpts.Get(server.FlagMinGasPrices))),
@@ -374,6 +398,7 @@ func (a appCreator) appExport(
 			uint(1),
 			// this line is used by starport scaffolding # stargate/root/exportArgument
 			appOpts,
+			app.EmptyWasmOptions,
 		)
 
 		if err := anApp.LoadHeight(height); err != nil {
@@ -390,6 +415,7 @@ func (a appCreator) appExport(
 			uint(1),
 			// this line is used by starport scaffolding # stargate/root/noHeightExportArgument
 			appOpts,
+			app.EmptyWasmOptions,
 		)
 	}
 

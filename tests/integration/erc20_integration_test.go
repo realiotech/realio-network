@@ -8,6 +8,7 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/evm/contracts"
 	commonfactory "github.com/cosmos/evm/testutil/integration/base/factory"
 	testutiltypes "github.com/cosmos/evm/testutil/types"
@@ -59,10 +60,12 @@ func (suite *EVMTestSuite) TestERC20MsgsTxBuilder() {
 	suite.assertContractTotalSupply(contractAddr, mintAmount)
 	suite.assertContractBalanceOf(contractAddr, senderKey.Addr, mintAmount)
 
-	// Register ERC20 token as native token, should build tx fail
-	suite.registerErc20(contractAddr)
+	// Register ERC20 token as native token: erc20 msgs are exposed to users,
+	// so registration must now succeed.
+	coinDenom := suite.registerErc20(contractAddr)
 
-	// Convert ERC20 to native token, should build tx fail
+	// Convert ERC20 to native token: should succeed now that the contract is
+	// registered as a token pair.
 	_, err = suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
 		Msgs: []sdk.Msg{&erc20types.MsgConvertERC20{
 			ContractAddress: contractAddr.Hex(),
@@ -71,19 +74,27 @@ func (suite *EVMTestSuite) TestERC20MsgsTxBuilder() {
 			Sender:          senderKey.Addr.Hex(),
 		}},
 	})
-	suite.Require().Error(err)
-	suite.Require().Contains(err.Error(), "failed to build tx")
+	suite.Require().NoError(err)
+	suite.Require().NoError(suite.network.NextBlock())
 
-	// Convert native token back to ERC20, should build tx fail
+	// sender's ERC20 balance decreased, recipient received the native coin
+	suite.assertContractBalanceOf(contractAddr, senderKey.Addr, mintAmount-transferAmount)
+	suite.assertBankBalance(recipientKey.AccAddr, coinDenom, transferAmount)
+
+	// Convert native token back to ERC20: should succeed.
 	_, err = suite.factory.ExecuteCosmosTx(recipientPriv, commonfactory.CosmosTxArgs{
 		Msgs: []sdk.Msg{&erc20types.MsgConvertCoin{
-			Coin:     sdk.NewCoin("erc20/0xb841F365D5221Bed66d60E69094418D8C2aa5A44", math.NewInt(transferAmount)),
+			Coin:     sdk.NewCoin(coinDenom, math.NewInt(transferAmount)),
 			Sender:   recipientKey.AccAddr.String(),
 			Receiver: senderKey.Addr.Hex(),
 		}},
 	})
-	suite.Require().Error(err)
-	suite.Require().Contains(err.Error(), "failed to build tx")
+	suite.Require().NoError(err)
+	suite.Require().NoError(suite.network.NextBlock())
+
+	// sender's ERC20 balance is restored, recipient's native coin is spent
+	suite.assertContractBalanceOf(contractAddr, senderKey.Addr, mintAmount)
+	suite.assertBankBalance(recipientKey.AccAddr, coinDenom, 0)
 }
 
 func (suite *EVMTestSuite) assertContractTotalSupply(contractAddr common.Address, expected int64) {
@@ -126,13 +137,26 @@ func (suite *EVMTestSuite) assertContractBalanceOf(contractAddr common.Address, 
 	suite.Require().NoError(suite.network.NextBlock())
 }
 
-func (suite *EVMTestSuite) registerErc20(contractAddr common.Address) {
+// registerErc20 registers contractAddr as a native token pair and returns
+// the resulting bank denom ("erc20:0x...").
+func (suite *EVMTestSuite) registerErc20(contractAddr common.Address) string {
 	_, err := suite.factory.ExecuteCosmosTx(suite.keyring.GetPrivKey(senderIndex), commonfactory.CosmosTxArgs{
 		Msgs: []sdk.Msg{&erc20types.MsgRegisterERC20{
 			Signer:         suite.keyring.GetAccAddr(0).String(),
 			Erc20Addresses: []string{contractAddr.Hex()},
 		}},
 	})
-	suite.Require().Error(err)
-	suite.Require().Contains(err.Error(), "failed to build tx")
+	suite.Require().NoError(err)
+	suite.Require().NoError(suite.network.NextBlock())
+	return erc20types.CreateDenom(contractAddr.Hex())
+}
+
+// assertBankBalance asserts addr's bank balance of denom equals expected.
+func (suite *EVMTestSuite) assertBankBalance(addr sdk.AccAddress, denom string, expected int64) {
+	res, err := suite.network.GetBankClient().Balance(suite.network.GetContext(), &banktypes.QueryBalanceRequest{
+		Address: addr.String(),
+		Denom:   denom,
+	})
+	suite.Require().NoError(err)
+	suite.Require().Equal(math.NewInt(expected), res.Balance.Amount)
 }
