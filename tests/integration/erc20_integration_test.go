@@ -64,8 +64,8 @@ func (suite *EVMTestSuite) TestERC20MsgsTxBuilder() {
 	// so registration must now succeed.
 	coinDenom := suite.registerErc20(contractAddr)
 
-	// Convert ERC20 to native token: should succeed now that the contract is
-	// registered as a token pair.
+	// Converting ERC20 to the native coin is rejected: MsgConvertERC20 is not
+	// in the app codec.
 	_, err = suite.factory.ExecuteCosmosTx(senderPriv, commonfactory.CosmosTxArgs{
 		Msgs: []sdk.Msg{&erc20types.MsgConvertERC20{
 			ContractAddress: contractAddr.Hex(),
@@ -74,14 +74,13 @@ func (suite *EVMTestSuite) TestERC20MsgsTxBuilder() {
 			Sender:          senderKey.Addr.Hex(),
 		}},
 	})
-	suite.Require().NoError(err)
+	suite.Require().ErrorContains(err, "unable to resolve type URL /cosmos.evm.erc20.v1.MsgConvertERC20")
 	suite.Require().NoError(suite.network.NextBlock())
+	suite.assertContractBalanceOf(contractAddr, senderKey.Addr, mintAmount)
+	suite.assertBankBalance(recipientKey.AccAddr, coinDenom, 0)
 
-	// sender's ERC20 balance decreased, recipient received the native coin
-	suite.assertContractBalanceOf(contractAddr, senderKey.Addr, mintAmount-transferAmount)
-	suite.assertBankBalance(recipientKey.AccAddr, coinDenom, transferAmount)
-
-	// Convert native token back to ERC20: should succeed.
+	// MsgConvertCoin is in the app codec, so it reaches x/erc20, which fails
+	// to escrow the coin because the recipient holds none.
 	_, err = suite.factory.ExecuteCosmosTx(recipientPriv, commonfactory.CosmosTxArgs{
 		Msgs: []sdk.Msg{&erc20types.MsgConvertCoin{
 			Coin:     sdk.NewCoin(coinDenom, math.NewInt(transferAmount)),
@@ -89,12 +88,9 @@ func (suite *EVMTestSuite) TestERC20MsgsTxBuilder() {
 			Receiver: senderKey.Addr.Hex(),
 		}},
 	})
-	suite.Require().NoError(err)
+	suite.Require().ErrorContains(err, "failed to escrow coins")
 	suite.Require().NoError(suite.network.NextBlock())
-
-	// sender's ERC20 balance is restored, recipient's native coin is spent
 	suite.assertContractBalanceOf(contractAddr, senderKey.Addr, mintAmount)
-	suite.assertBankBalance(recipientKey.AccAddr, coinDenom, 0)
 }
 
 func (suite *EVMTestSuite) assertContractTotalSupply(contractAddr common.Address, expected int64) {

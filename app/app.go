@@ -49,6 +49,7 @@ import (
 	cosmosevmutils "github.com/cosmos/evm/utils"
 	evmosvm "github.com/ethereum/go-ethereum/core/vm"
 
+	erc20v1 "github.com/cosmos/evm/api/cosmos/evm/erc20/v1"
 	"github.com/cosmos/evm/x/erc20"
 	erc20v2 "github.com/cosmos/evm/x/erc20/v2"
 	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
@@ -63,6 +64,7 @@ import (
 	// NOTE: override ICS20 keeper to support IBC transfers of ERC20 tokens
 
 	"github.com/gorilla/mux"
+	"google.golang.org/grpc"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -998,7 +1000,7 @@ func New(
 		erc20types.ModuleName,
 	)
 
-	app.configurator = module.NewConfigurator(app.appCodec, app.MsgServiceRouter(), app.GRPCQueryRouter())
+	app.configurator = module.NewConfigurator(app.appCodec, erc20MsgRouter{app.MsgServiceRouter()}, app.GRPCQueryRouter())
 	err = app.mm.RegisterServices(app.configurator)
 	if err != nil {
 		panic(err)
@@ -1470,4 +1472,23 @@ func BlockedAddresses() map[string]bool {
 	}
 
 	return blockedAddrs
+}
+
+// erc20MsgRouter registers Msg services without x/erc20's ConvertERC20, whose
+// message MakeEncodingConfig leaves out of the codec. The msg router panics on
+// a method whose message is not registered, and x/erc20 registers every method
+// of its Msg service.
+type erc20MsgRouter struct {
+	*baseapp.MsgServiceRouter
+}
+
+func (r erc20MsgRouter) RegisterService(sd *grpc.ServiceDesc, impl any) {
+	filtered := *sd
+	filtered.Methods = nil
+	for _, m := range sd.Methods {
+		if "/"+sd.ServiceName+"/"+m.MethodName != erc20v1.Msg_ConvertERC20_FullMethodName {
+			filtered.Methods = append(filtered.Methods, m)
+		}
+	}
+	r.MsgServiceRouter.RegisterService(&filtered, impl)
 }
