@@ -1,9 +1,11 @@
 package ante
 
 import (
+	corestoretypes "cosmossdk.io/core/store"
 	errorsmod "cosmossdk.io/errors"
 	storetypes "cosmossdk.io/store/types"
 	txsigning "cosmossdk.io/x/tx/signing"
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -19,8 +21,6 @@ import (
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 	ibcante "github.com/cosmos/ibc-go/v10/modules/core/ante"
 	ibckeeper "github.com/cosmos/ibc-go/v10/modules/core/keeper"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
-	corestoretypes "cosmossdk.io/core/store"
 )
 
 // HandlerOptions defines the list of module keepers required to run the RealioNetwork
@@ -41,11 +41,11 @@ type HandlerOptions struct {
 	MaxTxGasWanted         uint64
 	BlacklistKeeper        BlacklistKeeper
 	// use dynamic fee checker or the cosmos-sdk default one for native transactions
-	DynamicFeeChecker      bool
-	PendingTxListener      PendingTxListener
+	DynamicFeeChecker bool
+	PendingTxListener PendingTxListener
 	// wasm
-	WasmConfig             *wasmtypes.NodeConfig
-	TXCounterStoreService  corestoretypes.KVStoreService
+	WasmConfig            *wasmtypes.NodeConfig
+	TXCounterStoreService corestoretypes.KVStoreService
 }
 
 // Validate checks if the keepers are defined

@@ -51,9 +51,9 @@ import (
 
 	erc20v1 "github.com/cosmos/evm/api/cosmos/evm/erc20/v1"
 	"github.com/cosmos/evm/x/erc20"
-	erc20v2 "github.com/cosmos/evm/x/erc20/v2"
 	erc20keeper "github.com/cosmos/evm/x/erc20/keeper"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
+	erc20v2 "github.com/cosmos/evm/x/erc20/v2"
 	"github.com/cosmos/evm/x/feemarket"
 	feemarketkeeper "github.com/cosmos/evm/x/feemarket/keeper"
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"

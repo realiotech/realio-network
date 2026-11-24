@@ -53,9 +53,9 @@ import (
 	"github.com/realiotech/realio-network/app"
 	cmdcfg "github.com/realiotech/realio-network/cmd/config"
 
-	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/CosmWasm/wasmd/x/wasm"
 	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
+	wasmtypes "github.com/CosmWasm/wasmd/x/wasm/types"
 	"github.com/prometheus/client_golang/prometheus"
 	// this line is used by starport scaffolding # stargate/root/import
 )
@@ -282,7 +282,7 @@ func AppConfig(evmChainID uint64) (string, interface{}) {
 
 	realioAppConfig := RealioAppConfig{
 		EVMAppConfig: customAppConfig,
-		Wasm: wasmtypes.DefaultNodeConfig(),
+		Wasm:         wasmtypes.DefaultNodeConfig(),
 	}
 
 	return evmconfig.EVMAppTemplate + wasmtypes.DefaultConfigTemplate(), realioAppConfig

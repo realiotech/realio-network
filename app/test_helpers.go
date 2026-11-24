@@ -33,13 +33,13 @@ import (
 	feemarkettypes "github.com/cosmos/evm/x/feemarket/types"
 	evmtypes "github.com/cosmos/evm/x/vm/types"
 
+	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 	erc20types "github.com/cosmos/evm/x/erc20/types"
 	multistakingtypes "github.com/realio-tech/multi-staking-module/x/multi-staking/types"
 	"github.com/realiotech/realio-network/cmd/config"
 	"github.com/realiotech/realio-network/types"
 	bridgetypes "github.com/realiotech/realio-network/x/bridge/types"
 	minttypes "github.com/realiotech/realio-network/x/mint/types"
-	wasmkeeper "github.com/CosmWasm/wasmd/x/wasm/keeper"
 )
 
 func init() {
