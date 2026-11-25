@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/std"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	"github.com/cosmos/cosmos-sdk/x/auth/migrations/legacytx"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 
@@ -99,8 +100,36 @@ func MakeEncodingConfig(evmChainID uint64) params.EncodingConfig {
 	legacytx.RegressionTestingAminoCodec = legacyAmino
 	eip712.SetEncodingConfig(legacyAmino, interfaceRegistry, evmChainID)
 
-	ModuleBasics.RegisterLegacyAminoCodec(legacyAmino)
-	ModuleBasics.RegisterInterfaces(interfaceRegistry)
+	for name, basic := range ModuleBasics {
+		if name == erc20types.ModuleName {
+			continue
+		}
+		basic.RegisterLegacyAminoCodec(legacyAmino)
+		basic.RegisterInterfaces(interfaceRegistry)
+	}
+
+	// x/erc20 is registered here instead of by its AppModuleBasic, so that
+	// MsgConvertERC20 (ERC20 to Cosmos coin) is not in the codec and a tx
+	// carrying it fails to decode. The amino names match
+	// erc20types.RegisterLegacyAminoCodec.
+	interfaceRegistry.RegisterImplementations(
+		(*sdk.Msg)(nil),
+		&erc20types.MsgConvertCoin{},
+		&erc20types.MsgRegisterERC20{},
+		&erc20types.MsgToggleConversion{},
+		&erc20types.MsgUpdateParams{},
+	)
+	interfaceRegistry.RegisterImplementations(
+		(*txtypes.MsgResponse)(nil),
+		&erc20types.MsgConvertCoinResponse{},
+		&erc20types.MsgRegisterERC20Response{},
+		&erc20types.MsgToggleConversionResponse{},
+		&erc20types.MsgUpdateParamsResponse{},
+	)
+	legacyAmino.RegisterConcrete(&erc20types.MsgConvertCoin{}, "cosmos/evm/MsgConvertCoin", nil)
+	legacyAmino.RegisterConcrete(&erc20types.MsgRegisterERC20{}, "cosmos/evm/erc20/MsgRegisterERC20", nil)
+	legacyAmino.RegisterConcrete(&erc20types.MsgToggleConversion{}, "cosmos/evm/erc20/MsgToggleConversion", nil)
+	legacyAmino.RegisterConcrete(&erc20types.MsgUpdateParams{}, "cosmos/evm/erc20/MsgUpdateParams", nil)
 
 	// Wrap TxConfig with legacy fallback for decoding old EVM transactions
 	wrappedTxConfig := legacyFallbackTxConfig{TxConfig: txConfig}

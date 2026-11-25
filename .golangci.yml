@@ -1,14 +1,14 @@
 run:
   tests: true
-  # timeout for analysis, e.g. 30s, 5m, default is 1m
-  timeout: 5m
+  # timeout for analysis. CI runners take over 5m on this repo.
+  timeout: 15m
 
 linters:
   disable-all: true
   enable:
     - dogsled
     - errcheck
-    - exportloopref
+    - copyloopvar
     - goconst
     - gocritic
     - gofumpt

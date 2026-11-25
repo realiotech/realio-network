@@ -53,7 +53,7 @@ func TestBlacklistStoreLoaderIgnoresSkipHeight(t *testing.T) {
 			db := dbm.NewMemDB()
 			logger := log.NewTestLogger(t)
 			// Construct without loading so the old database can be seeded first.
-			app := New(logger, db, nil, false, map[int64]bool{tc.skipHeight: true}, home, 0, simtestutil.EmptyAppOptions{})
+			app := New(logger, db, nil, false, map[int64]bool{tc.skipHeight: true}, home, 0, simtestutil.EmptyAppOptions{}, EmptyWasmOptions)
 			oldApp := baseapp.NewBaseApp(t.Name(), logger, db, nil)
 			for name := range app.keys {
 				if name != blacklisttypes.StoreKey {
