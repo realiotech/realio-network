@@ -194,13 +194,15 @@ localnet-show-logstream:
 ###############################################################################
 
 PACKAGE_NAME:=github.com/realiotech/realio-network
-GOLANG_CROSS_VERSION  = v1.23
+GOLANG_CROSS_VERSION  = v1.24.6
+WASMVM_VERSION := $(shell awk '$$1 == "github.com/CosmWasm/wasmvm/v2" {print $$2}' go.mod)
 GOPATH ?= '$(HOME)/go'
 release-dry-run:
 	docker run \
 		--rm \
 		--privileged \
 		-e CGO_ENABLED=1 \
+		-e WASMVM_VERSION=$(WASMVM_VERSION) \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v `pwd`:/go/src/$(PACKAGE_NAME) \
 		-v ${GOPATH}/pkg:/go/pkg \
@@ -217,6 +219,7 @@ release:
 		--rm \
 		--privileged \
 		-e CGO_ENABLED=1 \
+		-e WASMVM_VERSION=$(WASMVM_VERSION) \
 		--env-file .release-env \
 		-v /var/run/docker.sock:/var/run/docker.sock \
 		-v `pwd`:/go/src/$(PACKAGE_NAME) \
