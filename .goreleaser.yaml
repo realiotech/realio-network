@@ -1,7 +1,15 @@
+version: 2
+
 before:
   hooks:
     - go mod download
+    # Static libwasmvm libraries for the builds below, checked against the
+    # wasmvm release checksums. WASMVM_VERSION is set by the Makefile from go.mod.
+    - sh -c 'cd /lib && for f in libwasmvm_muslc.x86_64.a libwasmvm_muslc.aarch64.a libwasmvmstatic_darwin.a; do curl -fsSLO --retry 5 --retry-all-errors https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.WASMVM_VERSION }}/$f || exit 1; done && curl -fsSL --retry 5 --retry-all-errors https://github.com/CosmWasm/wasmvm/releases/download/{{ .Env.WASMVM_VERSION }}/checksums.txt | grep -E "muslc|static_darwin" | sha256sum -c -'
 
+# libwasmvm (CosmWasm) is linked statically, so the binaries do not need a
+# libwasmvm shared library at runtime. wasmvm has no Windows build, so there
+# is no Windows target.
 builds:
   - id: "realio-networkd-darwin"
     main: ./cmd/realio-networkd
@@ -10,14 +18,15 @@ builds:
       - CGO_ENABLED=1
       - CC=o64-clang
       - CXX=o64-clang++
+      - CGO_LDFLAGS=-L/lib
     goos:
       - darwin
     goarch:
       - amd64
-    flags:
-      - -tags=cgo
+    tags:
+      - static_wasm
     ldflags:
-      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=realionetwork -X github.com/cosmos/cosmos-sdk/version.AppName=realio-networkd -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+      - -s -w -linkmode=external -X github.com/cosmos/cosmos-sdk/version.Name=realionetwork -X github.com/cosmos/cosmos-sdk/version.AppName=realio-networkd -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
   - id: "realio-networkd-darwin-arm64"
     main: ./cmd/realio-networkd
     binary: bin/realio-networkd
@@ -25,29 +34,36 @@ builds:
       - CGO_ENABLED=1
       - CC=oa64-clang
       - CXX=oa64-clang++
+      - CGO_LDFLAGS=-L/lib
     goos:
       - darwin
     goarch:
       - arm64
-    flags:
-      - -tags=cgo
+    tags:
+      - static_wasm
     ldflags:
-      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=realionetwork -X github.com/cosmos/cosmos-sdk/version.AppName=realio-networkd -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+      - -s -w -linkmode=external -X github.com/cosmos/cosmos-sdk/version.Name=realionetwork -X github.com/cosmos/cosmos-sdk/version.AppName=realio-networkd -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+  # The muslc libwasmvm is linked into a fully static binary, which runs on
+  # any Linux distribution. netgo and osusergo keep glibc's resolver and user
+  # lookup out of the static link.
   - id: "realio-networkd-linux"
     main: ./cmd/realio-networkd
     binary: bin/realio-networkd
     env:
       - CGO_ENABLED=1
-      - CC=gcc
-      - CXX=g++
+      - CC=x86_64-linux-gnu-gcc
+      - CXX=x86_64-linux-gnu-g++
+      - CGO_LDFLAGS=-L/lib
     goos:
       - linux
     goarch:
       - amd64
-    flags:
-      - -tags=cgo
+    tags:
+      - muslc
+      - netgo
+      - osusergo
     ldflags:
-      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=realionetwork -X github.com/cosmos/cosmos-sdk/version.AppName=realio-networkd -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+      - -s -w -linkmode=external -extldflags '-Wl,-z,muldefs -static -lm' -X github.com/cosmos/cosmos-sdk/version.Name=realionetwork -X github.com/cosmos/cosmos-sdk/version.AppName=realio-networkd -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
   - id: "realio-networkd-linux-arm64"
     main: ./cmd/realio-networkd
     binary: bin/realio-networkd
@@ -55,30 +71,17 @@ builds:
       - CGO_ENABLED=1
       - CC=aarch64-linux-gnu-gcc
       - CXX=aarch64-linux-gnu-g++
+      - CGO_LDFLAGS=-L/lib
     goos:
       - linux
     goarch:
       - arm64
-    flags:
-      - -tags=cgo
+    tags:
+      - muslc
+      - netgo
+      - osusergo
     ldflags:
-      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=realionetwork -X github.com/cosmos/cosmos-sdk/version.AppName=realio-networkd -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
-  - id: "realio-networkd-windows"
-    main: ./cmd/realio-networkd
-    binary: bin/realio-networkd
-    env:
-      - CGO_ENABLED=1
-      - CC=x86_64-w64-mingw32-gcc
-      - CXX=x86_64-w64-mingw32-g++
-    goos:
-      - windows
-    goarch:
-      - amd64
-    flags:
-      - -tags=cgo
-      - -buildmode=exe
-    ldflags:
-      - -s -w -X github.com/cosmos/cosmos-sdk/version.Name=realionetwork -X github.com/cosmos/cosmos-sdk/version.AppName=realio-networkd -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
+      - -s -w -linkmode=external -extldflags '-Wl,-z,muldefs -static -lm' -X github.com/cosmos/cosmos-sdk/version.Name=realionetwork -X github.com/cosmos/cosmos-sdk/version.AppName=realio-networkd -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}} -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
 
 archives:
   - name_template:  >-
@@ -87,13 +90,9 @@ archives:
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
-    format_overrides:
-      - goos: windows
-        format: zip
-    builds:
+    ids:
       - realio-networkd-darwin
       - realio-networkd-darwin-arm64
-      - realio-networkd-windows
       - realio-networkd-linux
       - realio-networkd-linux-arm64
 
@@ -106,4 +105,4 @@ changelog:
       - '^docs:'
       - '^test:'
 snapshot:
-  name_template: "{{ .Tag }}-next"
+  version_template: "{{ .Tag }}-next"
